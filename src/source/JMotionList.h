@@ -39,7 +39,7 @@ class JMotionListData : protected JObject
 private:
   bool Active;
   //byte State;  //-0:Sin movimiento, 1:Movimiento finalizado, 2:Inicia movimiento, 3:Continua movimiento
-  bool TypeSimple;
+  bool TypeSimple;   //Only linear movement.
   tdouble3 MvSimple1;
   tmatrix4d MvMatrix1;
   tdouble3 MvSimple2;

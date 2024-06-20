@@ -48,6 +48,7 @@
 //:# - Al usar ProcesTimeSimple() comprueba que el timestep solicitado sea mayor 
 //:#   o igual al tiempo final anterior. (11-05-2017)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
+//:# - New movements MovAddRotationXYZFile() and MovAddPathFile(). (18-06-2024)
 //:#############################################################################
 
 /// \file JMotion.h \brief Declares the class \ref JMotion.
@@ -102,7 +103,8 @@ private:
   bool ExistsObj(JMotionObj* obj)const;
   void MovAdd(unsigned objid,JMotionMov* mov);
   JMotionAxis* AxisAdd(unsigned objid,const tdouble3& p1,const tdouble3& p2);
-  void ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node,unsigned& id,unsigned idp);
+  void ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
+    ,unsigned& id,unsigned idp);
 
   void MovAddCopy(JMotionMov* mv)const;
 
@@ -122,19 +124,50 @@ public:
   void EventAdd(unsigned objid,unsigned movid,double timestart,double timefinish=-1);
 
   void MovAddWait(unsigned objid,unsigned id,unsigned nextid,double time);
-  void MovAddTeleport(unsigned objid,unsigned id,unsigned nextid,const tdouble3& mpos);
-  void MovAddRectilinear(unsigned objid,unsigned id,unsigned nextid,double time,const tdouble3& vel);
-  void MovAddRectilinearAce(unsigned objid,unsigned id,unsigned nextid,double time,const tdouble3& ace,const tdouble3& vel,bool velpre);
-  void MovAddRotation(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2,double velang,bool useangdegrees=true);
-  void MovAddRotationAce(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2,double aceang,double velang,bool velpre,bool useangdegrees=true);
-  void MovAddCircular(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2,const tdouble3& ref,double velang,bool useangdegrees=true);
-  void MovAddCircularAce(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2,const tdouble3& ref,double aceang,double velang,bool velpre,bool useangdegrees=true);
-  void MovAddRecSinu(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3& freq,const tdouble3& ampl,tdouble3 phase,bool phaseprev,bool useangdegrees=true);
-  void MovAddRotSinu(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2,double freq,double ampl,double phase,bool phaseprev,bool useangdegrees=true);
-  void MovAddCirSinu(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2,const tdouble3& ref,double freq,double ampl,double phase,bool phaseprev,bool useangdegrees=true);
-  void MovAddRectilinearFile(unsigned objid,unsigned id,unsigned nextid,double time,const std::string& file,int fields,int fieldtime,int fieldx,int fieldy,int fieldz);
-  void MovAddRotationFile(unsigned objid,unsigned id,unsigned nextid,double time,bool angdegrees
-    ,const tdouble3& axisp1,const tdouble3& axisp2,const std::string& file);
+  void MovAddTeleport(unsigned objid,unsigned id,unsigned nextid
+    ,const tdouble3& mpos);
+  void MovAddRectilinear(unsigned objid,unsigned id,unsigned nextid
+    ,double time,const tdouble3& vel);
+  void MovAddRectilinearAce(unsigned objid,unsigned id,unsigned nextid
+    ,double time,const tdouble3& ace,const tdouble3& vel,bool velpre);
+  void MovAddRotation(unsigned objid,unsigned id,unsigned nextid
+    ,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+    ,double velang,bool useangdegrees=true);
+  void MovAddRotationAce(unsigned objid,unsigned id,unsigned nextid
+    ,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+    ,double aceang,double velang,bool velpre,bool useangdegrees=true);
+  void MovAddCircular(unsigned objid,unsigned id,unsigned nextid
+    ,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+    ,const tdouble3& ref,double velang,bool useangdegrees=true);
+  void MovAddCircularAce(unsigned objid,unsigned id,unsigned nextid
+    ,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+    ,const tdouble3& ref,double aceang,double velang,bool velpre
+    ,bool useangdegrees=true);
+  void MovAddRecSinu(unsigned objid,unsigned id,unsigned nextid
+    ,double time,bool angdegrees,const tdouble3& freq,const tdouble3& ampl
+    ,tdouble3 phase,bool phaseprev,bool useangdegrees=true);
+  void MovAddRotSinu(unsigned objid,unsigned id,unsigned nextid
+    ,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+    ,double freq,double ampl,double phase,bool phaseprev,bool useangdegrees=true);
+  void MovAddCirSinu(unsigned objid,unsigned id,unsigned nextid,double time
+    ,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+    ,const tdouble3& ref,double freq,double ampl,double phase,bool phaseprev
+    ,bool useangdegrees=true);
+  void MovAddRectilinearFile(unsigned objid,unsigned id,unsigned nextid
+    ,double time,const std::string& file,int fields,int fieldtime,int fieldx
+    ,int fieldy,int fieldz);
+  void MovAddRotationFile(unsigned objid,unsigned id,unsigned nextid
+    ,double time,bool angdegrees,const tdouble3& axisp1,const tdouble3& axisp2
+    ,const std::string& file);
+  void MovAddRotationAdvFile(unsigned objid,unsigned id,unsigned nextid
+    ,double time,bool angdegrees,const tdouble3& center,const std::string& file
+    ,int fields,int fieldtime,int fieldang1,int fieldang2,int fieldang3
+    ,bool intrinsic,const std::string& axes);
+  void MovAddPathFile(unsigned objid,unsigned id,unsigned nextid
+    ,double time,bool angdegrees,const tdouble3& center,const std::string& file
+    ,int fields,int fieldtime,int fieldx,int fieldy,int fieldz,int fieldang1
+    ,int fieldang2,int fieldang3,bool movecenter,bool intrinsic
+    ,const std::string& axes);
   void MovAddNull(unsigned objid,unsigned id);
 
   bool ExistsRef(int ref)const{ return(ObjGetPointerByRef(ref)!=NULL); }
@@ -159,17 +192,23 @@ public:
 
   //-Nuevo metodo para devolver resultados de ProcesTimeSimple() o ProcesTimeAce().
   bool ProcesTimeGetData(unsigned ref,bool& typesimple,tdouble3& simplemov
-    ,tdouble3& simplevel,tdouble3& simpleace,tmatrix4d& matmov,tmatrix4d& matmov2)const;
-  bool ProcesTimeGetData(unsigned ref,bool& typesimple,tdouble3& simplemov,tmatrix4d& matmov)const;
+    ,tdouble3& simplevel,tdouble3& simpleace,tmatrix4d& matmov
+    ,tmatrix4d& matmov2)const;
+  bool ProcesTimeGetData(unsigned ref,bool& typesimple,tdouble3& simplemov
+    ,tmatrix4d& matmov)const;
 
   void CopyConfig(JMotion& mot)const;
-  void CopyChangeRef(JMotion& mot,const int* ref,const int* refnew,unsigned refcount)const;
+  void CopyChangeRef(JMotion& mot,const int* ref,const int* refnew
+    ,unsigned refcount)const;
   void Optimize();
 
   void WriteXml(JXml* jxml,const std::string& path)const;
-  void ReadXml(const std::string& dirdata,JXml* jxml,const std::string& path,bool checkexists=true);
-  void LoadFileXml(const std::string& dirdata,const std::string& file,const std::string& path);
-  void SaveFileXml(const std::string& file,const std::string& path,bool newfile=true)const;
+  void ReadXml(const std::string& dirdata,JXml* jxml,const std::string& path
+    ,bool checkexists=true);
+  void LoadFileXml(const std::string& dirdata,const std::string& file
+    ,const std::string& path);
+  void SaveFileXml(const std::string& file,const std::string& path
+    ,bool newfile=true)const;
 };
 
 #endif

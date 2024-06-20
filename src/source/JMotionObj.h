@@ -41,8 +41,19 @@ class TiXmlNode;
 class JMotionMovActive : protected JObject
 {
 public:
+  ///Type of motion data in time.
+  typedef enum{ 
+    TpDfNull=0     ///<None.
+   ,TpDfMov=1      ///<Position data.
+   ,TpDfRotAxis=2  ///<Rotation angle.
+   ,TpDfRotEuler=3 ///<Euler rotation angles.
+   ,TpDfPath=4     ///<Position and Euler rotation angles.
+  }TpDfType; 
+
+public:
   const double EventFinish;
-  double Start,Finish;
+  double Start;
+  double Finish;
   bool Flash;
   tdouble3 Vel;    //-Solo se usa para el RectilinearAce
   double VelAng;   //-Solo se usa para el RotationAce
@@ -51,14 +62,16 @@ public:
 
   //-Vars para el MovRectFile y MovRotFile
   static const unsigned DFSIZEMAX=104857600; ///<Maximum file size (100mb).
-  bool DfPosType;    //-Indica que se almacenan posiciones.
+  TpDfType DfType;   ///<Type of motio data in time.
   unsigned DfCount;  //-Numero de posiciones
   unsigned DfIndex;  //-Indice de posicionamiento temporal
   tdouble3 DfLastPos;
   double DfLastAng;
   const double*   DfTimes; //-Tiempos
   const tdouble3* DfPos;   //-Posiciones
-  const double*   DfAng;   //-Angulos, siemgre en grados.
+  const double*   DfAng;   //-Angulos siemgre en grados.
+  const tdouble3* DfAngXYZ;//-Angulos XYZ siempre en grados.
+  tdouble3 DfLastAngXYZ;//-Angulos XYZ siempre en grados
 
   JMotionMov* Mov;
   bool Del;
@@ -70,11 +83,12 @@ public:
   void NextMov();
 
   void DfReset();
-  void DfConfig(bool postype);
+  void DfConfig(TpDfType dftype);
 
   static unsigned BinarySearch(unsigned size,const double* times,double t);
   tdouble3 DfGetNewPos(double t);
-  double DfGetNewAng(double t);
+  double   DfGetNewAng(double t);
+  tdouble3 DfGetNewAngXYZ(double t);
 };
 
 

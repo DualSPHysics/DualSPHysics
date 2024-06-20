@@ -322,7 +322,8 @@ public:
   void WriteXml(TiXmlNode* node)const;
 
   void PrepareData(){  
-    if(!DataFile)DataFile=new JMotionDataMov(*DirData,File,Fields,FieldTime,FieldX,FieldY,FieldZ);
+    if(!DataFile)DataFile=new JMotionDataMov(*DirData,File,Fields
+      ,FieldTime,FieldX,FieldY,FieldZ);
   }
   unsigned GetCount()const{  return(DataFile->GetCount());  }
   const double*   GetTimes()const{  return(DataFile->GetTimes());  }
@@ -428,7 +429,6 @@ public:
   const bool Intrinsic;
   const std::string Axes;
   tdouble3 Center;
-  //tdouble3 ActualCenter;
 //==============================================================================
   JMotionMovPathFile(unsigned id,unsigned nextid,double time,bool angdegrees
     ,const std::string* dirdata,const std::string& file,int fields,int fieldtime

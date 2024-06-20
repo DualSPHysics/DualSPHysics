@@ -526,6 +526,9 @@
     <ClInclude Include="..\source\JMeshTDatasLoad.h">
       <Filter>Source\MeshData</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JMotionData.h">
+      <Filter>Common\JMotion</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -839,6 +842,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JMeshTDatasXml.cpp">
       <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMotionData.cpp">
+      <Filter>Common\JMotion</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

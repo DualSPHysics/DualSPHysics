@@ -137,7 +137,7 @@ bool JDsMotion::ProcesTime(TpMotionMode mode,double timestep,double dt){
 }
 
 //==============================================================================
-/// Defines no motion for indicated object.
+/// Returns motion data for indicated object.
 //==============================================================================
 const StMotionData& JDsMotion::GetMotionData(unsigned idx)const{
   if(idx<GetNumObjects())return(ObjMotion[idx]);

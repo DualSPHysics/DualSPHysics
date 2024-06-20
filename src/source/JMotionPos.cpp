@@ -46,13 +46,6 @@ void JMotionPos::Reset(){
 void JMotionPos::Move(const tdouble3& dis){
   if(TypeSimple)PosSimple=TDouble3(PosSimple.x+dis.x,PosSimple.y+dis.y,PosSimple.z+dis.z);
   else PosMatrix.Mul(JMatrix4d::MatrixMov(dis));
-/*
-  else{
-//  printf("\nMove:(%g,%g,%g)\n",dis.x,dis.y,dis.z);
-//    PosMatrix.Print("PreMove");
-    PosMatrix.Mul(JMatrix4::MatrixMov(dis));
-//    PosMatrix.Print("PostMove");
-  }*/
 }
 
 //==============================================================================
@@ -60,21 +53,17 @@ void JMotionPos::Move(const tdouble3& dis){
 //==============================================================================
 void JMotionPos::Rotate(double ang,const tdouble3& axisp1,const tdouble3& axisp2){
   if(TypeSimple)ToMatrix();
-//  JMatrix4d m=JMatrix4d::MatrixRot(ang,axisp1,axisp2);
-//  m.Print("m");
   PosMatrix.Mul(JMatrix4d::MatrixRot(ang,axisp1,axisp2));
-/*
-  JMatrix4d m=JMatrix4d::MatrixRot(ang,axisp1,axisp2);
-  PosMatrix=m;
-  TypeSimple=false;
-/*
-  if(TypeSimple&&modpos.TypeSimple){
-    PosSimple=TDouble3(PosSimple.x+modpos.PosSimple.x,PosSimple.y+modpos.PosSimple.y,PosSimple.z+modpos.PosSimple.z);
-  }
-  else{
-    //---->PDTE
-  }
-*/
+}
+
+//==============================================================================
+// Aplica rotacion.
+//==============================================================================
+void JMotionPos::RotateXYZ(const tdouble3& ang,const tdouble3& rot_center
+  ,const char* axes,const bool intrinsic)
+{
+  if(TypeSimple)ToMatrix();
+  PosMatrix.Mul(JMatrix4d::MatrixRotateCen(rot_center,ang.x,ang.y,ang.z,axes,intrinsic));
 }
 
 //==============================================================================

@@ -125,7 +125,8 @@ bool JMotionListData::GetData(bool& typesimple,tdouble3& simplemov
   ,tmatrix4d& matmov2)const
 {
   if(Active){
-    if(typesimple=TypeSimple){
+    typesimple=TypeSimple;
+    if(typesimple){
       simplemov=MvSimple1;
       simplevel=VelSimple;
       simpleace=AceSimple;
@@ -145,7 +146,8 @@ bool JMotionListData::GetData(bool& typesimple,tdouble3& simplemov
   ,tmatrix4d& matmov)const
 {
   if(Active){
-    if(typesimple=TypeSimple){
+    typesimple=TypeSimple;
+    if(typesimple){
       simplemov=MvSimple1;
     }
     else{
