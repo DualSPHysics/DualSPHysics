@@ -2409,29 +2409,37 @@ void JSph::WavesInit(JGaugeSystem* gaugesystem,const JSphMk* mkinfo
   wdims.domposmin=GaugeSystem->GetDomPosMin();
   wdims.domposmax=GaugeSystem->GetDomPosMax();
   wdims.padposmin=wdims.padposmax=TDouble3(DBL_MAX);
+  const bool ignore_missingmk=(false); //-Enabled for VRes simulations.
   for(unsigned cp=0;cp<WaveGen->GetCount();cp++){
     const word mkbound=WaveGen->GetPaddleMkbound(cp);
     //-Obtains initial limits of paddle for AWAS configuration.
     const unsigned cmk=mkinfo->GetMkBlockByMkBound(mkbound);
-    if(cmk<mkinfo->Size()){
+    const bool missingmk=(cmk>=mkinfo->Size());
+    if(!missingmk){
       wdims.padposmin=mkinfo->Mkblock(cmk)->GetPosMin();
       wdims.padposmax=mkinfo->Mkblock(cmk)->GetPosMax();
     }
-    else wdims.padposmin=wdims.padposmax=TDouble3(DBL_MAX);
-    WaveGen->InitPaddle(cp,timemax,timepart,wdims);
-    //-Configures gauge according AWAS configuration.
-    if(WaveGen->PaddleUseAwas(cp)){
-      const string gname=fun::PrintStr("AwasMkb%02u",mkbound);
-      const double coefmassdef=(Simulate2D? 0.4: 0.5);
-      double masslimit,tstart,gdp;
-      tdouble3 point0,point2;
-      WaveGen->PaddleGetAwasInfo(cp,coefmassdef,wdims.massfluid,masslimit
-        ,tstart,gdp,point0,point2);
+    else{
+      wdims.padposmin=wdims.padposmax=TDouble3(DBL_MAX);
+      if(ignore_missingmk)Log->PrintfWarning(
+        "Wave paddle is ignored since particles with mkbound=%d are missing.",mkbound);
+    }
+    if(!ignore_missingmk || !missingmk){
+      WaveGen->InitPaddle(cp,timemax,timepart,wdims);
+      //-Configures gauge according AWAS configuration.
+      if(WaveGen->PaddleUseAwas(cp)){
+        const string gname=fun::PrintStr("AwasMkb%02u",mkbound);
+        const double coefmassdef=(Simulate2D? 0.4: 0.5);
+        double masslimit,tstart,gdp;
+        tdouble3 point0,point2;
+        WaveGen->PaddleGetAwasInfo(cp,coefmassdef,wdims.massfluid,masslimit
+          ,tstart,gdp,point0,point2);
 
-      //-Creates gauge for AWAS.
-      JGaugeSwl* gswl=gaugesystem->AddGaugeSwl(gname,tstart,DBL_MAX,0
-        ,false,point0,point2,gdp,float(masslimit));
-      WaveGen->PaddleGaugeInit(cp,(void*)gswl);
+        //-Creates gauge for AWAS.
+        JGaugeSwl* gswl=gaugesystem->AddGaugeSwl(gname,tstart,DBL_MAX,0
+          ,false,point0,point2,gdp,float(masslimit));
+        WaveGen->PaddleGaugeInit(cp,(void*)gswl);
+      }
     }
   }
 }
