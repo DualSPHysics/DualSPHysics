@@ -67,6 +67,20 @@ void JMotionPos::RotateXYZ(const tdouble3& ang,const tdouble3& rot_center
 }
 
 //==============================================================================
+// Aplica rotacion realtiva a partir de la rotación anterior y la nueva.
+//==============================================================================
+void JMotionPos::RotateXYZ(const tdouble3& previous_ang,const tdouble3& new_ang,const tdouble3& rot_center
+  ,const char* axes,const bool intrinsic)
+{
+  if(TypeSimple)ToMatrix();
+  JMatrix4d prev_matrix=JMatrix4d::MatrixRotateCen(rot_center,-previous_ang.x,-previous_ang.y,-previous_ang.z,axes,intrinsic);
+  prev_matrix.MulPre(JMatrix4d::MatrixRotateCen(rot_center,new_ang.x,new_ang.y,new_ang.z,axes,!intrinsic));
+  PosMatrix = prev_matrix;
+
+}
+
+
+//==============================================================================
 // Aplica movimiento.
 //==============================================================================
 void JMotionPos::MoveMix(const JMotionPos& modpos){
@@ -93,4 +107,7 @@ void JMotionPos::ToMatrix(){
 tdouble3 JMotionPos::PointMove(const tdouble3& p)const{
   return(TypeSimple? TDouble3(p.x+PosSimple.x,p.y+PosSimple.y,p.z+PosSimple.z): PosMatrix.MulPoint(p));
 }
+
+
+
 

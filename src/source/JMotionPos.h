@@ -46,8 +46,11 @@ public:
   void Rotate(double ang,const tdouble3& axisp1,const tdouble3& axisp2);
   void RotateXYZ(const tdouble3& angxyz,const tdouble3& center
     ,const char* axes="XYZ",const bool intrinsic=false);
+  void RotateXYZ(const tdouble3& previous_angxyz,const tdouble3& angxyz,const tdouble3& center
+    ,const char* axes="XYZ",const bool intrinsic=false);
   void MoveMix(const JMotionPos& modpos);
   void ToMatrix();
+  void FromDifference(JMotionPos prev,JMotionPos next);
 
   tdouble3 PointMove(const tdouble3& p) const;
   void PointsMove(tdouble3& p1,tdouble3& p2)const{
