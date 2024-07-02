@@ -50,7 +50,6 @@ public:
     ,const char* axes="XYZ",const bool intrinsic=false);
   void MoveMix(const JMotionPos& modpos);
   void ToMatrix();
-  void FromDifference(JMotionPos prev,JMotionPos next);
 
   tdouble3 PointMove(const tdouble3& p) const;
   void PointsMove(tdouble3& p1,tdouble3& p2)const{

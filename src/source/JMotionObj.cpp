@@ -324,7 +324,7 @@ void JMotionObj::Reset(){
   ActiveMovs.clear();
   Active=false;
   Moving=false;
-  Pos.Reset();
+  //Pos.Reset();
   ModPos.Reset();
 }
 
@@ -431,7 +431,7 @@ void JMotionObj::ResetTime(){
   ActiveMovs.clear();
   Active=false;
   Moving=false;
-  Pos.Reset();
+  //Pos.Reset();
   ModPos.Reset();
   //-Aplica reinicio a los hijos.
   for(unsigned c=0;c<Children.size();c++)Children[c]->ResetTime();
@@ -658,7 +658,7 @@ bool JMotionObj::ProcesTime(double timestep,double dt,JMotionObj** lismov
               amov->DfLastAngXYZ=newangxyz;
               amov->DfLastPos=newpos;
               modif=true;
-              printf(" PT>> t:%f newpos:(%f,%f,%f) dpos:(%f,%f,%f)\n",t,newpos.x,newpos.y,newpos.z,dpos.x,dpos.y,dpos.z);
+              //printf(" PT>> t:%f newpos:(%f,%f,%f) dpos:(%f,%f,%f)\n",t,newpos.x,newpos.y,newpos.z,dpos.x,dpos.y,dpos.z);
             }break;
           }
           //-Cambia al movimiento enlazado con el actual para terminar de consumir el dt.
