@@ -849,7 +849,7 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
           //-Loads other configuration.
           tdouble3 center=jxml->ReadElementDouble3(ele,"center");
           bool intrinsic =jxml->ReadElementBool(ele,"intrinsic","value",true,false);
-          string axes=jxml->GetAttributeStr(efile,"axes",true,"XYZ");
+          string axes=jxml->ReadElementStr(ele,"axes","value",true,"XYZ");
           //-Creates motion.
           MovAddRotationAdvFile(idp,mvid,nextid,time,angdegrees,center,file
             ,fields,fieldtime,fieldang1,fieldang2,fieldang3,intrinsic,axes);
@@ -871,7 +871,7 @@ void JMotion::ReadXml(const std::string& dirdata,JXml* jxml,TiXmlNode* node
           tdouble3 center=jxml->ReadElementDouble3(ele,"center");
           bool movecenter=jxml->ReadElementBool(ele,"movecenter","value",true,true);
           bool intrinsic =jxml->ReadElementBool(ele,"intrinsic","value",true,false);
-          string axes=jxml->GetAttributeStr(efile,"axes",true,"XYZ");
+          string axes=jxml->ReadElementStr(ele,"axes","value",true,"XYZ");
           //-Creates motion.
           MovAddPathFile(idp,mvid,nextid,time,angdegrees,center,file,fields
             ,fieldtime,fieldx,fieldy,fieldz,fieldang1,fieldang2,fieldang3
