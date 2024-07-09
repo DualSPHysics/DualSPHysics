@@ -637,7 +637,6 @@ bool JMotionObj::ProcesTime(double timestep,double dt,JMotionObj** lismov
               ModPos.RotateXYZ(amov->DfLastAngXYZ,newangxyz,mv->Center,axes,intrinsic);
               amov->DfLastAngXYZ=newangxyz;
               modif=true;
-
             }break;
             case JMotionMov::RotTransFile:{
               JMotionMovPathFile* mv=(JMotionMovPathFile*)mov;
