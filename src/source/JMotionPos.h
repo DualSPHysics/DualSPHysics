@@ -46,6 +46,8 @@ public:
   void Rotate(double ang,const tdouble3& axisp1,const tdouble3& axisp2);
   void RotateXYZ(const tdouble3& angxyz,const tdouble3& center
     ,const char* axes="XYZ",const bool intrinsic=false);
+  void RotateXYZ(const tdouble3& previous_angxyz,const tdouble3& angxyz,const tdouble3& center
+    ,const char* axes="XYZ",const bool intrinsic=false);
   void MoveMix(const JMotionPos& modpos);
   void ToMatrix();
 

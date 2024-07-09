@@ -251,7 +251,6 @@ tdouble3 JMotionMovActive::DfGetNewAngXYZ(double t){
     const double angz=(fang.z>=0? angxyz0.z+tfactor*(angxyz.z-angxyz0.z): 0);
     newangxyz=TDouble3(angx,angy,angz);
   }
-  //printf("index:%u  t:%g  newpos:%f\n",DfIndex,t,newpos);
   return(newangxyz);
 }
 
@@ -635,14 +634,9 @@ bool JMotionObj::ProcesTime(double timestep,double dt,JMotionObj** lismov
               const char* axes=mv->Axes.c_str();
               const bool intrinsic=mv->Intrinsic;
               tdouble3 newangxyz=amov->DfGetNewAngXYZ(t);
-              tdouble3 angxyz=newangxyz-amov->DfLastAngXYZ;
-              ModPos.RotateXYZ(TDouble3(newangxyz.x-amov->DfLastAngXYZ.x
-                                       ,newangxyz.y-amov->DfLastAngXYZ.y
-                                       ,newangxyz.z-amov->DfLastAngXYZ.z)
-                                       ,mv->Center,axes,intrinsic);
+              ModPos.RotateXYZ(amov->DfLastAngXYZ,newangxyz,mv->Center,axes,intrinsic);
               amov->DfLastAngXYZ=newangxyz;
               modif=true;
-              //printf(" PT>> t:%f ang:%f newang:%f\n",t,ang,newang);
             }break;
             case JMotionMov::RotTransFile:{
               JMotionMovPathFile* mv=(JMotionMovPathFile*)mov;
@@ -656,14 +650,14 @@ bool JMotionObj::ProcesTime(double timestep,double dt,JMotionObj** lismov
               tdouble3 newpos=amov->DfGetNewPos(t);
               tdouble3 dpos = newpos-amov->DfLastPos;
               tdouble3 newangxyz=amov->DfGetNewAngXYZ(t);
-              tdouble3 angxyz=newangxyz-amov->DfLastAngXYZ;
-              ModPos.Move(dpos);
+              //ModPos.Move(dpos);
               if(movecenter)mv->Center = mv->Center + dpos;
-              ModPos.RotateXYZ(angxyz,mv->Center,axes,intrinsic);
+              ModPos.RotateXYZ(amov->DfLastAngXYZ,newangxyz,mv->Center,axes,intrinsic);
+              ModPos.Move(dpos);
               amov->DfLastAngXYZ=newangxyz;
               amov->DfLastPos=newpos;
               modif=true;
-              //printf(" PT>> t:%f ang:%f newang:%f\n",t,ang,newang);
+              //printf(" PT>> t:%f newpos:(%f,%f,%f) dpos:(%f,%f,%f)\n",t,newpos.x,newpos.y,newpos.z,dpos.x,dpos.y,dpos.z);
             }break;
           }
           //-Cambia al movimiento enlazado con el actual para terminar de consumir el dt.
@@ -709,6 +703,7 @@ bool JMotionObj::GetMov(unsigned& ref,tdouble3& mvsimple
   if(simple)mvsimple=ModPos.GetSimple();
   else{
 	  mvmatrix=ModPos.GetMatrix();
+	  //mvmatrix=Pos.GetMatrix();
 	  //if(ModPos.GetSimple()!= TDouble3(0.0))mvsimple=ModPos.GetSimple(); //TODO Check for failure
   }
   return(simple);
