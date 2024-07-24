@@ -1006,8 +1006,10 @@ void JXml::SaveFile(const std::string& fname,const std::string& app,bool date){
 void JXml::LoadFile(const std::string& fname){
   Reset();
   FileReading=fname;
+  if(!fun::FileExists(FileReading))
+    Run_ExceptioonFile("XML file was not found.",FileReading);
   if(!Doc->LoadFile(FileReading.c_str())){
-    std::string tex="Cannot load the xml file: ";
+    std::string tex="Cannot load the XML file: ";
     tex=tex+Doc->ErrorDesc();
     char cad[256];
     sprintf(cad," (row:%d col:%d)",Doc->ErrorRow(),Doc->ErrorCol());

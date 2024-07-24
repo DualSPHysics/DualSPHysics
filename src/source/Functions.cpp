@@ -1940,7 +1940,7 @@ void ReverseByteOrder(llong* data,int count,llong* result){
   for(int c=0;c<count;c++){
     unsigned int v=((unsigned int*)data)[c*2+1];
     unsigned int v2=((unsigned int*)data)[c*2];
-    ((unsigned int*)result)[c*2]=((v<<24)&0xFF000000)|((v<<8)&0x00FF0000)|((v>>8)&0x0000FF00)|((v>>24)&0x000000FF);
+    ((unsigned int*)result)[c*2  ]=((v <<24)&0xFF000000)|((v <<8)&0x00FF0000)|((v >>8)&0x0000FF00)|((v >>24)&0x000000FF);
     ((unsigned int*)result)[c*2+1]=((v2<<24)&0xFF000000)|((v2<<8)&0x00FF0000)|((v2>>8)&0x0000FF00)|((v2>>24)&0x000000FF);
   }
 }
