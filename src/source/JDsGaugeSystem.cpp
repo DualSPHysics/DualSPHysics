@@ -368,32 +368,32 @@ void JGaugeSystem::ReadXml(const JXml* sxml,TiXmlElement* lis,const JSphMk* mkin
           gau=AddGaugeMesh(name,cfg.computestart,cfg.computeend,cfg.computedt
             ,true,mesh,outdata,tfmt,buffersize,kclimit,kcdummy,masslimit);
         }  //<vs_meeshdat_end>
-        else if(cmd=="flow"){ //<vs_meeshdat_ini>
-			  sxml->CheckElementNames(ele,true,"kclimit buffersize dirdat point vec1 vec2 size1 size2 savevtkpart computedt computetime output outputdt outputtime");
-			  jmsh::StMeshBasic mesh={TDouble3(0),TDouble3(0),TDouble3(0),TDouble3(0),0,0,0,0,0,0,TFloat3(0)};
-			  mesh.ptref=sxml->ReadElementDouble3(ele,"point");
-			  mesh.vec1=sxml->ReadElementDouble3(ele,"vec1",true);
-			  mesh.vec2=sxml->ReadElementDouble3(ele,"vec2",true);
-			  if(mesh.vec1!=TDouble3(0)){
-				mesh.dis1  =sxml->ReadElementDouble(ele,"size1","length");
-				mesh.dispt1=sxml->ReadElementDouble(ele,"size1","distpt");
-			  }
-			  if(mesh.vec2!=TDouble3(0)){
-				mesh.dis2  =sxml->ReadElementDouble(ele,"size2","length");
-				mesh.dispt2=sxml->ReadElementDouble(ele,"size2","distpt");
-			  }
-			  mesh.dirdat=sxml->ReadElementFloat3(ele,"dirdat",true,TDouble3(1,0,0));
-			  mesh.dirdat=fgeo::VecUnitary(mesh.dirdat);
-	          //-Reads kclimit.
-			  float kclimit=0.5f;
-			  if(fun::StrLower(sxml->ReadElementStr(ele,"kclimit","value",true))=="none")kclimit=FLT_MAX;
-			  else kclimit=sxml->ReadElementFloat(ele,"kclimit","value",true,0.5f);
-			  //-Reads buffersize.
-			  unsigned buffersize=sxml->ReadElementUnsigned(ele,"buffersize","value",true,0);
-			  //-Creates gauge object.
-			  gau=AddGaugeFlow(name,cfg.computestart,cfg.computeend,cfg.computedt
-				,true,mesh,kclimit,buffersize);
-			}  //<vs_meeshdat_end>
+        else if(cmd=="flow"){ //<vs_flowdat_ini>
+          sxml->CheckElementNames(ele,true,"kclimit buffersize dirdat point vec1 vec2 size1 size2 savevtkpart computedt computetime output outputdt outputtime");
+          jmsh::StMeshBasic mesh={TDouble3(0),TDouble3(0),TDouble3(0),TDouble3(0),0,0,0,0,0,0,TFloat3(0)};
+          mesh.ptref=sxml->ReadElementDouble3(ele,"point");
+          mesh.vec1=sxml->ReadElementDouble3(ele,"vec1",true);
+          mesh.vec2=sxml->ReadElementDouble3(ele,"vec2",true);
+          if(mesh.vec1!=TDouble3(0)){
+            mesh.dis1  =sxml->ReadElementDouble(ele,"size1","length");
+            mesh.dispt1=sxml->ReadElementDouble(ele,"size1","distpt");
+          }
+          if(mesh.vec2!=TDouble3(0)){
+            mesh.dis2  =sxml->ReadElementDouble(ele,"size2","length");
+            mesh.dispt2=sxml->ReadElementDouble(ele,"size2","distpt");
+          }
+          mesh.dirdat=sxml->ReadElementFloat3(ele,"dirdat",true,TDouble3(1,0,0));
+          mesh.dirdat=fgeo::VecUnitary(mesh.dirdat);
+          //-Reads kclimit.
+          float kclimit=0.5f;
+          if(fun::StrLower(sxml->ReadElementStr(ele,"kclimit","value",true))=="none")kclimit=FLT_MAX;
+          else kclimit=sxml->ReadElementFloat(ele,"kclimit","value",true,0.5f);
+          //-Reads buffersize.
+          unsigned buffersize=sxml->ReadElementUnsigned(ele,"buffersize","value",true,0);
+          //-Creates gauge object.
+          gau=AddGaugeFlow(name,cfg.computestart,cfg.computeend,cfg.computedt
+            ,true,mesh,kclimit,buffersize);
+        } //<vs_flowdat_end>
         else Run_ExceptioonFile(fun::PrintStr("Gauge type \'%s\' is invalid.",cmd.c_str()),sxml->ErrGetFileRow(ele));
         gau->SetSaveVtkPart(cfg.savevtkpart);
         //gau->ConfigComputeTiming(cfg.computestart,cfg.computeend,cfg.computedt);
@@ -494,7 +494,7 @@ JGaugeMesh* JGaugeSystem::AddGaugeMesh(std::string name,double computestart
 }
 //<vs_meeshdat_end>
 
-//<vs_meeshflow_ini>
+//<vs_flowdat_ini>
 //==============================================================================
 /// Creates new gauge-Mesh and returns pointer.
 //==============================================================================
@@ -516,7 +516,7 @@ JGaugeFlow* JGaugeSystem::AddGaugeFlow(std::string name,double computestart
   Gauges.push_back(gau);
   return(gau);
 }
-//<vs_meeshflow_end>
+//<vs_flowdat_end>
 
 //==============================================================================
 /// Creates new gauge-Force and returns pointer.

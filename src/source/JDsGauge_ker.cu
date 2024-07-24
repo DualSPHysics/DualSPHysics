@@ -490,7 +490,6 @@ void ComputeGaugeMeshZsurf(float masslimit,const jmsh::StMeshPts& mp
 //<vs_meeshdat_end>
 
 
-
 //<vs_flowdat_ini>
 //------------------------------------------------------------------------------
 /// Calculates data interpolation according to fluid particle data.
@@ -604,7 +603,7 @@ void ComputeGaugeFlow(const StCteSph& CSP,const StDivDataGpu& dvd
     default: throw "Kernel unknown at ComputeGaugeMesh().";
   }
 }
-
+//<vs_flowdat_end>
 
 
 //------------------------------------------------------------------------------

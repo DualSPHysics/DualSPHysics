@@ -143,7 +143,7 @@ std::string JGaugeItem::GetNameType(TpGauge type){
     case GAUGE_Swl:     return("SWL");
     case GAUGE_MaxZ:    return("MaxZ");
     case GAUGE_Mesh:    return("Mesh");  //<vs_meeshdat>
-    case GAUGE_Flow:    return("Flow");  //<vs_meeshdat>
+    case GAUGE_Flow:    return("Flow");  //<vs_flowdat>
     case GAUGE_Force:   return("Force");
   }
   return("???");
@@ -202,15 +202,15 @@ void JGaugeItem::GetConfig(std::vector<std::string>& lines)const{
     }
     lines.push_back(fun::PrintStr("KernelCorr.: %s",tkcorr.c_str()));
   }  //<vs_meeshdat_end>
-  else if(Type==GAUGE_Flow){  //<vs_meeshdat_ini>
-      const JGaugeFlow* gau=(JGaugeFlow*)this;
-      JGaugeFlow::StInfo v=gau->GetInfo();
-      lines.push_back(fun::PrintStr("GaugePoints: %u  (%u x %u)",v.npt.z,v.npt.x,v.npt.y));
-      lines.push_back(fun::PrintStr("GaugePos...: %s",fun::Double3gRangeStr(v.ptref,v.ptend).c_str()));
-      lines.push_back(fun::PrintStr("Vectors....: (%s) - (%s)",fun::Double3gStr(v.vec1).c_str(),fun::Double3gStr(v.vec2).c_str()));
-      lines.push_back(fun::PrintStr("PointDp....: (%f,%f)",v.dispt.x,v.dispt.y));
-      lines.push_back(fun::PrintStr("DirDat.....: (%s)",fun::Float3gStr(v.dirdat).c_str()));
-    }  //<vs_meeshdat_end>
+  else if(Type==GAUGE_Flow){ //<vs_flowdat_ini>
+    const JGaugeFlow* gau=(JGaugeFlow*)this;
+    JGaugeFlow::StInfo v=gau->GetInfo();
+    lines.push_back(fun::PrintStr("GaugePoints: %u  (%u x %u)",v.npt.z,v.npt.x,v.npt.y));
+    lines.push_back(fun::PrintStr("GaugePos...: %s",fun::Double3gRangeStr(v.ptref,v.ptend).c_str()));
+    lines.push_back(fun::PrintStr("Vectors....: (%s) - (%s)",fun::Double3gStr(v.vec1).c_str(),fun::Double3gStr(v.vec2).c_str()));
+    lines.push_back(fun::PrintStr("PointDp....: (%f,%f)",v.dispt.x,v.dispt.y));
+    lines.push_back(fun::PrintStr("DirDat.....: (%s)",fun::Float3gStr(v.dirdat).c_str()));
+  } //<vs_flowdat_end>
   else if(Type==GAUGE_Force){
     const JGaugeForce* gau=(JGaugeForce*)this;
     lines.push_back(fun::PrintStr("MkBound.....: %u (%s particles)",gau->GetMkBound(),TpPartGetStrCode(gau->GetTypeParts())));
@@ -1720,6 +1720,7 @@ void JGaugeMesh::CalculeGpu(const StDataGpu& datagpu){
 //<vs_meeshdat_end>
 
 
+//<vs_flowdat_ini>
 //##############################################################################
 //# JGaugeFlow
 //##############################################################################
@@ -1793,8 +1794,6 @@ void JGaugeFlow::SetMeshData(const jmsh::StMeshBasic& meshbas){
   MeshDat->ConfigMesh(MeshPts,0,"VelDir");
   DpArea=MeshBas.dispt1*MeshBas.dispt2;
 }
-
-
 
 //==============================================================================
 /// Returns structure with basic information about configuration.
@@ -1914,7 +1913,6 @@ void JGaugeFlow::SaveVtkScheme()const{
   Log->AddFileInfo(filevtk,"Saves VTK file with scheme of Flow gauge.");
   jmsh::JMeshTDatasSave::SaveVtkScheme(filevtk,MeshPts);
 }
-
 
 //==============================================================================
 /// Calculates velocity at indicated points (on CPU).
@@ -2069,11 +2067,11 @@ void JGaugeFlow::CalculeGpu(const StDataGpu& datagpu){
     //Computing flow
     //}
     float velsum=0;
-	{//-Computes total vel on GPU.
-	  const float sum=curedus::ReduSumFloat(npt,0,aug.DataVdirg,aug.AuxSumg);
-	  velsum=sum;
-	  Check_CudaErroor("Failed in Flow RedSum calculation.");
-	}
+	  {//-Computes total vel on GPU.
+	    const float sum=curedus::ReduSumFloat(npt,0,aug.DataVdirg,aug.AuxSumg);
+	    velsum=sum;
+	    Check_CudaErroor("Failed in Flow RedSum calculation.");
+	  }
 
     const float flowvalue=velsum*DpArea*1000;
     //-Stores calculated result.
@@ -2087,13 +2085,8 @@ void JGaugeFlow::CalculeGpu(const StDataGpu& datagpu){
     }
   }
 }
-
 #endif
-
-
-
-
-
+//<vs_flowdat_end>
 
 
 //##############################################################################
