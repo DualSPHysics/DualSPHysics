@@ -807,10 +807,10 @@ void JSphInOutPoints::CheckPointsInLine(tdouble3 dir,unsigned np
   if(!np)Run_ExceptioonFile("There are no points",xmlrow);
   //-Computes maximum distance to plane.
   const tplane3d pla=fgeo::PlaneNormalized(fgeo::PlanePtVec(points[0],dir));
-  double dmax=(pla.a*points[0].x+pla.b*points[0].y+pla.c*points[0].z+pla.d);
+  double dmax=fabs(pla.a*points[0].x+pla.b*points[0].y+pla.c*points[0].z+pla.d);
   for(unsigned p=1;p<np;p++){
     const tdouble3 pt=points[p];
-    const double d=(pla.a*pt.x+pla.b*pt.y+pla.c*pt.z+pla.d);
+    const double d=fabs(pla.a*pt.x+pla.b*pt.y+pla.c*pt.z+pla.d);
     if(dmax<d)dmax=d;
   }
   //-Show error.
@@ -868,10 +868,10 @@ void JSphInOutPoints::CheckPointsInPlane(tdouble3 dir,unsigned np
   if(!np)Run_ExceptioonFile("There are no points",xmlrow);
   //-Computes maximum distance to plane.
   const tplane3d pla=fgeo::PlaneNormalized(fgeo::PlanePtVec(points[0],dir));
-  double dmax=(pla.a*points[0].x+pla.b*points[0].y+pla.c*points[0].z+pla.d);
+  double dmax=fabs(pla.a*points[0].x+pla.b*points[0].y+pla.c*points[0].z+pla.d);
   for(unsigned p=1;p<np;p++){
     const tdouble3 pt=points[p];
-    const double d=(pla.a*pt.x+pla.b*pt.y+pla.c*pt.z+pla.d);
+    const double d=fabs(pla.a*pt.x+pla.b*pt.y+pla.c*pt.z+pla.d);
     if(dmax<d)dmax=d;
   }
   //-Show error.
