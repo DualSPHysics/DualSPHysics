@@ -368,7 +368,8 @@ void JGaugeSystem::ReadXml(const JXml* sxml,TiXmlElement* lis,const JSphMk* mkin
           gau=AddGaugeMesh(name,cfg.computestart,cfg.computeend,cfg.computedt
             ,true,mesh,outdata,tfmt,buffersize,kclimit,kcdummy,masslimit);
         }  //<vs_meeshdat_end>
-        else if(cmd=="flow"){ //<vs_flowdat_ini>
+      #ifndef DISABLE_GAUGEFLOW //<vs_flowdat_ini>
+        else if(cmd=="flow"){
           sxml->CheckElementNames(ele,true,"kclimit buffersize dirdat point vec1 vec2 size1 size2 savevtkpart computedt computetime output outputdt outputtime");
           jmsh::StMeshBasic mesh={TDouble3(0),TDouble3(0),TDouble3(0),TDouble3(0),0,0,0,0,0,0,TFloat3(0)};
           mesh.ptref=sxml->ReadElementDouble3(ele,"point");
@@ -393,7 +394,8 @@ void JGaugeSystem::ReadXml(const JXml* sxml,TiXmlElement* lis,const JSphMk* mkin
           //-Creates gauge object.
           gau=AddGaugeFlow(name,cfg.computestart,cfg.computeend,cfg.computedt
             ,true,mesh,kclimit,buffersize);
-        } //<vs_flowdat_end>
+        }
+      #endif //<vs_flowdat_end>
         else Run_ExceptioonFile(fun::PrintStr("Gauge type \'%s\' is invalid.",cmd.c_str()),sxml->ErrGetFileRow(ele));
         gau->SetSaveVtkPart(cfg.savevtkpart);
         //gau->ConfigComputeTiming(cfg.computestart,cfg.computeend,cfg.computedt);
@@ -494,7 +496,7 @@ JGaugeMesh* JGaugeSystem::AddGaugeMesh(std::string name,double computestart
 }
 //<vs_meeshdat_end>
 
-//<vs_flowdat_ini>
+#ifndef DISABLE_GAUGEFLOW //<vs_flowdat_ini>
 //==============================================================================
 /// Creates new gauge-Mesh and returns pointer.
 //==============================================================================
@@ -516,7 +518,7 @@ JGaugeFlow* JGaugeSystem::AddGaugeFlow(std::string name,double computestart
   Gauges.push_back(gau);
   return(gau);
 }
-//<vs_flowdat_end>
+#endif //<vs_flowdat_end>
 
 //==============================================================================
 /// Creates new gauge-Force and returns pointer.

@@ -80,7 +80,9 @@ public:
     ,GAUGE_Swl
     ,GAUGE_MaxZ
     ,GAUGE_Mesh   //<vs_meeshdat>
-    ,GAUGE_Flow   //<vs_flowdat>
+#ifndef DISABLE_GAUGEFLOW //<vs_flowdat_ini>
+    ,GAUGE_Flow
+#endif                    //<vs_flowdat_end>
     ,GAUGE_Force
   }TpGauge;
 
@@ -706,7 +708,7 @@ public:
 //<vs_meeshdat_end>
 
 
-//<vs_flowdat_ini>
+#ifndef DISABLE_GAUGEFLOW //<vs_flowdat_ini>
 //##############################################################################
 //# JGaugeFlow
 //##############################################################################
@@ -820,7 +822,7 @@ public:
  #endif
 
 };
-//<vs_flowdat_end>
+#endif //<vs_flowdat_end>
 
 
 //##############################################################################
