@@ -102,6 +102,7 @@
 //:# - Nuevas funciones KnumStr(),KintStr(). (10-08-2023)
 //:# - Nuevas funcion GetParentPath(). (27-01-2024)
 //:# - Nuevo parametro de activacion en funciones KnumStr(),KintStr(). (12-04-2024)
+//:# - Error corregido en uso de vsnprintf(). (24-07-2024)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.

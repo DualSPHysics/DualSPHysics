@@ -51,7 +51,7 @@ namespace fun{
 void RunExceptioonFun(const std::string& srcfile,int srcline
   ,const std::string& fun,const std::string& msg,const std::string& file)
 { // fun::RunExceptioonFun(__FILE__,__LINE__,__func__,"msg");
-  std::string tx;
+  string tx;
   tx=fun::PrintStr("\n*** Exception (%s::%s:%d)\n",GetPathLevels(srcfile,3).c_str(),fun.c_str(),srcline);
   if(!msg.empty())tx=tx+fun::PrintStr("Text: %s\n",msg.c_str());
   if(!file.empty())tx=tx+fun::PrintStr("File: %s\n",file.c_str());
@@ -262,25 +262,28 @@ std::string GetTextRandomCode(unsigned length){
 /// Returns string using the same parameters used in printf().
 //==============================================================================
 std::string PrintStr(const char* format,...){
-  std::string ret;
-  const unsigned SIZE=1024;
-  char buffer[SIZE+1];
-  va_list args;
-  va_start(args, format);
-  int size=vsnprintf(buffer,SIZE,format,args);
-  if(size>=0 && size<SIZE)ret=buffer;
-  else{
-    int rsize=-1;
-    int size2=SIZE+SIZE*2;
-    for(int c=0;c<10 && rsize<0;c++,size2+=SIZE*2){
-      char* buff2=new char[size2+1];
-      rsize=vsnprintf(buff2,size2,format,args);
-      if(rsize>=0)ret=buff2;
-      delete[] buff2;
-    }
-    if(rsize<0)Run_ExceptioonFun("Output text is too long.");
+  string ret;
+  const int SIZE=1022;
+  int rsize=0;
+  {
+    char buffer[SIZE+2];
+    va_list args;
+    va_start(args,format);
+    rsize=vsnprintf(buffer,SIZE,format,args); //ok
+    if(rsize>=0 && rsize<SIZE)ret=buffer;
+    va_end(args);
   }
-  va_end(args);
+  if(rsize>=SIZE){
+    const int size2=rsize+10;
+    char* buff2=new char[size2];
+    va_list args;
+    va_start(args,format);
+    const int rsize2=vsnprintf(buff2,size2,format,args); //ok
+    if(rsize2>=0 && rsize2<size2)ret=buff2;
+    else Run_ExceptioonFun("Output text is too long.");
+    va_end(args);
+    delete[] buff2;
+  }
   return(ret);
 }
   
@@ -289,27 +292,30 @@ std::string PrintStr(const char* format,...){
 /// separator in format is corrected.
 //==============================================================================
 std::string PrintStrCsv(bool csvsepcoma,const char* format,...){
-  const std::string format2=StrCsvSep(csvsepcoma,format);
+  const string format2=StrCsvSep(csvsepcoma,format);
   const char* formatok=format2.c_str();
-  std::string ret;
-  const unsigned SIZE=1024;
-  char buffer[SIZE+1];
-  va_list args;
-  va_start(args,format);
-  int size=vsnprintf(buffer,SIZE,formatok,args);
-  if(size>=0 && size<SIZE)ret=buffer;
-  else{
-    int rsize=-1;
-    int size2=SIZE+SIZE*2;
-    for(int c=0;c<10 && rsize<0;c++,size2+=SIZE*2){
-      char* buff2=new char[size2+1];
-      rsize=vsnprintf(buff2,size2,formatok,args);
-      if(rsize>=0)ret=buff2;
-      delete[] buff2;
-    }
-    if(rsize<0)Run_ExceptioonFun("Output text is too long.");
+  string ret;
+  const int SIZE=1022;
+  int rsize=0;
+  {
+    char buffer[SIZE+2];
+    va_list args;
+    va_start(args,format);
+    rsize=vsnprintf(buffer,SIZE,formatok,args); //ok
+    if(rsize>=0 && rsize<SIZE)ret=buffer;
+    va_end(args);
   }
-  va_end(args);
+  if(rsize>=SIZE){
+    const int size2=rsize+10;
+    char* buff2=new char[size2];
+    va_list args;
+    va_start(args,format);
+    const int rsize2=vsnprintf(buff2,size2,formatok,args); //ok
+    if(rsize2>=0 && rsize2<size2)ret=buff2;
+    else Run_ExceptioonFun("Output text is too long.");
+    va_end(args);
+    delete[] buff2;
+  }
   return(ret);
 }
 
@@ -319,7 +325,7 @@ std::string PrintStrCsv(bool csvsepcoma,const char* format,...){
 std::string StrCsvSep(bool csvsepcoma,const std::string& cad){
   const char sep0=(csvsepcoma? ';': ',');
   const char sep1=(csvsepcoma? ',': ';');
-  std::string str=cad;
+  string str=cad;
   const unsigned size=unsigned(str.size());
   for(unsigned c=0;c<size;c++)if(str[c]==sep0)str[c]=sep1;
   return(str);
@@ -374,8 +380,8 @@ std::string RealStr(double v,unsigned ndigits,bool removezeros){
 //==============================================================================
 std::string IntStrFill(int v,int vmax){
   unsigned len=unsigned(UintStr(vmax).length());
-  std::string value=IntStr(v);
-  while(unsigned(value.length())<len)value=std::string("0")+value;
+  string value=IntStr(v);
+  while(unsigned(value.length())<len)value=string("0")+value;
   return(value);
 }
 
@@ -384,8 +390,8 @@ std::string IntStrFill(int v,int vmax){
 //==============================================================================
 std::string UintStrFill(unsigned v,unsigned vmax,const char fillchar){
   unsigned len=unsigned(UintStr(vmax).length());
-  std::string value=UintStr(v);
-  std::string fill="."; fill[0]=fillchar;
+  string value=UintStr(v);
+  string fill="."; fill[0]=fillchar;
   while(unsigned(value.length())<len)value=fill+value;
   return(value);
 }
@@ -396,7 +402,7 @@ std::string UintStrFill(unsigned v,unsigned vmax,const char fillchar){
 std::string LongStr(llong v){
   char cad[128];
   sprintf(cad,"%lld",v);
-  return(std::string(cad));
+  return(string(cad));
 }
 
 //==============================================================================
@@ -405,7 +411,7 @@ std::string LongStr(llong v){
 std::string UlongStr(ullong v){
   char cad[128];
   sprintf(cad,"%llu",v);
-  return(std::string(cad));
+  return(string(cad));
 }
 
 //==============================================================================
@@ -414,7 +420,7 @@ std::string UlongStr(ullong v){
 std::string UintStr(unsigned v,const char* fmt){
   char cad[128];
   sprintf(cad,fmt,v);
-  return(std::string(cad));
+  return(string(cad));
 }
 
 //==============================================================================
@@ -423,7 +429,7 @@ std::string UintStr(unsigned v,const char* fmt){
 std::string IntStr(int v){
   char cad[128];
   sprintf(cad,"%d",v);
-  return(std::string(cad));
+  return(string(cad));
 }
 
 //==============================================================================
@@ -432,7 +438,7 @@ std::string IntStr(int v){
 std::string Int3Str(const tint3& v){
   char cad[128];
   sprintf(cad,"%d,%d,%d",v.x,v.y,v.z);
-  return(std::string(cad));
+  return(string(cad));
 }
 
 //==============================================================================
@@ -441,7 +447,7 @@ std::string Int3Str(const tint3& v){
 std::string Uint3Str(const tuint3& v){
   char cad[128];
   sprintf(cad,"%u,%u,%u",v.x,v.y,v.z);
-  return(std::string(cad));
+  return(string(cad));
 }
 
 //==============================================================================
@@ -514,7 +520,7 @@ std::string KintStr(llong v,bool thousep){
 std::string FloatStr(float v,const char* fmt){
   char cad[128];
   sprintf(cad,fmt,v);
-  return(std::string(cad));
+  return(string(cad));
 }
 
 //==============================================================================
@@ -523,7 +529,7 @@ std::string FloatStr(float v,const char* fmt){
 std::string FloatxStr(float v,const char* fmt){
   char cad[128];
   sprintf(cad,fmt,v);
-  return(v==-FLT_MAX? std::string("MIN"): (v==FLT_MAX? std::string("MAX"): std::string(cad)));
+  return(v==-FLT_MAX? string("MIN"): (v==FLT_MAX? string("MAX"): string(cad)));
 }
 
 //==============================================================================
@@ -532,7 +538,7 @@ std::string FloatxStr(float v,const char* fmt){
 std::string Float3Str(const tfloat3& v,const char* fmt){
   char cad[1024];
   sprintf(cad,fmt,v.x,v.y,v.z);
-  return(std::string(cad));
+  return(string(cad));
 }
 
 //==============================================================================
@@ -541,7 +547,7 @@ std::string Float3Str(const tfloat3& v,const char* fmt){
 std::string DoubleStr(double v,const char* fmt){
   char cad[512];
   sprintf(cad,fmt,v);
-  return(std::string(cad));
+  return(string(cad));
 }
 
 //==============================================================================
@@ -550,7 +556,7 @@ std::string DoubleStr(double v,const char* fmt){
 std::string DoublexStr(double v,const char* fmt){
   char cad[512];
   sprintf(cad,fmt,v);
-  return(v==-DBL_MAX? std::string("MIN"): (v==DBL_MAX? std::string("MAX"): std::string(cad)));
+  return(v==-DBL_MAX? string("MIN"): (v==DBL_MAX? string("MAX"): string(cad)));
 }
 
 //==============================================================================
@@ -559,7 +565,7 @@ std::string DoublexStr(double v,const char* fmt){
 std::string Double3Str(const tdouble3& v,const char* fmt){
   char cad[2048];
   sprintf(cad,fmt,v.x,v.y,v.z);
-  return(std::string(cad));
+  return(string(cad));
 }
 
 //==============================================================================
@@ -568,7 +574,7 @@ std::string Double3Str(const tdouble3& v,const char* fmt){
 std::string Double4Str(const tdouble4& v,const char* fmt){
   char cad[2048];
   sprintf(cad,fmt,v.x,v.y,v.z,v.w);
-  return(std::string(cad));
+  return(string(cad));
 }
 
 //==============================================================================
@@ -712,7 +718,7 @@ tdouble3 StrToDouble3(std::string v){
 /// Gets string in uppercase.
 //==============================================================================
 std::string StrUpper(const std::string& cad){
-  std::string ret;
+  string ret;
   for(unsigned c=0;c<cad.length();c++)ret=ret+char(toupper(cad[c]));
   return(ret);
 }
@@ -721,7 +727,7 @@ std::string StrUpper(const std::string& cad){
 /// Gets string in lowercase.
 //==============================================================================
 std::string StrLower(const std::string& cad){
-  std::string ret;
+  string ret;
   for(unsigned c=0;c<cad.length();c++)ret=ret+char(tolower(cad[c]));
   return(ret);
 }
@@ -759,7 +765,7 @@ std::string StrFillEnd(const std::string& cad,const std::string rcad
 /// Gets string without spaces at the beginning and end.
 //==============================================================================
 std::string StrTrim(const std::string& cad){
-  std::string ret;
+  string ret;
   int lsp=0,rsp=0;
   for(int c=0;c<int(cad.length())&&cad[c]==' ';c++)lsp++;
   for(int c=int(cad.length())-1;c<int(cad.length())&&cad[c]==' ';c--)rsp++;
@@ -771,7 +777,7 @@ std::string StrTrim(const std::string& cad){
 /// Gets string without spaces at the beginning.
 //==============================================================================
 std::string StrTrimBegin(const std::string& cad){
-  std::string ret;
+  string ret;
   int lsp=0;
   for(int c=0;c<int(cad.length())&&cad[c]==' ';c++)lsp++;
   int size=int(cad.length())-(lsp);
@@ -782,7 +788,7 @@ std::string StrTrimBegin(const std::string& cad){
 /// Gets string without spaces at the end.
 //==============================================================================
 std::string StrTrimEnd(const std::string& cad){
-  std::string ret;
+  string ret;
   int rsp=0;
   for(int c=int(cad.length())-1;c<int(cad.length())&&cad[c]==' ';c--)rsp++;
   int size=int(cad.length())-(rsp);
@@ -793,7 +799,7 @@ std::string StrTrimEnd(const std::string& cad){
 /// Gets string without repeated spaces.
 //==============================================================================
 std::string StrTrimRepeated(const std::string& cad){
-  std::string ret;
+  string ret;
   bool lastsp=false;
   for(int c=0;c<int(cad.length());c++){
     const char let=cad[c];
@@ -809,7 +815,7 @@ std::string StrTrimRepeated(const std::string& cad){
 /// Gets string without the character indicated.
 //==============================================================================
 std::string StrWithoutChar(const std::string& cad,char let){
-  std::string ret;
+  string ret;
   for(int c=0;c<int(cad.length());c++)if(cad[c]!=let)ret=ret+cad[c];
   return(ret);
 }
@@ -818,7 +824,7 @@ std::string StrWithoutChar(const std::string& cad,char let){
 /// Gets string with the string indicated n times.
 //==============================================================================
 std::string StrRepeat(const std::string& cad,unsigned count){
-  std::string ret;
+  string ret;
   for(unsigned c=0;c<count;c++)ret=ret+cad;
   return(ret);
 }
@@ -829,7 +835,7 @@ std::string StrRepeat(const std::string& cad,unsigned count){
 std::string StrReplace(const std::string& cad,const std::string& key
   ,const std::string& newcad)
 {
-  std::string str=cad;
+  string str=cad;
   int posini=0;
   int pos=int(str.substr(posini).find(key));
   int c=0;
@@ -865,7 +871,7 @@ std::string StrRemoveBefore(const std::string& cad,const std::string& key){
 /// Escape sequences: \a, \b, \f, \n, \r, \t, \v, \\, \', \".
 //==============================================================================
 std::string StrAddSlashes(const std::string& cad){
-  std::string ret;
+  string ret;
   const int len=int(cad.length());
   for(int c=0;c<len;c++){
     switch(cad[c]){
@@ -890,7 +896,7 @@ std::string StrAddSlashes(const std::string& cad){
 /// Escape sequences: \a, \b, \f, \n, \r, \t, \v, \\, \', \".
 //==============================================================================
 std::string StrStripSlashes(const std::string& cad){
-  std::string ret;
+  string ret;
   const int len=int(cad.length());
   for(int c=0;c<len;c++){
     if(cad[c]=='\\' && c+1<len){
@@ -988,7 +994,7 @@ std::string StrFileError(int error){
 std::string StrSplit(const std::string mark,std::string& text){
   const unsigned smark=unsigned(mark.size());
   int tpos=int(text.find(mark));
-  std::string ret=(tpos>=0? text.substr(0,tpos): text);
+  string ret=(tpos>=0? text.substr(0,tpos): text);
   text=(tpos>=0? text.substr(tpos+smark): "");
   return(ret);
 }
@@ -1001,7 +1007,7 @@ unsigned StrSplitCount(const std::string mark,std::string text){
   unsigned count=0;
   while(!text.empty()){
     int tpos=int(text.find(mark));
-    //std::string ret=(tpos>=0? text.substr(0,tpos): text);
+    //string ret=(tpos>=0? text.substr(0,tpos): text);
     text=(tpos>=0? text.substr(tpos+smark): "");
     count++;
   }
@@ -1013,7 +1019,7 @@ unsigned StrSplitCount(const std::string mark,std::string text){
 //==============================================================================
 std::string StrSplitValue(const std::string mark,std::string text,unsigned value){
   const unsigned smark=unsigned(mark.size());
-  std::string ret="";
+  string ret="";
   unsigned count=0;
   while(!text.empty()){
     int tpos=int(text.find(mark));
@@ -1033,9 +1039,9 @@ std::string StrSplitValue(const std::string mark,std::string text,unsigned value
 unsigned VectorSplitStr(const std::string mark,const std::string& text
   ,std::vector<std::string>& vec)
 {
-  std::string aux=text;
+  string aux=text;
   while(!aux.empty()){
-    std::string txv=StrSplit(mark,aux);
+    string txv=StrSplit(mark,aux);
     if(!txv.empty())vec.push_back(txv.c_str());
   }
   return((unsigned)vec.size());
@@ -1047,9 +1053,9 @@ unsigned VectorSplitStr(const std::string mark,const std::string& text
 unsigned VectorSplitInt(const std::string mark,const std::string& text
   ,std::vector<int>& vec)
 {
-  std::string aux=text;
+  string aux=text;
   while(!aux.empty()){
-    std::string txv=StrSplit(mark,aux);
+    string txv=StrSplit(mark,aux);
     if(!txv.empty())vec.push_back(atoi(txv.c_str()));
   }
   return((unsigned)vec.size());
@@ -1061,9 +1067,9 @@ unsigned VectorSplitInt(const std::string mark,const std::string& text
 unsigned VectorSplitDouble(const std::string mark,const std::string& text
   ,std::vector<double>& vec)
 {
-  std::string aux=text;
+  string aux=text;
   while(!aux.empty()){
-    std::string txv=StrSplit(mark,aux);
+    string txv=StrSplit(mark,aux);
     if(!txv.empty())vec.push_back(atof(txv.c_str()));
   }
   return((unsigned)vec.size());
@@ -1075,9 +1081,9 @@ unsigned VectorSplitDouble(const std::string mark,const std::string& text
 unsigned VectorSplitFloat(const std::string mark,const std::string& text
   ,std::vector<float>& vec)
 {
-  std::string aux=text;
+  string aux=text;
   while(!aux.empty()){
-    std::string txv=StrSplit(mark,aux);
+    string txv=StrSplit(mark,aux);
     if(!txv.empty())vec.push_back(float(atof(txv.c_str())));
   }
   return((unsigned)vec.size());
@@ -1409,7 +1415,7 @@ std::string VarKStr(const std::string& name,unsigned value){
 std::string VarStr(const std::string& name,unsigned n,const int* values
   ,std::string size)
 {
-  std::string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
+  string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
   for(unsigned c=0;c<n;c++)tex=tex+(c? ",": "")+fun::IntStr(values[c]);
   return(tex+"]");
 }
@@ -1417,7 +1423,7 @@ std::string VarStr(const std::string& name,unsigned n,const int* values
 std::string VarStr(const std::string& name,unsigned n,const unsigned* values
   ,std::string size)
 {
-  std::string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
+  string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
   for(unsigned c=0;c<n;c++)tex=tex+(c? ",": "")+fun::UintStr(values[c]);
   return(tex+"]");
 }
@@ -1425,7 +1431,7 @@ std::string VarStr(const std::string& name,unsigned n,const unsigned* values
 std::string VarStr(const std::string& name,unsigned n,const word* values
   ,std::string size)
 {
-  std::string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
+  string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
   for(unsigned c=0;c<n;c++)tex=tex+(c? ",": "")+fun::UintStr(values[c]);
   return(tex+"]");
 }
@@ -1433,7 +1439,7 @@ std::string VarStr(const std::string& name,unsigned n,const word* values
 std::string VarStr(const std::string& name,unsigned n,const float* values
   ,std::string size,const char* fmt)
 {
-  std::string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
+  string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
   for(unsigned c=0;c<n;c++)tex=tex+(c? ",": "")+fun::FloatStr(values[c],fmt);
   return(tex+"]");
 }
@@ -1441,7 +1447,7 @@ std::string VarStr(const std::string& name,unsigned n,const float* values
 std::string VarStr(const std::string& name,unsigned n,const double* values
   ,std::string size,const char* fmt)
 {
-  std::string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
+  string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
   for(unsigned c=0;c<n;c++)tex=tex+(c? ",": "")+fun::DoubleStr(values[c],fmt);
   return(tex+"]");
 }
@@ -1449,7 +1455,7 @@ std::string VarStr(const std::string& name,unsigned n,const double* values
 std::string VarStr(const std::string& name,unsigned n,const tdouble3* values
   ,std::string size,const char* fmt)
 {
-  std::string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
+  string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
   for(unsigned c=0;c<n;c++)tex=tex+(c? ", ": "")+"("+fun::Double3xStr(values[c],fmt)+")";
   return(tex+"]");
 }
@@ -1602,7 +1608,7 @@ std::string GetCurrentDir(){
   #else
   getcwd(buff,FILENAME_MAX);
   #endif
-  //:std::string current_dir(buff);
+  //string current_dir(buff);
   return(buff);
 }
 
@@ -1629,15 +1635,15 @@ int MkdirPath(std::string path){
   for(unsigned c=0;c<unsigned(path.size());c++)if(path[c]=='\\')path[c]='/';
   //:printf("----> path: [%s]\n",path.c_str());
   if(!path.empty() && !DirExists(path)){
-    std::string path0;
-    std::string aux=path;
+    string path0;
+    string aux=path;
     #ifndef WIN32
       const bool linuxroot=(path[0]=='/');
     #else
       const bool linuxroot=false;
     #endif
     while(!aux.empty()){
-      std::string dir=StrSplit("/",aux);
+      string dir=StrSplit("/",aux);
       //:printf("------> dir: [%s]\n",dir.c_str());
       if(!dir.empty() && dir!="."){
         if(path0.empty() && !linuxroot)path0=dir; else path0=path0+"/"+dir;
@@ -1658,7 +1664,7 @@ int MkdirPath(std::string path){
 /// Returns the parent directory with its path. E.g. /saa/file.x  -->  /saa
 //==============================================================================
 std::string GetDirParent(const std::string& fullfile){
-  std::string dir;
+  string dir;
   int pos=int(fullfile.find_last_of("/"));
   if(pos<=0)pos=int(fullfile.find_last_of("\\"));
   if(pos>0)dir=fullfile.substr(0,pos);
@@ -1669,7 +1675,7 @@ std::string GetDirParent(const std::string& fullfile){
 /// Returns the path of file or directory. E.g. /saa/file.x  -->  /saa/
 //==============================================================================
 std::string GetParentPath(const std::string& fullfile){
-  std::string dir;
+  string dir;
   int pos=int(fullfile.find_last_of("/"));
   if(pos<0)pos=int(fullfile.find_last_of("\\"));
   if(pos>=0)dir=fullfile.substr(0,pos+1);
@@ -1685,15 +1691,15 @@ std::string GetCanonicalPath(std::string pathbase,std::string path){
   #else
     if(path.size()>=1 && path[0]=='/')pathbase="";
   #endif
-  std::string dir;
+  string dir;
   while(!pathbase.empty() || !path.empty()){
-    std::string text;
+    string text;
     if(!pathbase.empty()){ text=pathbase; pathbase=""; }
     else{ text=path; path=""; }
     while(!text.empty()){
       const int tpos=(int)std::min((unsigned)text.find("/"),(unsigned)text.find("\\"));
       //:printf("--> [%s] tpos:%d -> ",text.c_str(),tpos);
-      std::string ret=(tpos>=0? text.substr(0,tpos): text);
+      string ret=(tpos>=0? text.substr(0,tpos): text);
       text=(tpos>=0? text.substr(tpos+1): "");
       //:printf("[%s][%s]  ",ret.c_str(),text.c_str());
       if(!ret.empty()){
@@ -1717,22 +1723,22 @@ std::string GetCanonicalPath(std::string pathbase,std::string path){
 /// Returns the path with indicated levels.
 //==============================================================================
 std::string GetPathLevels(std::string path,unsigned levels){
-  std::string dir="";
+  string dir="";
   path=GetDirWithoutSlash(path);
   bool root=(!path.empty() && (path[0]=='/' || path[0]=='\\'));
   if(root)path=path.substr(1,path.length()-1);
   for(unsigned c=0;c<levels && !path.empty();c++){
-    std::string sdir=fun::GetFile(path);
+    string sdir=fun::GetFile(path);
     //:printf("%d> path:[%s]  sdir:[%s]\n",c,path.c_str(),sdir.c_str());
     if(!sdir.empty()){
       if(dir.empty())dir=sdir;
       else dir=sdir+"/"+dir;
     }
     path=fun::GetDirParent(path);
-    if(path.empty() && root)dir=std::string("/")+dir;
+    if(path.empty() && root)dir=string("/")+dir;
     //:printf("%d> dir:[%s]  path:[%s]\n",c,dir.c_str(),path.c_str());
   }
-  if(!path.empty() && dir[0]!='/')dir=std::string(".../")+dir;
+  if(!path.empty() && dir[0]!='/')dir=string(".../")+dir;
   return(dir);
 }
 
@@ -1740,7 +1746,7 @@ std::string GetPathLevels(std::string path,unsigned levels){
 /// Returns the filename or directory of a path.
 //==============================================================================
 std::string GetFile(const std::string& ruta){
-  std::string file;
+  string file;
   int c;
   for(c=int(ruta.size())-1;c>=0 && ruta[c]!='\\' && ruta[c]!='/';c--);
   file=(c<0? ruta: ruta.substr(c+1));
@@ -1751,7 +1757,7 @@ std::string GetFile(const std::string& ruta){
 /// Returns the path with slash.
 //==============================================================================
 std::string GetDirWithSlash(const std::string& ruta){
-  std::string rut=ruta;
+  string rut=ruta;
   if(!ruta.empty()){
     char last=ruta[ruta.length()-1];
     if(last!='\\' && last!='/')rut=ruta+"/";
@@ -1772,7 +1778,7 @@ std::string GetDirWithoutSlash(const std::string& ruta){
 /// Returns the extension of a file.
 //==============================================================================
 std::string GetExtension(const std::string& file){
-  std::string ext;
+  string ext;
   int pos=(int)file.find_last_of(".");
   int posmin=std::max((int)file.find_last_of("/"),(int)file.find_last_of("\\"));
   if(pos>=0 && pos>posmin)ext=file.substr(pos+1);
@@ -1804,7 +1810,7 @@ void GetFileNameSplit(const std::string& file,std::string& dir
 /// Adds extension (without point) to the path of a file.
 //==============================================================================
 std::string AddExtension(const std::string& file,const std::string& ext){
-  std::string file2=file;
+  string file2=file;
   if(file2.empty() || file2[file2.length()-1]!='.')file2+='.';
   file2+=ext;
   return(file2);
@@ -1814,7 +1820,7 @@ std::string AddExtension(const std::string& file,const std::string& ext){
 /// Returns the filename with number.
 //==============================================================================
 std::string FileNameSec(std::string fname,unsigned fnumber){
-  std::string fext=GetExtension(fname);
+  string fext=GetExtension(fname);
   if(!fext.empty())fname=fname.substr(0,fname.size()-fext.size()-1);
   if(fnumber!=UINT_MAX){
     char cad[64];
@@ -1830,8 +1836,8 @@ std::string FileNameSec(std::string fname,unsigned fnumber){
 /// E.g.: GetNewFileName("DBG_name_%04d.dat")
 //==============================================================================
 std::string GetNewFileName(std::string fnamefmt,unsigned initialnum){
-  std::string file0;
-  std::string file=PrintStr(fnamefmt.c_str(),initialnum);
+  string file0;
+  string file=PrintStr(fnamefmt.c_str(),initialnum);
   while(FileExists(file) && file0!=file){
     initialnum++;
     file0=file;
@@ -1845,7 +1851,7 @@ std::string GetNewFileName(std::string fnamefmt,unsigned initialnum){
 /// Returns the filename with a requested size of characters.
 //==============================================================================
 std::string ShortFileName(const std::string& file,unsigned maxlen,bool withpoints){
-  std::string file2;
+  string file2;
   if(file.length()<=maxlen)file2=file;
   else{
     file2=file.substr(file.length()-maxlen);
@@ -1855,7 +1861,7 @@ std::string ShortFileName(const std::string& file,unsigned maxlen,bool withpoint
     if(pos1>=0)file2=file2.substr(pos1);
     if(withpoints){
       if(file2.length()+3>maxlen)file2=ShortFileName(file2,maxlen-3,false);
-      file2=std::string("...")+file2;
+      file2=string("...")+file2;
     }
   }
   return(file2);

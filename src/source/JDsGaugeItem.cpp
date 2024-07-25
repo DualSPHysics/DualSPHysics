@@ -1796,7 +1796,7 @@ void JGaugeFlow::SetMeshData(const jmsh::StMeshBasic& meshbas){
   //-Allocates memory on CPU.
   MeshDat=new jmsh::JMeshData();
   MeshDat->ConfigMesh(MeshPts,0,"VelDir");
-  DpArea=MeshBas.dispt1*MeshBas.dispt2;
+  DpArea=float(MeshBas.dispt1*MeshBas.dispt2);
 }
 
 //==============================================================================
@@ -1988,7 +1988,7 @@ template<TpKernel tker> void JGaugeFlow::CalculeCpuT(const StDataCpu& datacpu){
 
   flowvalue*=DpArea*1000;
   //-Stores result. | Guarda resultado.
-  Result.Set(timestep,flowvalue);
+  Result.Set(timestep,float(flowvalue));
   //Log->Printf("------> t:%f",TimeStep);
   if(Output(timestep))StoreResult();
 }
@@ -2089,6 +2089,7 @@ void JGaugeFlow::CalculeGpu(const StDataGpu& datagpu){
     }
   }
 }
+
 #endif
 #endif //<vs_flowdat_end>
 

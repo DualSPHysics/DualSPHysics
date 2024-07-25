@@ -417,7 +417,9 @@ const JDataArrays::StDataArray& JDataArrays::GetArrayCte(unsigned idx)const{
 //==============================================================================
 /// Returns constant reference to requested array by name.
 //==============================================================================
-const JDataArrays::StDataArray& JDataArrays::GetArrayCte(const std::string& keyname)const{
+const JDataArrays::StDataArray& JDataArrays::GetArrayCte(
+  const std::string& keyname)const
+{
   const unsigned idx=GetIdxName(keyname);
   if(idx==UINT_MAX)
     Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));

@@ -35,6 +35,7 @@
 //:# - Nuevo metodo AddHead3() y clase Head3 para cabeceras de datos triples. (02-11-2020)
 //:# - Soporta tipo tmatrix4d. (04-02-2021)
 //:# - Mejora de rendimiento para volumenes grandes usando append. (05-03-2023)
+//:# - Error corregido en uso de vsnprintf(). (24-07-2024)
 //:# =========
 //:# To defnine output format use: 
 //:#   jcsv::JSaveCsv2 scsv( );

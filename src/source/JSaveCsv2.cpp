@@ -173,24 +173,27 @@ void JSaveCsv2::AddHead3(std::string headtx){
 //==============================================================================
 std::string JSaveCsv2::ToStr(const char* format,...)const{
   std::string ret;
-  const unsigned SIZE=1024;
-  char buffer[SIZE+1];
-  va_list args;
-  va_start(args, format);
-  int size=vsnprintf(buffer,SIZE,format,args);
-  if(size>=0 && size<SIZE)ret=buffer;
-  else{
-    int rsize=-1;
-    int size2=SIZE+SIZE*2;
-    for(int c=0;c<10 && rsize<0;c++,size2+=SIZE*2){
-      char* buff2=new char[size2+1];
-      rsize=vsnprintf(buff2,size2,format,args);
-      if(rsize>=0)ret=buff2;
-      delete[] buff2;
-    }
-    if(rsize<0)Run_Exceptioon("Error in JSaveCsv2::ToStr(): Output text is too long.");
+  const int SIZE=1022;
+  int rsize=0;
+  {
+    char buffer[SIZE+2];
+    va_list args;
+    va_start(args,format);
+    rsize=vsnprintf(buffer,SIZE,format,args); //ok
+    if(rsize>=0 && rsize<SIZE)ret=buffer;
+    va_end(args);
   }
-  va_end(args);
+  if(rsize>=SIZE){
+    const int size2=rsize+10;
+    char* buff2=new char[size2];
+    va_list args;
+    va_start(args,format);
+    const int rsize2=vsnprintf(buff2,size2,format,args); //ok
+    if(rsize2>=0 && rsize2<size2)ret=buff2;
+    else Run_Exceptioon("Error in JSaveCsv2::ToStr(): Output text is too long.");
+    va_end(args);
+    delete[] buff2;
+  }
   return(ret);
 }
 

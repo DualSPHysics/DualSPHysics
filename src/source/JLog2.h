@@ -35,6 +35,7 @@
 //:# - Permite usar un Mutex para sicronizar el acceso en multithreading ejecuciones. (22-08-2019)
 //:# - Permite crear un log como referencia a otro para incluir un prefijo de forma automatica. (06-09-2019)
 //:# - El uso de mutex o no se define en JLog2Def.h. (17-06-2020)
+//:# - Error corregido en uso de vsnprintf(). (24-07-2024)
 //:#############################################################################
 
 /// \file JLog2.h \brief Declares the class \ref JLog2.
