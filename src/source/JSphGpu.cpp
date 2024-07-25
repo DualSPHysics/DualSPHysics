@@ -1011,8 +1011,9 @@ void JSphGpu::RunMotion(double stepdt){
         ,Code_g->ptr());
     }
   }
+  //<vs_m2dbc_ini>
   //-Copy motion velocity and compute acceleration of moving particles.
-  if(MotionVel_g){ //<vs_m2dbc_ini>
+  if(MotionVel_g){
     cusph::CopyMotionVelAce(CaseNmoving,stepdt,RidpMotg,Velrho_g->cptr()
       ,MotionVel_g->ptr(),MotionAce_g->ptr());
   } //<vs_m2dbc_end>

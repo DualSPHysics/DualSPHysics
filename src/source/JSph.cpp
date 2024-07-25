@@ -210,7 +210,10 @@ void JSph::InitVars(){
   NoRtimes=false;
   TerminateMt=0;
   TerminateTimeMax=DBL_MAX;
-  DtIni=DtMin=0; CoefDtMin=0; DtAllParticles=false;
+  DtIni=0;
+  DtMin=0;
+  CoefDtMin=0;
+  DtAllParticles=false;
   MinFluidStop=0;
   NpfMinimum=0;
   PartsOutWrn=1; PartsOutTotWrn=10;
@@ -517,18 +520,18 @@ llong JSph::GetAllocMemoryCpu()const{
 //==============================================================================
 std::string JSph::GetFeatureList(){
   string list;
-  if(AVAILABLE_CHRONO  )list=list+", Project Chrono coupling";
-  if(AVAILABLE_MOORDYNPLUS )list=list+", MoorDynPlus coupling";
-  if(AVAILABLE_WAVEGEN )list=list+", Wave generation";
-  if(1)                 list=list+", mDBC no-slip"; //<vs_m2dbc>
-  if(AVAILABLE_NUMEXLIB)list=list+", Numex vars";
-  if(AVAILABLE_VTKLIB  )list=list+", VTK output";
+  if(AVAILABLE_CHRONO     )list=list+", Project Chrono coupling";
+  if(AVAILABLE_MOORDYNPLUS)list=list+", MoorDynPlus coupling";
+  if(AVAILABLE_WAVEGEN    )list=list+", Wave generation";
+  if(1)                    list=list+", mDBC no-slip"; //<vs_m2dbc>
+  if(AVAILABLE_NUMEXLIB   )list=list+", Numex vars";
+  if(AVAILABLE_VTKLIB     )list=list+", VTK output";
   #ifdef CODE_SIZE4
-                        list=list+", MkWord";
+                           list=list+", MkWord";
   #endif
-  if(AVAILABLE_GPU     )list=list+", GPU execution";
+  if(AVAILABLE_GPU        )list=list+", GPU execution";
   #ifdef OMP_USE
-                        list=list+", OpenMP execution";
+                           list=list+", OpenMP execution";
   #endif
   if(list.size()>2)list=list.substr(2);
   return(list);
@@ -838,7 +841,6 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   //-Aplies configuration using command line.
   if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
   if(cfg->SvExtraParts!="undefined")SvExtraParts=cfg->SvExtraParts;
-
   if(cfg->TBoundary){
     TBoundary=BC_DBC;
     SlipMode=SLIP_Vel0;
@@ -1251,13 +1253,16 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   }
   
   //-Configuration of boundary extrapolated correction.
-  if(xml.GetNodeSimple("case.execution.special.boundextrap",false))Run_Exceptioon("The XML section 'boundextrap' is obsolete. Use mDBC boundary conditions.");
-  if(xml.GetNodeSimple("case.execution.special.boundcorr",false))Run_Exceptioon("The XML section 'boundcorr' is obsolete. Use mDBC boundary conditions.");
+  if(xml.GetNodeSimple("case.execution.special.boundextrap",false))
+    Run_Exceptioon("The XML section 'boundextrap' is obsolete. Use mDBC boundary conditions.");
+  if(xml.GetNodeSimple("case.execution.special.boundcorr",false))
+    Run_Exceptioon("The XML section 'boundcorr' is obsolete. Use mDBC boundary conditions.");
  
   //-Configuration of Moorings object.
   if(xml.GetNodeSimple("case.execution.special.moorings",true)){
     if(WithFloating){
-      if(!AVAILABLE_MOORDYNPLUS)Run_Exceptioon("Code for moorings and MoorDynPlus coupling is not included in the current compilation.");
+      if(!AVAILABLE_MOORDYNPLUS)Run_Exceptioon(
+        "Code for moorings and MoorDynPlus coupling is not included in the current compilation.");
       Moorings=new JDsMooredFloatings(DirCase,CaseName,Gravity,TimeMax,TimePart);
       Moorings->LoadXml(&xml,"case.execution.special.moorings");
     }
@@ -1628,7 +1633,8 @@ void JSph::VisuConfig(){
   Log->Print(fun::VarStr("Viscosity",GetViscoName(TVisco)));
   Log->Print(fun::VarStr("  Visco",Visco));
   Log->Print(fun::VarStr("  ViscoBoundFactor",ViscoBoundFactor));
-  if(ViscoBoundFactor!=1.f && TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0)Log->PrintWarning("ViscoBoundFactor should be 1.0 when mDBC no-slip or free slip is used.");
+  if(ViscoBoundFactor!=1.f && TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0)
+    Log->PrintWarning("ViscoBoundFactor should be 1.0 when mDBC no-slip or free slip is used.");
   if(ViscoTime)Log->Print(fun::VarStr("ViscoTime",ViscoTime->GetFile()));
   ConfigInfo=ConfigInfo+sep+"Visco_"+GetViscoName(TVisco)+fun::PrintStr("(%gb%g)",Visco,ViscoBoundFactor);
   //-DensityDiffusion.

@@ -85,10 +85,13 @@ void JDataArrays::CopyDataFrom(const JDataArrays& arr,bool filterarrays){
   for(unsigned ca=0;ca<na;ca++){
     JDataArrays::StDataArray& ar=Arrays[ca];
     unsigned ca2=arr.GetIdxName(ar.keyname);
-    if(ca2==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing in source data.",ar.keyname.c_str()));
+    if(ca2==UINT_MAX)Run_Exceptioon(fun::PrintStr(
+      "Array \'%s\' is missing in source data.",ar.keyname.c_str()));
     const JDataArrays::StDataArray& ar2=arr.GetArrayCte(ca2);
-    if(ar.type!=ar2.type)Run_Exceptioon(fun::PrintStr("Type of array \'%s\' does not match.",ar.keyname.c_str()));
-    if(ar.count!=ar2.count)Run_Exceptioon(fun::PrintStr("Size of array \'%s\' does not match.",ar.keyname.c_str()));
+    if(ar.type!=ar2.type)Run_Exceptioon(fun::PrintStr(
+      "Type of array \'%s\' does not match.",ar.keyname.c_str()));
+    if(ar.count!=ar2.count)Run_Exceptioon(fun::PrintStr(
+      "Size of array \'%s\' does not match.",ar.keyname.c_str()));
     memcpy(ar.ptr,ar2.ptr,SizeOfType(ar.type)*ar.count);
   }
   if(!filterarrays){
@@ -96,7 +99,8 @@ void JDataArrays::CopyDataFrom(const JDataArrays& arr,bool filterarrays){
     for(unsigned ca2=0;ca2<na2;ca2++){
       const JDataArrays::StDataArray& ar2=arr.GetArrayCte(ca2);
       unsigned ca=GetIdxName(ar2.keyname);
-      if(ca==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' of source is missing in target data.",ar2.keyname.c_str()));
+      if(ca==UINT_MAX)Run_Exceptioon(fun::PrintStr(
+        "Array \'%s\' of source is missing in target data.",ar2.keyname.c_str()));
     }
   }
 }
@@ -127,16 +131,20 @@ void JDataArrays::FreeMemory(StDataArray& arr){
       case TypeUshort:   delete[] (word*    )ptr;  break;
       case TypeUint:     delete[] (unsigned*)ptr;  break;
       case TypeInt:      delete[] (int*     )ptr;  break;
+      case TypeUllong:   delete[] (ullong*  )ptr;  break;
+      case TypeLlong:    delete[] (llong*   )ptr;  break;
       case TypeFloat:    delete[] (float*   )ptr;  break;
       case TypeDouble:   delete[] (double*  )ptr;  break;
       case TypeUint3:    delete[] (tuint3*  )ptr;  break;
       case TypeInt3:     delete[] (tint3*   )ptr;  break;
       case TypeFloat3:   delete[] (tfloat3* )ptr;  break;
       case TypeDouble3:  delete[] (tdouble3*)ptr;  break;
-      default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
+      default: Run_Exceptioon(fun::PrintStr(
+        "Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
     }
     arr.ptr=NULL;
     arr.count=0;
+    arr.size=0;
   }
 }
 
@@ -166,8 +174,25 @@ unsigned JDataArrays::GetDataCount(bool minimum)const{
 unsigned JDataArrays::GetDataCount()const{ 
   unsigned smin=GetDataCount(true );
   unsigned smax=GetDataCount(false);
-  if(smin!=smax)Run_Exceptioon("The minimum data count does not match the maximum data count.");
+  if(smin!=smax)
+    Run_Exceptioon("The minimum data count does not match the maximum data count.");
   return(smin);
+}
+
+//==============================================================================
+/// Set number of data values without changes in memory allocation.
+/// The new count value must be <= the available size in pointers.
+//==============================================================================
+void JDataArrays::SetCountData(unsigned count){ 
+  const unsigned na=Count();
+  for(unsigned c=0;c<na;c++){
+    StDataArray& arr=Arrays[c];
+    if(arr.count!=count){
+      if(arr.size<count)
+        Run_Exceptioon("Not enough allocated memory to increase count of data values.");
+      arr.count=count;
+    }
+  }
 }
 
 //==============================================================================
@@ -203,9 +228,12 @@ std::string JDataArrays::CheckErrorArray(unsigned idx,TpTypeData type
   if(idx>=Count())err=fun::PrintStr("Array %u is missing.",idx);
   else{
     const string keyname=Arrays[idx].keyname;
-    if(Arrays[idx].type!=type)err=fun::PrintStr("Type of array \'%s\' is not %s.",keyname.c_str(),TypeToStr(type));
-    else if(count && Arrays[idx].count!=count)err=fun::PrintStr("Size of array \'%s\' is not %u.",keyname.c_str(),count);
-    else if(count && !Arrays[idx].ptr)err=fun::PrintStr("Array \'%s\' without data.",keyname.c_str());
+    if(Arrays[idx].type!=type)err=fun::PrintStr(
+      "Type of array \'%s\' is not %s.",keyname.c_str(),TypeToStr(type));
+    else if(count && Arrays[idx].count!=count)err=fun::PrintStr(
+      "Size of array \'%s\' is not %u.",keyname.c_str(),count);
+    else if(count && !Arrays[idx].ptr)err=fun::PrintStr(
+      "Array \'%s\' without data.",keyname.c_str());
   }
   return(err);
 }
@@ -222,10 +250,13 @@ unsigned JDataArrays::AddArray(std::string fullname,TpTypeData type
   ar.type=type;
   ar.tag=0;
   ar.count=count;
+  ar.size=count;
   ar.ptr=ptr;
   ar.delptr=delptr;
-  if(ar.keyname.empty())Run_Exceptioon(fun::PrintStr("Array name \'%s\' is invalid.",ar.keyname.c_str()));
-  if(ExistsName(ar.keyname))Run_Exceptioon(fun::PrintStr("Array \'%s\' already exists.",ar.keyname.c_str()));
+  if(ar.keyname.empty())
+    Run_Exceptioon(fun::PrintStr("Array name \'%s\' is invalid.",ar.keyname.c_str()));
+  if(ExistsName(ar.keyname))
+    Run_Exceptioon(fun::PrintStr("Array \'%s\' already exists.",ar.keyname.c_str()));
   Arrays.push_back(ar);
   return(Count()-1);
 }
@@ -244,7 +275,8 @@ void JDataArrays::DeleteArray(unsigned idx){
 //==============================================================================
 void JDataArrays::DeleteArray(std::string keyname){
   const unsigned idx=GetIdxName(keyname);
-  if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
+  if(idx==UINT_MAX)
+    Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
   else DeleteArray(idx);
 }
 
@@ -253,7 +285,8 @@ void JDataArrays::DeleteArray(std::string keyname){
 //==============================================================================
 void JDataArrays::EraseArray(std::string keyname){
   const unsigned idx=GetIdxName(keyname);
-  if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
+  if(idx==UINT_MAX)
+    Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
   Arrays.erase(Arrays.begin()+idx);
 }
 
@@ -284,11 +317,12 @@ void JDataArrays::ReverseArrayData(unsigned idx){
     case TypeUshort:
     case TypeUint:
     case TypeUint3:    break;
-    case TypeInt:{     int*    v=(int*   )ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
-    case TypeFloat:{   float*  v=(float* )ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
-    case TypeDouble:{  double* v=(double*)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
-    case TypeInt3:{    int*    v=(int*   )ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
-    case TypeFloat3:{  float*  v=(float* )ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
+    case TypeInt:    { int*    v=(int*   )ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
+    case TypeLlong:  { llong*  v=(llong* )ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
+    case TypeFloat:  { float*  v=(float* )ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
+    case TypeDouble: { double* v=(double*)ar.ptr;  for(unsigned c=0;c<count ;c++)v[c]=-v[c];  }break;
+    case TypeInt3:   { int*    v=(int*   )ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
+    case TypeFloat3: { float*  v=(float* )ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
     case TypeDouble3:{ double* v=(double*)ar.ptr;  for(unsigned c=0;c<count3;c++)v[c]=-v[c];  }break;
     default: Run_Exceptioon(fun::PrintStr("Type of data \'%s\' is invalid.",TypeToStr(ar.type)));
   }
@@ -367,7 +401,8 @@ JDataArrays::StDataArray& JDataArrays::GetArray(unsigned idx){
 //==============================================================================
 JDataArrays::StDataArray& JDataArrays::GetArray(const std::string& keyname){
   const unsigned idx=GetIdxName(keyname);
-  if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
+  if(idx==UINT_MAX)
+    Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
   return(Arrays[idx]);
 }
 
@@ -384,7 +419,8 @@ const JDataArrays::StDataArray& JDataArrays::GetArrayCte(unsigned idx)const{
 //==============================================================================
 const JDataArrays::StDataArray& JDataArrays::GetArrayCte(const std::string& keyname)const{
   const unsigned idx=GetIdxName(keyname);
-  if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
+  if(idx==UINT_MAX)
+    Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
   return(Arrays[idx]);
 }
 
@@ -401,7 +437,8 @@ JDataArrays::StDataArray JDataArrays::GetArrayData(unsigned idx)const{
 //==============================================================================
 JDataArrays::StDataArray JDataArrays::GetArrayData(const std::string& keyname)const{
   const unsigned idx=GetIdxName(keyname);
-  if(idx==UINT_MAX)Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
+  if(idx==UINT_MAX)
+    Run_Exceptioon(fun::PrintStr("Array \'%s\' is missing.",keyname.c_str()));
   return(Arrays[idx]);
 }
 
@@ -433,6 +470,8 @@ std::string JDataArrays::GetFmtByType(TpTypeData type){
     case TypeUshort:
     case TypeUint:     fmt="%u";       break;
     case TypeInt:      fmt="%d";       break;
+    case TypeUllong:   fmt="%llu";     break;
+    case TypeLlong:    fmt="%lld";     break;
     case TypeFloat:    fmt="%15.7E";   break;
     case TypeDouble:   fmt="%20.12E";  break;
     case TypeUint3:    fmt="%u";       break;
@@ -440,7 +479,8 @@ std::string JDataArrays::GetFmtByType(TpTypeData type){
     case TypeFloat3:   fmt="%15.7E";   break;
     case TypeDouble3:  fmt="%20.12E";  break;
   }
-  if(fmt.empty())Run_ExceptioonSta(fun::PrintStr("Type \'%s\' without output-format.",TypeToStr(type)));
+  if(fmt.empty())Run_ExceptioonSta(fun::PrintStr(
+    "Type \'%s\' without output-format.",TypeToStr(type)));
   return(fmt);
 }
 
@@ -503,7 +543,9 @@ const void* JDataArrays::GetArrayPtr(const std::string& keyname,TpTypeData type
 void JDataArrays::Print()const{
   for(unsigned ca=0;ca<Count();ca++){
     StDataArray ar=Arrays[ca];
-    printf("[%02d] \'%s\' (%s)  %s[%u] %s\n",ca,ar.keyname.c_str(),ar.fullname.c_str(),TypeToStr(ar.type),ar.count,(ar.delptr? "(delptr)": ""));
+    printf("[%02d] \'%s\' (%s)  %s[%u/%u] %s\n",ca,ar.keyname.c_str()
+      ,ar.fullname.c_str(),TypeToStr(ar.type),ar.count,ar.size
+      ,(ar.delptr? "(delptr)": ""));
   }
 }
 
@@ -517,7 +559,8 @@ byte* JDataArrays::NewArrayByte(unsigned count,bool defvalue,byte value){
     if(count && defvalue)memset(v,value,sizeof(byte)*count);
   }
   catch(const std::bad_alloc){
-    Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
   }
   return(v);
 }
@@ -535,7 +578,8 @@ word* JDataArrays::NewArrayWord(unsigned count,bool defvalue,word value){
     }
   }
   catch(const std::bad_alloc){
-    Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
   }
   return(v);
 }
@@ -553,7 +597,8 @@ unsigned* JDataArrays::NewArrayUint(unsigned count,bool defvalue,unsigned value)
     }
   }
   catch(const std::bad_alloc){
-    Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
   }
   return(v);
 }
@@ -571,7 +616,46 @@ int* JDataArrays::NewArrayInt(unsigned count,bool defvalue,int value){
     }
   }
   catch(const std::bad_alloc){
-    Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
+  }
+  return(v);
+}
+
+//==============================================================================
+/// Returns dynamic pointer with ullong array. (this pointer must be deleted)
+//==============================================================================
+ullong* JDataArrays::NewArrayUllong(unsigned count,bool defvalue,ullong value){
+  ullong* v=NULL;
+  try{
+    v=new ullong[count];
+    if(count && defvalue){
+      if(!value)memset(v,0,sizeof(ullong)*count);
+      else for(unsigned c=0;c<count;c++)v[c]=value;
+    }
+  }
+  catch(const std::bad_alloc){
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
+  }
+  return(v);
+}
+
+//==============================================================================
+/// Returns dynamic pointer with llong array. (this pointer must be deleted)
+//==============================================================================
+llong* JDataArrays::NewArrayLlong(unsigned count,bool defvalue,llong value){
+  llong* v=NULL;
+  try{
+    v=new llong[count];
+    if(count && defvalue){
+      if(!value)memset(v,0,sizeof(llong)*count);
+      else for(unsigned c=0;c<count;c++)v[c]=value;
+    }
+  }
+  catch(const std::bad_alloc){
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
   }
   return(v);
 }
@@ -589,7 +673,8 @@ float* JDataArrays::NewArrayFloat(unsigned count,bool defvalue,float value){
     }
   }
   catch(const std::bad_alloc){
-    Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
   }
   return(v);
 }
@@ -607,7 +692,8 @@ double* JDataArrays::NewArrayDouble(unsigned count,bool defvalue,double value){
     }
   }
   catch(const std::bad_alloc){
-    Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
   }
   return(v);
 }
@@ -625,7 +711,8 @@ tuint3* JDataArrays::NewArrayUint3(unsigned count,bool defvalue,tuint3 value){
     }
   }
   catch(const std::bad_alloc){
-    Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
   }
   return(v);
 }
@@ -643,7 +730,8 @@ tint3* JDataArrays::NewArrayInt3(unsigned count,bool defvalue,tint3 value){
     }
   }
   catch(const std::bad_alloc){
-    Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
   }
   return(v);
 }
@@ -661,7 +749,8 @@ tfloat3* JDataArrays::NewArrayFloat3(unsigned count,bool defvalue,tfloat3 value)
     }
   }
   catch(const std::bad_alloc){
-    Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
   }
   return(v);
 }
@@ -679,7 +768,8 @@ tdouble3* JDataArrays::NewArrayDouble3(unsigned count,bool defvalue,tdouble3 val
     }
   }
   catch(const std::bad_alloc){
-    Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
   }
   return(v);
 }
@@ -697,7 +787,8 @@ unsigned* JDataArrays::NewArraySeqUint(unsigned count,unsigned start,unsigned st
     }
   }
   catch(const std::bad_alloc){
-    Run_ExceptioonSta(fun::PrintStr("Could not allocate the requested memory (size=%u).",count));
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
   }
   return(v);
 }
@@ -720,7 +811,8 @@ void JDataArrays::ToFloat1w(unsigned count,const tfloat4* data,float* dest){
 }
 
 //==============================================================================
-/// Returns dynamic pointer with x,y,z values from tfloat4 values. (this pointer must be deleted)
+/// Returns dynamic pointer with x,y,z values from tfloat4 values. 
+/// (this pointer must be deleted)
 //==============================================================================
 tfloat3* JDataArrays::NewArrayFloat3xyz(unsigned count,const tfloat4* data){
   tfloat3* v=NewArrayFloat3(count,false);
@@ -729,7 +821,8 @@ tfloat3* JDataArrays::NewArrayFloat3xyz(unsigned count,const tfloat4* data){
 }
 
 //==============================================================================
-/// Returns dynamic pointer with x,y,z values from tfloat4 values. (this pointer must be deleted)
+/// Returns dynamic pointer with x,y,z values from tfloat4 values.
+/// (this pointer must be deleted)
 //==============================================================================
 float* JDataArrays::NewArrayFloat1w(unsigned count,const tfloat4* data){
   float* v=NewArrayFloat(count,false);
@@ -766,19 +859,23 @@ unsigned JDataArrays::FilterApply(unsigned count,const byte* filter){
   const unsigned na=Count();
   for(unsigned c=0;c<na;c++){
     StDataArray& arr=Arrays[c];
-    if(arr.count!=count)Run_Exceptioon(fun::PrintStr("Number of values of \'%s\' does not match size of filter.",arr.keyname.c_str()));
+    if(arr.count!=count)Run_Exceptioon(fun::PrintStr(
+      "Number of values of \'%s\' does not match size of filter.",arr.keyname.c_str()));
     switch(arr.type){
       case TypeUchar:    ReindexData(nsel,reindex,arr.count,(byte*    )arr.ptr,NULL);  break;
       case TypeUshort:   ReindexData(nsel,reindex,arr.count,(word*    )arr.ptr,NULL);  break;
       case TypeUint:     ReindexData(nsel,reindex,arr.count,(unsigned*)arr.ptr,NULL);  break;
       case TypeInt:      ReindexData(nsel,reindex,arr.count,(int*     )arr.ptr,NULL);  break;
+      case TypeUllong:   ReindexData(nsel,reindex,arr.count,(ullong*  )arr.ptr,NULL);  break;
+      case TypeLlong:    ReindexData(nsel,reindex,arr.count,(llong*   )arr.ptr,NULL);  break;
       case TypeFloat:    ReindexData(nsel,reindex,arr.count,(float*   )arr.ptr,NULL);  break;
       case TypeDouble:   ReindexData(nsel,reindex,arr.count,(double*  )arr.ptr,NULL);  break;
       case TypeUint3:    ReindexData(nsel,reindex,arr.count,(tuint3*  )arr.ptr,NULL);  break;
       case TypeInt3:     ReindexData(nsel,reindex,arr.count,(tint3*   )arr.ptr,NULL);  break;
       case TypeFloat3:   ReindexData(nsel,reindex,arr.count,(tfloat3* )arr.ptr,NULL);  break;
       case TypeDouble3:  ReindexData(nsel,reindex,arr.count,(tdouble3*)arr.ptr,NULL);  break;
-      default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
+      default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid."
+        ,TypeToStr(arr.type)));
     }
     arr.count=nsel;
   }
@@ -811,6 +908,8 @@ unsigned JDataArrays::SortData(unsigned count,const unsigned* reindex){
       case TypeUshort:   ReindexData(count,reindex,arr.count,(word*    )arr.ptr,(word*    )aux);  break;
       case TypeUint:     ReindexData(count,reindex,arr.count,(unsigned*)arr.ptr,(unsigned*)aux);  break;
       case TypeInt:      ReindexData(count,reindex,arr.count,(int*     )arr.ptr,(int*     )aux);  break;
+      case TypeUllong:   ReindexData(count,reindex,arr.count,(ullong*  )arr.ptr,(ullong*  )aux);  break;
+      case TypeLlong:    ReindexData(count,reindex,arr.count,(llong*   )arr.ptr,(llong*   )aux);  break;
       case TypeFloat:    ReindexData(count,reindex,arr.count,(float*   )arr.ptr,(float*   )aux);  break;
       case TypeDouble:   ReindexData(count,reindex,arr.count,(double*  )arr.ptr,(double*  )aux);  break;
       case TypeUint3:    ReindexData(count,reindex,arr.count,(tuint3*  )arr.ptr,(tuint3*  )aux);  break;
@@ -831,7 +930,8 @@ unsigned JDataArrays::SortData(unsigned count,const unsigned* reindex){
 //==============================================================================
 unsigned JDataArrays::FilterList(unsigned n,const unsigned* list){
   const unsigned count=GetDataCount(false);
-  if(count!=GetDataCount(true))Run_Exceptioon("All arrays must have the same number of values.");
+  if(count!=GetDataCount(true))
+    Run_Exceptioon("All arrays must have the same number of values.");
   byte* filter=NewArrayByte(count,true);
   for(unsigned c=0;c<n;c++)if(list[c]<count)filter[list[c]]=1;
   const unsigned nfinal=FilterApply(count,filter);
@@ -844,7 +944,8 @@ unsigned JDataArrays::FilterList(unsigned n,const unsigned* list){
 //==============================================================================
 unsigned JDataArrays::FilterSortList(unsigned n,const unsigned* list){
   const unsigned count=GetDataCount(false);
-  if(count!=GetDataCount(true))Run_Exceptioon("All arrays must have the same number of values.");
+  if(count!=GetDataCount(true))
+    Run_Exceptioon("All arrays must have the same number of values.");
   if(n>count)Run_Exceptioon("Size of list is higher than number of values.");
   SortData(n,list);
   return(n);
@@ -870,9 +971,19 @@ void JDataArrays::ReallocMemory(){
           memcpy(pnew,arr.ptr,sizeof(word)*count);
         break;
         case TypeUint:
-        case TypeInt:
           pnew=NewArrayUint(count);
           memcpy(pnew,arr.ptr,sizeof(unsigned)*count);
+        break;
+        case TypeInt:
+          pnew=NewArrayInt(count);
+          memcpy(pnew,arr.ptr,sizeof(int)*count);
+        break;
+        case TypeUllong:
+          pnew=NewArrayUllong(count);
+          memcpy(pnew,arr.ptr,sizeof(ullong)*count);
+        case TypeLlong:
+          pnew=NewArrayLlong(count);
+          memcpy(pnew,arr.ptr,sizeof(llong)*count);
         break;
         case TypeFloat:
           pnew=NewArrayFloat(count);
@@ -883,9 +994,11 @@ void JDataArrays::ReallocMemory(){
           memcpy(pnew,arr.ptr,sizeof(double)*count);
         break;
         case TypeUint3:
-        case TypeInt3:
           pnew=NewArrayUint3(count);
           memcpy(pnew,arr.ptr,sizeof(tuint3)*count);
+        case TypeInt3:
+          pnew=NewArrayInt3(count);
+          memcpy(pnew,arr.ptr,sizeof(tint3)*count);
         break;
         case TypeFloat3:
           pnew=NewArrayFloat3(count);
@@ -895,12 +1008,14 @@ void JDataArrays::ReallocMemory(){
           pnew=NewArrayDouble3(count);
           memcpy(pnew,arr.ptr,sizeof(tdouble3)*count);
         break;
-        default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
+        default: Run_Exceptioon(fun::PrintStr(
+          "Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
       }
       FreeMemory(arr);
       arr.delptr=true;
       arr.ptr=pnew;
       arr.count=count;
+      arr.size=count;
     }
   }
 }

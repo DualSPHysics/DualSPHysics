@@ -717,7 +717,6 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
             dvy=velp1.y-movvelp2.y;
             dvz=velp1.z-movvelp2.z;
           } //<vs_m2dbc_end>
-          
           if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz)*(rhop1/velrhop2.w);
 
           const float cbar=(float)Cs0;
@@ -1670,7 +1669,7 @@ void JSphCpu::ComputeVelrhoBound(const tfloat4* velrhoold,const float* ar
       velrhonew[p]=velrhoold[p]; //-Check...
     }
   } //<vs_m2dbc_end>
-  else{ //-For DBC and mDBC (SLIP_Vel0).
+  else{ //-For DBC and mDBC (SLIP_Vel0). //<vs_m2dbc>
     const int npb=int(Npb);
     #ifdef OMP_USE
       #pragma omp parallel for schedule (static) if(npb>OMP_LIMIT_COMPUTESTEP)
@@ -1679,7 +1678,7 @@ void JSphCpu::ComputeVelrhoBound(const tfloat4* velrhoold,const float* ar
       const float rhonew=float(double(velrhoold[p].w)+armul*ar[p]);
       velrhonew[p]=TFloat4(0,0,0,(rhonew<RhopZero? RhopZero: rhonew));//-Avoid fluid particles being absorved by boundary ones. | Evita q las boundary absorvan a las fluidas.
     }
-  }
+  } //<vs_m2dbc>
 }
 
 //==============================================================================
@@ -1847,7 +1846,8 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
   const int npf=np-npb;
   
   //-Calculate rho of boundary and set velocity=0. | Calcula rho de contorno y vel igual a cero.
-  if(!mdbc2){ //<vs_m2dbc>
+  if(!mdbc2) //<vs_m2dbc>
+  {
     const float*   arc=Ar_c->cptr();
     const tfloat4* velrhoprec=VelrhoPre_c->cptr();
     tfloat4*       velrhoc=Velrho_c->ptr();
@@ -2160,8 +2160,9 @@ void JSphCpu::RunMotion(double stepdt){
         ,Velrho_c->ptr(),Code_c->ptr());
     }
   }
+  //<vs_m2dbc_ini>
   //-Copy motion velocity and compute acceleration of moving particles.
-  if(MotionVel_c){ //<vs_m2dbc_ini>
+  if(MotionVel_c){
     CopyMotionVelAce(CaseNmoving,stepdt,RidpMot,Velrho_c->cptr()
       ,MotionVel_c->ptr(),MotionAce_c->ptr());
   } //<vs_m2dbc_end>
