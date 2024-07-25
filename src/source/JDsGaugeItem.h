@@ -80,6 +80,7 @@ public:
     ,GAUGE_Swl
     ,GAUGE_MaxZ
     ,GAUGE_Mesh   //<vs_meeshdat>
+    ,GAUGE_Flow   //<vs_flowdat>
     ,GAUGE_Force
   }TpGauge;
 
@@ -703,6 +704,124 @@ public:
 
 };
 //<vs_meeshdat_end>
+
+
+//<vs_flowdat_ini>
+//##############################################################################
+//# JGaugeFlow
+//##############################################################################
+/// \brief Calculates Flow in a grid of positions.
+class JGaugeFlow : public JGaugeItem
+{
+private:
+ #ifdef _WITHGPU //LATER
+  ///Structure with auxiliary memory for execution on GPU.
+  typedef struct StrGaugeFlowDataGpu{
+    bool GpuMemory;     ///<Indicates when GPU memory is allocated.
+    //float3* Resultg;  ///<Stores final result from GPU [1].
+    float*  DataVdirg;  ///<Stores on GPU memory velocity in requested direction. [GridPts.npt1*GridPts.npt2*GridPts.npt3]
+    float* AuxSumg;
+    //-Methods.
+    StrGaugeFlowDataGpu(){
+      GpuMemory=false;
+      //Resultg=NULL;
+      DataVdirg=NULL;
+      AuxSumg=NULL;
+    }
+  }StGaugeFlowDataGpu;
+ #endif
+
+public:
+  ///Structure with basic information about configuration.
+  typedef struct{
+    tdouble3 ptref;      ///<Initial measurement position.
+    tdouble3 ptend;      ///<Final measurement position.
+    tdouble3 vec1;       ///<First axis vector to define the measurement grid.
+    tdouble3 vec2;       ///<Second axis vector to define the measurement grid.
+    tdouble2 dispt;      ///<Distance between measurement points.
+    tuint3   npt;        ///<Number of positions.
+    tfloat3 dirdat;      ///<Direction vector for computed linear velocity or other variables.
+  }StInfo;
+
+  ///Structure with result of JGaugeFlow object.
+  typedef struct StrGaugeFlowRes{
+    double timestep;
+    float flow;
+    bool modified;
+    StrGaugeFlowRes(){ Reset(); }
+    void Reset(){
+      Set(0,0.0);
+      modified=false;
+    }
+    void Set(double t,float flow){
+      timestep=t; this->flow=flow; modified=true;
+    }
+  }StGaugeFlowRes;
+
+protected:
+  //-Definition.
+  //std::string OutDataList;   ///<Output data selection.
+  //bool SaveCsv;              ///<Saves data in CSV file. (ALWAYS TRUE?)
+  jmsh::StMeshBasic MeshBas; ///<Basic mesh configuration.
+  jmsh::StMeshPts MeshPts;   ///<Mesh configuration for calculations.
+  float KcLimit;             ///<Minimum value of sum_wab_vol to apply the Kernel Correction. FLT_MAX to disable (default=0.5)
+  //KcLimit can be optional or directly disabled
+
+  //-Auxiliary variables.
+  jmsh::JMeshData* MeshDat;
+  float DpArea;
+  //float* MassDatCpu;   ///<Auxiliar memory to compute mass. [MeshPts.npt] NO MASS
+
+  //-Auxiliary variables for GPU execution.
+ #ifdef _WITHGPU
+  StGaugeFlowDataGpu AuxDataGpu[MAXGPUS];
+ #endif
+
+  //-Result variables.
+  StGaugeFlowRes Result;     ///<Result of the last measure.
+  std::vector<StGaugeFlowRes> OutBuff;     ///<Results in buffer.
+
+  void Reset();
+ #ifdef _WITHGPU
+  void ResetGpuMemory();
+ #endif
+
+  void SetMeshData(const jmsh::StMeshBasic& meshbas);
+  void ClearResult(){ Result.Reset(); }
+  void StoreResult();
+
+public:
+  JGaugeFlow(unsigned idx,std::string name,const jmsh::StMeshBasic& meshbas,
+    float kclimit,unsigned buffersize
+    ,int gpucount);
+  ~JGaugeFlow();
+  void ConfigDomMCel(bool fixed);
+
+  StInfo GetInfo()const;
+
+  void SaveResults();
+  void SaveVtkResult(unsigned cpart);
+  unsigned GetPointDef(std::vector<tfloat3>& points)const;
+  void SaveVtkScheme()const;
+
+  jmsh::StMeshBasic GetMeshBas()const{ return(MeshBas); }
+  jmsh::StMeshPts GetMesh()const{ return(MeshPts); }
+
+  const StGaugeFlowRes& GetResult()const{ return(Result); }
+
+  template<TpKernel tker> void CalculeCpuT(const StDataCpu& datacpu);
+  void CalculeCpu(const StDataCpu& datacpu);
+
+ #ifdef _WITHGPU
+  bool AllocatedGpuMemory(int id)const;
+  void FreeGpuMemory(int id);
+  void AllocGpuMemory(int id);
+  void CalculeGpu(const StDataGpu& datagpu);
+ #endif
+
+};
+//<vs_flowdat_end>
+
 
 //##############################################################################
 //# JGaugeForce
