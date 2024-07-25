@@ -143,7 +143,9 @@ std::string JGaugeItem::GetNameType(TpGauge type){
     case GAUGE_Swl:     return("SWL");
     case GAUGE_MaxZ:    return("MaxZ");
     case GAUGE_Mesh:    return("Mesh");  //<vs_meeshdat>
-    case GAUGE_Flow:    return("Flow");  //<vs_flowdat>
+    #ifndef DISABLE_GAUGEFLOW            //<vs_flowdat_ini>
+    case GAUGE_Flow:    return("Flow");
+    #endif                               //<vs_flowdat_end>
     case GAUGE_Force:   return("Force");
   }
   return("???");
@@ -202,7 +204,8 @@ void JGaugeItem::GetConfig(std::vector<std::string>& lines)const{
     }
     lines.push_back(fun::PrintStr("KernelCorr.: %s",tkcorr.c_str()));
   }  //<vs_meeshdat_end>
-  else if(Type==GAUGE_Flow){ //<vs_flowdat_ini>
+#ifndef DISABLE_GAUGEFLOW //<vs_flowdat_ini>
+  else if(Type==GAUGE_Flow){
     const JGaugeFlow* gau=(JGaugeFlow*)this;
     JGaugeFlow::StInfo v=gau->GetInfo();
     lines.push_back(fun::PrintStr("GaugePoints: %u  (%u x %u)",v.npt.z,v.npt.x,v.npt.y));
@@ -210,7 +213,8 @@ void JGaugeItem::GetConfig(std::vector<std::string>& lines)const{
     lines.push_back(fun::PrintStr("Vectors....: (%s) - (%s)",fun::Double3gStr(v.vec1).c_str(),fun::Double3gStr(v.vec2).c_str()));
     lines.push_back(fun::PrintStr("PointDp....: (%f,%f)",v.dispt.x,v.dispt.y));
     lines.push_back(fun::PrintStr("DirDat.....: (%s)",fun::Float3gStr(v.dirdat).c_str()));
-  } //<vs_flowdat_end>
+  }
+#endif                    //<vs_flowdat_end>
   else if(Type==GAUGE_Force){
     const JGaugeForce* gau=(JGaugeForce*)this;
     lines.push_back(fun::PrintStr("MkBound.....: %u (%s particles)",gau->GetMkBound(),TpPartGetStrCode(gau->GetTypeParts())));
@@ -1720,7 +1724,7 @@ void JGaugeMesh::CalculeGpu(const StDataGpu& datagpu){
 //<vs_meeshdat_end>
 
 
-//<vs_flowdat_ini>
+#ifndef DISABLE_GAUGEFLOW //<vs_flowdat_ini>
 //##############################################################################
 //# JGaugeFlow
 //##############################################################################
@@ -2086,7 +2090,7 @@ void JGaugeFlow::CalculeGpu(const StDataGpu& datagpu){
   }
 }
 #endif
-//<vs_flowdat_end>
+#endif //<vs_flowdat_end>
 
 
 //##############################################################################

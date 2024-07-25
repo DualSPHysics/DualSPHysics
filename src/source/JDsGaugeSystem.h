@@ -143,8 +143,10 @@ public:
     ,tdouble3 point0,double height,float distlimit);
   JGaugeMesh*     AddGaugeMesh (std::string name,double computestart,double computeend,double computedt,bool fixed                          //<vs_meeshdat>
     ,const jmsh::StMeshBasic& meshbas,std::string outdata,unsigned tfmt,unsigned buffersize,float kclimit,float kcdummy,float masslimit=0); //<vs_meeshdat>
-  JGaugeFlow*     AddGaugeFlow (std::string name,double computestart,double computeend,double computedt,bool fixed  //<vs_flowdat>
-      ,const jmsh::StMeshBasic& meshbas,float kclimit,unsigned buffersize);                                         //<vs_flowdat> 
+#ifndef DISABLE_GAUGEFLOW //<vs_flowdat_ini>
+  JGaugeFlow*     AddGaugeFlow (std::string name,double computestart,double computeend,double computedt,bool fixed
+      ,const jmsh::StMeshBasic& meshbas,float kclimit,unsigned buffersize);
+#endif //<vs_flowdat_end>
   JGaugeForce*    AddGaugeForce(std::string name,double computestart,double computeend,double computedt,bool fixed
     ,const JSphMk* mkinfo,word mkbound);
 
