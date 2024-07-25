@@ -135,8 +135,8 @@ protected:
   //-Variables for mDBC (Opt).
   acfloat3*   BoundNor_c;   ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
   acfloat3*   MotionVel_c;  ///<Velocity of a moving boundary particle (Opt).
-  acfloat3*   MotionAce_c;  ///<Acceleration of a moving boundary (Opt).
-  acfloat*    BoundOnOff_c; ///<Boundary particle on off switch to multiply massp2 (Opt,Null).
+  acfloat3*   MotionAce_c;  ///<Acceleration of a moving boundary (Opt).                       //<vs_m2dbc>
+  acfloat*    BoundOnOff_c; ///<Boundary particle on off switch to multiply massp2 (Opt,Null). //<vs_m2dbc>
     
   //-Variables for compute step VERLET (Opt).
   acfloat4*   VelrhoM1_c;   ///<Verlet: in order to keep previous values (Opt).
@@ -210,8 +210,8 @@ protected:
 
   void InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned* dcell
     ,const unsigned* ftridp,const StDemData* demobjs
-    ,const tdouble3* pos,const tfloat4* velrho,const typecode* code,const unsigned* idp
-    ,float& viscdt,tfloat3* ace)const;
+    ,const tdouble3* pos,const tfloat4* velrho,const typecode* code
+    ,const unsigned* idp,float& viscdt,tfloat3* ace)const;
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,bool mdbc2>
     void Interaction_ForcesCpuT(const stinterparmsc& t,StInterResultc& res)const;

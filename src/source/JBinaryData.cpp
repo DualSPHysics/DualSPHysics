@@ -510,7 +510,6 @@ void JBinaryDataArray::AddTexts(size_t count,const std::string* strs
 /// Devuelve puntero de datos comprobando que tenga datos.
 /// Returns pointer and check is pointer is populated with data.
 //==============================================================================
-
 const void* JBinaryDataArray::GetDataPointer()const{
   if(!DataInPointer())Run_Exceptioon("There are not available data in pointer.");
   return(Pointer);
@@ -522,7 +521,6 @@ const void* JBinaryDataArray::GetDataPointer()const{
 /// Copies data of the pointer or FileData indicated pointer and returns
 /// the number of elements.
 //==============================================================================
-
 size_t JBinaryDataArray::GetDataCopy(size_t size,void* pointer)const{
   if(!DataInPointer() && !DataInFile())Run_Exceptioon("There are not available data in Pointer or FileData.");
   const size_t stype=JBinaryDataDef::SizeOfType(GetType());
@@ -555,7 +553,6 @@ size_t JBinaryDataArray::GetDataCopy(size_t size,void* pointer)const{
 //==============================================================================
 /// Constructor.
 //==============================================================================
-
 JBinaryData::JBinaryData(std::string name):Name(name){ 
   ClassName="JBinaryData";
   Parent=NULL;
@@ -569,9 +566,8 @@ JBinaryData::JBinaryData(std::string name):Name(name){
 
 //==============================================================================
 /// Constructor de copias.
-/// Copu of constructor
+/// Copy constructor
 //==============================================================================
-
 JBinaryData::JBinaryData(const JBinaryData& src){
   ClassName="JBinaryData";
   Parent=NULL;

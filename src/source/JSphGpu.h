@@ -132,8 +132,8 @@ protected:
   //-Variables for mDBC (Opt).
   agfloat3*   BoundNor_g;   ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
   agfloat3*   MotionVel_g;  ///<Velocity of a moving boundary particle (Opt).
-  agfloat3*   MotionAce_g;  ///<Acceleration of a moving boundary (Opt).
-  agfloat*    BoundOnOff_g; ///<Boundary particle on off switch to multiply massp2 (Opt,Null).
+  agfloat3*   MotionAce_g;  ///<Acceleration of a moving boundary (Opt).                       //<vs_m2dbc>
+  agfloat*    BoundOnOff_g; ///<Boundary particle on off switch to multiply massp2 (Opt,Null). //<vs_m2dbc>
     
   //-Variables for compute step VERLET (Opt).
   agfloat4*   VelrhoM1_g;  ///<Verlet: in order to keep previous values (Opt).

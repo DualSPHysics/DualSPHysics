@@ -113,6 +113,7 @@
 #define KSTR(a) fun::KnumStr(a).c_str()
 #define KINTSW(a,thousep) fun::KintStr(a,thousep).c_str()
 #define KSTRSW(a,thousep) fun::KnumStr(a,thousep).c_str()
+#define BOOLCHR(a) (a? "True": "False")
 
 #include <ctime>
 #include <string>
