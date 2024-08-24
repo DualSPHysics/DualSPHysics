@@ -172,8 +172,8 @@ protected:
 
   TpVisco TVisco;             ///<Viscosity type: Artificial, Laminar...
   float Visco;                ///<Viscosity value.
-  float ViscoBoundFactor;     ///<For boundary interaction use Visco*ViscoBoundFactor.                  | Para interaccion con contorno usa Visco*ViscoBoundFactor.
-  JDsViscoInput* ViscoTime;   ///<Provides a viscosity value as a function of simulation time.          | Proporciona un valor de viscosidad en funcion del instante de la simulacion.
+  float ViscoBoundFactor;     ///<For boundary interaction use Visco*ViscoBoundFactor.
+  JDsViscoInput* ViscoTime;   ///<Provides a viscosity value as a function of simulation time.
 
   TpBoundary TBoundary;       ///<Boundary condition: DBC, M-DBC.
   TpSlipMode SlipMode;        ///<Slip mode for mDBC 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).

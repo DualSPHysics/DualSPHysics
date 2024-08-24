@@ -469,45 +469,43 @@ void JSphGpu::PrintAllocMemory(llong mcpu,llong mgpu)const{
 }
 
 //==============================================================================
+/// Loads constant data for GPU in ctes.
+/// Carga constantes para GPU en ctes.
+//==============================================================================
+void JSphGpu::GetConstantData(StCteInteraction& ctes)const{
+  memset(&ctes,0,sizeof(StCteInteraction));
+  //-Set mass particle values.
+  SetCtegMass(ctes,MassBound,MassFluid);
+  //-Set distance values depending on h and dp.
+  SetCtegKsize(ctes,KernelH,KernelSize,KernelSize2,PosCellSize
+    ,Eta2,float(Dp),Scell,MovLimit);
+  //-Wendland constants are always computed since this kernel is used in some parts where other kernels are not defined (e.g. mDBC, inlet/outlet...).
+  SetCtegKerWendland(ctes,KWend);
+  //-Copies constants for other kernels.
+  if(TKernel==KERNEL_Cubic)SetCtegKerCubic(ctes,KCubic);
+  //-Set values for density and pressure.
+  SetCtegRho(ctes,RhopZero,1.f/RhopZero,Gamma,float(Cs0),CteB);
+  //-Set values for DDT.
+  SetCtegDdt(ctes,DDTkh,DDTgz);
+  //-Set values on formulation options.
+  SetCtegOpts(ctes,Symmetry,unsigned(TBoundary));
+  //-Set values for open periodic boundaries.
+  SetCtegPeriodic(ctes,PeriActive,PeriXinc,PeriYinc,PeriZinc);
+  //-Set values for map definition.
+  SetCtegMap(ctes,MapRealPosMin,MapRealSize);
+  //-Set values depending on the assigned domain (can change).
+  //-MGDIV_Z is necessary to avoid errors in KerGetInteraction_Cells().
+  SetCtegDomain(ctes,MGDIV_Z,DomCellCode,DomPosMin);
+}
+
+//==============================================================================
 /// Uploads constants to the GPU.
 /// Copia constantes a la GPU.
 //==============================================================================
 void JSphGpu::ConstantDataUp(){
   StCteInteraction ctes;
-  memset(&ctes,0,sizeof(StCteInteraction));
-  ctes.nbound=CaseNbound;
-  ctes.massb=MassBound; ctes.massf=MassFluid;
-  ctes.kernelh=KernelH;
-  ctes.kernelsize2=KernelSize2; 
-  ctes.poscellsize=PosCellSize; 
-  //-Wendland constants are always computed since this kernel is used in some parts where other kernels are not defined (e.g. mDBC, inlet/outlet...).
-  ctes.awen=KWend.awen; ctes.bwenh=KWend.bwenh;
-  //-Copies constants for other kernels.
-  if(TKernel==KERNEL_Cubic){
-    ctes.cubic_a1=KCubic.a1; ctes.cubic_a2=KCubic.a2; ctes.cubic_aa=KCubic.aa; ctes.cubic_a24=KCubic.a24;
-    ctes.cubic_c1=KCubic.c1; ctes.cubic_c2=KCubic.c2; ctes.cubic_d1=KCubic.d1; ctes.cubic_odwdeltap=KCubic.od_wdeltap;
-  }
-  ctes.cs0=float(Cs0); ctes.eta2=Eta2;
-  ctes.ddtkh=DDTkh;
-  ctes.ddtgz=DDTgz;
-  ctes.scell=Scell; 
-  ctes.kernelsize=KernelSize;
-  ctes.dp=float(Dp);
-  ctes.cteb=CteB; ctes.gamma=Gamma;
-  ctes.rhopzero=RhopZero;
-  ctes.ovrhopzero=1.f/RhopZero;
-  ctes.movlimit=MovLimit;
-  ctes.maprealposminx=MapRealPosMin.x; ctes.maprealposminy=MapRealPosMin.y; ctes.maprealposminz=MapRealPosMin.z;
-  ctes.maprealsizex=MapRealSize.x; ctes.maprealsizey=MapRealSize.y; ctes.maprealsizez=MapRealSize.z;
-  ctes.symmetry=Symmetry;   //<vs_syymmetry>
-  ctes.tboundary=unsigned(TBoundary);
-  ctes.periactive=PeriActive;
-  ctes.xperincx=PeriXinc.x; ctes.xperincy=PeriXinc.y; ctes.xperincz=PeriXinc.z;
-  ctes.yperincx=PeriYinc.x; ctes.yperincy=PeriYinc.y; ctes.yperincz=PeriYinc.z;
-  ctes.zperincx=PeriZinc.x; ctes.zperincy=PeriZinc.y; ctes.zperincz=PeriZinc.z;
-  ctes.axis=MGDIV_Z;//-Necessary to avoid errors in KerGetInteraction_Cells().
-  ctes.cellcode=DomCellCode;
-  ctes.domposminx=DomPosMin.x; ctes.domposminy=DomPosMin.y; ctes.domposminz=DomPosMin.z;
+  GetConstantData(ctes);
+  //-Copy constants to GPU memory.
   cusph::CteInteractionUp(&ctes);
   Check_CudaErroor("Failed copying constants to GPU.");
 }

@@ -28,6 +28,7 @@
 //:#   aceptable. (15-09-2018)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
 //:# - Nuevo metodo NearbyPositionsLt(). (30-10-2020)
+//:# - Nuevo metodo NearbyPositionsColXY(). (27-07-2024)
 //:#############################################################################
 
 #include "JObject.h"
@@ -78,6 +79,8 @@ public:
 
   unsigned NearbyPositions(const tdouble3& ps,unsigned pignore,double dist);
   unsigned NearbyPositionsLt(const tdouble3& ps,unsigned pignore,double dist
+    ,std::vector<unsigned>& vsel)const;
+  unsigned NearbyPositionsColXY(const tdouble3& ps,unsigned pignore,double dist
     ,std::vector<unsigned>& vsel)const;
 
   unsigned GetCountSelect()const{ return(CountSelect); }

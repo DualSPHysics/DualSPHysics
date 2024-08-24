@@ -133,7 +133,7 @@ void JAppInfo::LogInit(std::string fname,bool mpirun,int mpirank,int mpilaunch){
   }
   //-Creates object for log.
   Log=new JLog2;
-  Log->Init(fname);
+  Log->Init(fname,mpirun,mpirank,mpilaunch);
 }
 #endif
 

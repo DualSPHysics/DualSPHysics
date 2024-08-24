@@ -728,6 +728,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JTimerCuda.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\source\JTrianglesMesh.h" />
     <ClInclude Include="..\source\JViscosityDef.h" />
     <ClInclude Include="..\source\JVtkLib.h" />
     <ClInclude Include="..\source\JVtkLibDef.h" />
@@ -899,6 +900,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\source\JTrianglesMesh.cpp" />
     <ClCompile Include="..\source\JWaveSpectrumGpu.cpp" />
     <ClCompile Include="..\source\JXml.cpp" />
     <ClCompile Include="..\source\main.cpp" />

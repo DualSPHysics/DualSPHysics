@@ -28,6 +28,7 @@
 #define _JSphGpu_ker_
 
 #include "DualSphDef.h"
+#include "JSphGpu_cte.h"
 #include "JCellDivDataGpu.h"
 #include <cuda_runtime_api.h>
 
@@ -35,43 +36,6 @@ class JLog2;
 
 #define SPHBSIZE 256
 
-/// Structure with constants stored in the constant memory of GPU for the particle interactions.
-typedef struct{
-  unsigned nbound;
-  float massb;              ///<Reference mass of the general boundary particle [kg].
-  float massf;              ///<Reference mass of the fluid particle [kg].
-  float kernelh;            ///<The smoothing length of SPH kernel [m].
-  float kernelsize2;        ///<Maximum interaction distance squared (KernelSize^2).
-  float poscellsize;        ///<Size of cells used for coding PosCell (it is usually KernelSize).
-  float awen;               ///<Wendland kernel constant (awen) to compute wab.
-  float bwenh;              ///<Wendland kernel constant (bwenh) to compute fac (kernel derivative).
-  float cs0;                ///<Speed of sound at the reference density.
-  float eta2;               ///<Constant related to H (Eta2=(h*0.1)*(h*0.1)).
-  float ddtkh;              ///<Constant for DDT1 & DDT2. DDTkh=DDTValue*KernelSize
-  float ddtgz;              ///<Constant for DDT2.        ddtgz=RhopZero*Gravity.z/CteB
-  float scell;              ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
-  float kernelsize;         ///<Maximum interaction distance between particles (KernelK*KernelH).
-  float dp;                 ///<Initial distance between particles [m].
-  float cteb;               ///<Constant used in the state equation [Pa].
-  float gamma;              ///<Politropic constant for water used in the state equation.
-  float rhopzero;           ///<Reference density of the fluid [kg/m3].
-  float ovrhopzero;         ///<ovrhopzero=1/RhopZero
-  float movlimit;
-  unsigned symmetry;   //<vs_syymmetry>
-  unsigned tboundary;  
-  unsigned periactive;
-  double xperincx,xperincy,xperincz;
-  double yperincx,yperincy,yperincz;
-  double zperincx,zperincy,zperincz;
-  double maprealposminx,maprealposminy,maprealposminz;
-  double maprealsizex,maprealsizey,maprealsizez;
-  //-Values depending on the assigned domain (can change). | Valores que dependen del dominio asignado (puden cambiar).
-  unsigned axis;
-  unsigned cellcode;
-  double domposminx,domposminy,domposminz;
-  //-Ctes. of Cubic Spline kernel.
-  float cubic_a1,cubic_a2,cubic_aa,cubic_a24,cubic_c1,cubic_d1,cubic_c2,cubic_odwdeltap;
-}StCteInteraction; 
 
 /// Structure to collect kernel information.
 typedef struct{

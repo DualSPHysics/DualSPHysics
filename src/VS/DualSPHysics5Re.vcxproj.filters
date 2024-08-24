@@ -529,6 +529,12 @@
     <ClInclude Include="..\source\JMotionData.h">
       <Filter>Common\JMotion</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_cte.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JTrianglesMesh.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -845,6 +851,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JMotionData.cpp">
       <Filter>Common\JMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JTrianglesMesh.cpp">
+      <Filter>Common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

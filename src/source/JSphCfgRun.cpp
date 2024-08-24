@@ -25,6 +25,9 @@
 
 using namespace std;
 
+//##############################################################################
+//# JSphCfgRun
+//##############################################################################
 //==============================================================================
 /// Constructor.
 //==============================================================================
@@ -37,9 +40,11 @@ JSphCfgRun::JSphCfgRun():JCfgRunBase(){
 /// Initialisation of variables.
 //==============================================================================
 void JSphCfgRun::Reset(){
-  PrintInfo=false; DirsDef=0;
+  PrintInfo=false;
+  DirsDef=0;
   Cpu=true;
-  Gpu=false; GpuId=-1; GpuFree=false;
+  Gpu=false;
+  GpuId=-1;
   Stable=false;
   SvPosDouble=-1;
   SvExtraParts="undefined";
@@ -52,7 +57,8 @@ void JSphCfgRun::Reset(){
   MdbcThreshold=-1;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
-  TStep=STEP_None; VerletSteps=-1;
+  TStep=STEP_None;
+  VerletSteps=-1;
   TKernel=KERNEL_None;
   TVisco=VISCO_None;
   Visco=0;
@@ -75,10 +81,14 @@ void JSphCfgRun::Reset(){
   RunName="";
   DirOut="";
   DirDataOut="data"; 
-  PartBegin=0; PartBeginFirst=0; PartBeginDir="";
+  PartBegin=0;
+  PartBeginFirst=0;
+  PartBeginDir="";
   RestartChrono=false;
   CFLnumber=-1;
-  RhopOutModif=false; RhopOutMin=700; RhopOutMax=1300;
+  RhopOutModif=false;
+  RhopOutMin=700;
+  RhopOutMax=1300;
   FtPause=-1;
   NstepsBreak=0;
   SvAllSteps=false;
@@ -95,10 +105,11 @@ void JSphCfgRun::VisuInfo()const{
   if(!FeatureList.empty())printf("Available features: %s.\n",FeatureList.c_str());
   printf("\n");
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
-  printf("Information about execution parameters:\n\n");
-  printf("  DualSPHysics [name_case [dir_out]] [options]\n\n");
+  printf("Information about execution parameters:\n");
+  printf("\n");
+  printf("  DualSPHysics [name_case [dir_out]] [options]\n");
+  printf("\n");
   printf("  General options:\n");
-//  printf("  Options:\n");
   printf("    -h          Shows information about parameters\n");
   printf("    -ver        Shows version information\n");
   printf("    -info       Shows version features in JSON format\n");
@@ -244,7 +255,6 @@ void JSphCfgRun::VisuConfig()const{
   fun::PrintVar("  PartBeginDir",PartBeginDir,ln);
   fun::PrintVar("  Cpu",Cpu,ln);
   printf("  %s  %s\n",fun::VarStr("Gpu",Gpu).c_str(),fun::VarStr("GpuId",GpuId).c_str());
-  fun::PrintVar("  GpuFree",GpuFree,ln);
   fun::PrintVar("  Stable",Stable,ln);
   fun::PrintVar("  SvPosDouble",SvPosDouble,ln);
   fun::PrintVar("  OmpThreads",OmpThreads,ln);
@@ -282,7 +292,9 @@ void JSphCfgRun::VisuConfig()const{
 //==============================================================================
 /// Loads execution parameters.
 //==============================================================================
-void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file){
+void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
+  ,const std::string& file)
+{
   if(lv>=10)Run_Exceptioon("No more than 10 levels of recursive configuration.");
   for(int c=0;c<optn;c++){
     const string opt=optlis[c];
@@ -293,8 +305,8 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
     }
     else if(opt[0]=='-'){
       //-Splits options in txoptfull, txopt1, txopt2, txopt3 and txopt4.
-      string txword,txoptfull,txopt1,txopt2,txopt3;
-      SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3);
+      string txword,txoptfull,txopt1,txopt2,txopt3,txopt4;
+      SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3,txopt4);
       //-Checks keywords in commands.
       if(txword=="CPU"){
         Cpu=Gpu=false; 
@@ -313,7 +325,8 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
       else if(txword=="SVEXTRAPARTS")SvExtraParts=txoptfull;
 #ifdef OMP_USE
       else if(txword=="OMPTHREADS"){ 
-        OmpThreads=atoi(txoptfull.c_str()); if(OmpThreads<0)OmpThreads=0;
+        OmpThreads=atoi(txoptfull.c_str());
+        if(OmpThreads<0)OmpThreads=0;
       } 
 #endif
       else if(txword=="CELLMODE"){
@@ -341,7 +354,8 @@ void JSphCfgRun::LoadOpts(string* optlis,int optn,int lv,const std::string& file
       }
       else if(txword=="INITNORPART"){ InitParms.push_back(opt); }
       else if(txword=="SYMPLECTIC")TStep=STEP_Symplectic;
-      else if(txword=="VERLET"){ TStep=STEP_Verlet; 
+      else if(txword=="VERLET"){
+        TStep=STEP_Verlet; 
         if(txoptfull!="")VerletSteps=atoi(txoptfull.c_str()); 
       }
       else if(txword=="WENDLAND")TKernel=KERNEL_Wendland;

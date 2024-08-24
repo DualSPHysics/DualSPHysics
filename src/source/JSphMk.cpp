@@ -114,7 +114,8 @@ void JSphMk::Config(const JCaseParts* parts){
       case TpPartFloating:  code=CodeSetType(0,block.Type,c-MkListFixed-MkListMoving);  break;
       case TpPartFluid:     code=CodeSetType(0,block.Type,c-MkListBound);               break;
     }
-    JSphMkBlock* pmk=new JSphMkBlock(block.Type,block.GetMkType(),block.GetMk(),code,block.GetBegin(),block.GetCount());
+    JSphMkBlock* pmk=new JSphMkBlock(block.Type,block.GetMkType(),block.GetMk()
+      ,code,block.GetBegin(),block.GetCount());
     MkList.push_back(pmk);
   }
   //-Checks number of fluid blocks.

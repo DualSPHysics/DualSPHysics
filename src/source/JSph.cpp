@@ -554,7 +554,8 @@ void JSph::LoadConfig(const JSphCfgRun* cfg){
   CaseName=cfg->CaseName; 
   DirCase=fun::GetDirWithSlash(fun::GetDirParent(CaseName));
   CaseName=CaseName.substr(DirCase.length());
-  if(!CaseName.length())Run_Exceptioon("Name of the case for execution was not indicated.");
+  if(CaseName.empty())Run_Exceptioon(
+    "Name of the case for execution was not indicated.");
   RunName=(cfg->RunName.length()? cfg->RunName: CaseName);
   FileXml=DirCase+CaseName+".xml";
   PartBeginDir=cfg->PartBeginDir; 
@@ -1007,7 +1008,8 @@ void JSph::LoadConfigVarsExec(){
 /// Loads the case configuration to be executed.
 //==============================================================================
 void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
-  if(!fun::FileExists(FileXml))Run_ExceptioonFile("Case configuration was not found.",FileXml);
+  if(!fun::FileExists(FileXml))
+    Run_ExceptioonFile("Case configuration was not found.",FileXml);
   JXml xml;
   xml.LoadFile(FileXml);
   const JXml* cxml=&xml;
@@ -1047,7 +1049,6 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   CaseNfluid=parts.Count(TpPartFluid);
   CaseNbound=CaseNp-CaseNfluid;
   CaseNpb=CaseNbound-CaseNfloat;
-  
   NpDynamic=ReuseIds=false;
   TotalNp=CaseNp; IdMax=CaseNp-1;
 
@@ -2173,7 +2174,8 @@ void JSph::LoadCaseParticles(){
   Log->Print("Loading initial state of particles...");
   PartsLoaded=new JPartsLoad4(Cpu);
   PartsLoaded->LoadParticles(DirCase,CaseName,PartBegin,PartBeginDir);
-  PartsLoaded->CheckConfig(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid,Simulate2D,Simulate2DPosY,TpPeri(PeriActive));
+  PartsLoaded->CheckConfig(CaseNp,CaseNfixed,CaseNmoving,CaseNfloat,CaseNfluid
+    ,Simulate2D,Simulate2DPosY,TpPeri(PeriActive));
 
   if(PartBegin)RestartCheckData(PartsLoaded->GetPosSingle());
   Log->Printf("Loaded particles: %s",KINT(PartsLoaded->GetCount()));
@@ -3078,7 +3080,7 @@ void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
   TimerSim.Stop();
   //-Saves RunPARTs.csv
   if(SvData&SDAT_Info){
-    SaveRunPartsCsv(infoplus,TimerPart.GetElapsedTimeD()/1000.,TimerSim.GetElapsedTimeD()/1000.);
+    SaveRunPartsCsv(infoplus,TimerPart.GetSecs(),TimerSim.GetSecs());
   }
 
   //-Stores particle data and other information in bi4 format.
@@ -3091,7 +3093,7 @@ void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
       domainmax=MaxValues(domainmax,vdom[c].gethi());
     }
     JBinaryData* bdpart=DataBi4->AddPartInfo(Part,TimeStep,npsave,nout,Nstep
-      ,TimerPart.GetElapsedTimeD()/1000.,domainmin,domainmax,TotalNp);
+      ,TimerPart.GetSecs(),domainmin,domainmax,TotalNp);
     if(TStep==STEP_Symplectic)bdpart->SetvDouble("SymplecticDtPre",SymplecticDtPre);
     if(UseDEM)bdpart->SetvDouble("DemDtForce",DemDtForce); //(DEM)
     if(SvData&SDAT_Info){
@@ -3242,10 +3244,10 @@ void JSph::SaveData(unsigned npsave,const JDataArrays& arrays
   //-Computation of time.
   if(Part>PartIni || Nstep){
     TimerPart.Stop();
-    const double tpart=TimerPart.GetElapsedTimeD()/1000;
+    const double tpart=TimerPart.GetSecs();
     const double tseg=tpart/(TimeStep-TimeStepM1);
     TimerSim.Stop();
-    const double tcalc=TimerSim.GetElapsedTimeD()/1000;
+    const double tcalc=TimerSim.GetSecs();
     const double tleft=(tcalc/(TimeStep-TimeStepIni))*(TimeMax-TimeStep);
     const string xparttime=fun::PrintStr((TimeStep>=100? "%9.4f": (TimeStep>=10? "%9.5f": "%9.6f")),TimeStep);
     string xtseg=fun::PrintStr("%9.2f",tseg);

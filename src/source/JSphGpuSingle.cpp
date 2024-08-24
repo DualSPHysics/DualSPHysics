@@ -788,7 +788,7 @@ void JSphGpuSingle::RunGaugeSystem(double timestep){
 void JSphGpuSingle::ComputePips(bool run){
   if(run || DsPips->CheckRun(Nstep)){
     TimerSim.Stop();
-    const double timesim=TimerSim.GetElapsedTimeD()/1000.;
+    const double timesim=TimerSim.GetSecs();
     const unsigned sauxmemg=Arrays_Gpu->GetArraySize();
     aguint auxmemg("auxmemg",Arrays_Gpu,true);
     DsPips->ComputeGpu(Nstep,TimeStep,timesim,Np,Npb,NpbOk
@@ -947,7 +947,7 @@ void JSphGpuSingle::SaveData(){
     infoplus.memorynctalloc=infoplus.memorynctused=GetMemoryGpuNct();
     infoplus.memorynpalloc=infoplus.memorynpused=GetMemoryGpuNp();
     TimerSim.Stop();
-    infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
+    infoplus.timesim=TimerSim.GetSecs();
   }
   else infoplus.SetBasic(Np,npnormal,Np-Npb,CellDivSingle->GetNct());
 
@@ -993,8 +993,8 @@ void JSphGpuSingle::SaveExtraData(){
 /// Muestra y graba resumen final de ejecucion.
 //==============================================================================
 void JSphGpuSingle::FinishRun(bool stop){
-  const float tsim=TimerSim.GetElapsedTimeF()/1000.f;
-  const float ttot=TimerTot.GetElapsedTimeF()/1000.f;
+  const float tsim=(float)TimerSim.GetSecs();
+  const float ttot=(float)TimerTot.GetSecs();
   JSph::ShowResume(stop,tsim,ttot,true,"");
   Log->Print(" ");
   string hinfo,dinfo;

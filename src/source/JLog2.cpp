@@ -69,7 +69,9 @@ void JLog2::Reset(){
   FileName="";
   Ok=false;
   MpiRun=false;
-  MpiRank=0; MpiLaunch=0;
+  MpiRank=0;
+  MpiLaunch=0;
+  ForceFlush=false;
   if(Pf){
     if(Pf->is_open())Pf->close();
     delete Pf; Pf=NULL;
@@ -109,7 +111,8 @@ void JLog2::Init(std::string fname,bool mpirun,int mpirank,int mpilaunch){
 //==============================================================================
 void JLog2::Print(const std::string& tx,TpMode_Out mode,bool flush){
   if(Parent){ 
-    if(!tx.empty() && tx[0]=='\n')Parent->Print(string("\n")+ParentPrefix+tx.substr(1),mode,flush);
+    if(!tx.empty() && tx[0]=='\n')
+      Parent->Print(string("\n")+ParentPrefix+tx.substr(1),mode,flush);
     else Parent->Print(ParentPrefix+tx,mode,flush);
     return; 
   }
@@ -123,7 +126,7 @@ void JLog2::Print(const std::string& tx,TpMode_Out mode,bool flush){
     else printf("%s\n",tx.c_str());
   }
   if((mode&Out_File) && Pf)(*Pf) << tx << endl;
-  if(flush)fflush(stdout);
+  if(flush || ForceFlush)fflush(stdout);
 }
   
 //==============================================================================
@@ -131,7 +134,7 @@ void JLog2::Print(const std::string& tx,TpMode_Out mode,bool flush){
 //==============================================================================
 void JLog2::Print(const std::vector<std::string>& lines,TpMode_Out mode,bool flush){
   for(unsigned c=0;c<unsigned(lines.size());c++)Print(lines[c],mode,false);
-  if(flush)fflush(stdout);
+  if(flush || ForceFlush)fflush(stdout);
 }
   
 //==============================================================================
@@ -195,7 +198,7 @@ void JLog2::Printp(const std::string& prefix,const std::vector<std::string>& lin
   ,JLog2::TpMode_Out mode,bool flush)
 {
   for(unsigned c=0;c<unsigned(lines.size());c++)Printp(prefix,lines[c],mode,false);
-  if(flush)fflush(stdout);
+  if(flush || ForceFlush)fflush(stdout);
 }
   
 //==============================================================================
@@ -374,5 +377,4 @@ void JLog2::PrintFilesList(TpMode_Out mode,bool flush){
   const unsigned nf=FilesCount();
   if(nf)PrintFilesList("[Output files]"," ",mode,flush);
 }
-
 

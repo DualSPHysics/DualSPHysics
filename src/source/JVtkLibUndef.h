@@ -51,10 +51,25 @@ public:
   //==============================================================================
   // Different functions to create special VTK files.
   //==============================================================================
-  static void SaveVtkData(std::string fname,const JDataArrays& arrays,std::string posfield,bool createpath=true){}
-  static void SaveVtkCells(const std::string& fname,const tfloat3& posmin,const tuint3& cells,float scell,bool createpath=true){}
-  static void SaveVtkBoxes(const std::string& fname,unsigned nbox,const tfloat3* vbox,float sizemin=0,bool createpath=true){}
-  static void SaveVtkBoxes(const std::string& fname,unsigned nbox,const tdouble3* vbox,float sizemin=0,bool createpath=true){}
+  static void SaveVtkData(std::string fname,const JDataArrays& arrays
+    ,std::string posfield,bool createpath=true){}
+  static void SaveVtkLines(std::string file,bool svpoints,bool svlines
+    ,const std::vector<unsigned>& nodesline,const JDataArrays& datanodes
+    ,const JDataArrays* datasegs=NULL){}
+  static void SaveVtkLines2(std::string file,bool svpoints,bool svlines
+    ,const std::vector<tuint2>& lines,const JDataArrays& datanodes
+    ,const JDataArrays* datasegs=NULL){}
+  static void SaveVtkCells(const std::string& fname,const tfloat3& posmin
+    ,const tuint3& cells,float scell,bool createpath=true){}
+  static void SaveVtkBoxes(const std::string& fname,unsigned nbox
+    ,const tfloat3* vbox,float sizemin=0,bool createpath=true){}
+  static void SaveVtkBoxes(const std::string& fname,unsigned nbox
+    ,const tdouble3* vbox,float sizemin=0,bool createpath=true){}
+  static void LoadVtkTrianglesMesh(std::string file
+    ,JTrianglesMesh* tmesh){}
+  static void SaveVtkTrianglesMesh(std::string file
+    ,const JTrianglesMesh* tmesh){}
+
 
   //==============================================================================
   // Functions to create VTK files with shapes.

@@ -76,8 +76,10 @@ protected:
   std::ofstream* Pf;
   bool Ok;
   bool MpiRun;
-  int MpiRank,MpiLaunch;
+  int MpiRank;
+  int MpiLaunch;
   TpMode_Out ModeOutDef;
+  bool ForceFlush;
 
   std::vector<std::string> Warnings; ///<List of warnings.
 
@@ -93,6 +95,8 @@ public:
   void Reset();
   void Init(std::string fname,bool mpirun=false,int mpirank=0,int mpilaunch=0);
   void SetModeOutDef(TpMode_Out modeoutdef){ ModeOutDef=modeoutdef; }
+  void SetForceFlush(bool forceflush){ ForceFlush=forceflush; }
+
   void Print(const std::string& tx,TpMode_Out mode=Out_Default,bool flush=false);
   void Print(const std::vector<std::string>& lines,TpMode_Out mode=Out_Default,bool flush=false);
   void PrintDbg(const std::string& tx,TpMode_Out mode=Out_Default){ Print(tx,mode,true); }

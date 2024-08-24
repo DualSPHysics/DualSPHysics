@@ -47,6 +47,7 @@
 #include "JVtkLibDef.h"      //Defines DISABLE_VTKLIB to compile without VTK library and more options.
 
 class JShapeVtk;
+class JTrianglesMesh;
 
 //##############################################################################
 //# JVtkLib
@@ -85,15 +86,37 @@ public:
   // Different functions to create special VTK files.
   //==============================================================================
   /// Stores particle data in VTK file.
-  static void SaveVtkData(std::string fname,const JDataArrays& arrays,std::string posfield,bool createpath=true);
+  static void SaveVtkData(std::string fname,const JDataArrays& arrays
+    ,std::string posfield,bool createpath=true);
+
+  /// Saves lines with data as VTK geometry file.
+  static void SaveVtkLines(std::string file,bool svpoints,bool svlines
+    ,const std::vector<unsigned>& nodesline,const JDataArrays& datanodes
+    ,const JDataArrays* datasegs=NULL);
+
+  /// Saves lines with data as VTK geometry file.
+  static void SaveVtkLines2(std::string file,bool svpoints,bool svlines
+    ,const std::vector<tuint2>& lines,const JDataArrays& datanodes
+    ,const JDataArrays* datasegs=NULL);
 
   /// Generates a VTK file with map cells.
-  static void SaveVtkCells(const std::string& fname,const tfloat3& posmin,const tuint3& cells,float scell,bool createpath=true);
+  static void SaveVtkCells(const std::string& fname,const tfloat3& posmin
+    ,const tuint3& cells,float scell,bool createpath=true);
 
   /// Generates a VTK file with boxes.
-  static void SaveVtkBoxes(const std::string& fname,unsigned nbox,const tfloat3* vbox,float sizemin=0,bool createpath=true);
+  static void SaveVtkBoxes(const std::string& fname,unsigned nbox
+    ,const tfloat3* vbox,float sizemin=0,bool createpath=true);
   /// Generates a VTK file with boxes.
-  static void SaveVtkBoxes(const std::string& fname,unsigned nbox,const tdouble3* vbox,float sizemin=0,bool createpath=true);
+  static void SaveVtkBoxes(const std::string& fname,unsigned nbox
+    ,const tdouble3* vbox,float sizemin=0,bool createpath=true);
+
+
+  /// Loads triangles mesh from VTK geometry file.
+  static void LoadVtkTrianglesMesh(std::string file
+    ,JTrianglesMesh* tmesh);
+  /// Saves triangles mesh as VTK geometry file.
+  static void SaveVtkTrianglesMesh(std::string file
+    ,const JTrianglesMesh* tmesh);
 
   //==============================================================================
   // Functions to create VTK files with shapes.
@@ -220,7 +243,6 @@ public:
     ,tdouble3 mapposmin,tdouble3 mapposmax,double dist,std::string dirout
     ,unsigned nsel,const unsigned* partsel,unsigned np,const tdouble3* pos
     ,tfloat3* boundnor);
-
 
 };
 #endif

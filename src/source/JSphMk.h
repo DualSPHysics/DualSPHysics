@@ -58,13 +58,16 @@ public:
   const unsigned Begin;   ///<Id of the first particle of the block.
   const unsigned Count;   ///<Number of particles.
 
-  JSphMkBlock(TpParticles type,unsigned mktype,unsigned mk,typecode code,unsigned begin,unsigned count);
+  JSphMkBlock(TpParticles type,unsigned mktype,unsigned mk,typecode code
+    ,unsigned begin,unsigned count);
   void Reset();
 
   bool GetPosDefined()const{ return(PosDefined); }
   tdouble3 GetPosMin()const{ return(PosMin); }
   tdouble3 GetPosMax()const{ return(PosMax); }
-  void SetPosMinMax(const tdouble3& pmin,const tdouble3& pmax){ PosDefined=true; PosMin=pmin; PosMax=pmax; }
+  void SetPosMinMax(const tdouble3& pmin,const tdouble3& pmax){ 
+    PosDefined=true; PosMin=pmin; PosMax=pmax;
+  }
 };
 
 

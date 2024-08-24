@@ -2397,4 +2397,3 @@ void JGaugeForce::CalculeGpu(const StDataGpu& datagpu){
 
 #endif
 
-

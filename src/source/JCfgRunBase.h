@@ -113,7 +113,7 @@ public:
 
   virtual void VisuInfo()const=0;
   virtual void VisuConfig()const=0;
-  virtual void LoadOpts(std::string* optlis,int optn,int lv,const std::string& file)=0;
+  virtual void LoadOpts(const std::string* optlis,int optn,int lv,const std::string& file)=0;
   virtual void ValidaCfg()=0;
 };
 

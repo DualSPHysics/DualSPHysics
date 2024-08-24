@@ -732,4 +732,3 @@ void JGaugeSystem::SaveResults(unsigned cpart){
   for(unsigned cg=0;cg<ng;cg++)Gauges[cg]->SaveResults(cpart);
 }
 
-

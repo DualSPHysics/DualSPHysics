@@ -24,6 +24,7 @@
 //:#   y en Linux usando gettimeofday(). (10-01-2011)
 //:# - Traduccion de comentarios al ingles. (10-02-2012)
 //:# - Se anhadio el flag Started para controlar si estaba inicializado. (22-05-2012)
+//:# - Nuevo metodo GetSecs(). (14-08-2024)
 //:#############################################################################
 
 /// \file JTimer.h \brief Declares the class \ref JTimer.
@@ -66,6 +67,7 @@ public:
   //-Returns time in milliseconds.
   float GetElapsedTimeF()const{ return((float(GetElapsed().QuadPart)*float(1000))/float(Freq.QuadPart)); }
   double GetElapsedTimeD()const{ return((double(GetElapsed().QuadPart)*double(1000))/double(Freq.QuadPart)); }
+  double GetSecs()const{ return(GetElapsedTimeD()/1000); }
 };
 
 #else
@@ -103,6 +105,7 @@ public:
   double GetElapsedTimeD()const{
     return((CounterEnd.tv_sec-CounterIni.tv_sec)*1000+(double(CounterEnd.tv_usec)/1000.0)-(double(CounterIni.tv_usec)/1000.0));
   }
+  double GetSecs()const{ return(GetElapsedTimeD()/1000); }
 };
 
 #endif

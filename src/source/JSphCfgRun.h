@@ -39,7 +39,6 @@ public:
   bool Cpu;
   bool Gpu;
   int GpuId;
-  bool GpuFree;
   bool Stable;
   int SvPosDouble;  ///<Saves particle position using double precision (default=0)
   std::string SvExtraParts;   ///<Part interval (or list) for saving extra data for restart option (default=empty=disabled)
@@ -103,7 +102,7 @@ public:
   void SetFeatureList(std::string list){ FeatureList=list; }
   void VisuInfo()const;
   void VisuConfig()const;
-  void LoadOpts(std::string* optlis,int optn,int lv,const std::string& file);
+  void LoadOpts(const std::string* optlis,int optn,int lv,const std::string& file);
   void ValidaCfg(){}
 };
 

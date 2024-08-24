@@ -244,6 +244,7 @@ inline tdouble3 operator *(const tdouble3& a, const double& b){ return(TDouble3(
 inline tdouble3 operator /(const tdouble3& a, const double& b){ return(TDouble3(a.x/b,a.y/b,a.z/b)); }
 inline tdouble3 MinValues(const tdouble3& a, const tdouble3& b){ return(TDouble3((a.x<=b.x? a.x: b.x),(a.y<=b.y? a.y: b.y),(a.z<=b.z? a.z: b.z))); }
 inline tdouble3 MaxValues(const tdouble3& a, const tdouble3& b){ return(TDouble3((a.x>=b.x? a.x: b.x),(a.y>=b.y? a.y: b.y),(a.z>=b.z? a.z: b.z))); }
+inline double   TDouble3Get(const tdouble3& a,unsigned c){ return(!c? a.x: (c==1? a.y: a.z)); }
 
 ///Converts \ref tuint3 to \ref tint3.
 inline tint3 ToTInt3(const tuint3& v){ return(TInt3(int(v.x),int(v.y),int(v.z))); }
@@ -520,6 +521,11 @@ inline bool operator ==(const tmatrix4d& a, const tmatrix4d& b){ return(a.a11==b
 inline bool operator !=(const tmatrix4d& a, const tmatrix4d& b){ return(a.a11!=b.a11 || a.a12!=b.a12 || a.a13!=b.a13 || a.a14!=b.a14 || a.a21!=b.a21 || a.a22!=b.a22 || a.a23!=b.a23 || a.a24!=b.a24 || a.a31!=b.a31 || a.a32!=b.a32 || a.a33!=b.a33 || a.a34!=b.a34 || a.a41!=b.a41 || a.a42!=b.a42 || a.a43!=b.a43 || a.a44!=b.a44); }
 inline tdouble3 MatrixMulPoint(const tmatrix4d& m,const tdouble3& p){ return(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z + m.a14, m.a21*p.x + m.a22*p.y + m.a23*p.z + m.a24, m.a31*p.x + m.a32*p.y + m.a33*p.z + m.a34)); }
 inline tfloat3 MatrixMulPointNormal(const tmatrix4d& m,const tfloat3& p){ return(ToTFloat3(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z, m.a21*p.x + m.a22*p.y + m.a23*p.z, m.a31*p.x + m.a32*p.y + m.a33*p.z))); }
+
+///Converts \ref tmatrix4d to \ref tmatrix4f.
+inline tmatrix4f ToTMatrix4f(const tmatrix4d &m){ return(TMatrix4f(float(m.a11),float(m.a12),float(m.a13),float(m.a14),float(m.a21),float(m.a22),float(m.a23),float(m.a24),float(m.a31),float(m.a32),float(m.a33),float(m.a34),float(m.a41),float(m.a42),float(m.a43),float(m.a44))); }
+///Converts \ref tmatrix4f to \ref tmatrix4d.
+inline tmatrix4d ToTMatrix4d(const tmatrix4f &m){ return(TMatrix4d(m.a11,m.a12,m.a13,m.a14,m.a21,m.a22,m.a23,m.a24,m.a31,m.a32,m.a33,m.a34,m.a41,m.a42,m.a43,m.a44)); }
 
 
 ///Matrix of 6x6 values of type float.

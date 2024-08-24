@@ -322,6 +322,7 @@ std::string VarKStr(const std::string& name,unsigned value);
 
 std::string VarStr(const std::string& name,unsigned n,const int* values,std::string size="?");
 std::string VarStr(const std::string& name,unsigned n,const unsigned* values,std::string size="?");
+std::string VarStr(const std::string& name,unsigned n,const ullong* values,std::string size="?");
 std::string VarStr(const std::string& name,unsigned n,const word* values,std::string size="?");
 std::string VarStr(const std::string& name,unsigned n,const float* values,std::string size="?",const char* fmt="%f");
 std::string VarStr(const std::string& name,unsigned n,const double* values,std::string size="?",const char* fmt="%f");

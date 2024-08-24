@@ -998,7 +998,7 @@ void JSphCpuSingle::RunGaugeSystem(double timestep){
 void JSphCpuSingle::ComputePips(bool run){
   if(run || DsPips->CheckRun(Nstep)){
     TimerSim.Stop();
-    const double timesim=TimerSim.GetElapsedTimeD()/1000.;
+    const double timesim=TimerSim.GetSecs();
     DsPips->ComputeCpu(Nstep,TimeStep,timesim,CSP,OmpThreads,Np,Npb
       ,NpbOk,DivData,Dcell_c->cptr(),Pos_c->cptr());
   }
@@ -1150,7 +1150,7 @@ void JSphCpuSingle::SaveData(){
     infoplus.SetNpExtra(NpbOk,Npb-NpbOk,Np-Npb,NpbPer,NpfPer);
     infoplus.memorycpualloc=GetAllocMemoryCpu();
     TimerSim.Stop();
-    infoplus.timesim=TimerSim.GetElapsedTimeD()/1000.;
+    infoplus.timesim=TimerSim.GetSecs();
   }
   else infoplus.SetBasic(Np,npnormal,Np-Npb,CellDivSingle->GetNct());
 
@@ -1191,8 +1191,8 @@ void JSphCpuSingle::SaveExtraData(){
 /// Muestra y graba resumen final de ejecucion.
 //==============================================================================
 void JSphCpuSingle::FinishRun(bool stop){
-  const float tsim=TimerSim.GetElapsedTimeF()/1000.f;
-  const float ttot=TimerTot.GetElapsedTimeF()/1000.f;
+  const float tsim=(float)TimerSim.GetSecs();
+  const float ttot=(float)TimerTot.GetSecs();
   JSph::ShowResume(stop,tsim,ttot,true,"");
   Log->Print(" ");
   string hinfo,dinfo;

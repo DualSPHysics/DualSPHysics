@@ -24,6 +24,7 @@
 #include "DualSphDef.h"
 #include "JDsTimersGpu.h"
 #include "JCellDivDataGpu.h"
+#include "JSphGpu_cte.h"
 #include "JSph.h"
 #include "JArraysCpu.h"
 #include "JArraysGpu.h"
@@ -194,6 +195,7 @@ protected:
   llong GetAllocMemoryGpu()const;
   void PrintAllocMemory(llong mcpu,llong mgpu)const;
 
+  void GetConstantData(StCteInteraction& ctes)const;
   void ConstantDataUp();
   void ParticlesDataUp(unsigned n,const tfloat3* boundnor);
   unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code

@@ -67,7 +67,7 @@ void JMotionPos::RotateXYZ(const tdouble3& ang,const tdouble3& rot_center
 }
 
 //==============================================================================
-// Aplica rotacion realtiva a partir de la rotación anterior y la nueva.
+// Aplica rotacion realtiva a partir de la rotacion anterior y la nueva.
 //==============================================================================
 void JMotionPos::RotateXYZ(const tdouble3& previous_ang,const tdouble3& new_ang,const tdouble3& rot_center
   ,const char* axes,const bool intrinsic)

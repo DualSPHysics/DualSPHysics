@@ -254,7 +254,7 @@ double TriangleArea(const tdouble3& p1,const tdouble3& p2,const tdouble3& p3){
   //Se hace el producto cruz.
   //Computes the cross product.
   double Vi=PQy*PRz-PRy*PQz;
-  double Vj=-(PQx*PRz-PRx*PQz);
+  double Vj=PRx*PQz-PQx*PRz;
   double Vk=PQx*PRy-PRx*PQy;
   //Se obtiene el area del triangulo que es igual a la mitad de la magnitud del vector resultante.
   //Obtains the triangle area that equals half the magnitude of the resulting vector.

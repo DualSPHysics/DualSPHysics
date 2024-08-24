@@ -239,3 +239,34 @@ unsigned JSimpleNeigs::NearbyPositionsLt(const tdouble3& ps,unsigned pignore
   return(unsigned(vsel.size()));
 }
 
+//==============================================================================
+/// Store nearby positions in vector vsel and returns number of selected positions.
+/// Looks for positions with the same X and Y, and computes distance in Z.
+/// Guarda las posiciones cercanas en vsel y devuelve el numero de posiciones 
+/// seleccionadas. Busca posiciones en la misma X e Y, y compruba distancia en Z.
+//==============================================================================
+unsigned JSimpleNeigs::NearbyPositionsColXY(const tdouble3& ps,unsigned pignore
+  ,double dist,std::vector<unsigned>& vsel)const
+{
+  vsel.clear();
+  //printf("==> pos:(%f,%f,%f)\n",ps.x,ps.y,ps.z);
+  tint3 celmin,celmax;
+  GetNearbyCells(ps,dist,celmin,celmax);
+  //printf("==> NearbyCells:%s\n",fun::Int3RangeStr(celmin,celmax).c_str());
+  for(int cz=celmin.z;cz<=celmax.z;cz++)for(int cy=celmin.y;cy<=celmax.y;cy++){
+    const unsigned cmin=GetCell(TInt3(celmin.x,cy,cz));
+    const unsigned cmax=GetCell(TInt3(celmax.x,cy,cz));
+    const unsigned pini=BeginCell[cmin];
+    const unsigned pfin=BeginCell[cmax+1];
+    for(unsigned cp=pini;cp<pfin;cp++){
+      const unsigned p=PosInCell[cp];
+      const tdouble3 ps2=Pos[p];
+      if(ps.x==ps2.x && ps.y==ps2.y){
+        const double ds=fabs(ps.z-ps2.z);
+        if(ds<=dist && p!=pignore)vsel.push_back(p);
+      }
+    }
+  }
+  return(unsigned(vsel.size()));
+}
+

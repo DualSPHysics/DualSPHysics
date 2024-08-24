@@ -168,7 +168,7 @@ bool JTimeControl::CheckRealTime(){
   //NumCheckTime++;
   bool ret=false;
   Timer.Stop();
-  const double t=Timer.GetElapsedTimeD()/1000.0;//-En segundos.
+  const double t=Timer.GetSecs();//-En segundos.
   //:printf("---------->nite:%u t:%f \n",IteNum,t);
   if(t>NextTime){
     ret=true;

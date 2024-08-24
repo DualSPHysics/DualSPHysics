@@ -789,7 +789,7 @@ void JCaseProperties::FilterMk(word mkboundfirst,word mkfluidfirst
       }
       v=rg.GetNextValue(v);
     }
-    //timer.Stop(); printf("\nTime of fast method: %.3f sec.\n\n",timer.GetElapsedTimeF()/1000.f); fflush(stdout);
+    //timer.Stop(); printf("\nTime of fast method: %.3f sec.\n\n",timer.GetSecs()); fflush(stdout);
   }
 
   //-Reorders MK's.

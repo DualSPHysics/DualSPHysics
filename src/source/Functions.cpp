@@ -1428,6 +1428,14 @@ std::string VarStr(const std::string& name,unsigned n,const unsigned* values
   return(tex+"]");
 }
 //==============================================================================
+std::string VarStr(const std::string& name,unsigned n,const ullong* values
+  ,std::string size)
+{
+  string tex=name+"["+(size=="?"? UintStr(n): size)+"]=[";
+  for(unsigned c=0;c<n;c++)tex=tex+(c? ",": "")+fun::UlongStr(values[c]);
+  return(tex+"]");
+}
+//==============================================================================
 std::string VarStr(const std::string& name,unsigned n,const word* values
   ,std::string size)
 {
