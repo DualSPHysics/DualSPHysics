@@ -560,9 +560,8 @@ void JSphGpuSingle::MdbcBoundCorrection(){
   if(SlipMode==SLIP_Vel0){
     const unsigned n=(UseNormalsFt? Np: NpbOk);
     cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,n,CaseNbound
-      ,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
-      ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
-      ,Velrho_g->ptr());
+      ,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr()
+      ,Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr(),Velrho_g->ptr());
   }
   else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
     const unsigned n=NpbOk;  //-Note that floating boidies are not supported by mDBC2.
@@ -577,6 +576,7 @@ void JSphGpuSingle::MdbcBoundCorrection(){
   else Run_Exceptioon("Error: SlipMode is invalid.");
   Timersg->TmStop(TMG_CfPreForces,true);
 }
+
 
 //==============================================================================
 /// Returns the maximum value of  (ace.x^2 + ace.y^2 + ace.z^2) from Acec[].

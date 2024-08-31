@@ -510,7 +510,7 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   }
   if(UseNormals){
     CellDivSingle->SortArray(BoundNor_c->ptr());
-    if(MotionVel_c){ //<vs_m2dbc_ini>
+    if(MotionVel_c || MotionAce_c){ //<vs_m2dbc_ini>
       CellDivSingle->SortArray(MotionVel_c->ptr());
       CellDivSingle->SortArray(MotionAce_c->ptr());
     } //<vs_m2dbc_end>

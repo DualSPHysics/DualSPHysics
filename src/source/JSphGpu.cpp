@@ -360,6 +360,9 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   FreeGpuMemoryParticles();
   //-Calculate number of partices to allocate memory.
   GpuParticlesSize=np+PARTICLES_OVERMEMORY_MIN;
+  //-Checks maximum number.
+  if(GpuParticlesSize>=unsigned(INT_MAX))
+    Run_Exceptioon("Particle number for allocation is too large.");
   //-Set size of arrays.
   Arrays_Gpu->SetArraySize(GpuParticlesSize);
   //-Create arrays for basic particle data.
@@ -402,6 +405,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
     Sps2Strain_g=new agsymatrix3f("Sps2Straing",Arrays_Gpu,false); //-NO INITIAL MEMORY.
   }
 
+  //-Check CUDA errors.
   Check_CudaErroor("Failed GPU memory allocation.");
 }
 

@@ -60,7 +60,6 @@ void ComputeStepSymplecticCor(bool floating,bool shift,bool inout,bool mdbc2
   ,float rhopoutmin,float rhopoutmax,tfloat3 gravity
   ,typecode* code,double2* movxy,double* movz,float4* velrho,cudaStream_t stm);
 
-
 }
 
 

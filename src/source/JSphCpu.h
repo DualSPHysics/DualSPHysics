@@ -134,7 +134,7 @@ protected:
 
   //-Variables for mDBC (Opt).
   acfloat3*   BoundNor_c;   ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
-  acfloat3*   MotionVel_c;  ///<Velocity of a moving boundary particle (Opt).
+  acfloat3*   MotionVel_c;  ///<Velocity of a moving boundary particle (Opt).                  //<vs_m2dbc>
   acfloat3*   MotionAce_c;  ///<Acceleration of a moving boundary (Opt).                       //<vs_m2dbc>
   acfloat*    BoundOnOff_c; ///<Boundary particle on off switch to multiply massp2 (Opt,Null). //<vs_m2dbc>
     
