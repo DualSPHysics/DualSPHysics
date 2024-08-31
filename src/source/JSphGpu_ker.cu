@@ -1334,11 +1334,9 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip>
             const float vfrz=frz*volp2;
 
             //===== Velocity =====
-            if(tslip!=SLIP_Vel0){
-              velp1.x+=vwab*velrhop2.x;
-              velp1.y+=vwab*velrhop2.y;
-              velp1.z+=vwab*velrhop2.z;
-            }
+            velp1.x+=vwab*velrhop2.x;
+            velp1.y+=vwab*velrhop2.y;
+            velp1.z+=vwab*velrhop2.z;
 
             //===== Matrix A for correction =====
             if(sim2d){

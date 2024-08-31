@@ -855,6 +855,9 @@
     <ClCompile Include="..\source\JTrianglesMesh.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\JSphCpu_mdbc.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuildStep Include="..\source\JSphGpu.h">

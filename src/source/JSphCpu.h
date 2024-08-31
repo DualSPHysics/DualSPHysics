@@ -225,6 +225,9 @@ protected:
     void Interaction_Forces_ct2(const stinterparmsc& t,StInterResultc& res)const;
   void Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)const;
 
+  //------------------------------------------
+  //-mDBC implementation in JSphCpu_mdbc.cpp
+  //------------------------------------------
   template<TpKernel tker,bool sim2d> void InteractionMdbcCorrectionT2
     (unsigned n,StDivDataCpu divdata,float mdbcthreshold
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
@@ -235,8 +238,12 @@ protected:
   void Interaction_MdbcCorrection(const StDivDataCpu& divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
     ,const tfloat3* boundnor,tfloat4* velrho);
+  //------------------------------------------
 
   //<vs_m2dbc_ini>
+  //------------------------------------------
+  //-mDBC2 implementation in JSphCpu_mdbc.cpp
+  //------------------------------------------
   float Mdbc2PressClone(bool sim2d,const float rhoghost,tfloat3 bnormalp1
     ,const tfloat3 gravity,const tfloat3 motacep1,const tfloat3 dpos)const;
   float Mdbc2InfNorm3x3(tmatrix3d mat)const;
@@ -253,6 +260,9 @@ protected:
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
     ,const tfloat3* boundnor,const tfloat3* motionvel,const tfloat3* motionace
     ,tfloat4* velrho,float* boundonoff);
+  void CopyMotionVelAce(unsigned nmoving,double dt,const unsigned* ridpmot
+    ,const tfloat4* velrho,tfloat3* motionvel,tfloat3* motionace)const;
+  //------------------------------------------
   //<vs_m2dbc_end>
 
   void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrho
@@ -279,8 +289,6 @@ protected:
     ,const unsigned* ridpmot,tdouble3* pos,unsigned* dcell,tfloat4* velrho,typecode* code)const;
   void MoveMatBound(unsigned np,unsigned ini,tmatrix4d m,double dt,const unsigned* ridpmot
     ,tdouble3* pos,unsigned* dcell,tfloat4* velrho,typecode* code,tfloat3* boundnor)const;
-  void CopyMotionVelAce(unsigned nmoving,double dt,const unsigned* ridpmot
-    ,const tfloat4* velrho,tfloat3* motionvel,tfloat3* motionace)const; //<vs_m2dbc>
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunRelaxZone(double dt);

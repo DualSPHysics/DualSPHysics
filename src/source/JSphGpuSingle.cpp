@@ -493,7 +493,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Boundary correction for mDBC.
   const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
   if(runmdbc)MdbcBoundCorrection(); 
-  const bool mdbc2=(runmdbc && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
+  const bool mdbc2=(runmdbc && SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
 
   InterStep=interstep;
   PreInteraction_Forces();

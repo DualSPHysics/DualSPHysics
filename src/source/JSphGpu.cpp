@@ -373,7 +373,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   //-Arrays for mDBC.
   if(UseNormals){
     BoundNor_g=new agfloat3("BoundNorg",Arrays_Gpu,true);
-    if(SlipMode!=SLIP_Vel0){ //<vs_m2dbc_ini>
+    if(SlipMode>=SLIP_NoSlip){ //<vs_m2dbc_ini>
       MotionVel_g =new agfloat3("MotionVelg" ,Arrays_Gpu,true);
       MotionAce_g =new agfloat3("MotionAceg" ,Arrays_Gpu,true);
       BoundOnOff_g=new agfloat( "BoundOnOffg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
@@ -625,7 +625,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
     StDivDataGpu divdatag;
     memset(&divdatag,0,sizeof(StDivDataGpu));
     #ifndef DISABLE_BSMODES
-      const bool mdbc2=(TBoundary==BC_MDBC && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
+      const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
       const StInterParmsg parms=StrInterParmsg(Simulate2D
         ,Symmetry  //<vs_syymmetry>
         ,TKernel,FtMode
@@ -808,7 +808,7 @@ void JSphGpu::PosInteraction_Forces(){
 //==============================================================================
 void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   Timersg->TmStart(TMG_SuComputeStep,false);
-  const bool mdbc2=(TBoundary==BC_MDBC && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
+  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=(ShiftingMode!=SHIFT_None);
   const bool inout=(InOut!=NULL);
   const float3* indirvel=(inout? InOut->GetDirVelg(): NULL);
@@ -845,7 +845,7 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
 //==============================================================================
 void JSphGpu::ComputeSymplecticPre(double dt){
   Timersg->TmStart(TMG_SuComputeStep,false);
-  const bool mdbc2=(TBoundary==BC_MDBC && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
+  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=false; //(ShiftingMode!=SHIFT_None); //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
   const bool inout=(InOut!=NULL);
   //-Assign memory to PRE variables.
@@ -883,7 +883,7 @@ void JSphGpu::ComputeSymplecticPre(double dt){
 //==============================================================================
 void JSphGpu::ComputeSymplecticCorr(double dt){
   Timersg->TmStart(TMG_SuComputeStep,false);
-  const bool mdbc2=(TBoundary==BC_MDBC && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
+  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=(ShiftingMode!=SHIFT_None);
   const bool inout=(InOut!=NULL);
   //-Allocate memory to compute the diplacement.

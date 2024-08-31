@@ -191,7 +191,7 @@ void JSph::InitVars(){
   ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
   Visco=0; ViscoBoundFactor=1;
   TBoundary=BC_DBC;
-  SlipMode=SLIP_Vel0;
+  SlipMode=SLIP_None;
   MdbcCorrector=false;
   MdbcThreshold=0;
   UseNormals=false;
@@ -846,9 +846,9 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   //-Aplies configuration using command line.
   if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
   if(cfg->SvExtraParts!="undefined")SvExtraParts=cfg->SvExtraParts;
-  if(cfg->TBoundary){
+  if(cfg->TBoundary>=0){
     TBoundary=BC_DBC;
-    SlipMode=SLIP_Vel0;
+    SlipMode=SLIP_None;
     MdbcThreshold=0;
     switch(cfg->TBoundary){
       case 1:  TBoundary=BC_DBC;   break;
@@ -868,7 +868,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
     if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip)Run_Exceptioon(
       "Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
   }
-  MdbcCorrector=(TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0);
+  MdbcCorrector=(SlipMode>=SLIP_NoSlip);
   UseNormals=(TBoundary==BC_MDBC);
     
   if(cfg->TStep)TStep=cfg->TStep;
@@ -1639,7 +1639,7 @@ void JSph::VisuConfig(){
   Log->Print(fun::VarStr("Viscosity",GetViscoName(TVisco)));
   Log->Print(fun::VarStr("  Visco",Visco));
   Log->Print(fun::VarStr("  ViscoBoundFactor",ViscoBoundFactor));
-  if(ViscoBoundFactor!=1.f && TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0)
+  if(ViscoBoundFactor!=1.f && SlipMode>=SLIP_NoSlip)
     Log->PrintWarning("ViscoBoundFactor should be 1.0 when mDBC no-slip or free slip is used.");
   if(ViscoTime)Log->Print(fun::VarStr("ViscoTime",ViscoTime->GetFile()));
   ConfigInfo=ConfigInfo+sep+"Visco_"+GetViscoName(TVisco)+fun::PrintStr("(%gb%g)",Visco,ViscoBoundFactor);

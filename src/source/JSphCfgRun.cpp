@@ -52,8 +52,8 @@ void JSphCfgRun::Reset(){
   SvTimers=true;
   CellMode=CELLMODE_Full;
   CellDomFixed=false;
-  TBoundary=0;
-  SlipMode=0;
+  TBoundary=-1;
+  SlipMode=-1;
   MdbcThreshold=-1;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
@@ -342,16 +342,28 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         if(!ok)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="CELLFIXED")CellDomFixed=OptIsEnabled(txoptfull);
-      else if(txword=="DBC")          { TBoundary=1; SlipMode=0; }
-      else if(txword=="MDBC")         { TBoundary=2; SlipMode=1; }
-      else if(txword=="MDBC_NOSLIP")  { TBoundary=2; SlipMode=2; }
-      //else if(txword=="MDBC_FREESLIP"){ TBoundary=2; SlipMode=3; }
+      else if(txword=="DBC"){
+        TBoundary=int(BC_DBC);
+        SlipMode=int(SLIP_None);
+      }
+      else if(txword=="MDBC"){
+        TBoundary=int(BC_MDBC);
+        SlipMode=int(SLIP_Vel0);
+      }
+      else if(txword=="MDBC_NOSLIP"){
+        TBoundary=int(BC_MDBC);
+        SlipMode=int(SLIP_NoSlip);
+      }
+      //else if(txword=="MDBC_FREESLIP"){
+      //  TBoundary=int(BC_MDBC);
+      //  SlipMode=int(SLIP_FreeSlip);
+      //}
       else if(txword=="MDBC_THRESHOLD"){ 
         MdbcThreshold=float(atof(txoptfull.c_str())); 
         if(MdbcThreshold<0 || MdbcThreshold>1.f)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="INITNORPLA"){
-        InitParms.push_back(opt); //if(TBoundary==1){ TBoundary=2; SlipMode=1; }//-Activates mDBC.
+        InitParms.push_back(opt);
       }
       else if(txword=="INITNORPART"){ InitParms.push_back(opt); }
       else if(txword=="SYMPLECTIC")TStep=STEP_Symplectic;

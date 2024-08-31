@@ -422,15 +422,16 @@ typedef enum{
 
 ///Types of boundary conditions.
 typedef enum{ 
-  BC_MDBC=2,   ///<M-DBC.
-  BC_DBC=1     ///<Dynamic Boundary Condition (DBC).
+  BC_DBC=1    ///<Dynamic Boundary Condition (DBC).
+ ,BC_MDBC=2   ///<mDBC.
 }TpBoundary;
 
-///Types of boundary conditions. 
+///Slip modes for mDBC. 
 typedef enum{ 
-  SLIP_FreeSlip=3,  ///<Free slip
-  SLIP_NoSlip=2,    ///<No-slip
-  SLIP_Vel0=1       ///<DBC vel=0
+  SLIP_None=0      ///<mDBC is not used.
+ ,SLIP_Vel0=1      ///<mDBC original: DBC vel=0
+ ,SLIP_NoSlip=2    ///<mDBC2 slip mode: No-slip
+ ,SLIP_FreeSlip=3  ///<mDBC2 slip mode: Free slip (in development).
 }TpSlipMode;
 
 ///Types of interaction step.
