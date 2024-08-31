@@ -20,6 +20,7 @@
 
 #include "JSphGpuSingle.h"
 #include "JCellDivGpuSingle.h"
+#include "JSphGpu_mdbc_iker.h"
 #include "JSphMk.h"
 #include "JPartsLoad4.h"
 #include "Functions.h"

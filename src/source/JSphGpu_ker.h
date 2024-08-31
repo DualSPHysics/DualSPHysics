@@ -192,22 +192,6 @@ void ComputeVelMod(unsigned n,const float4* vel,float* velmod);
 //-Kernels for the force calculation.
 void Interaction_Forces(const StInterParmsg& t);
 
-//-Kernels for the boundary correction (mDBC).
-void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d,unsigned n
-  ,unsigned nbound,const StDivDataGpu& dvd,const tdouble3& mapposmin
-  ,const double2* posxy,const double* posz,const float4* poscell
-  ,const typecode* code,const unsigned* idp,const float3* boundnor
-  ,float4* velrho,cudaStream_t stm=NULL);
-
-//-Kernels for the boundary correction (mDBC2). //<vs_m2dbc_ini>
-void Interaction_Mdbc2Correction(TpKernel tkernel,bool simulate2d
-  ,TpSlipMode slipmode,unsigned n,unsigned nbound,const tfloat3 gravity
-  ,const StDivDataGpu& dvd,const tdouble3& mapposmin,const double2* posxy
-  ,const double* posz,const float4* poscell,const typecode* code
-  ,const unsigned* idp,const float3* boundnor,const float3* motionvel
-  ,const float3* motionace,float4* velrho,float* boundonoff
-  ,cudaStream_t stm=NULL);                      //<vs_m2dbc_end>
-
 //-Kernels for the calculation of the DEM forces.
 void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
   ,const StDivDataGpu& dvd,const unsigned* dcell
@@ -242,9 +226,6 @@ void MoveLinBound(byte periactive,unsigned np,unsigned ini,tdouble3 mvpos,tfloat
   ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrho,typecode* code);
 void MoveMatBound(byte periactive,bool simulate2d,unsigned np,unsigned ini,tmatrix4d m,double dt
   ,const unsigned* ridpmot,double2* posxy,double* posz,unsigned* dcell,float4* velrho,typecode* code,float3* boundnor);
-void CopyMotionVelAce(unsigned nmoving,double dt,const unsigned* ridpmot
-  ,const float4* velrho,float3* motionvel,float3* motionace); //<vs_m2dbc>
-
 void FtNormalsUpdate(unsigned np,unsigned ini,tmatrix4d m,const unsigned* ridpmot,float3* boundnor);
 
 //-Kernels for MLPistons motion.

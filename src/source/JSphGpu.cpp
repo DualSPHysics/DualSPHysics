@@ -21,6 +21,7 @@
 #include "JSphGpu.h"
 #include "JException.h"
 #include "JSphGpu_ker.h"
+#include "JSphGpu_mdbc_iker.h"
 #include "JSphGpuSimple_ker.h"
 #include "JCellDivGpu.h"
 #include "JDsGpuInfo.h"
