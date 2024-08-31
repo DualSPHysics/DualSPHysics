@@ -225,6 +225,7 @@ protected:
     void Interaction_Forces_ct2(const stinterparmsc& t,StInterResultc& res)const;
   void Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)const;
 
+
   //------------------------------------------
   //-mDBC implementation in JSphCpu_mdbc.cpp
   //------------------------------------------
