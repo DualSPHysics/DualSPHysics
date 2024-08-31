@@ -523,7 +523,7 @@ std::string JSph::GetFeatureList(){
   if(AVAILABLE_CHRONO     )list=list+", Project Chrono coupling";
   if(AVAILABLE_MOORDYNPLUS)list=list+", MoorDynPlus coupling";
   if(AVAILABLE_WAVEGEN    )list=list+", Wave generation";
-  if(1)                    list=list+", mDBC no-slip"; //<vs_m2dbc>
+                           list=list+", mDBC no-slip"; //<vs_m2dbc>
   if(AVAILABLE_NUMEXLIB   )list=list+", Numex vars";
   if(AVAILABLE_VTKLIB     )list=list+", VTK output";
   #ifdef CODE_SIZE4
@@ -604,7 +604,11 @@ void JSph::LoadConfig(const JSphCfgRun* cfg){
   LoadCaseConfig(cfg);
 
   //-PIPS configuration.
-  if(cfg->PipsMode)DsPips=new JDsPips(Cpu,cfg->PipsSteps,(cfg->PipsMode==2),(TStep==STEP_Symplectic? 2: 1));
+  if(cfg->PipsMode){
+    const bool svdata=(cfg->PipsMode==2);
+    const int ntimes=(TStep==STEP_Symplectic? 2: 1);
+    DsPips=new JDsPips(Cpu,cfg->PipsSteps,svdata,ntimes);
+  }
 }
 
 //==============================================================================
@@ -861,8 +865,8 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   if(TBoundary==BC_MDBC){
     if(cfg->MdbcThreshold>=0)MdbcThreshold=cfg->MdbcThreshold;
     if(SlipMode!=SLIP_Vel0)MdbcThreshold=0;
-    if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip)
-      Run_Exceptioon("Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
+    if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip)Run_Exceptioon(
+      "Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
   }
   MdbcCorrector=(TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0);
   UseNormals=(TBoundary==BC_MDBC);
@@ -1049,6 +1053,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   CaseNfluid=parts.Count(TpPartFluid);
   CaseNbound=CaseNp-CaseNfluid;
   CaseNpb=CaseNbound-CaseNfloat;
+
   NpDynamic=ReuseIds=false;
   TotalNp=CaseNp; IdMax=CaseNp-1;
 

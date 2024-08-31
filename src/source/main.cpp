@@ -101,13 +101,15 @@ std::string getlicense_lgpl(const std::string& name,bool simple){
 //==============================================================================
 ///  Shows program version and JSON information and finishes the execution.
 //==============================================================================
-bool ShowsVersionInfo(int argc,char** argv){
+bool ShowsVersionInfo(int argc,char** argv,bool show=true){
   const string option=fun::StrLower(argc==2? argv[1]: "");
   bool finish=true;
   if(fun::StrRemoveAfter(option,":")=="-ver"){
     const string vtex=JCfgRunBase::VerText(AppInfo.GetFullName(),option);
-    printf("%s\n",vtex.c_str());
-    if(vtex==AppInfo.GetFullName())printf("%s",getlicense_lgpl(AppInfo.GetShortName(),true).c_str());
+    if(show){
+      printf("%s\n",vtex.c_str());
+      if(vtex==AppInfo.GetFullName())printf("%s",getlicense_lgpl(AppInfo.GetShortName(),true).c_str());
+    }
   }
   else if(option=="-info"){
     //-Defines the features included in the program.
@@ -128,7 +130,7 @@ bool ShowsVersionInfo(int argc,char** argv){
     info.push_back(fun::JSONProperty("Version"  ,AppInfo.GetMainVer()));
     info.push_back(fun::JSONProperty("Date"     ,AppInfo.GetDate()));
     info.push_back(fun::JSONPropertyValue("Features",fun::JSONObject(features)));
-    printf("%s\n",fun::JSONObject(info).c_str());
+    if(show)printf("%s\n",fun::JSONObject(info).c_str());
   }
   else finish=false;
   return(finish);
@@ -160,11 +162,11 @@ int main(int argc, char** argv){
   #endif
 
   AppInfo.ConfigRunPaths(argv[0]);
+  const std::string appname=AppInfo.GetFullName();
+  const std::string license=getlicense_lgpl(AppInfo.GetShortName(),false);
   if(ShowsVersionInfo(argc,argv))return(errcode);
-  std::string license=getlicense_lgpl(AppInfo.GetShortName(),false);
   printf("%s",license.c_str());
-  std::string appname=AppInfo.GetFullName();
-  std::string appnamesub=fun::StrFillEnd("","=",unsigned(appname.size())+1);
+  const std::string appnamesub=fun::StrFillEnd("","=",unsigned(appname.size())+1);
   printf("\n%s\n%s\n",appname.c_str(),appnamesub.c_str());
   JLog2* log=NULL;
   JSphCfgRun cfg;

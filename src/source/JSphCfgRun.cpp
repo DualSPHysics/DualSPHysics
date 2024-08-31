@@ -146,9 +146,9 @@ void JSphCfgRun::VisuInfo()const{
 
   printf("  Formulation options:\n");
   printf("    -dbc           Dynamic Boundary Condition DBC (by default)\n");
-  printf("    -mdbc          Modified Dynamic Boundary Condition mDBC (mode:vel=0)\n");
-  printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode:no-slip)\n");
-  //printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode:free-slip)\n");
+  printf("    -mdbc          Modified Dynamic Boundary Condition mDBC (vel=0 mode)\n");
+  printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (no-slip mode)\n");
+  //printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (free-slip mode)\n");
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
   //printf("    -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]\n");
   printf("\n");
@@ -317,6 +317,7 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         Gpu=true;
         if(txoptfull!="")GpuId=atoi(txoptfull.c_str()); 
       }
+
       else if(txword=="STABLE")Stable=OptIsEnabled(txoptfull);
       else if(txword=="SAVEPOSDOUBLE"){
         const int v=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
