@@ -193,9 +193,8 @@ void ComputeVelMod(unsigned n,const float4* vel,float* velmod);
 void Interaction_Forces(const StInterParmsg& t);
 
 //-Kernels for the boundary correction (mDBC).
-void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d
-  ,unsigned n,unsigned nbound,float mdbcthreshold
-  ,const StDivDataGpu& dvd,const tdouble3& mapposmin
+void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d,unsigned n
+  ,unsigned nbound,const StDivDataGpu& dvd,const tdouble3& mapposmin
   ,const double2* posxy,const double* posz,const float4* poscell
   ,const typecode* code,const unsigned* idp,const float3* boundnor
   ,float4* velrho,cudaStream_t stm=NULL);

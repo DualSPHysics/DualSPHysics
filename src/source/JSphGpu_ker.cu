@@ -1015,8 +1015,7 @@ __device__ float4 KerComputePosCell(const double3& ps,const double3& mapposmin
 /// Only for SlipMode==SLIP_Vel0 (DBC vel=0)
 //------------------------------------------------------------------------------
 template<TpKernel tker,bool sim2d>
-  __global__ void KerInteractionMdbcCorrection_Fast
-  (unsigned n,unsigned nbound,float mdbcthreshold
+  __global__ void KerInteractionMdbcCorrection_Fast(unsigned n,unsigned nbound
   ,double3 mapposmin,float poscellsize,const float4* poscell
   ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
   ,const double2* posxy,const double* posz,const typecode* code
@@ -1028,7 +1027,6 @@ template<TpKernel tker,bool sim2d>
     const float3 bnormalp1=boundnor[p1];
     if(bnormalp1.x!=0 || bnormalp1.y!=0 || bnormalp1.z!=0){
       float rhofinal=FLT_MAX;
-      float sumwab=0;
 
       //-Calculates ghost node position.
       double3 gposp1=make_double3(posxy[p1].x+bnormalp1.x,posxy[p1].y+bnormalp1.y,posz[p1]+bnormalp1.z);
@@ -1073,7 +1071,6 @@ template<TpKernel tker,bool sim2d>
 
             //===== Kernel values multiplied by volume =====
             const float vwab=wab*volp2;
-            sumwab+=vwab;
             const float vfrx=frx*volp2;
             const float vfry=fry*volp2;
             const float vfrz=frz*volp2;
@@ -1096,7 +1093,7 @@ template<TpKernel tker,bool sim2d>
 
       //-Store the results.
       //--------------------
-      if(sumwab>=mdbcthreshold || (mdbcthreshold>=2 && sumwab+2>=mdbcthreshold)){
+      {
         const float3 dpos=make_float3(-bnormalp1.x,-bnormalp1.y,-bnormalp1.z); //-Boundary particle position - ghost node position.
         if(sim2d){
           const double determ=cumath::Determinant3x3dbl(a_corr2);
@@ -1141,11 +1138,11 @@ template<TpKernel tker,bool sim2d>
 /// Calculates extrapolated data on boundary particles from fluid domain for mDBC.
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
-template<TpKernel tker,bool sim2d> void Interaction_MdbcCorrectionT2(
-  unsigned n,unsigned nbound,float mdbcthreshold
-  ,const StDivDataGpu& dvd,const tdouble3& mapposmin,const double2* posxy
-  ,const double* posz,const float4* poscell,const typecode* code
-  ,const unsigned* idp,const float3* boundnor,float4* velrho,cudaStream_t stm)
+template<TpKernel tker,bool sim2d> void Interaction_MdbcCorrectionT2(unsigned n
+  ,unsigned nbound,const StDivDataGpu& dvd,const tdouble3& mapposmin
+  ,const double2* posxy,const double* posz,const float4* poscell
+  ,const typecode* code,const unsigned* idp,const float3* boundnor
+  ,float4* velrho,cudaStream_t stm)
 {
   const int2* beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
   //-Interaction GhostBoundaryNodes-Fluid.
@@ -1153,25 +1150,24 @@ template<TpKernel tker,bool sim2d> void Interaction_MdbcCorrectionT2(
     const unsigned bsbound=128;
     dim3 sgridb=cusph::GetSimpleGridSize(n,bsbound);
     KerInteractionMdbcCorrection_Fast <tker,sim2d> <<<sgridb,bsbound,0,stm>>>
-      (n,nbound,mdbcthreshold,Double3(mapposmin),dvd.poscellsize
+      (n,nbound,Double3(mapposmin),dvd.poscellsize
       ,poscell,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
       ,posxy,posz,code,idp,boundnor,velrho);
   }
 }
 //==============================================================================
 template<TpKernel tker> void Interaction_MdbcCorrectionT(bool simulate2d
-  ,unsigned n,unsigned nbound,float mdbcthreshold
-  ,const StDivDataGpu& dvd,const tdouble3& mapposmin
+  ,unsigned n,unsigned nbound,const StDivDataGpu& dvd,const tdouble3& mapposmin
   ,const double2* posxy,const double* posz,const float4* poscell
   ,const typecode* code,const unsigned* idp,const float3* boundnor
   ,float4* velrho,cudaStream_t stm)
 {
   if(simulate2d){
-    Interaction_MdbcCorrectionT2 <tker,true > (n,nbound,mdbcthreshold,dvd
+    Interaction_MdbcCorrectionT2 <tker,true > (n,nbound,dvd
       ,mapposmin,posxy,posz,poscell,code,idp,boundnor,velrho,stm);
   }
   else{
-    Interaction_MdbcCorrectionT2 <tker,false> (n,nbound,mdbcthreshold,dvd
+    Interaction_MdbcCorrectionT2 <tker,false> (n,nbound,dvd
       ,mapposmin,posxy,posz,poscell,code,idp,boundnor,velrho,stm);
   }
 }
@@ -1180,20 +1176,19 @@ template<TpKernel tker> void Interaction_MdbcCorrectionT(bool simulate2d
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
 void Interaction_MdbcCorrection(TpKernel tkernel,bool simulate2d
-  ,unsigned n,unsigned nbound,float mdbcthreshold
-  ,const StDivDataGpu& dvd,const tdouble3& mapposmin
+  ,unsigned n,unsigned nbound,const StDivDataGpu& dvd,const tdouble3& mapposmin
   ,const double2* posxy,const double* posz,const float4* poscell
   ,const typecode* code,const unsigned* idp,const float3* boundnor
   ,float4* velrho,cudaStream_t stm)
 {
   switch(tkernel){
     case KERNEL_Wendland:{ const TpKernel tker=KERNEL_Wendland;
-      Interaction_MdbcCorrectionT <tker> (simulate2d,n,nbound,mdbcthreshold
+      Interaction_MdbcCorrectionT <tker> (simulate2d,n,nbound
         ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,velrho,stm);
     }break;
 #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:{ const TpKernel tker=KERNEL_Cubic;
-      Interaction_MdbcCorrectionT <tker> (simulate2d,n,nbound,mdbcthreshold
+      Interaction_MdbcCorrectionT <tker> (simulate2d,n,nbound
         ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,velrho,stm);
     }break;
 #endif

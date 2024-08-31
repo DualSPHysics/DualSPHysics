@@ -54,7 +54,6 @@ void JSphCfgRun::Reset(){
   CellDomFixed=false;
   TBoundary=-1;
   SlipMode=-1;
-  MdbcThreshold=-1;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
   TStep=STEP_None;
@@ -150,7 +149,6 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (no-slip mode)\n");
   //printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (free-slip mode)\n");
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
-  //printf("    -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]\n");
   printf("\n");
   printf("    -initnorpla:<inlinecfg>  Initialize definition for <boundnormal_plane>\n");
   printf("    -initnorpart:<inlinecfg> Initialize definition for <boundnormal_parts>\n");
@@ -358,10 +356,6 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
       //  TBoundary=int(BC_MDBC);
       //  SlipMode=int(SLIP_FreeSlip);
       //}
-      else if(txword=="MDBC_THRESHOLD"){ 
-        MdbcThreshold=float(atof(txoptfull.c_str())); 
-        if(MdbcThreshold<0 || MdbcThreshold>1.f)ErrorParm(opt,c,lv,file);
-      }
       else if(txword=="INITNORPLA"){
         InitParms.push_back(opt);
       }

@@ -560,7 +560,7 @@ void JSphGpuSingle::MdbcBoundCorrection(){
   if(SlipMode==SLIP_Vel0){
     const unsigned n=(UseNormalsFt? Np: NpbOk);
     cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,n,CaseNbound
-      ,MdbcThreshold,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
+      ,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
       ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
       ,Velrho_g->ptr());
   }

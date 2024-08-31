@@ -193,7 +193,6 @@ void JSph::InitVars(){
   TBoundary=BC_DBC;
   SlipMode=SLIP_None;
   MdbcCorrector=false;
-  MdbcThreshold=0;
   UseNormals=false;
   UseNormalsFt=false;
   SvNormals=false;
@@ -849,7 +848,6 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   if(cfg->TBoundary>=0){
     TBoundary=BC_DBC;
     SlipMode=SLIP_None;
-    MdbcThreshold=0;
     switch(cfg->TBoundary){
       case 1:  TBoundary=BC_DBC;   break;
       case 2:  TBoundary=BC_MDBC;  break;
@@ -863,8 +861,6 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
     }
   }
   if(TBoundary==BC_MDBC){
-    if(cfg->MdbcThreshold>=0)MdbcThreshold=cfg->MdbcThreshold;
-    if(SlipMode!=SLIP_Vel0)MdbcThreshold=0;
     if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip)Run_Exceptioon(
       "Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
   }
@@ -1615,10 +1611,8 @@ void JSph::VisuConfig(){
   if(TBoundary==BC_MDBC){
     Log->Print(fun::VarStr("  SlipMode",GetSlipName(SlipMode)));
     Log->Print(fun::VarStr("  mDBC-Corrector",MdbcCorrector));
-    Log->Print(fun::VarStr("  mDBC-Threshold",MdbcThreshold));
     ConfigInfo=ConfigInfo+"("+GetSlipName(SlipMode);
     if(MdbcCorrector)ConfigInfo=ConfigInfo+" - Corrector";
-    if(MdbcThreshold>0)ConfigInfo=ConfigInfo+fun::PrintStr(" - Threshold=%g",MdbcThreshold);
     ConfigInfo=ConfigInfo+")";
   }
   //-StepAlgorithm. 

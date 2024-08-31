@@ -34,9 +34,8 @@ using namespace std;
 /// Perform interaction between ghost nodes of boundaries and fluid.
 //==============================================================================
 template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbcCorrectionT2
-  (unsigned n,StDivDataCpu divdata,float mdbcthreshold
-  ,const tdouble3* pos,const typecode* code,const unsigned* idp
-  ,const tfloat3* boundnor,tfloat4* velrho)
+  (unsigned n,StDivDataCpu divdata,const tdouble3* pos,const typecode* code
+  ,const unsigned* idp,const tfloat3* boundnor,tfloat4* velrho)
 {
   const float determlimit=1e-3f;
   const int nn=int(n);
@@ -45,7 +44,6 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbcCorrectionT2
   #endif
   for(int p1=0;p1<nn;p1++)if(boundnor[p1]!=TFloat3(0)){
     float rhofinal=FLT_MAX;
-    float sumwab=0;
 
     //-Calculates ghost node position.
     tdouble3 gposp1=pos[p1]+ToTDouble3(boundnor[p1]);
@@ -86,7 +84,6 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbcCorrectionT2
 
           //===== Kernel values multiplied by volume =====
           const float vwab=wab*volp2;
-          sumwab+=vwab;
           const float vfrx=frx*volp2;
           const float vfry=fry*volp2;
           const float vfrz=frz*volp2;
@@ -109,7 +106,7 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbcCorrectionT2
 
     //-Store the results.
     //--------------------
-    if(sumwab>=mdbcthreshold || (mdbcthreshold>=2 && sumwab+2>=mdbcthreshold)){
+    {
       const tfloat3 dpos=(boundnor[p1]*(-1.f)); //-Boundary particle position - ghost node position.
       if(sim2d){
         const double determ=fmath::Determinant3x3(a_corr2);
@@ -158,8 +155,8 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbcCorrectionT2
 {
   //-Interaction GhostBoundaryNodes-Fluid.
   const unsigned n=(UseNormalsFt? Np: NpbOk);
-  if(Simulate2D)InteractionMdbcCorrectionT2 <tker,true >(n,divdata,MdbcThreshold,pos,code,idp,boundnor,velrho);
-  else          InteractionMdbcCorrectionT2 <tker,false>(n,divdata,MdbcThreshold,pos,code,idp,boundnor,velrho);
+  if(Simulate2D)InteractionMdbcCorrectionT2 <tker,true >(n,divdata,pos,code,idp,boundnor,velrho);
+  else          InteractionMdbcCorrectionT2 <tker,false>(n,divdata,pos,code,idp,boundnor,velrho);
 }
 
 //==============================================================================

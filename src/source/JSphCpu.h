@@ -229,10 +229,9 @@ protected:
   //------------------------------------------
   //-mDBC implementation in JSphCpu_mdbc.cpp
   //------------------------------------------
-  template<TpKernel tker,bool sim2d> void InteractionMdbcCorrectionT2
-    (unsigned n,StDivDataCpu divdata,float mdbcthreshold
-    ,const tdouble3* pos,const typecode* code,const unsigned* idp
-    ,const tfloat3* boundnor,tfloat4* velrho);
+  template<TpKernel tker,bool sim2d> void InteractionMdbcCorrectionT2(unsigned n
+    ,StDivDataCpu divdata,const tdouble3* pos,const typecode* code
+    ,const unsigned* idp,const tfloat3* boundnor,tfloat4* velrho);
   template<TpKernel tker> void Interaction_MdbcCorrectionT(const StDivDataCpu& divdata
     ,const tdouble3* pos,const typecode* code,const unsigned* idp
     ,const tfloat3* boundnor,tfloat4* velrho);
