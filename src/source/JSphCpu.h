@@ -215,10 +215,14 @@ protected:
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,bool mdbc2>
     void Interaction_ForcesCpuT(const stinterparmsc& t,StInterResultc& res)const;
-  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> void Interaction_Forces_ct5(const stinterparmsc& t,StInterResultc& res)const;
-  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco> void Interaction_Forces_ct4(const stinterparmsc& t,StInterResultc& res)const;
-  template<TpKernel tker,TpFtMode ftmode> void Interaction_Forces_ct3(const stinterparmsc& t,StInterResultc& res)const;
-  template<TpKernel tker> void Interaction_Forces_ct2(const stinterparmsc& t,StInterResultc& res)const;
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> 
+    void Interaction_Forces_ct5(const stinterparmsc& t,StInterResultc& res)const;
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco> 
+    void Interaction_Forces_ct4(const stinterparmsc& t,StInterResultc& res)const;
+  template<TpKernel tker,TpFtMode ftmode>
+    void Interaction_Forces_ct3(const stinterparmsc& t,StInterResultc& res)const;
+  template<TpKernel tker>
+    void Interaction_Forces_ct2(const stinterparmsc& t,StInterResultc& res)const;
   void Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)const;
 
   template<TpKernel tker,bool sim2d> void InteractionMdbcCorrectionT2

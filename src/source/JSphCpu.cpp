@@ -980,13 +980,16 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   float viscdt=res.viscdt;
   if(t.npf){
     //-Interaction Fluid-Fluid.
-    InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2> (t.npf,t.npb,false,Visco                 
-      ,t.divdata,t.dcell,t.spstaurho2,t.sps2strain,t.pos,t.velrho,t.code,t.idp,t.press,t.dengradcorr
+    InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2> 
+      (t.npf,t.npb,false,Visco,t.divdata,t.dcell,t.spstaurho2,t.sps2strain
+      ,t.pos,t.velrho,t.code,t.idp,t.press,t.dengradcorr
       ,t.boundnor,t.boundonoff,t.motionvel //<vs_m2dbc>
       ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
     //-Interaction Fluid-Bound.
-    InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2> (t.npf,t.npb,true ,Visco*ViscoBoundFactor
-      ,t.divdata,t.dcell,t.spstaurho2,t.sps2strain,t.pos,t.velrho,t.code,t.idp,t.press,NULL
+    const float viscb=Visco*ViscoBoundFactor;
+    InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2>
+      (t.npf,t.npb,true ,viscb,t.divdata,t.dcell,t.spstaurho2,t.sps2strain
+      ,t.pos,t.velrho,t.code,t.idp,t.press,NULL
       ,t.boundnor,t.boundonoff,t.motionvel //<vs_m2dbc>
       ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
 
@@ -995,7 +998,8 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       ,RidpMot+CaseNmoving,DemData,t.pos,t.velrho,t.code,t.idp,viscdt,t.ace);
 
     //-Computes tau for Laminar+SPS.
-    if(tvisco==VISCO_LaminarSPS)ComputeSpsTau(t.npf,t.npb,t.velrho,t.sps2strain,t.spstaurho2);
+    if(tvisco==VISCO_LaminarSPS)
+      ComputeSpsTau(t.npf,t.npb,t.velrho,t.sps2strain,t.spstaurho2);
   }
   if(t.npbok){
     //-Interaction Bound-Fluid.
