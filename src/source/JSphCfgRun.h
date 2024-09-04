@@ -47,9 +47,8 @@ public:
 
   TpCellMode CellMode;  ///<Cell division mode.
   bool CellDomFixed;    ///<The Cell domain is fixed according maximum domain size (default=false).
-  int TBoundary;        ///<Boundary method: 0:None, 1:DBC (by default), 2:mDBC (SlipMode: 1:DBC vel=0)
-  int SlipMode;         ///<Slip mode for mDBC: 0:None, 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).
-  float MdbcThreshold;  ///<Kernel support limit to apply mDBC correction (default=0).
+  int TBoundary;        ///<Boundary method: -1:None, 1:DBC (by default), 2:mDBC (SlipMode: 1:DBC vel=0)
+  int SlipMode;         ///<Slip mode for mDBC: -1:None, 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).
   std::vector<std::string> InitParms;
 
   TpStep TStep;
@@ -107,5 +106,4 @@ public:
 };
 
 #endif
-
 

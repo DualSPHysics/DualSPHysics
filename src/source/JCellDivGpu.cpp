@@ -361,6 +361,17 @@ void JCellDivGpu::SortDataArrays(const double2* a,const double* b,const float4* 
 }
 
 //==============================================================================
+/// Reorders data arrays according to SortPart (for 3x float3).
+/// Ordena arrays de datos segun SortPart (para 3x float3).
+//==============================================================================
+void JCellDivGpu::SortDataArrays(const float3* a,const float3* b,const float3* c
+  ,float3* a2,float3* b2,float3* c2)
+{
+  const unsigned pini=(DivideFull? 0: NpbFinal);
+  cudiv::SortDataParticles(Nptot,pini,SortPart,a,b,c,a2,b2,c2);
+}
+
+//==============================================================================
 /// Reorders data arrays according to SortPart (for type tsymatrix3f).
 /// Ordena arrays de datos segun SortPart (para tipo tsymatrix3f).
 //==============================================================================

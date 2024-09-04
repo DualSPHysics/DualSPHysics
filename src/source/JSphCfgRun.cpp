@@ -52,9 +52,8 @@ void JSphCfgRun::Reset(){
   SvTimers=true;
   CellMode=CELLMODE_Full;
   CellDomFixed=false;
-  TBoundary=0;
-  SlipMode=0;
-  MdbcThreshold=-1;
+  TBoundary=-1;
+  SlipMode=-1;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
   TStep=STEP_None;
@@ -146,11 +145,10 @@ void JSphCfgRun::VisuInfo()const{
 
   printf("  Formulation options:\n");
   printf("    -dbc           Dynamic Boundary Condition DBC (by default)\n");
-  printf("    -mdbc          Modified Dynamic Boundary Condition mDBC (mode:vel=0)\n");
-  printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode:no-slip)\n");
-  //printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode:free-slip)\n");
+  printf("    -mdbc          Modified Dynamic Boundary Condition mDBC (vel=0 mode)\n");
+  printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (no-slip mode)\n");
+  //printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (free-slip mode)\n");
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
-  //printf("    -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]\n");
   printf("\n");
   printf("    -initnorpla:<inlinecfg>  Initialize definition for <boundnormal_plane>\n");
   printf("    -initnorpart:<inlinecfg> Initialize definition for <boundnormal_parts>\n");
@@ -317,6 +315,7 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         Gpu=true;
         if(txoptfull!="")GpuId=atoi(txoptfull.c_str()); 
       }
+
       else if(txword=="STABLE")Stable=OptIsEnabled(txoptfull);
       else if(txword=="SAVEPOSDOUBLE"){
         const int v=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
@@ -341,18 +340,26 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         if(!ok)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="CELLFIXED")CellDomFixed=OptIsEnabled(txoptfull);
-      else if(txword=="DBC")          { TBoundary=1; SlipMode=0; }
-      else if(txword=="MDBC")         { TBoundary=2; SlipMode=1; }
-      else if(txword=="MDBC_NOSLIP")  { TBoundary=2; SlipMode=2; }
-      //else if(txword=="MDBC_FREESLIP"){ TBoundary=2; SlipMode=3; }
-      else if(txword=="MDBC_THRESHOLD"){ 
-        MdbcThreshold=float(atof(txoptfull.c_str())); 
-        if(MdbcThreshold<0 || MdbcThreshold>1.f)ErrorParm(opt,c,lv,file);
+      else if(txword=="DBC"){
+        TBoundary=int(BC_DBC);
+        SlipMode=int(SLIP_None);
       }
+      else if(txword=="MDBC"){
+        TBoundary=int(BC_MDBC);
+        SlipMode=int(SLIP_Vel0);
+      }
+      else if(txword=="MDBC_NOSLIP"){
+        TBoundary=int(BC_MDBC);
+        SlipMode=int(SLIP_NoSlip);
+      }
+      //else if(txword=="MDBC_FREESLIP"){
+      //  TBoundary=int(BC_MDBC);
+      //  SlipMode=int(SLIP_FreeSlip);
+      //}
       else if(txword=="INITNORPLA"){
-        InitParms.push_back(opt); //if(TBoundary==1){ TBoundary=2; SlipMode=1; }//-Activates mDBC.
+        InitParms.push_back(opt);
       }
-      else if(txword=="INITNORPART"){ InitParms.push_back(opt); }
+      else if(txword=="INITNORPART")InitParms.push_back(opt);
       else if(txword=="SYMPLECTIC")TStep=STEP_Symplectic;
       else if(txword=="VERLET"){
         TStep=STEP_Verlet; 

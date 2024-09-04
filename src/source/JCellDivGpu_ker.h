@@ -65,6 +65,8 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
 void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
   ,const double2* a,const double* b,const float4* c,double2* a2,double* b2,float4* c2);
 void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const float3* a,const float3* b,const float3* c,float3* a2,float3* b2,float3* c2);
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
   ,const tsymatrix3f* a,tsymatrix3f* a2);
 void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
   ,const float3* a,float3* a2);

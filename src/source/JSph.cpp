@@ -191,9 +191,8 @@ void JSph::InitVars(){
   ShiftingMode=(Shifting? Shifting->GetShiftMode(): SHIFT_None);
   Visco=0; ViscoBoundFactor=1;
   TBoundary=BC_DBC;
-  SlipMode=SLIP_Vel0;
+  SlipMode=SLIP_None;
   MdbcCorrector=false;
-  MdbcThreshold=0;
   UseNormals=false;
   UseNormalsFt=false;
   SvNormals=false;
@@ -523,7 +522,7 @@ std::string JSph::GetFeatureList(){
   if(AVAILABLE_CHRONO     )list=list+", Project Chrono coupling";
   if(AVAILABLE_MOORDYNPLUS)list=list+", MoorDynPlus coupling";
   if(AVAILABLE_WAVEGEN    )list=list+", Wave generation";
-  if(1)                    list=list+", mDBC no-slip"; //<vs_m2dbc>
+                           list=list+", mDBC no-slip"; //<vs_m2dbc>
   if(AVAILABLE_NUMEXLIB   )list=list+", Numex vars";
   if(AVAILABLE_VTKLIB     )list=list+", VTK output";
   #ifdef CODE_SIZE4
@@ -604,7 +603,11 @@ void JSph::LoadConfig(const JSphCfgRun* cfg){
   LoadCaseConfig(cfg);
 
   //-PIPS configuration.
-  if(cfg->PipsMode)DsPips=new JDsPips(Cpu,cfg->PipsSteps,(cfg->PipsMode==2),(TStep==STEP_Symplectic? 2: 1));
+  if(cfg->PipsMode){
+    const bool svdata=(cfg->PipsMode==2);
+    const int ntimes=(TStep==STEP_Symplectic? 2: 1);
+    DsPips=new JDsPips(Cpu,cfg->PipsSteps,svdata,ntimes);
+  }
 }
 
 //==============================================================================
@@ -842,10 +845,9 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   //-Aplies configuration using command line.
   if(cfg->SvPosDouble>=0)SvPosDouble=(cfg->SvPosDouble!=0);
   if(cfg->SvExtraParts!="undefined")SvExtraParts=cfg->SvExtraParts;
-  if(cfg->TBoundary){
+  if(cfg->TBoundary>=0){
     TBoundary=BC_DBC;
-    SlipMode=SLIP_Vel0;
-    MdbcThreshold=0;
+    SlipMode=SLIP_None;
     switch(cfg->TBoundary){
       case 1:  TBoundary=BC_DBC;   break;
       case 2:  TBoundary=BC_MDBC;  break;
@@ -859,12 +861,10 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
     }
   }
   if(TBoundary==BC_MDBC){
-    if(cfg->MdbcThreshold>=0)MdbcThreshold=cfg->MdbcThreshold;
-    if(SlipMode!=SLIP_Vel0)MdbcThreshold=0;
-    if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip)
-      Run_Exceptioon("Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
+    if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip)Run_Exceptioon(
+      "Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
   }
-  MdbcCorrector=(TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0);
+  MdbcCorrector=(SlipMode>=SLIP_NoSlip);
   UseNormals=(TBoundary==BC_MDBC);
     
   if(cfg->TStep)TStep=cfg->TStep;
@@ -1049,6 +1049,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   CaseNfluid=parts.Count(TpPartFluid);
   CaseNbound=CaseNp-CaseNfluid;
   CaseNpb=CaseNbound-CaseNfloat;
+
   NpDynamic=ReuseIds=false;
   TotalNp=CaseNp; IdMax=CaseNp-1;
 
@@ -1610,10 +1611,8 @@ void JSph::VisuConfig(){
   if(TBoundary==BC_MDBC){
     Log->Print(fun::VarStr("  SlipMode",GetSlipName(SlipMode)));
     Log->Print(fun::VarStr("  mDBC-Corrector",MdbcCorrector));
-    Log->Print(fun::VarStr("  mDBC-Threshold",MdbcThreshold));
     ConfigInfo=ConfigInfo+"("+GetSlipName(SlipMode);
     if(MdbcCorrector)ConfigInfo=ConfigInfo+" - Corrector";
-    if(MdbcThreshold>0)ConfigInfo=ConfigInfo+fun::PrintStr(" - Threshold=%g",MdbcThreshold);
     ConfigInfo=ConfigInfo+")";
   }
   //-StepAlgorithm. 
@@ -1634,7 +1633,7 @@ void JSph::VisuConfig(){
   Log->Print(fun::VarStr("Viscosity",GetViscoName(TVisco)));
   Log->Print(fun::VarStr("  Visco",Visco));
   Log->Print(fun::VarStr("  ViscoBoundFactor",ViscoBoundFactor));
-  if(ViscoBoundFactor!=1.f && TBoundary==BC_MDBC && SlipMode!=SLIP_Vel0)
+  if(ViscoBoundFactor!=1.f && SlipMode>=SLIP_NoSlip)
     Log->PrintWarning("ViscoBoundFactor should be 1.0 when mDBC no-slip or free slip is used.");
   if(ViscoTime)Log->Print(fun::VarStr("ViscoTime",ViscoTime->GetFile()));
   ConfigInfo=ConfigInfo+sep+"Visco_"+GetViscoName(TVisco)+fun::PrintStr("(%gb%g)",Visco,ViscoBoundFactor);

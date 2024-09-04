@@ -21,6 +21,7 @@
 #include "JSphGpu.h"
 #include "JException.h"
 #include "JSphGpu_ker.h"
+#include "JSphGpu_mdbc_iker.h"
 #include "JSphGpuSimple_ker.h"
 #include "JCellDivGpu.h"
 #include "JDsGpuInfo.h"
@@ -160,7 +161,8 @@ void JSphGpu::InitVars(){
   BoundNor_g=NULL;     //-mDBC
   MotionVel_g=NULL;    //-mDBC2  //<vs_m2dbc>
   MotionAce_g=NULL;    //-mDBC2  //<vs_m2dbc>
-  BoundOnOff_g=NULL;   //-mDBC2  //<vs_m2dbc>
+  BoundMode_g=NULL;    //-mDBC2  //<vs_m2dbc>
+  TangenVel_g=NULL;    //-mDBC2  //<vs_m2dbc>
 
   VelrhoM1_g=NULL;     //-Verlet
   PosxyPre_g=NULL;     //-Symplectic
@@ -331,7 +333,8 @@ void JSphGpu::FreeGpuMemoryParticles(){
   delete BoundNor_g;    BoundNor_g=NULL;    //-mDBC
   delete MotionVel_g;   MotionVel_g=NULL;   //-mDBC2  //<vs_m2dbc>
   delete MotionAce_g;   MotionAce_g=NULL;   //-mDBC2  //<vs_m2dbc>
-  delete BoundOnOff_g;  BoundOnOff_g=NULL;  //-mDBC2  //<vs_m2dbc>
+  delete BoundMode_g;   BoundMode_g=NULL;   //-mDBC2  //<vs_m2dbc>
+  delete TangenVel_g;   TangenVel_g=NULL;   //-mDBC2  //<vs_m2dbc>
 
   delete VelrhoM1_g;    VelrhoM1_g=NULL;    //-Verlet
   delete PosxyPre_g;    PosxyPre_g=NULL;    //-Symplectic
@@ -360,6 +363,9 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   FreeGpuMemoryParticles();
   //-Calculate number of partices to allocate memory.
   GpuParticlesSize=np+PARTICLES_OVERMEMORY_MIN;
+  //-Checks maximum number.
+  if(GpuParticlesSize>=unsigned(INT_MAX))
+    Run_Exceptioon("Particle number for allocation is too large.");
   //-Set size of arrays.
   Arrays_Gpu->SetArraySize(GpuParticlesSize);
   //-Create arrays for basic particle data.
@@ -373,10 +379,11 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   //-Arrays for mDBC.
   if(UseNormals){
     BoundNor_g=new agfloat3("BoundNorg",Arrays_Gpu,true);
-    if(SlipMode!=SLIP_Vel0){ //<vs_m2dbc_ini>
-      MotionVel_g =new agfloat3("MotionVelg" ,Arrays_Gpu,true);
-      MotionAce_g =new agfloat3("MotionAceg" ,Arrays_Gpu,true);
-      BoundOnOff_g=new agfloat( "BoundOnOffg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
+    if(SlipMode>=SLIP_NoSlip){ //<vs_m2dbc_ini>
+      MotionVel_g=new agfloat3("MotionVelg",Arrays_Gpu,true);
+      MotionAce_g=new agfloat3("MotionAceg",Arrays_Gpu,true);
+      BoundMode_g=new agbyte  ("BoundModeg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
+      TangenVel_g=new agfloat3("TangenVelg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
     } //<vs_m2dbc_end>
   }
   //-Arrays for Verlet.
@@ -402,6 +409,7 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
     Sps2Strain_g=new agsymatrix3f("Sps2Straing",Arrays_Gpu,false); //-NO INITIAL MEMORY.
   }
 
+  //-Check CUDA errors.
   Check_CudaErroor("Failed GPU memory allocation.");
 }
 
@@ -625,7 +633,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
     StDivDataGpu divdatag;
     memset(&divdatag,0,sizeof(StDivDataGpu));
     #ifndef DISABLE_BSMODES
-      const bool mdbc2=(TBoundary==BC_MDBC && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
+      const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
       const StInterParmsg parms=StrInterParmsg(Simulate2D
         ,Symmetry  //<vs_syymmetry>
         ,TKernel,FtMode
@@ -799,7 +807,8 @@ void JSphGpu::PosInteraction_Forces(){
   Delta_g->Free();
   ShiftPosfs_g->Free();
   if(Sps2Strain_g)Sps2Strain_g->Free();
-  if(BoundOnOff_g)BoundOnOff_g->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
+  if(BoundMode_g)BoundMode_g->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
+  if(TangenVel_g)TangenVel_g->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
 }
 
 //==============================================================================
@@ -808,10 +817,11 @@ void JSphGpu::PosInteraction_Forces(){
 //==============================================================================
 void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   Timersg->TmStart(TMG_SuComputeStep,false);
-  const bool mdbc2=(TBoundary==BC_MDBC && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
+  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=(ShiftingMode!=SHIFT_None);
   const bool inout=(InOut!=NULL);
   const float3* indirvel=(inout? InOut->GetDirVelg(): NULL);
+  const byte* boundmode=AG_CPTR(BoundMode_g); //<vs_m2dbc>
   VerletStep++;
   //-Allocates memory to compute the displacement.
   agdouble2 movxyg("movxyg",Arrays_Gpu,true);
@@ -820,15 +830,17 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   if(VerletStep<VerletSteps){
     const double twodt=dt+dt;
     cusphs::ComputeStepVerlet(WithFloating,shift,inout,mdbc2,Np,Npb
-      ,Velrho_g->cptr(),VelrhoM1_g->cptr(),Ar_g->cptr(),Ace_g->cptr()
-      ,ShiftPosfs_g->cptr(),indirvel,dt,twodt,RhopZero,RhopOutMin,RhopOutMax
-      ,Gravity,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
+      ,Velrho_g->cptr(),VelrhoM1_g->cptr(),boundmode,Ar_g->cptr()
+      ,Ace_g->cptr(),ShiftPosfs_g->cptr(),indirvel,dt,twodt
+      ,RhopZero,RhopOutMin,RhopOutMax,Gravity,Code_g->ptr()
+      ,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
   }
   else{
     cusphs::ComputeStepVerlet(WithFloating,shift,inout,mdbc2,Np,Npb
-      ,Velrho_g->cptr(),Velrho_g->cptr(),Ar_g->cptr(),Ace_g->cptr()
-      ,ShiftPosfs_g->cptr(),indirvel,dt,dt,RhopZero,RhopOutMin,RhopOutMax
-      ,Gravity,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
+      ,Velrho_g->cptr(),Velrho_g->cptr(),boundmode,Ar_g->cptr()
+      ,Ace_g->cptr(),ShiftPosfs_g->cptr(),indirvel,dt,dt
+      ,RhopZero,RhopOutMin,RhopOutMax,Gravity,Code_g->ptr()
+      ,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
     VerletStep=0;
   }
   //-The new values are calculated in VelrhoM1_g.
@@ -845,7 +857,7 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
 //==============================================================================
 void JSphGpu::ComputeSymplecticPre(double dt){
   Timersg->TmStart(TMG_SuComputeStep,false);
-  const bool mdbc2=(TBoundary==BC_MDBC && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
+  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=false; //(ShiftingMode!=SHIFT_None); //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
   const bool inout=(InOut!=NULL);
   //-Assign memory to PRE variables.
@@ -862,8 +874,9 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   //-Compute displacement, velocity and density.
   const double dt05=dt*.5;
   const float3* indirvel=(InOut? InOut->GetDirVelg(): NULL);
+  const byte* boundmode=AG_CPTR(BoundMode_g); //<vs_m2dbc>
   cusphs::ComputeStepSymplecticPre(WithFloating,shift,inout,mdbc2,Np,Npb
-    ,VelrhoPre_g->cptr(),Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
+    ,VelrhoPre_g->cptr(),boundmode,Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
     ,indirvel,dt05,RhopZero,RhopOutMin,RhopOutMax,Gravity
     ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
 
@@ -883,7 +896,7 @@ void JSphGpu::ComputeSymplecticPre(double dt){
 //==============================================================================
 void JSphGpu::ComputeSymplecticCorr(double dt){
   Timersg->TmStart(TMG_SuComputeStep,false);
-  const bool mdbc2=(TBoundary==BC_MDBC && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
+  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=(ShiftingMode!=SHIFT_None);
   const bool inout=(InOut!=NULL);
   //-Allocate memory to compute the diplacement.
@@ -892,8 +905,9 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   //-Computes displacement, velocity and density.
   const double dt05=dt*.5;
   const float3* indirvel=(InOut? InOut->GetDirVelg(): NULL);
+  const byte* boundmode=AG_CPTR(BoundMode_g); //<vs_m2dbc>
   cusphs::ComputeStepSymplecticCor(WithFloating,shift,inout,mdbc2,Np,Npb
-    ,VelrhoPre_g->cptr(),Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
+    ,VelrhoPre_g->cptr(),boundmode,Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
     ,indirvel,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity
     ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
 

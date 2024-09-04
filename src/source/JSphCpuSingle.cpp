@@ -510,7 +510,7 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   }
   if(UseNormals){
     CellDivSingle->SortArray(BoundNor_c->ptr());
-    if(MotionVel_c){ //<vs_m2dbc_ini>
+    if(MotionVel_c || MotionAce_c){ //<vs_m2dbc_ini>
       CellDivSingle->SortArray(MotionVel_c->ptr());
       CellDivSingle->SortArray(MotionAce_c->ptr());
     } //<vs_m2dbc_end>
@@ -590,7 +590,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Boundary correction for mDBC.
   const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
   if(runmdbc)MdbcBoundCorrection();
-  const bool mdbc2=(runmdbc && SlipMode==SLIP_NoSlip); //<vs_m2dbc>
+  const bool mdbc2=(runmdbc && SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   
   InterStep=interstep;
   PreInteraction_Forces();
@@ -602,7 +602,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   const stinterparmsc parms=StInterparmsc(Np,Npb,NpbOk
     ,DivData,Dcell_c->cptr()
     ,Pos_c->cptr(),Velrho_c->cptr(),Idp_c->cptr(),Code_c->cptr(),Press_c->cptr()
-    ,AC_CPTR(BoundNor_c),AC_CPTR(BoundOnOff_c),AC_CPTR(MotionVel_c) //<vs_m2dbc>
+    ,AC_CPTR(BoundMode_c),AC_CPTR(TangenVel_c),AC_CPTR(MotionVel_c) //<vs_m2dbc>
     ,dengradcorr
     ,Ar_c->ptr(),Ace_c->ptr(),AC_PTR(Delta_c)
     ,ShiftingMode,AC_PTR(ShiftPosfs_c)
@@ -652,11 +652,13 @@ void JSphCpuSingle::MdbcBoundCorrection(){
       ,Idp_c->cptr(),BoundNor_c->cptr(),Velrho_c->ptr());
   }
   else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
-    BoundOnOff_c->Reserve();     //-BoundOnOff_c is freed in PosInteraction_Forces().
-    BoundOnOff_c->Memset(0,Npb); //-BoundOnOff_c[]=0
+    const unsigned nmode=(UseNormalsFt? Np: Npb);
+    BoundMode_c->Reserve();       //-BoundMode_c is freed in PosInteraction_Forces().
+    BoundMode_c->Memset(0,nmode); //-BoundMode_c[]=0=BMODE_DBC
+    TangenVel_c->Reserve();       //-TangenVel_c is freed in PosInteraction_Forces().
     Interaction_Mdbc2Correction(DivData,Pos_c->cptr(),Code_c->cptr()
-      ,Idp_c->cptr(),BoundNor_c->cptr(),MotionVel_c->cptr()
-      ,MotionAce_c->cptr(),Velrho_c->ptr(),BoundOnOff_c->ptr());
+      ,Idp_c->cptr(),BoundNor_c->cptr(),MotionVel_c->cptr(),MotionAce_c->cptr()
+      ,Velrho_c->ptr(),BoundMode_c->ptr(),TangenVel_c->ptr());
   } //<vs_m2dbc_end>
   else Run_Exceptioon("Error: SlipMode is invalid.");
   Timersc->TmStop(TMC_CfPreForces);

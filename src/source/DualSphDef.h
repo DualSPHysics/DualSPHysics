@@ -422,16 +422,23 @@ typedef enum{
 
 ///Types of boundary conditions.
 typedef enum{ 
-  BC_MDBC=2,   ///<M-DBC.
-  BC_DBC=1     ///<Dynamic Boundary Condition (DBC).
+  BC_DBC=1    ///<Dynamic Boundary Condition (DBC).
+ ,BC_MDBC=2   ///<mDBC.
 }TpBoundary;
 
-///Types of boundary conditions. 
+///Slip modes for mDBC. 
 typedef enum{ 
-  SLIP_FreeSlip=3,  ///<Free slip
-  SLIP_NoSlip=2,    ///<No-slip
-  SLIP_Vel0=1       ///<DBC vel=0
+  SLIP_None=0      ///<mDBC is not used.
+ ,SLIP_Vel0=1      ///<mDBC original: DBC vel=0
+ ,SLIP_NoSlip=2    ///<mDBC2 slip mode: No-slip
+ ,SLIP_FreeSlip=3  ///<mDBC2 slip mode: Free slip (in development).
 }TpSlipMode;
+
+#define MDBC2_KEEPVEL  ///<En MdbcBoundCorrection() no modifica velrho para usarlo en interaccion en lugar de velmotion.
+
+#define BMODE_DBC 0       ///<Boundary particle use DBC.
+#define BMODE_MDBC2 1     ///<Boundary particle use mDBC2.
+#define BMODE_MDBC2OFF 2  ///<Boundary particle use mDBC2 but mass is disabled.
 
 ///Types of interaction step.
 typedef enum{ 
