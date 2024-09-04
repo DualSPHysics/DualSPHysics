@@ -80,8 +80,8 @@ typedef struct StrInterParmsg{
   const float4*    velrho;
   const unsigned*  idp;
   const typecode*  code;
-  const float3*    boundnor;     //<vs_m2dbc>
-  const float*     boundonoff;   //<vs_m2dbc>
+  const byte*      boundmode;    //<vs_m2dbc>
+  const float3*    tangenvel;    //<vs_m2dbc>
   const float3*    motionvel;    //<vs_m2dbc>
   const float*     ftomassp;
   const tsymatrix3f* spstaurho2;
@@ -116,8 +116,8 @@ typedef struct StrInterParmsg{
     ,const unsigned* dcell
     ,const double2* posxy,const double* posz,const float4* poscell
     ,const float4* velrho,const unsigned* idp,const typecode* code
-    ,const float3* boundnor     //<vs_m2dbc>
-    ,const float*  boundonoff   //<vs_m2dbc>
+    ,const byte*   boundmode    //<vs_m2dbc>
+    ,const float3* tangenvel    //<vs_m2dbc>
     ,const float3* motionvel    //<vs_m2dbc>
     ,const float* ftomassp
     ,const tsymatrix3f* spstaurho2
@@ -153,9 +153,9 @@ typedef struct StrInterParmsg{
     this->dcell=dcell;
     this->posxy=posxy; this->posz=posz; this->poscell=poscell;
     this->velrho=velrho; this->idp=idp; this->code=code;
-    this->boundnor  =boundnor;     //<vs_m2dbc>
-    this->boundonoff=boundonoff;   //<vs_m2dbc>
-    this->motionvel =motionvel;    //<vs_m2dbc>
+    this->boundmode=boundmode;   //<vs_m2dbc>
+    this->tangenvel=tangenvel;   //<vs_m2dbc>
+    this->motionvel=motionvel;   //<vs_m2dbc>
     this->ftomassp=ftomassp;
     this->spstaurho2=spstaurho2;
     this->dengradcorr=dengradcorr;

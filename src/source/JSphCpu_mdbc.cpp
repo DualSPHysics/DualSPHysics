@@ -227,13 +227,26 @@ float JSphCpu::Mdbc2InfNorm4x4(tmatrix4d mat)const{
   const float infnorm=max(row1,max(row2,max(row3,row4)));
   return(infnorm);
 }
+//------------------------------------------------------------------------------
+/// Calculates tangent velocity
+//------------------------------------------------------------------------------
+tfloat3 JSphCpu::Mdbc2TangenVel(const tfloat3& boundnor,const tfloat3& velfinal)const{
+  const float snormal=sqrt(boundnor.x*boundnor.x + boundnor.y*boundnor.y + boundnor.z*boundnor.z);
+  const tfloat3 bnormal=boundnor/snormal;
+	const float veldotnorm=velfinal.x*bnormal.x + velfinal.y*bnormal.y + velfinal.z*bnormal.z;
+  const tfloat3 tangentvel=TFloat3(velfinal.x-veldotnorm*bnormal.x,
+                                   velfinal.y-veldotnorm*bnormal.y,
+                                   velfinal.z-veldotnorm*bnormal.z);
+  return(tangentvel);
+}
+
 //==============================================================================
 /// Perform interaction between ghost nodes of boundaries and fluid.
 //==============================================================================
 template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbc2CorrectionT2
   (unsigned n,const StDivDataCpu &divdata,const tdouble3* pos,const typecode* code
   ,const unsigned* idp,const tfloat3* boundnor,const tfloat3* motionvel
-  ,const tfloat3* motionace,tfloat4* velrho,float* boundonoff)
+  ,const tfloat3* motionace,tfloat4* velrho,byte* boundmode,tfloat3* tangenvel)
 {
   const int nn=int(n);
   #ifdef OMP_USE
@@ -321,16 +334,12 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbc2CorrectionT2
       //-Store the results.
       //--------------------
       if(submerged>0.f){
-        boundonoff[p1]=1.0f;
+        boundmode[p1]=BMODE_MDBC2;
         const tfloat3 dpos=(boundnor[p1]*(-1.f)); //-Boundary particle position - ghost node position.
         if(sim2d){//-2D simulation.
           if(sumwab<0.1f){ //-If kernel sum is small use shepherd density and vel0.
             //-Trying to avoid too negative pressures.
-            const float rhoghost=max(RhopZero,float(rhop1/a_corr2.a11));
-            //-Clone particle proceedure.
-            const float pressfinal=Mdbc2PressClone(sim2d,rhoghost,bnormalp1,Gravity,motacep1,dpos);
-            //-Final values to be saved.
-            rhofinal=RhopZero+float(pressfinal/(Cs0*Cs0));
+            rhofinal=max(RhopZero,float(rhop1/a_corr2.a11));
           }
           else{//-Chech if matrix is invertible and well conditioned.
             const double determ=fmath::Determinant3x3(a_corr2);
@@ -340,29 +349,17 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbc2CorrectionT2
               const float infnorma   =Mdbc2InfNorm3x3(a_corr2);
               const float infnormainv=Mdbc2InfNorm3x3(invacorr2);
               const float condinf=float(Dp*Dp)*infnorma*infnormainv;
-              if(condinf<=50){//-If matrix is well conditioned use matrix inverse for density and shepherd for velocity.
-                const float rhoghost=float(invacorr2.a11*rhop1 + invacorr2.a12*gradrhop1.x + invacorr2.a13*gradrhop1.z);
-                //-Clone particle proceedure.
-                const float pressfinal=Mdbc2PressClone(sim2d,rhoghost,bnormalp1,Gravity,motacep1,dpos);
-                //-Final values to be saved.
-                rhofinal=RhopZero + float(pressfinal/(Cs0*Cs0));
-              }
-              else{ //-If ill conditioned use shepherd.
-                const float rhoghost=float(rhop1/a_corr2.a11);
-                //-Clone particle proceedure.
-                const float pressfinal=Mdbc2PressClone(sim2d,rhoghost,bnormalp1,Gravity,motacep1,dpos);
-                //-Final values to be saved.
-                rhofinal=RhopZero+float(pressfinal/(Cs0*Cs0));
-              }
+              if(condinf<=50)//-If matrix is well conditioned use matrix inverse for density and shepherd for velocity.
+                rhofinal=float(invacorr2.a11*rhop1 + invacorr2.a12*gradrhop1.x + invacorr2.a13*gradrhop1.z);
+              else//-If ill conditioned use shepherd.
+                rhofinal=float(rhop1/a_corr2.a11);
             }
-            else{//-If not invertible use shepherd for density.
-              const float rhoghost=float(rhop1/a_corr2.a11);
-              //-Clone particle proceedure.
-              const float pressfinal=Mdbc2PressClone(sim2d,rhoghost,bnormalp1,Gravity,motacep1,dpos);
-              //-Final values to be saved.
-              rhofinal=RhopZero+float(pressfinal/(Cs0*Cs0));
-            }
+            else//-If not invertible use shepherd for density.
+              rhofinal=float(rhop1/a_corr2.a11);
           }
+          //-Final density according to press.
+          const float pressfinal=Mdbc2PressClone(sim2d,rhofinal,bnormalp1,Gravity,motacep1,dpos);
+          rhofinal=RhopZero+float(pressfinal/(Cs0*Cs0));
           //-velocity with Shepherd Sum.
           velrhofinal.x=float(velp1.x/a_corr2.a11);
           velrhofinal.y=0.f;
@@ -372,11 +369,7 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbc2CorrectionT2
           //-Density with pressure cloning.
           if(sumwab<0.1f){//-If kernel sum is small use shepherd density and vel0.
             //-Trying to avoid too negative pressures.
-            const float rhoghost=max(RhopZero,float(rhop1/a_corr3.a11));
-            //-Clone particle proceedure.
-            const float pressfinal=Mdbc2PressClone(sim2d,rhoghost,bnormalp1,Gravity,motacep1,dpos);
-            //-Final values to be saved.
-            rhofinal=RhopZero+float(pressfinal/(Cs0*Cs0));
+            rhofinal=max(RhopZero,float(rhop1/a_corr3.a11));
           }
           else{
             const double determ=fmath::Determinant4x4(a_corr3);
@@ -386,29 +379,17 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbc2CorrectionT2
               const float infnorma   =Mdbc2InfNorm4x4(a_corr3);
               const float infnormainv=Mdbc2InfNorm4x4(invacorr3);
               const float condinf=float(Dp*Dp)*infnorma*infnormainv;
-              if(condinf<=50){//-If matrix is well conditioned use matrix inverse for density.
-                const float rhoghost=float(invacorr3.a11*rhop1 + invacorr3.a12*gradrhop1.x + invacorr3.a13*gradrhop1.y + invacorr3.a14*gradrhop1.z);
-                //-Clone particle proceedure.
-                const float pressfinal=Mdbc2PressClone(sim2d,rhoghost,bnormalp1,Gravity,motacep1,dpos);
-                //-Final values to be saved.
-                rhofinal=RhopZero+float(pressfinal/(Cs0*Cs0));
-              }
-              else{//-Matrix is not well conditioned, use shepherd for density.
-                const float rhoghost=float(rhop1/a_corr3.a11);
-                //-Clone particle proceedure.
-                const float pressfinal=Mdbc2PressClone(sim2d,rhoghost,bnormalp1,Gravity,motacep1,dpos);
-                //-Final values to be saved.
-                rhofinal=RhopZero+float(pressfinal/(Cs0*Cs0));
-              }
+              if(condinf<=50)//-If matrix is well conditioned use matrix inverse for density.
+                rhofinal=float(invacorr3.a11*rhop1 + invacorr3.a12*gradrhop1.x + invacorr3.a13*gradrhop1.y + invacorr3.a14*gradrhop1.z);
+              else//-Matrix is not well conditioned, use shepherd for density.
+                rhofinal=float(rhop1/a_corr3.a11);
             }
-            else{//-Matrix is not invertible use shepherd for density.
-              const float rhoghost=float(rhop1/a_corr3.a11);
-              //-Clone particle proceedure.
-              const float pressfinal=Mdbc2PressClone(sim2d,rhoghost,bnormalp1,Gravity,motacep1,dpos);
-              //-Final values to be saved.
-              rhofinal=RhopZero+float(pressfinal/(Cs0*Cs0));
-            }
+            else//-Matrix is not invertible use shepherd for density.
+              rhofinal=float(rhop1/a_corr3.a11);
           }
+          //-Final density according to press.
+          const float pressfinal=Mdbc2PressClone(sim2d,rhofinal,bnormalp1,Gravity,motacep1,dpos);
+          rhofinal=RhopZero+float(pressfinal/(Cs0*Cs0));
           //-Velocity with Shepherd sum.
           velrhofinal.x=float(velp1.x/a_corr3.a11);
           velrhofinal.y=float(velp1.y/a_corr3.a11);
@@ -418,10 +399,15 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbc2CorrectionT2
         //-Store the results.
         if(SlipMode==SLIP_NoSlip){//-No-Slip: vel = 2*motion - ghost
           const tfloat3 v=motionvel[p1];
-          velrho[p1]=TFloat4(v.x+v.x - velrhofinal.x,
-                             v.y+v.y - velrhofinal.y,
-                             v.z+v.z - velrhofinal.z, 
-                             rhofinal);
+          const tfloat3 v2=TFloat3(v.x+v.x - velrhofinal.x,
+                                   v.y+v.y - velrhofinal.y,
+                                   v.z+v.z - velrhofinal.z); 
+          #ifndef MDBC2_KEEPVEL
+            velrho[p1]=TFloat4(v2.x,v2.y,v2.z,rhofinal);
+          #else
+            velrho[p1].w=rhofinal;
+          #endif
+          tangenvel[p1]=Mdbc2TangenVel(bnormalp1,v2);
         }
         if(SlipMode==SLIP_FreeSlip){//-No-Penetration and free slip.
           tfloat3 fsvelfinal; //-Final free slip boundary velocity.
@@ -451,9 +437,14 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbc2CorrectionT2
         }
       }
       else{//-If unsubmerged switch off boundary particle.
-        boundonoff[p1]=0;
+        boundmode[p1]=BMODE_MDBC2OFF;
         const tfloat3 v=motionvel[p1];
-        velrho[p1]=TFloat4(v.x,v.y,v.z,RhopZero);
+        #ifndef MDBC2_KEEPVEL
+          velrho[p1]=TFloat4(v.x,v.y,v.z,RhopZero);
+        #else
+          velrho[p1].w=RhopZero;
+        #endif
+        tangenvel[p1]=Mdbc2TangenVel(bnormalp1,v);
       }
     }
   }
@@ -466,12 +457,12 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbc2CorrectionT2
  template<TpKernel tker> void JSphCpu::Interaction_Mdbc2CorrectionT
   (const StDivDataCpu &divdata,const tdouble3* pos,const typecode* code
   ,const unsigned* idp,const tfloat3* boundnor,const tfloat3* motionvel
-  ,const tfloat3* motionace,tfloat4* velrho,float* boundonoff)
+  ,const tfloat3* motionace,tfloat4* velrho,byte* boundmode,tfloat3* tangenvel)
 {
   //-Interaction GhostBoundaryNodes-Fluid.
-  const unsigned n=NpbOk;  //-Note that floating boidies are not supported by mDBC2.
-  if(Simulate2D)InteractionMdbc2CorrectionT2 <tker,true >(n,divdata,pos,code,idp,boundnor,motionvel,motionace,velrho,boundonoff);
-  else          InteractionMdbc2CorrectionT2 <tker,false>(n,divdata,pos,code,idp,boundnor,motionvel,motionace,velrho,boundonoff);
+  const unsigned n=(UseNormalsFt? Np: Npb);
+  if(Simulate2D)InteractionMdbc2CorrectionT2 <tker,true >(n,divdata,pos,code,idp,boundnor,motionvel,motionace,velrho,boundmode,tangenvel);
+  else          InteractionMdbc2CorrectionT2 <tker,false>(n,divdata,pos,code,idp,boundnor,motionvel,motionace,velrho,boundmode,tangenvel);
 }
 
 //==============================================================================
@@ -481,11 +472,11 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbc2CorrectionT2
 void JSphCpu::Interaction_Mdbc2Correction(const StDivDataCpu &divdata
   ,const tdouble3* pos,const typecode* code,const unsigned* idp
   ,const tfloat3* boundnor,const tfloat3* motionvel,const tfloat3* motionace
-  ,tfloat4* velrho,float* boundonoff)
+  ,tfloat4* velrho,byte* boundmode,tfloat3* tangenvel)
 {
   switch(TKernel){
-    case KERNEL_Cubic:       Interaction_Mdbc2CorrectionT <KERNEL_Cubic     > (divdata,pos,code,idp,boundnor,motionvel,motionace,velrho,boundonoff);  break;
-    case KERNEL_Wendland:    Interaction_Mdbc2CorrectionT <KERNEL_Wendland  > (divdata,pos,code,idp,boundnor,motionvel,motionace,velrho,boundonoff);  break;
+    case KERNEL_Cubic:       Interaction_Mdbc2CorrectionT <KERNEL_Cubic     > (divdata,pos,code,idp,boundnor,motionvel,motionace,velrho,boundmode,tangenvel);  break;
+    case KERNEL_Wendland:    Interaction_Mdbc2CorrectionT <KERNEL_Wendland  > (divdata,pos,code,idp,boundnor,motionvel,motionace,velrho,boundmode,tangenvel);  break;
     default: Run_Exceptioon("Kernel unknown.");
   }
 }

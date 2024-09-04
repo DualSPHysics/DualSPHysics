@@ -94,7 +94,8 @@ void JSphCpu::InitVars(){
   BoundNor_c=NULL;    //-mDBC
   MotionVel_c=NULL;   //-mDBC2  //<vs_m2dbc>
   MotionAce_c=NULL;   //-mDBC2  //<vs_m2dbc>
-  BoundOnOff_c=NULL;  //-mDBC2  //<vs_m2dbc>
+  BoundMode_c=NULL;   //-mDBC2  //<vs_m2dbc>
+  TangenVel_c=NULL;   //-mDBC2  //<vs_m2dbc>
 
   VelrhoM1_c=NULL;    //-Verlet
   PosPre_c=NULL;      //-Symplectic
@@ -156,7 +157,8 @@ void JSphCpu::FreeCpuMemoryParticles(){
   delete BoundNor_c;    BoundNor_c=NULL;    //-mDBC
   delete MotionVel_c;   MotionVel_c=NULL;   //-mDBC2  //<vs_m2dbc>
   delete MotionAce_c;   MotionAce_c=NULL;   //-mDBC2  //<vs_m2dbc>
-  delete BoundOnOff_c;  BoundOnOff_c=NULL;  //-mDBC2  //<vs_m2dbc>
+  delete BoundMode_c;   BoundMode_c=NULL;   //-mDBC2  //<vs_m2dbc>
+  delete TangenVel_c;   TangenVel_c=NULL;   //-mDBC2  //<vs_m2dbc>
 
   delete VelrhoM1_c;    VelrhoM1_c=NULL;    //-Verlet
   delete PosPre_c;      PosPre_c=NULL;      //-Symplectic
@@ -196,9 +198,10 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np){
   if(UseNormals){
     BoundNor_c=new acfloat3("BoundNorc",Arrays_Cpu,true);
     if(SlipMode>=SLIP_NoSlip){ //<vs_m2dbc_ini>
-      MotionVel_c =new acfloat3("MotionVelc" ,Arrays_Cpu,true);
-      MotionAce_c =new acfloat3("MotionAcec" ,Arrays_Cpu,true);
-      BoundOnOff_c=new acfloat( "BoundOnOffc",Arrays_Cpu,false); //-NO INITIAL MEMORY.
+      MotionVel_c=new acfloat3("MotionVelc",Arrays_Cpu,true);
+      MotionAce_c=new acfloat3("MotionAcec",Arrays_Cpu,true);
+      BoundMode_c=new acbyte  ("BoundModec",Arrays_Cpu,false); //-NO INITIAL MEMORY.
+      TangenVel_c=new acfloat3("TangenVelc",Arrays_Cpu,false); //-NO INITIAL MEMORY.
     } //<vs_m2dbc_end>
   }
   //-Arrays for Verlet.
@@ -506,7 +509,8 @@ void JSphCpu::PosInteraction_Forces(){
   Delta_c->Free();
   ShiftPosfs_c->Free();
   if(Sps2Strain_c)Sps2Strain_c->Free();
-  if(BoundOnOff_c)BoundOnOff_c->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
+  if(BoundMode_c)BoundMode_c->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
+  if(TangenVel_c)TangenVel_c->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
 }
 
 //==============================================================================
@@ -603,7 +607,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   ,const tsymatrix3f* tau,tsymatrix3f* two_strain
   ,const tdouble3* pos,const tfloat4* velrho,const typecode* code
   ,const unsigned* idp,const float* press,const tfloat3* dengradcorr
-  ,const tfloat3* boundnor,const float* boundonoff,const tfloat3* motionvel //<vs_m2dbc>
+  ,const byte* boundmode,const tfloat3* tangenvel,const tfloat3* motionvel //<vs_m2dbc>
   ,float& viscdt,float* ar,tfloat3* ace,float* delta
   ,TpShifting shiftmode,tfloat4* shiftposfs)const
 {
@@ -677,33 +681,13 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
             if(ftp2 && shift && shiftmode==SHIFT_NoBound)shiftposfsp1.x=FLT_MAX; //-With floating objects do not use shifting. | Con floatings anula shifting.
             compute=!(USE_FTEXTERNAL && ftp1 && (boundp2 || ftp2)); //-Deactivate when using DEM and if it is of type float-float or float-bound. | Se desactiva cuando se usa DEM y es float-float o float-bound.
           }
+          //-Changing the mass of boundary particle with boundmode. //<vs_m2dbc_ini>
+          if(mdbc2 && boundp2 && !ftp2){
+            if(boundmode[p2]==BMODE_MDBC2OFF)massp2=0;
+          } //<vs_m2dbc_end>
 
           tfloat4 velrhop2=velrho[p2];
           if(rsym)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
-
-          //<vs_m2dbc_ini>
-          //-Setting up boundary normals and new boundary velocities
-          tfloat3 normalp2    =TFloat3(0); //-Creating a normailsed boundary normal
-          tfloat3 normalvelp2 =TFloat3(0); //-Boundary particle velocity normal to boundary used in con of mass
-          tfloat3 tangentvelp2=TFloat3(0); //-Boundary particle velocity tangent to boundary used in momentu
-          tfloat3 movvelp2    =motionvel[p2];
-          if(mdbc2 && boundp2 && !ftp2){//-Computes velocities and change massp2 for mDBC2 (not for floating particles).
-            float norm=sqrt(boundnor[p2].x*boundnor[p2].x + boundnor[p2].y*boundnor[p2].y + boundnor[p2].z*boundnor[p2].z);
-            if(norm>0.f){ // mDBC
-              normalp2.x=boundnor[p2].x/norm; normalp2.y=boundnor[p2].y/norm; normalp2.z=boundnor[p2].z/norm;
-              // calculating boundary particle velocity components
-              float veldotnorm=velrhop2.x*normalp2.x + velrhop2.y*normalp2.y + velrhop2.z*normalp2.z;
-              normalvelp2.x=veldotnorm*normalp2.x; normalvelp2.y=veldotnorm*normalp2.y; normalvelp2.z=veldotnorm*normalp2.z;
-              tangentvelp2.x=velrhop2.x-normalvelp2.x; tangentvelp2.y=velrhop2.y-normalvelp2.y; tangentvelp2.z=velrhop2.z-normalvelp2.z;
-            }
-            else{ // DBC hopefulyl this doesnt break it
-              normalvelp2.x=velrhop2.x;  normalvelp2.y=velrhop2.y;  normalvelp2.z=velrhop2.z;
-              tangentvelp2.x=velrhop2.x; tangentvelp2.y=velrhop2.y; tangentvelp2.z=velrhop2.z;
-            }
-            // changing the mass of boundary particle with boundonoff
-            massp2=boundonoff[p2]*massp2; 
-          }
-          //<vs_m2dbc_end>
 
           //-Velocity derivative (Momentum equation).
           if(compute){
@@ -715,11 +699,14 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 
           //-Density derivative (Continuity equation).
           float dvx=velp1.x-velrhop2.x, dvy=velp1.y-velrhop2.y, dvz=velp1.z-velrhop2.z;
-          if(mdbc2 && boundp2 && !ftp2){ //<vs_m2dbc_ini>
-            dvx=velp1.x-movvelp2.x; //-mDBC2 no slip.
-            dvy=velp1.y-movvelp2.y;
-            dvz=velp1.z-movvelp2.z;
-          } //<vs_m2dbc_end>
+          #ifndef MDBC2_KEEPVEL
+            if(mdbc2 && boundp2 && !ftp2){ //<vs_m2dbc_ini>
+              const tfloat3 movvelp2=motionvel[p2];
+              dvx=velp1.x-movvelp2.x; //-mDBC2 no slip.
+              dvy=velp1.y-movvelp2.y;
+              dvz=velp1.z-movvelp2.z;
+            } //<vs_m2dbc_end>
+          #endif
           if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz)*(rhop1/velrhop2.w);
 
           const float cbar=(float)Cs0;
@@ -755,6 +742,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
           //===== Viscosity ===== 
           if(compute){
             if(mdbc2 && boundp2 && !ftp2){ //<vs_m2dbc_ini>
+              const tfloat3 tangentvelp2=tangenvel[p2];
               dvx=velp1.x-tangentvelp2.x;
               dvy=velp1.y-tangentvelp2.y;
               dvz=velp1.z-tangentvelp2.z;
@@ -986,14 +974,14 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
     InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2> 
       (t.npf,t.npb,false,Visco,t.divdata,t.dcell,t.spstaurho2,t.sps2strain
       ,t.pos,t.velrho,t.code,t.idp,t.press,t.dengradcorr
-      ,t.boundnor,t.boundonoff,t.motionvel //<vs_m2dbc>
+      ,t.boundmode,t.tangenvel,t.motionvel //<vs_m2dbc>
       ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
     //-Interaction Fluid-Bound.
     const float viscb=Visco*ViscoBoundFactor;
     InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2>
       (t.npf,t.npb,true ,viscb,t.divdata,t.dcell,t.spstaurho2,t.sps2strain
       ,t.pos,t.velrho,t.code,t.idp,t.press,NULL
-      ,t.boundnor,t.boundonoff,t.motionvel //<vs_m2dbc>
+      ,t.boundmode,t.tangenvel,t.motionvel //<vs_m2dbc>
       ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
 
     //-Interaction of DEM Floating-Bound & Floating-Floating. //(DEM)
@@ -1130,8 +1118,8 @@ void JSphCpu::UpdatePos(tdouble3 rpos,double movx,double movy,double movz
 /// Calcula nuevos valores de posicion, velocidad y densidad para el fluido (usando Verlet).
 //==============================================================================
 void JSphCpu::ComputeVerletVarsFluid(bool shift,const tfloat3* indirvel
-  ,const tfloat4* velrho1,const tfloat4* velrho2,double dt,double dt2
-  ,const float* ar,const tfloat3* ace,const tfloat4* shiftposfs 
+  ,const tfloat4* velrho1,const tfloat4* velrho2,const byte* boundmode
+  ,double dt,double dt2,const float* ar,const tfloat3* ace,const tfloat4* shiftposfs 
   ,tdouble3* pos,unsigned* dcell,typecode* code,tfloat4* velrhonew)const
 {
   const double dt205=0.5*dt*dt;
@@ -1184,7 +1172,8 @@ void JSphCpu::ComputeVerletVarsFluid(bool shift,const tfloat3* indirvel
     }
     else{//-Floating Particles.
       velrhonew[p]=velrho1[p];
-      velrhonew[p].w=(rhonew<RhopZero? RhopZero: rhonew); //-Avoid fluid particles being absorved by floating ones. | Evita q las floating absorvan a las fluidas.
+      if(!boundmode || boundmode[p]<BMODE_MDBC2) //<vs_m2dbc>
+        velrhonew[p].w=(rhonew<RhopZero? RhopZero: rhonew); //-Avoid fluid particles being absorved by floating ones. | Evita q las floating absorvan a las fluidas.
     }
   }
 }
@@ -1196,21 +1185,24 @@ void JSphCpu::ComputeVerletVarsFluid(bool shift,const tfloat3* indirvel
 /// Calcula nuevos valores de densidad y pone velocidad a cero para el contorno 
 /// (fixed+moving, no floating).
 //==============================================================================
-void JSphCpu::ComputeVelrhoBound(const tfloat4* velrhoold,const float* ar
-  ,double armul,tfloat4* velrhonew)const
+void JSphCpu::ComputeVelrhoBound(const tfloat4* velrhoold,const byte* boundmode
+  ,const float* ar,double armul,tfloat4* velrhonew)const
 {
   const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
+  const int npb=int(Npb);
   if(mdbc2){ //<vs_m2dbc_ini>
-    const int npb=int(Npb);
     #ifdef OMP_USE
       #pragma omp parallel for schedule (static) if(npb>OMP_LIMIT_COMPUTESTEP)
     #endif
     for(int p=0;p<npb;p++){
-      velrhonew[p]=velrhoold[p]; //-Check...
+      if(boundmode[p]>=BMODE_MDBC2)velrhonew[p]=velrhoold[p]; //-For mDBC2.
+      else{//-For DBC and mDBC (SLIP_Vel0).
+        const float rhonew=float(double(velrhoold[p].w)+armul*ar[p]);
+        velrhonew[p]=TFloat4(0,0,0,(rhonew<RhopZero? RhopZero: rhonew));//-Avoid fluid particles being absorved by boundary ones. | Evita q las boundary absorvan a las fluidas.
+      }
     }
   } //<vs_m2dbc_end>
   else{ //-For DBC and mDBC (SLIP_Vel0). //<vs_m2dbc>
-    const int npb=int(Npb);
     #ifdef OMP_USE
       #pragma omp parallel for schedule (static) if(npb>OMP_LIMIT_COMPUTESTEP)
     #endif
@@ -1229,19 +1221,22 @@ void JSphCpu::ComputeVerlet(double dt){
   Timersc->TmStart(TMC_SuComputeStep);
   const bool shift=(Shifting!=NULL);
   const tfloat3* indirvel=(InOut? InOut->GetDirVel(): NULL);
+  const byte* boundmode=AC_CPTR(BoundMode_c); //<vs_m2dbc>
   VerletStep++;
   if(VerletStep<VerletSteps){
     const double twodt=dt+dt;
     ComputeVerletVarsFluid(shift,indirvel,Velrho_c->cptr(),VelrhoM1_c->cptr()
-      ,dt,twodt,Ar_c->cptr(),Ace_c->cptr(),ShiftPosfs_c->cptr()
+      ,boundmode,dt,twodt,Ar_c->cptr(),Ace_c->cptr(),ShiftPosfs_c->cptr()
       ,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr(),VelrhoM1_c->ptr());
-    ComputeVelrhoBound(VelrhoM1_c->cptr(),Ar_c->cptr(),twodt,VelrhoM1_c->ptr());
+    ComputeVelrhoBound(VelrhoM1_c->cptr(),boundmode,Ar_c->cptr()
+      ,twodt,VelrhoM1_c->ptr());
   }
   else{
     ComputeVerletVarsFluid(shift,indirvel,Velrho_c->cptr(),Velrho_c->cptr()
-      ,dt,dt,Ar_c->cptr(),Ace_c->cptr(),ShiftPosfs_c->cptr()
+      ,boundmode,dt,dt,Ar_c->cptr(),Ace_c->cptr(),ShiftPosfs_c->cptr()
       ,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr(),VelrhoM1_c->ptr());
-    ComputeVelrhoBound(Velrho_c->cptr(),Ar_c->cptr(),dt,VelrhoM1_c->ptr());
+    ComputeVelrhoBound(Velrho_c->cptr(),boundmode,Ar_c->cptr()
+      ,dt,VelrhoM1_c->ptr());
     VerletStep=0;
   }
   //-New values are calculated en VelrhoM1_c. | Los nuevos valores se calculan en VelrhoM1_c.
@@ -1274,14 +1269,17 @@ void JSphCpu::ComputeSymplecticPre(double dt){
     const float*   arc=Ar_c->cptr();
     const tfloat4* velrhoprec=VelrhoPre_c->cptr();
     tfloat4*       velrhoc=Velrho_c->ptr();
+    const byte*    boundmode=AC_CPTR(BoundMode_c); //<vs_m2dbc>
     #ifdef OMP_USE
       #pragma omp parallel for schedule (static) if(npb>OMP_LIMIT_COMPUTESTEP)
     #endif
     for(int p=0;p<npb;p++){
-      const tfloat4 vr=velrhoprec[p];
-      const float rhonew=float(double(vr.w)+dt05*arc[p]);
-      velrhoc[p]=TFloat4(vr.x,vr.y,vr.z,(rhonew<RhopZero? RhopZero: rhonew));//-Avoid fluid particles being absorbed by boundary ones. | Evita q las boundary absorvan a las fluidas.
-      if(mdbc2)velrhoc[p]=vr; //<vs_m2dbc>
+      tfloat4 vr=velrhoprec[p];
+      if(!mdbc2 || boundmode[p]<BMODE_MDBC2){ //-For DBC or mDBC1 //<vs_m2dbc>
+        vr.w=float(double(vr.w)+dt05*arc[p]);
+        vr.w=(vr.w<RhopZero? RhopZero: vr.w); //-To prevent absorption of fluid particles by boundaries. | Evita que las boundary absorvan a las fluidas.
+      }
+      velrhoc[p]=vr;
     }
   }
 
@@ -1297,6 +1295,7 @@ void JSphCpu::ComputeSymplecticPre(double dt){
     typecode*       codec2=Code_c->ptr();
     tdouble3*       movc=mov_c.ptr();
     tfloat4*        velrhoc=Velrho_c->ptr();
+    const byte*     boundmode=AC_CPTR(BoundMode_c); //<vs_m2dbc>
     #ifdef OMP_USE
       #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTESTEP)
     #endif
@@ -1340,7 +1339,8 @@ void JSphCpu::ComputeSymplecticPre(double dt){
       }
       else{//-Floating Particles.
         velrhoc[p]=velrhoprec[p];
-        velrhoc[p].w=(rhonew<RhopZero? RhopZero: rhonew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.
+        if(!mdbc2 || boundmode[p]<BMODE_MDBC2) //<vs_m2dbc>
+          velrhoc[p].w=(rhonew<RhopZero? RhopZero: rhonew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.
       }
     }
   }
@@ -1386,18 +1386,21 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
   const int npf=np-npb;
   
   //-Calculate rho of boundary and set velocity=0. | Calcula rho de contorno y vel igual a cero.
-  if(!mdbc2) //<vs_m2dbc>
   {
     const float*   arc=Ar_c->cptr();
     const tfloat4* velrhoprec=VelrhoPre_c->cptr();
     tfloat4*       velrhoc=Velrho_c->ptr();
+    const byte*    boundmode=AC_CPTR(BoundMode_c); //<vs_m2dbc>
     #ifdef OMP_USE
       #pragma omp parallel for schedule (static) if(npb>OMP_LIMIT_COMPUTESTEP)
     #endif
     for(int p=0;p<npb;p++){
-      const double epsilon_rdot=(-double(arc[p])/double(velrhoc[p].w))*dt;
-      const float rhonew=float(double(velrhoprec[p].w)*  (2.-epsilon_rdot)/(2.+epsilon_rdot));
-      velrhoc[p]=TFloat4(0,0,0,(rhonew<RhopZero? RhopZero: rhonew));//-Avoid fluid particles being absorbed by boundary ones. | Evita q las boundary absorvan a las fluidas.
+      if(!mdbc2 || boundmode[p]<BMODE_MDBC2){ //<vs_m2dbc>
+        const double epsilon_rdot=(-double(arc[p])/double(velrhoc[p].w))*dt;
+        const float rhonew=float(double(velrhoprec[p].w)*  (2.-epsilon_rdot)/(2.+epsilon_rdot));
+        velrhoc[p]=TFloat4(0,0,0,(rhonew<RhopZero? RhopZero: rhonew));//-Avoid fluid particles being absorbed by boundary ones. | Evita q las boundary absorvan a las fluidas.
+      } //<vs_m2dbc>
+      else velrhoc[p]=velrhoprec[p]; //-Like in GPU implementation.
     }
   }
 
@@ -1413,6 +1416,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
     typecode*       codec2=Code_c->ptr();
     tdouble3*       movc=mov_c.ptr();
     tfloat4*        velrhoc=Velrho_c->ptr();
+    const byte*     boundmode=AC_CPTR(BoundMode_c); //<vs_m2dbc>
     #ifdef OMP_USE
       #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTESTEP)
     #endif
@@ -1461,7 +1465,8 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
       }
       else{//-Floating Particles.
         velrhoc[p]=velrhoprec[p];
-        velrhoc[p].w=(rhonew<RhopZero? RhopZero: rhonew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.
+        if(!mdbc2 || boundmode[p]<BMODE_MDBC2) //<vs_m2dbc>
+          velrhoc[p].w=(rhonew<RhopZero? RhopZero: rhonew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.
       }
     }
   }

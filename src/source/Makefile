@@ -1,4 +1,4 @@
-#DualSPHysics GPU/CPU v5.4.335+ 31-08-2024
+#DualSPHysics GPU/CPU v5.4.336 04-09-2024
 
 #=============== Compilation Options (YES/NO) ===============
 USE_DEBUG=NO

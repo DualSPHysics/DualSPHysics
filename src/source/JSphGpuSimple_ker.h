@@ -44,18 +44,18 @@ void Resety(unsigned n,unsigned ini,float3* v,cudaStream_t stm);
 //-Kernels for ComputeStep (vel & rho).
 //----------------------------------------
 void ComputeStepVerlet(bool floating,bool shift,bool inout,bool mdbc2
-  ,unsigned np,unsigned npb,const float4* velrho1,const float4* velrho2
+  ,unsigned np,unsigned npb,const float4* velrho1,const float4* velrho2,const byte* boundmode
   ,const float* ar,const float3* ace,const float4* shiftposfs,const float3* indirvel
-  ,double dt,double dt2,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
-  ,typecode* code,double2* movxy,double* movz,float4* velrhonew,cudaStream_t stm);
+  ,double dt,double dt2,float rhopzero,float rhopoutmin,float rhopoutmax
+  ,tfloat3 gravity,typecode* code,double2* movxy,double* movz,float4* velrhonew,cudaStream_t stm);
 void ComputeStepSymplecticPre(bool floating,bool shift,bool inout,bool mdbc2
-  ,unsigned np,unsigned npb,const float4* velrhopre
+  ,unsigned np,unsigned npb,const float4* velrhopre,const byte* boundmode
   ,const float* ar,const float3* ace,const float4* shiftposfs,const float3* indirvel
   ,double dtm,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
   ,typecode* code,double2* movxy,double* movz,float4* velrho,cudaStream_t stm);
 void ComputeStepSymplecticCor(bool floating,bool shift,bool inout,bool mdbc2
-  ,unsigned np,unsigned npb,const float4* velrhopre,const float* ar
-  ,const float3* ace,const float4* shiftposfs,const float3* indirvel
+  ,unsigned np,unsigned npb,const float4* velrhopre,const byte* boundmode
+  ,const float* ar,const float3* ace,const float4* shiftposfs,const float3* indirvel
   ,double dtm,double dt,float rhopzero
   ,float rhopoutmin,float rhopoutmax,tfloat3 gravity
   ,typecode* code,double2* movxy,double* movz,float4* velrho,cudaStream_t stm);

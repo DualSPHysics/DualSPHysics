@@ -42,7 +42,7 @@ void Interaction_Mdbc2Correction(TpKernel tkernel,bool simulate2d
   ,const StDivDataGpu& dvd,const tdouble3& mapposmin,const double2* posxy
   ,const double* posz,const float4* poscell,const typecode* code
   ,const unsigned* idp,const float3* boundnor,const float3* motionvel
-  ,const float3* motionace,float4* velrho,float* boundonoff
+  ,const float3* motionace,float4* velrho,byte* boundmode,float3* tangenvel
   ,cudaStream_t stm=NULL);
 
 void CopyMotionVelAce(unsigned nmoving,double dt,const unsigned* ridpmot

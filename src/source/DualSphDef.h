@@ -434,6 +434,12 @@ typedef enum{
  ,SLIP_FreeSlip=3  ///<mDBC2 slip mode: Free slip (in development).
 }TpSlipMode;
 
+#define MDBC2_KEEPVEL  ///<En MdbcBoundCorrection() no modifica velrho para usarlo en interaccion en lugar de velmotion.
+
+#define BMODE_DBC 0       ///<Boundary particle use DBC.
+#define BMODE_MDBC2 1     ///<Boundary particle use mDBC2.
+#define BMODE_MDBC2OFF 2  ///<Boundary particle use mDBC2 but mass is disabled.
+
 ///Types of interaction step.
 typedef enum{ 
   INTERSTEP_None=0,         

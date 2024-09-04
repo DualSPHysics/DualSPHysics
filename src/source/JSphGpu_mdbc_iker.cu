@@ -270,21 +270,35 @@ __device__ float KerMdbc2InfNorm4x4(tmatrix4f mat){
   return(infnorm);
 }
 //------------------------------------------------------------------------------
+/// Calculates tangent velocity
+//------------------------------------------------------------------------------
+__device__ float3 KerMdbc2TangenVel(const float3& boundnor,const float3& velfinal){
+  const float snormal=sqrt(boundnor.x*boundnor.x + boundnor.y*boundnor.y + boundnor.z*boundnor.z);
+  const float bnormalx=boundnor.x/snormal;
+  const float bnormaly=boundnor.y/snormal;
+  const float bnormalz=boundnor.z/snormal;
+	const float veldotnorm=velfinal.x*bnormalx + velfinal.y*bnormaly + velfinal.z*bnormalz;
+  const float3 tangentvel=make_float3(velfinal.x-veldotnorm*bnormalx,
+                                      velfinal.y-veldotnorm*bnormaly,
+                                      velfinal.z-veldotnorm*bnormalz);
+  return(tangentvel);
+}
+//------------------------------------------------------------------------------
 /// Perform interaction between ghost node of selected bondary and fluid.
 //------------------------------------------------------------------------------
-template<TpKernel tker,bool sim2d,TpSlipMode tslip>
+template<TpKernel tker,bool sim2d,TpSlipMode tslip,bool sp>
   __global__ void KerInteractionMdbc2Correction_Fast
   (unsigned n,unsigned nbound,float3 gravity
   ,double3 mapposmin,float poscellsize,const float4* poscell
   ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
   ,const double2* posxy,const double* posz,const typecode* code
   ,const unsigned* idp,const float3* boundnor,const float3* motionvel
-  ,const float3* motionace,float4* velrho,float* boundonoff)
+  ,const float3* motionace,float4* velrho,byte* boundmode,float3* tangenvel)
 {
   const unsigned p1=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p1<n){
     const float3 bnormalp1=boundnor[p1];
-    if(bnormalp1.x!=0 || bnormalp1.y!=0 || bnormalp1.z!=0){
+    if(bnormalp1.x!=0 || bnormalp1.z!=0 || bnormalp1.y!=0){
       float rhofinal=FLT_MAX;
       float3 velrhofinal=make_float3(0,0,0);
       float sumwab=0;
@@ -368,48 +382,34 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip>
       //-Store the results.
       //--------------------
       if(submerged>0.f){
-        boundonoff[p1]=1.0f;
+        boundmode[p1]=BMODE_MDBC2;
         const float3 dpos=make_float3(-bnormalp1.x,-bnormalp1.y,-bnormalp1.z); //-Boundary particle position - ghost node position.
         if(sim2d){//-2D simulation.
           if(sumwab<0.1f){ //-If kernel sum is small use shepherd density and vel0.
             //-Trying to avoid too negative pressures.
-            const float rhoghost=max(CTE.rhopzero,(rhop1/a_corr2.a11));
-            //-Clone particle proceedure.
-            const float pressfinal=KerMdbc2PressClone(sim2d,rhoghost,bnormalp1,gravity,motacep1,dpos);
-            //-Final values to be saved.
-            rhofinal=CTE.rhopzero+float(pressfinal/(CTE.cs0*CTE.cs0));
+            rhofinal=max(CTE.rhopzero,(rhop1/a_corr2.a11));
           }
           else{//-Chech if matrix is invertible and well conditioned.
-            const double determ=cumath::Determinant3x3dbl(a_corr2);
+            const double determ=(sp? cumath::Determinant3x3(a_corr2): 
+                                     cumath::Determinant3x3dbl(a_corr2));
             if(fabs(determ)>=0.001){//-Use 1e-3f (first_order).
-              const tmatrix3f invacorr2=cumath::InverseMatrix3x3dbl(a_corr2,determ);
+              const tmatrix3f invacorr2=(sp? cumath::InverseMatrix3x3(a_corr2,determ):
+                                             cumath::InverseMatrix3x3dbl(a_corr2,determ));
               //-Calculate the scaled condition number
               const float infnorma   =KerMdbc2InfNorm3x3(a_corr2);
               const float infnormainv=KerMdbc2InfNorm3x3(invacorr2);
               const float condinf=CTE.dp*CTE.dp * infnorma * infnormainv;
-              if(condinf<=50){//-If matrix is well conditioned use matrix inverse for density and shepherd for velocity.
-                const float rhoghost=float(invacorr2.a11*rhop1 + invacorr2.a12*gradrhop1.x + invacorr2.a13*gradrhop1.z);
-                //-Clone particle proceedure.
-                const float pressfinal=KerMdbc2PressClone(sim2d,rhoghost,bnormalp1,gravity,motacep1,dpos);
-                //-Final values to be saved.
-                rhofinal=CTE.rhopzero + float(pressfinal/(CTE.cs0*CTE.cs0));
-              }
-              else{ //-If ill conditioned use shepherd.
-                const float rhoghost=float(rhop1/a_corr2.a11);
-                //-Clone particle proceedure.
-                const float pressfinal=KerMdbc2PressClone(sim2d,rhoghost,bnormalp1,gravity,motacep1,dpos);
-                //-Final values to be saved.
-                rhofinal=CTE.rhopzero+float(pressfinal/(CTE.cs0*CTE.cs0));
-              }
+              if(condinf<=50)//-If matrix is well conditioned use matrix inverse for density and shepherd for velocity.
+                rhofinal=float(invacorr2.a11*rhop1 + invacorr2.a12*gradrhop1.x + invacorr2.a13*gradrhop1.z);
+              else//-If ill conditioned use shepherd.
+                rhofinal=float(rhop1/a_corr2.a11);
             }
-            else{//-If not invertible use shepherd for density.
-              const float rhoghost=float(rhop1/a_corr2.a11);
-              //-Clone particle proceedure.
-              const float pressfinal=KerMdbc2PressClone(sim2d,rhoghost,bnormalp1,gravity,motacep1,dpos);
-              //-Final values to be saved.
-              rhofinal=CTE.rhopzero+float(pressfinal/(CTE.cs0*CTE.cs0));
-            }
+            else//-If not invertible use shepherd for density.
+              rhofinal=float(rhop1/a_corr2.a11);
           }
+          //-Final density according to press.
+          const float pressfinal=KerMdbc2PressClone(sim2d,rhofinal,bnormalp1,gravity,motacep1,dpos);
+          rhofinal=CTE.rhopzero+float(pressfinal/(CTE.cs0*CTE.cs0));
           //-velocity with Shepherd Sum.
           velrhofinal.x=float(velp1.x/a_corr2.a11);
           velrhofinal.y=0.f;
@@ -419,43 +419,29 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip>
           //-Density with pressure cloning.
           if(sumwab<0.1f){//-If kernel sum is small use shepherd for density.
             //-Trying to avoid too negative pressures for empty kernel.
-            const float rhoghost=max(CTE.rhopzero,float(rhop1/a_corr3.a11));
-            //-Clone particle proceedure.
-            const float pressfinal=KerMdbc2PressClone(sim2d,rhoghost,bnormalp1,gravity,motacep1,dpos);
-            //-Final values to be saved.
-            rhofinal=CTE.rhopzero+float(pressfinal/(CTE.cs0*CTE.cs0));
+            rhofinal=max(CTE.rhopzero,float(rhop1/a_corr3.a11));
           }
           else{
-            const double determ=cumath::Determinant4x4dbl(a_corr3);
+            const double determ=(sp? cumath::Determinant4x4(a_corr3): 
+                                     cumath::Determinant4x4dbl(a_corr3));
             if(fabs(determ)>=0.001){
-              const tmatrix4f invacorr3=cumath::InverseMatrix4x4dbl(a_corr3,determ);
+              const tmatrix4f invacorr3=(sp? cumath::InverseMatrix4x4(a_corr3,determ):
+                                             cumath::InverseMatrix4x4dbl(a_corr3,determ));
               //-Calculate the scaled condition number.
               const float infnorma   =KerMdbc2InfNorm4x4(a_corr3);
               const float infnormainv=KerMdbc2InfNorm4x4(invacorr3);
               const float condinf=CTE.dp*CTE.dp*infnorma*infnormainv;
-              if(condinf<=50){//-If matrix is well conditioned use matrix inverse for density.
-                const float rhoghost=float(invacorr3.a11*rhop1 + invacorr3.a12*gradrhop1.x + invacorr3.a13*gradrhop1.y + invacorr3.a14*gradrhop1.z);
-                //-Clone particle proceedure.
-                const float pressfinal=KerMdbc2PressClone(sim2d,rhoghost,bnormalp1,gravity,motacep1,dpos);
-                //-Final values to be saved.
-                rhofinal=CTE.rhopzero+float(pressfinal/(CTE.cs0*CTE.cs0));
-              }
-              else{//-Matrix is not well conditioned, use shepherd for density.
-                const float rhoghost=float(rhop1/a_corr3.a11);
-                //-Clone particle proceedure.
-                const float pressfinal=KerMdbc2PressClone(sim2d,rhoghost,bnormalp1,gravity,motacep1,dpos);
-                //-Final values to be saved.
-                rhofinal=CTE.rhopzero+float(pressfinal/(CTE.cs0*CTE.cs0));
-              }
+              if(condinf<=50)//-If matrix is well conditioned use matrix inverse for density.
+                rhofinal=float(invacorr3.a11*rhop1 + invacorr3.a12*gradrhop1.x + invacorr3.a13*gradrhop1.y + invacorr3.a14*gradrhop1.z);
+              else//-Matrix is not well conditioned, use shepherd for density.
+                rhofinal=float(rhop1/a_corr3.a11);
             }
-            else{//-Matrix is not invertible use shepherd for density.
-              const float rhoghost=float(rhop1/a_corr3.a11);
-              //-Clone particle proceedure.
-              const float pressfinal=KerMdbc2PressClone(sim2d,rhoghost,bnormalp1,gravity,motacep1,dpos);
-              //-Final values to be saved.
-              rhofinal=CTE.rhopzero+float(pressfinal/(CTE.cs0*CTE.cs0));
-            }
+            else//-Matrix is not invertible use shepherd for density.
+              rhofinal=float(rhop1/a_corr3.a11);
           }
+          //-Final density according to press.
+          const float pressfinal=KerMdbc2PressClone(sim2d,rhofinal,bnormalp1,gravity,motacep1,dpos);
+          rhofinal=CTE.rhopzero+float(pressfinal/(CTE.cs0*CTE.cs0));
           //-Velocity with Shepherd sum.
           velrhofinal.x=float(velp1.x/a_corr3.a11);
           velrhofinal.y=float(velp1.y/a_corr3.a11);
@@ -465,42 +451,52 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip>
         //-Store the results.
         if(tslip==SLIP_NoSlip){//-No-Slip: vel = 2*motion - ghost
           const float3 v=motionvel[p1];
-          velrho[p1]=make_float4(v.x+v.x - velrhofinal.x,
-                                 v.y+v.y - velrhofinal.y,
-                                 v.z+v.z - velrhofinal.z, 
-                                 rhofinal);
+          const float3 v2=make_float3(v.x+v.x - velrhofinal.x,
+                                      v.y+v.y - velrhofinal.y,
+                                      v.z+v.z - velrhofinal.z); 
+          #ifndef MDBC2_KEEPVEL
+            velrho[p1]=make_float4(v2.x,v2.y,v2.z,rhofinal);
+          #else
+            velrho[p1].w=rhofinal;
+          #endif
+          tangenvel[p1]=KerMdbc2TangenVel(bnormalp1,v2);
         }
-        if(tslip==SLIP_FreeSlip){//-No-Penetration and free slip.
-          float3 fsvelfinal; //-Final free slip boundary velocity.
-          const float3 v=motionvel[p1];
-          const float motion=sqrt(v.x*v.x + v.y*v.y + v.z*v.z); //-To check if boundary moving.
-          const float norm=sqrt(bnormalp1.x*bnormalp1.x + bnormalp1.y*bnormalp1.y + bnormalp1.z*bnormalp1.z);
-          //-Creating a normailsed boundary normal.
-          const float3 normal=make_float3(fabs(bnormalp1.x)/norm,fabs(bnormalp1.y)/norm,fabs(bnormalp1.z)/norm);
-          //-Finding the velocity componants normal and tangential to boundary.
-          const float3 normvel=make_float3(velrhofinal.x*normal.x,velrhofinal.y*normal.y,velrhofinal.z*normal.z);//-Velocity in direction of normal pointing into fluid).
-          if(motion>0){ //-If moving boundary.
-            const float3 normmot=make_float3(v.x*normal.x,v.y*normal.y,v.z*normal.z); //-Boundary motion in direction normal to boundary.
-            fsvelfinal=make_float3(normmot.x+normmot.x - normvel.x,
-                                   normmot.y+normmot.y - normvel.y,
-                                   normmot.z+normmot.z - normvel.z);
-            //-Only velocity in normal direction for no-penetration.
-            //-Fluid sees zero velocity in the tangetial direction.
-          }
-          else {
-            const float3 tangvel=make_float3(velrhofinal.x-normvel.x,velrhofinal.y-normvel.y,velrhofinal.z-normvel.z); //-Velocity tangential to normal.
-            fsvelfinal=make_float3(tangvel.x-normvel.x,tangvel.y-normvel.y,tangvel.z-normvel.z);
-            //-Tangential velocity equal to fluid velocity for free slip.
-            //-Normal velocity reversed for no-penetration.
-          }
-          //-Save the velocity and density.
-          velrho[p1]=make_float4(fsvelfinal.x,fsvelfinal.y,fsvelfinal.z,rhofinal);
-        }
+        //if(tslip==SLIP_FreeSlip){//-No-Penetration and free slip.
+        //  float3 fsvelfinal; //-Final free slip boundary velocity.
+        //  const float3 v=motionvel[p1];
+        //  const float motion=sqrt(v.x*v.x + v.y*v.y + v.z*v.z); //-To check if boundary moving.
+        //  const float norm=sqrt(bnormalp1.x*bnormalp1.x + bnormalp1.y*bnormalp1.y + bnormalp1.z*bnormalp1.z);
+        //  //-Creating a normailsed boundary normal.
+        //  const float3 normal=make_float3(fabs(bnormalp1.x)/norm,fabs(bnormalp1.y)/norm,fabs(bnormalp1.z)/norm);
+        //  //-Finding the velocity componants normal and tangential to boundary.
+        //  const float3 normvel=make_float3(velrhofinal.x*normal.x,velrhofinal.y*normal.y,velrhofinal.z*normal.z);//-Velocity in direction of normal pointing into fluid).
+        //  if(motion>0){ //-If moving boundary.
+        //    const float3 normmot=make_float3(v.x*normal.x,v.y*normal.y,v.z*normal.z); //-Boundary motion in direction normal to boundary.
+        //    fsvelfinal=make_float3(normmot.x+normmot.x - normvel.x,
+        //                           normmot.y+normmot.y - normvel.y,
+        //                           normmot.z+normmot.z - normvel.z);
+        //    //-Only velocity in normal direction for no-penetration.
+        //    //-Fluid sees zero velocity in the tangetial direction.
+        //  }
+        //  else {
+        //    const float3 tangvel=make_float3(velrhofinal.x-normvel.x,velrhofinal.y-normvel.y,velrhofinal.z-normvel.z); //-Velocity tangential to normal.
+        //    fsvelfinal=make_float3(tangvel.x-normvel.x,tangvel.y-normvel.y,tangvel.z-normvel.z);
+        //    //-Tangential velocity equal to fluid velocity for free slip.
+        //    //-Normal velocity reversed for no-penetration.
+        //  }
+        //  //-Save the velocity and density.
+        //  velrho[p1]=make_float4(fsvelfinal.x,fsvelfinal.y,fsvelfinal.z,rhofinal);
+        //}
       }
       else{//-If unsubmerged switch off boundary particle.
-        boundonoff[p1]=0;
+        boundmode[p1]=BMODE_MDBC2OFF;
         const float3 v=motionvel[p1];
-        velrho[p1]=make_float4(v.x,v.y,v.z,CTE.rhopzero);
+        #ifndef MDBC2_KEEPVEL
+          velrho[p1]=make_float4(v.x,v.y,v.z,CTE.rhopzero);
+        #else
+          velrho[p1].w=CTE.rhopzero;
+        #endif
+        tangenvel[p1]=KerMdbc2TangenVel(bnormalp1,v);
       }
     }
   }
@@ -515,18 +511,20 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip> void Interaction_Mdbc2Correc
   ,const StDivDataGpu& dvd,const tdouble3& mapposmin,const double2* posxy
   ,const double* posz,const float4* poscell,const typecode* code
   ,const unsigned* idp,const float3* boundnor,const float3* motionvel
-  ,const float3* motionace,float4* velrho,float* boundonoff,cudaStream_t stm)
+  ,const float3* motionace,float4* velrho,byte* boundmode,float3* tangenvel
+  ,cudaStream_t stm)
 {
   const int2* beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
   //-Interaction GhostBoundaryNodes-Fluid.
   if(n){
     const unsigned bsbound=128;
     dim3 sgridb=cusph::GetSimpleGridSize(n,bsbound);
-    KerInteractionMdbc2Correction_Fast <tker,sim2d,tslip> <<<sgridb,bsbound,0,stm>>>
+    const bool usefloat=false;
+    KerInteractionMdbc2Correction_Fast <tker,sim2d,tslip,usefloat> <<<sgridb,bsbound,0,stm>>>
       (n,nbound,Float3(gravity),Double3(mapposmin),dvd.poscellsize
       ,poscell,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid
       ,posxy,posz,code,idp,boundnor,motionvel,motionace
-      ,velrho,boundonoff);
+      ,velrho,boundmode,tangenvel);
   }
 }
 //==============================================================================
@@ -535,19 +533,20 @@ template<TpKernel tker> void Interaction_Mdbc2CorrectionT(bool simulate2d
   ,const StDivDataGpu& dvd,const tdouble3& mapposmin,const double2* posxy
   ,const double* posz,const float4* poscell,const typecode* code
   ,const unsigned* idp,const float3* boundnor,const float3* motionvel
-  ,const float3* motionace,float4* velrho,float* boundonoff,cudaStream_t stm)
+  ,const float3* motionace,float4* velrho,byte* boundmode,float3* tangenvel
+  ,cudaStream_t stm)
 {
   switch(slipmode){
     case SLIP_NoSlip:{ const TpSlipMode tslip=SLIP_NoSlip;
       if(simulate2d){ const bool sim2d=true;
         Interaction_Mdbc2CorrectionT2 <tker,sim2d,tslip> (n,nbound,gravity
           ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel
-          ,motionace,velrho,boundonoff,stm);
+          ,motionace,velrho,boundmode,tangenvel,stm);
       }
       else{ const bool sim2d=false;
         Interaction_Mdbc2CorrectionT2 <tker,sim2d,tslip> (n,nbound,gravity
           ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel
-          ,motionace,velrho,boundonoff,stm);
+          ,motionace,velrho,boundmode,tangenvel,stm);
       }
     }break;
     //case SLIP_FreeSlip:{ const TpSlipMode tslip=SLIP_FreeSlip;
@@ -564,19 +563,20 @@ void Interaction_Mdbc2Correction(TpKernel tkernel,bool simulate2d
   ,const StDivDataGpu& dvd,const tdouble3& mapposmin,const double2* posxy
   ,const double* posz,const float4* poscell,const typecode* code
   ,const unsigned* idp,const float3* boundnor,const float3* motionvel
-  ,const float3* motionace,float4* velrho,float* boundonoff,cudaStream_t stm)
+  ,const float3* motionace,float4* velrho,byte* boundmode,float3* tangenvel
+  ,cudaStream_t stm)
 {
   switch(tkernel){
     case KERNEL_Wendland:{ const TpKernel tker=KERNEL_Wendland;
       Interaction_Mdbc2CorrectionT <tker> (simulate2d,slipmode,n,nbound,gravity
         ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,motionace
-        ,velrho,boundonoff,stm);
+        ,velrho,boundmode,tangenvel,stm);
     }break;
 #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:{ const TpKernel tker=KERNEL_Cubic;
       Interaction_Mdbc2CorrectionT <tker> (simulate2d,slipmode,n,nbound,gravity
         ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel,motionace
-        ,velrho,boundonoff,stm);
+        ,velrho,boundmode,tangenvel,stm);
     }break;
 #endif
     default: throw "Kernel unknown at Interaction_Mdbc2Correction().";

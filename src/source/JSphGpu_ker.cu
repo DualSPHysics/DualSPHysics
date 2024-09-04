@@ -526,7 +526,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   (bool boundp2,unsigned p1,const unsigned& pini,const unsigned& pfin,float visco
   ,const float* ftomassp,const float2* tauff,const float3* dengradcorr
   ,const float4* poscell,const float4* velrho,const typecode* code,const unsigned* idp
-  ,const float3* boundnor,const float* boundonoff,const float3* motionvel //<vs_m2dbc>
+  ,const byte* boundmode,const float3* tangenvel,const float3* motionvel //<vs_m2dbc>
   ,float massp2,bool ftp1
   ,const float4& pscellp1,const float4& velrhop1,float pressp1
   ,const float2& taup1_xx_xy,const float2& taup1_xz_yy,const float2& taup1_yz_zz
@@ -563,33 +563,13 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
         if(ftp2 && shift && shiftmode==SHIFT_NoBound)shiftposfsp1.x=FLT_MAX; //-Cancels shifting with floating bodies. | Con floatings anula shifting.
         compute=!(USE_FTEXTERNAL && ftp1 && (boundp2 || ftp2)); //-Deactivated when DEM or Chrono is used and is float-float or float-bound. | Se desactiva cuando se usa DEM o Chrono y es float-float o float-bound.
       }
+      //-Changing the mass of boundary particle with boundmode. //<vs_m2dbc_ini>
+      if(mdbc2 && boundp2 && !ftp2){
+        if(boundmode[p2]==BMODE_MDBC2OFF)massp2=0;
+      } //<vs_m2dbc_end>
 
       float4 velrhop2=velrho[p2];
       if(symm)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
-      
-      //<vs_m2dbc_ini>
-      //-Setting up boundary normals and new boundary velocities
-      float3 normalp2    =make_float3(0,0,0); //-Creating a normailsed boundary normal
-      float3 normalvelp2 =make_float3(0,0,0); //-Boundary particle velocity normal to boundary used in con of mass
-      float3 tangentvelp2=make_float3(0,0,0); //-Boundary particle velocity tangent to boundary used in momentu
-      float3 movvelp2    =motionvel[p2];
-      if(mdbc2 && boundp2 && !ftp2){//-Computes velocities and change massp2 for mDBC2 (not for floating particles).
-        float norm=sqrt(boundnor[p2].x*boundnor[p2].x + boundnor[p2].y*boundnor[p2].y + boundnor[p2].z*boundnor[p2].z);
-        if(norm>0.f){ // mDBC
-          normalp2.x=boundnor[p2].x/norm; normalp2.y=boundnor[p2].y/norm; normalp2.z=boundnor[p2].z/norm;
-          // calculating boundary particle velocity components
-          float veldotnorm=velrhop2.x*normalp2.x + velrhop2.y*normalp2.y + velrhop2.z*normalp2.z;
-          normalvelp2.x=veldotnorm*normalp2.x; normalvelp2.y=veldotnorm*normalp2.y; normalvelp2.z=veldotnorm*normalp2.z;
-          tangentvelp2.x=velrhop2.x-normalvelp2.x; tangentvelp2.y=velrhop2.y-normalvelp2.y; tangentvelp2.z=velrhop2.z-normalvelp2.z;
-        }
-        else{ // DBC hopefulyl this doesnt break it
-          normalvelp2.x=velrhop2.x;  normalvelp2.y=velrhop2.y;  normalvelp2.z=velrhop2.z;
-          tangentvelp2.x=velrhop2.x; tangentvelp2.y=velrhop2.y; tangentvelp2.z=velrhop2.z;
-        }
-        // changing the mass of boundary particle with boundonoff
-        massp2=boundonoff[p2]*massp2; 
-      }
-      //<vs_m2dbc_end>
 
       //-Velocity derivative (Momentum equation).
       if(compute){
@@ -602,11 +582,14 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 
       //-Density derivative (Continuity equation).
       float dvx=velrhop1.x-velrhop2.x, dvy=velrhop1.y-velrhop2.y, dvz=velrhop1.z-velrhop2.z;
+      #ifndef MDBC2_KEEPVEL
       if(mdbc2 && boundp2 && !ftp2){ //<vs_m2dbc_ini>
+        const float3 movvelp2=motionvel[p2];
         dvx=velrhop1.x-movvelp2.x; //-mDBC2 no slip.
         dvy=velrhop1.y-movvelp2.y;
         dvz=velrhop1.z-movvelp2.z;
       } //<vs_m2dbc_end>
+      #endif
       if(compute)arp1+=(USE_FLOATING? ftmassp2: massp2)*(dvx*frx+dvy*fry+dvz*frz)*(velrhop1.w/velrhop2.w);
 
       const float cbar=CTE.cs0;
@@ -641,6 +624,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       //===== Viscosity ===== 
       if(compute){
         if(mdbc2 && boundp2 && !ftp2){ //<vs_m2dbc_ini>
+          const float3 tangentvelp2=tangenvel[p2];
           dvx=velrhop1.x-tangentvelp2.x;
           dvy=velrhop1.y-tangentvelp2.y;
           dvz=velrhop1.z-tangentvelp2.z;
@@ -707,7 +691,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   ,const unsigned* dcell,const float* ftomassp,const float2* tauff,float2* two_strain
   ,const float3* dengradcorr,const float4* poscell,const float4* velrho
   ,const typecode* code,const unsigned* idp
-  ,const float3* boundnor,const float* boundonoff,const float3* motionvel //<vs_m2dbc>
+  ,const byte* boundmode,const float3* tangenvel,const float3* motionvel //<vs_m2dbc>
   ,float* viscdt,float* ar,float3* ace,float* delta
   ,TpShifting shiftmode,float4* shiftposfs)
 {
@@ -762,7 +746,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       if(pfin){
                           KerInteractionForcesFluidBox<tker,ftmode,tvisco,tdensity,shift,mdbc2,false>
                             (false,p1,pini,pfin,viscof,ftomassp,tauff,dengradcorr,poscell,velrho,code,idp
-                            ,boundnor,boundonoff,motionvel //<vs_m2dbc>
+                            ,boundmode,tangenvel,motionvel //<vs_m2dbc>
                             ,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
                             ,deltap1,shiftmode,shiftposfsp1);
@@ -770,7 +754,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
         //<vs_syymmetry_ini>
         if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,tvisco,tdensity,shift,mdbc2,true >
                             (false,p1,pini,pfin,viscof,ftomassp,tauff,dengradcorr,poscell,velrho,code,idp
-                            ,boundnor,boundonoff,motionvel //<vs_m2dbc>
+                            ,boundmode,tangenvel,motionvel //<vs_m2dbc>
                             ,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
                             ,deltap1,shiftmode,shiftposfsp1);
@@ -784,14 +768,14 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       if(pfin){
                           KerInteractionForcesFluidBox<tker,ftmode,tvisco,tdensity,shift,mdbc2,false>
                             (true,p1,pini,pfin,viscob,ftomassp,tauff,NULL,poscell,velrho,code,idp
-                            ,boundnor,boundonoff,motionvel //<vs_m2dbc>
+                            ,boundmode,tangenvel,motionvel //<vs_m2dbc>
                             ,CTE.massb,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
                             ,deltap1,shiftmode,shiftposfsp1);
         //<vs_syymmetry_ini>
         if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,tvisco,tdensity,shift,mdbc2,true >
                             (true,p1,pini,pfin,viscob,ftomassp,tauff,NULL,poscell,velrho,code,idp
-                            ,boundnor,boundonoff,motionvel //<vs_m2dbc>
+                            ,boundmode,tangenvel,motionvel //<vs_m2dbc>
                             ,CTE.massb,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
                             ,deltap1,shiftmode,shiftposfsp1);
@@ -836,7 +820,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       ,const int2*,unsigned,const unsigned*,const float*,const float2*
       ,float2*,const float3*,const float4*,const float4*,const typecode*
       ,const unsigned*
-      ,const float3*,const float*,const float3* //<vs_m2dbc>
+      ,const byte*,const float3*,const float3* //<vs_m2dbc>
       ,float*,float*,float3*,float*,TpShifting,float4*);
 
     fun_ptr ptr=&KerInteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2,symm>;
@@ -892,13 +876,13 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
       KerInteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2,true> <<<sgridf,t.bsfluid,0,t.stm>>> 
       (t.fluidnum,t.fluidini,t.viscob,t.viscof,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,t.dcell
       ,t.ftomassp,(const float2*)t.spstaurho2,(float2*)t.sps2strain,t.dengradcorr,t.poscell,t.velrho,t.code,t.idp
-      ,t.boundnor,t.boundonoff,t.motionvel //<vs_m2dbc>
+      ,t.boundmode,t.tangenvel,t.motionvel //<vs_m2dbc>
       ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
     else //<vs_syymmetry_end>
       KerInteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2,false> <<<sgridf,t.bsfluid,0,t.stm>>> 
       (t.fluidnum,t.fluidini,t.viscob,t.viscof,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,t.dcell
       ,t.ftomassp,(const float2*)t.spstaurho2,(float2*)t.sps2strain,t.dengradcorr,t.poscell,t.velrho,t.code,t.idp
-      ,t.boundnor,t.boundonoff,t.motionvel //<vs_m2dbc>
+      ,t.boundmode,t.tangenvel,t.motionvel //<vs_m2dbc>
       ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
       //KerInteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.scelldiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.poscell,t.velrho,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
   }
@@ -979,9 +963,9 @@ void Interaction_Forces(const StInterParmsg& t){
   if(t.tkernel!=KERNEL_Wendland)throw "Extra kernels are disabled for FastCompilation...";
   Interaction_Forces_gt0<KERNEL_Wendland> (t);
 #else
-  if(t.tkernel==KERNEL_Wendland)     Interaction_Forces_gt0<KERNEL_Wendland> (t);
+  if(t.tkernel==KERNEL_Wendland)       Interaction_Forces_gt0<KERNEL_Wendland> (t);
  #ifndef DISABLE_KERNELS_EXTRA
-  else if(t.tkernel==KERNEL_Cubic)   Interaction_Forces_gt0<KERNEL_Cubic   > (t);
+  else if(t.tkernel==KERNEL_Cubic)     Interaction_Forces_gt0<KERNEL_Cubic   > (t);
  #endif
 #endif
 }

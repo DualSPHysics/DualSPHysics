@@ -416,15 +416,21 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     SpsTauRho2_g->SwapPtr(&spstaug);
   }
   if(UseNormals){
-    agfloat3 auxg("-",Arrays_Gpu,true);
-    CellDivSingle->SortDataArrays(BoundNor_g->cptr(),auxg.ptr());
-    BoundNor_g->SwapPtr(&auxg);
-    if(MotionVel_g || MotionAce_g){ //<vs_m2dbc_ini>
-      CellDivSingle->SortDataArrays(MotionVel_g->cptr(),auxg.ptr());
-      MotionVel_g->SwapPtr(&auxg);
-      CellDivSingle->SortDataArrays(MotionAce_g->cptr(),auxg.ptr());
-      MotionAce_g->SwapPtr(&auxg);
-    } //<vs_m2dbc_end>
+    if(SlipMode<SLIP_NoSlip){
+      agfloat3 bnorg("-",Arrays_Gpu,true);
+      CellDivSingle->SortDataArrays(BoundNor_g->cptr(),bnorg.ptr());
+      BoundNor_g->SwapPtr(&bnorg);
+    }
+    else{//<vs_m2dbc_ini>
+      agfloat3 bnorg("-",Arrays_Gpu,true);
+      agfloat3 mvelg("-",Arrays_Gpu,true);
+      agfloat3 maceg("-",Arrays_Gpu,true);
+      CellDivSingle->SortDataArrays(BoundNor_g->cptr(),MotionVel_g->cptr(),MotionAce_g->cptr()
+        ,bnorg.ptr(),mvelg.ptr(),maceg.ptr());
+      BoundNor_g ->SwapPtr(&bnorg);
+      MotionVel_g->SwapPtr(&mvelg);
+      MotionAce_g->SwapPtr(&maceg);
+    }//<vs_m2dbc_end>
   }
 
   //-Collect divide data. | Recupera datos del divide.
@@ -515,7 +521,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,0,Nstep,DivData,Dcell_g->cptr()
     ,Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr()
     ,Velrho_g->cptr(),Idp_g->cptr(),Code_g->cptr()
-    ,AG_CPTR(BoundNor_g),AG_CPTR(BoundOnOff_g),AG_CPTR(MotionVel_g) //<vs_m2dbc>
+    ,AG_CPTR(BoundMode_g),AG_CPTR(TangenVel_g),AG_CPTR(MotionVel_g) //<vs_m2dbc>
     ,FtoMasspg,AG_CPTR(SpsTauRho2_g),dengradcorr
     ,ViscDt_g->ptr(),Ar_g->ptr(),Ace_g->ptr(),AG_PTR(Delta_g)
     ,AG_PTR(Sps2Strain_g)
@@ -565,14 +571,15 @@ void JSphGpuSingle::MdbcBoundCorrection(){
       ,Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr(),Velrho_g->ptr());
   }
   else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
-    const unsigned n=NpbOk;  //-Note that floating boidies are not supported by mDBC2.
-    BoundOnOff_g->Reserve();       //-BoundOnOff_g is freed in PosInteraction_Forces().
-    BoundOnOff_g->CuMemset(0,Npb); //-BoundOnOff_g[]=0
+    const unsigned n=(UseNormalsFt? Np: Npb);
+    BoundMode_g->Reserve();     //-BoundOnOff_g is freed in PosInteraction_Forces().
+    BoundMode_g->CuMemset(0,n); //-BoundMode_g[]=0=BMODE_DBC
+    TangenVel_g->Reserve();     //-TangenVel_g is freed in PosInteraction_Forces().
     cusph::Interaction_Mdbc2Correction(TKernel,Simulate2D,SlipMode,n,CaseNbound
       ,Gravity,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
       ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
       ,MotionVel_g->cptr(),MotionAce_g->cptr(),Velrho_g->ptr()
-      ,BoundOnOff_g->ptr());
+      ,BoundMode_g->ptr(),TangenVel_g->ptr());
   } //<vs_m2dbc_end>
   else Run_Exceptioon("Error: SlipMode is invalid.");
   Timersg->TmStop(TMG_CfPreForces,true);
