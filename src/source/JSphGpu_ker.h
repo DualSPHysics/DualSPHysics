@@ -246,7 +246,8 @@ void FtPartsUpdate(bool periactive,double dt,bool updatenormals
   ,unsigned np,unsigned fpini,float fradius,tmatrix4d mat
   ,tfloat3 fto_vellin,tfloat3 fto_velang,tdouble3 fto_center
   ,const unsigned* ridpmot,double2* posxy,double* posz,float4* velrho
-  ,unsigned* dcell,typecode* code,float3* boundnor,cudaStream_t stm=NULL);
+  ,unsigned* dcell,typecode* code,float3* boundnor,float3* motionvel
+  ,float3* motionace,cudaStream_t stm=NULL);
 
 
 //-Kernels for periodic conditions.

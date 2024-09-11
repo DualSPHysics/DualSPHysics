@@ -532,6 +532,9 @@
     <ClInclude Include="..\source\JTrianglesMesh.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JDebugSphCpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -851,6 +854,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JTrianglesMesh.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDebugSphCpu.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

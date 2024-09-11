@@ -538,6 +538,9 @@
     <ClInclude Include="..\source\JSphGpu_mdbc_iker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JDebugSphCpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -859,6 +862,9 @@
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JSphCpu_mdbc.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDebugSphCpu.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

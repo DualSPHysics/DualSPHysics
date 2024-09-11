@@ -96,6 +96,8 @@ class JCellDivCpu;
 
 class JSphCpu : public JSph
 {
+  friend class JDebugSphCpu;
+
 private:
   JCellDivCpu* CellDiv;
 
