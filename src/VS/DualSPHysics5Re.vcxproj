@@ -588,6 +588,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JChronoObjects.h" />
     <ClInclude Include="..\source\JChronoObjectsUndef.h" />
     <ClInclude Include="..\source\JComputeMotionRef.h" />
+    <ClInclude Include="..\source\JDebugSphCpu.h" />
     <ClInclude Include="..\source\JDsDamping.h" />
     <ClInclude Include="..\source\JDataArrays.h" />
     <ClInclude Include="..\source\JDebugSphGpu.h">
@@ -818,6 +819,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JCfgRunBase.cpp" />
     <ClCompile Include="..\source\JChronoObjects.cpp" />
     <ClCompile Include="..\source\JComputeMotionRef.cpp" />
+    <ClCompile Include="..\source\JDebugSphCpu.cpp" />
     <ClCompile Include="..\source\JDsDamping.cpp" />
     <ClCompile Include="..\source\JArraysGpu.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>

@@ -41,6 +41,7 @@
 #include "JDsPartFloatSave.h"
 #include "JLinearValue.h"
 #include "JDataArrays.h"
+#include "JDebugSphCpu.h"
 #include "JSphShifting.h"
 #include "JDsPips.h"
 #include "JDsExtraData.h"
@@ -652,6 +653,8 @@ void JSphCpuSingle::MdbcBoundCorrection(){
       ,Idp_c->cptr(),BoundNor_c->cptr(),Velrho_c->ptr());
   }
   else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
+    //const unsigned fnum=(InterStep==STEP_Verlet? Nstep: (InterStep==INTERSTEP_SymCorrector? Nstep*2+1: Nstep*2));
+    //JDebugSphCpu::SaveVtk("vtkdg/PreMdbcCorr.vtk",fnum,0,Np,"all",this);
     const unsigned nmode=(UseNormalsFt? Np: Npb);
     BoundMode_c->Reserve();       //-BoundMode_c is freed in PosInteraction_Forces().
     BoundMode_c->Memset(0,nmode); //-BoundMode_c[]=0=BMODE_DBC
@@ -839,7 +842,8 @@ void JSphCpuSingle::RunFloating(double dt,bool predictor){
     //-Apply displacement and new velocity to floating particles.
     const bool updatenormals=(!predictor && UseNormalsFt);
     FtPartsUpdate(dt,updatenormals,Fto_VelLinAng,Fto_Center,RidpMot
-      ,Pos_c->ptr(),Velrho_c->ptr(),Dcell_c->ptr(),Code_c->ptr(),AC_PTR(BoundNor_c));
+      ,Pos_c->ptr(),Velrho_c->ptr(),Dcell_c->ptr(),Code_c->ptr()
+      ,AC_PTR(BoundNor_c),AC_PTR(MotionVel_c),AC_PTR(MotionAce_c));
 
     //-Update floating data (FtObjs[]) for next step.
     if(!predictor)FtUpdateFloatings(dt,Fto_VelLinAng,Fto_Center);
@@ -922,8 +926,9 @@ void JSphCpuSingle::FtPartsSumAce(const tdouble3* posc,const tfloat3* acec
 void JSphCpuSingle::FtPartsUpdate(double dt,bool updatenormals
   ,const tfloat6* fto_vellinang,const tdouble3* fto_center,const unsigned* ridpmot
   ,tdouble3* posc,tfloat4* velrhoc,unsigned* dcellc,typecode* codec
-  ,tfloat3* boundnorc)const
+  ,tfloat3* boundnorc,tfloat3* motionvelc,tfloat3* motionacec)const
 {
+  const bool mdbc2=(updatenormals && (SlipMode>=SLIP_NoSlip)); //<vs_m2dbc>
   const int ftcount=int(FtCount);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
@@ -962,6 +967,14 @@ void JSphCpuSingle::FtPartsUpdate(double dt,bool updatenormals
         vr.y=fvel.y+(fomega.z*dist.x - fomega.x*dist.z);
         vr.z=fvel.z+(fomega.x*dist.y - fomega.y*dist.x);
         velrhoc[p]=vr;
+        //-Updates motionvel and motionace for mDBC no-slip.
+        if(mdbc2){ //<vs_m2dbc_ini>
+          const tfloat3 mvel0=motionvelc[p];
+          motionacec[p]=TFloat3(float((double(vr.x)-mvel0.x)/dt),
+                                float((double(vr.y)-mvel0.y)/dt),
+                                float((double(vr.z)-mvel0.z)/dt));
+          motionvelc[p]=TFloat3(vr.x,vr.y,vr.z);
+        } //<vs_m2dbc_end>
         //-Updates floating normals for mDBC.
         if(updatenormals){
           boundnorc[p]=ToTFloat3(mat.MulNormal(ToTDouble3(boundnorc[p])));

@@ -48,8 +48,10 @@ class JArrayGpu;
 //#define DG_ARRXPU_PRINT  //-Active prints for debug.
 
 
-#define AG_PTR(a) (a!=NULL? a->ptr(): NULL)
-#define AG_CPTR(a) (a!=NULL? a->cptr(): NULL)
+#define AG_PTR(a)     (a!=NULL? a->ptr()   : NULL)
+#define AG_PTRV(a,v)  (a!=NULL? a->ptr()+v : NULL)
+#define AG_CPTR(a)    (a!=NULL? a->cptr()  : NULL)
+#define AG_CPTRV(a,v) (a!=NULL? a->cptr()+v: NULL)
 
 //##############################################################################
 //# JArraysGpuList

@@ -1812,11 +1812,12 @@ void FtPartsSumAce(bool periactive,unsigned ftcount
 //------------------------------------------------------------------------------
 /// Updates information and particles of floating bodies.
 //------------------------------------------------------------------------------
-template<bool periactive> __global__ void KerFtPartsUpdate(double dt
+template<bool periactive,bool mdbc2> __global__ void KerFtPartsUpdate(double dt
   ,bool updatenormals,unsigned np,unsigned fpini,float fradius,tmatrix4d mat
   ,float3 fvel,float3 fomega,double3 fcenter
   ,const unsigned* ridpmot,double2* posxy,double* posz,float4* velrho
-  ,unsigned* dcell,typecode* code,float3* boundnor)
+  ,unsigned* dcell,typecode* code,float3* boundnor,float3* motionvel
+  ,float3* motionace)
 {
   const unsigned fp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(fp<np){
@@ -1837,6 +1838,14 @@ template<bool periactive> __global__ void KerFtPartsUpdate(double dt
       vr.y=fvel.y+(fomega.z*distx - fomega.x*distz);
       vr.z=fvel.z+(fomega.x*disty - fomega.y*distx);
       velrho[p]=vr;
+      //-Updates motionvel and motionace for mDBC no-slip.
+      if(mdbc2){ //<vs_m2dbc_ini>
+        const float3 mvel0=motionvel[p];
+        motionace[p]=make_float3(float((double(vr.x)-mvel0.x)/dt),
+                                 float((double(vr.y)-mvel0.y)/dt),
+                                 float((double(vr.z)-mvel0.z)/dt));
+        motionvel[p]=make_float3(vr.x,vr.y,vr.z);
+      } //<vs_m2dbc_end>
       //-Updates floating normals for mDBC.
       if(updatenormals){
         const float3 norf=boundnor[p];
@@ -1859,13 +1868,23 @@ void FtPartsUpdate(bool periactive,double dt,bool updatenormals
   ,unsigned np,unsigned fpini,float fradius,tmatrix4d mat
   ,tfloat3 fto_vellin,tfloat3 fto_velang,tdouble3 fto_center
   ,const unsigned* ridpmot,double2* posxy,double* posz,float4* velrho
-  ,unsigned* dcell,typecode* code,float3* boundnor,cudaStream_t stm)
+  ,unsigned* dcell,typecode* code,float3* boundnor,float3* motionvel
+  ,float3* motionace,cudaStream_t stm)
 {
   if(np){
     const unsigned bsize=128; 
     dim3 sgrid=GetSimpleGridSize(np,bsize);
-    if(periactive)KerFtPartsUpdate<true>  <<<sgrid,bsize,0,stm>>> (dt,updatenormals,np,fpini,fradius,mat,Float3(fto_vellin),Float3(fto_velang),Double3(fto_center),ridpmot,posxy,posz,velrho,dcell,code,boundnor);
-    else          KerFtPartsUpdate<false> <<<sgrid,bsize,0,stm>>> (dt,updatenormals,np,fpini,fradius,mat,Float3(fto_vellin),Float3(fto_velang),Double3(fto_center),ridpmot,posxy,posz,velrho,dcell,code,boundnor); 
+    if(updatenormals && motionvel!=NULL && motionace!=NULL){
+      const bool mdbc2=true;
+      if(periactive)KerFtPartsUpdate<true ,mdbc2> <<<sgrid,bsize,0,stm>>> (dt,updatenormals,np,fpini,fradius,mat,Float3(fto_vellin),Float3(fto_velang),Double3(fto_center),ridpmot,posxy,posz,velrho,dcell,code,boundnor,motionvel,motionace);
+      else          KerFtPartsUpdate<false,mdbc2> <<<sgrid,bsize,0,stm>>> (dt,updatenormals,np,fpini,fradius,mat,Float3(fto_vellin),Float3(fto_velang),Double3(fto_center),ridpmot,posxy,posz,velrho,dcell,code,boundnor,motionvel,motionace); 
+    }
+    else{
+      const bool mdbc2=false;
+      if(periactive)KerFtPartsUpdate<true ,mdbc2> <<<sgrid,bsize,0,stm>>> (dt,updatenormals,np,fpini,fradius,mat,Float3(fto_vellin),Float3(fto_velang),Double3(fto_center),ridpmot,posxy,posz,velrho,dcell,code,boundnor,motionvel,motionace);
+      else          KerFtPartsUpdate<false,mdbc2> <<<sgrid,bsize,0,stm>>> (dt,updatenormals,np,fpini,fradius,mat,Float3(fto_vellin),Float3(fto_velang),Double3(fto_center),ridpmot,posxy,posz,velrho,dcell,code,boundnor,motionvel,motionace); 
+    
+    }
   }
 }
 

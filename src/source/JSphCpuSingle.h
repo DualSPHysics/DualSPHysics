@@ -82,7 +82,8 @@ protected:
   void FtPartsUpdate(double dt,bool updatenormals
     ,const tfloat6* fto_vellinang,const tdouble3* fto_center
     ,const unsigned* ridpmot,tdouble3* posc,tfloat4* velrhoc
-    ,unsigned* dcellc,typecode* codec,tfloat3* boundnorc)const;
+    ,unsigned* dcellc,typecode* codec,tfloat3* boundnorc
+    ,tfloat3* motionvelc,tfloat3* motionacec)const;
 
   void RunFirstGaugeSystem(double timestep);
   void RunGaugeSystem(double timestep);

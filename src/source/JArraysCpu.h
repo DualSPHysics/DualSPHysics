@@ -45,8 +45,10 @@ class JArrayCpu;
 //#define DG_ARRSPU_PRINT  //-Active prints for debug.
   
 
-#define AC_PTR(a) (a!=NULL? a->ptr(): NULL)
-#define AC_CPTR(a) (a!=NULL? a->cptr(): NULL)
+#define AC_PTR(a)     (a!=NULL? a->ptr()   : NULL)
+#define AC_PTRV(a,v)  (a!=NULL? a->ptr()+v : NULL)
+#define AC_CPTR(a)    (a!=NULL? a->cptr()  : NULL)
+#define AC_CPTRV(a,v) (a!=NULL? a->cptr()+v: NULL)
 
 //##############################################################################
 //# JArraysCpuList
