@@ -34,6 +34,8 @@
 //:# - Nuevo metodo ReallocMemory(). (11-02-2024)
 //:# - Nuevos metodos para tipos ullong y llong. (20-05-2024)
 //:# - New attribute size and new method SetCountData(). (20-05-2024)
+//:# - Nuevo metodo SortDataBy(). (14-09-2024)
+//:# - Nuevo metodos NewArrayCpyXXX(). (15-09-2024)
 //:#############################################################################
 
 /// \file JDataArrays.h \brief Declares the class \ref JDataArrays.
@@ -93,6 +95,9 @@ protected:
   void ReindexData(unsigned sreindex,const unsigned* reindex,unsigned ndata,tdouble3* data,tdouble3* aux)const{ TReindexData<tdouble3>(sreindex,reindex,ndata,data,aux); }
 
   unsigned SortData(unsigned count,const unsigned* reindex);
+
+  template<class T> void MakeSortIndex(const T* data,std::vector<unsigned>& sortindex)const;
+  template<class T> void MakeSortIndex3(const T* data,std::vector<unsigned>& sortindex)const;
 
 public:
   JDataArrays();
@@ -229,10 +234,26 @@ public:
   static tdouble3* NewArrayDouble3(unsigned count,bool defvalue=false,tdouble3 value=TDouble3(0));
   static unsigned* NewArraySeqUint(unsigned count,unsigned start=0,unsigned step=1);
 
+  template<class T>static  T* NewArrayCpyT(unsigned count,const T* data);
+  static byte*     NewArrayCpyByte   (unsigned count,const byte*     data);
+  static word*     NewArrayCpyWord   (unsigned count,const word*     data);
+  static unsigned* NewArrayCpyUint   (unsigned count,const unsigned* data);
+  static int*      NewArrayCpyInt    (unsigned count,const int*      data);
+  static ullong*   NewArrayCpyUllong (unsigned count,const ullong*   data);
+  static llong*    NewArrayCpyLlong  (unsigned count,const llong*    data);
+  static float*    NewArrayCpyFloat  (unsigned count,const float*    data);
+  static double*   NewArrayCpyDouble (unsigned count,const double*   data);
+  static tuint3*   NewArrayCpyUint3  (unsigned count,const tuint3*   data);
+  static tint3*    NewArrayCpyInt3   (unsigned count,const tint3*    data);
+  static tfloat3*  NewArrayCpyFloat3 (unsigned count,const tfloat3*  data);
+  static tdouble3* NewArrayCpyDouble3(unsigned count,const tdouble3* data);
+
   static void ToFloat3xyz(unsigned count,const tfloat4* data,tfloat3* dest);
   static void ToFloat1w  (unsigned count,const tfloat4* data,float*   dest);
   static tfloat3*  NewArrayFloat3xyz(unsigned count,const tfloat4* data);
   static float*    NewArrayFloat1w  (unsigned count,const tfloat4* data);
+
+  void SortDataBy(const std::string& keyname);
 
   unsigned FilterApply(unsigned count,const byte* filter);
   unsigned FilterList(unsigned n,const unsigned* list);

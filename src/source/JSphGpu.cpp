@@ -228,11 +228,14 @@ void JSphGpu::AllocCpuMemoryFixed(){
 //==============================================================================
 void JSphGpu::FreeGpuMemoryFixed(){
   MemGpuFixed=0;
+  //-Memory for moving and floating particles.
   if(RidpMotg)  cudaFree(RidpMotg);    RidpMotg=NULL;
+  //-Memory for floating bodies.
   if(FtoMasspg) cudaFree(FtoMasspg);   FtoMasspg=NULL;
   if(FtoDatpg)  cudaFree(FtoDatpg);    FtoDatpg=NULL;
   if(FtoCenterg)cudaFree(FtoCenterg);  FtoCenterg=NULL;
   if(FtoAceg)   cudaFree(FtoAceg);     FtoAceg=NULL;
+  //-Memory for DEM coefficients.
   if(DemDatag)  cudaFree(DemDatag);    DemDatag=NULL;
   //-Frees streams for floating bodies.
   for(unsigned c=0;c<MaxNStmFloatings;c++){
@@ -263,7 +266,7 @@ void JSphGpu::AllocGpuMemoryFixed(){
   for(unsigned c=0;c<NStmFloatings;c++){
     cudaStreamCreate(StmFloatings+c);
   }
-  //-GPU memory for DEM.
+  //-Allocates memory for DEM coefficients.
   if(UseDEM){
     MemGpuFixed+=fcuda::Malloc(&DemDatag,DemDataSize);
   }

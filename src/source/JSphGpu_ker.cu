@@ -1019,38 +1019,40 @@ __device__ void KerInteractionForcesDemBox(
       const float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
       const float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
       const float rr2=drx*drx+dry*dry+drz*drz;
-      const float rad=sqrt(rr2);
+      if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
+        const float rad=sqrt(rr2);
 
-      //-Computes maximum value of demdt.
-      float4 demdatap2=demdata[CODE_GetTypeAndValue(codep2)];
-      const float nu_mass=(boundp2? masstotp1/2: masstotp1*demdatap2.x/(masstotp1+demdatap2.x)); //-With boundary takes the actual mass of floating 1. | Con boundary toma la propia masa del floating 1.
-      const float kn=4/(3*(taup1+demdatap2.y))*sqrt(CTE.dp/4); //-Generalized rigidity - Lemieux 2008.
-      const float dvx=velp1.x-velrho[p2].x, dvy=velp1.y-velrho[p2].y, dvz=velp1.z-velrho[p2].z; //vji
-      const float nx=drx/rad, ny=dry/rad, nz=drz/rad; //-normal_ji             
-      const float vn=dvx*nx+dvy*ny+dvz*nz; //-vji.nji    
-      const float demvisc=0.2f/(3.21f*(pow(nu_mass/kn,0.4f)*pow(fabs(vn),-0.2f))/40.f);
-      if(demdtp1<demvisc)demdtp1=demvisc;
+        //-Computes maximum value of demdt.
+        float4 demdatap2=demdata[CODE_GetTypeAndValue(codep2)];
+        const float nu_mass=(boundp2? masstotp1/2: masstotp1*demdatap2.x/(masstotp1+demdatap2.x)); //-With boundary takes the actual mass of floating 1. | Con boundary toma la propia masa del floating 1.
+        const float kn=4.f/(3.f*(taup1+demdatap2.y))*sqrt(CTE.dp/4); //-Generalized rigidity - Lemieux 2008.
+        const float dvx=velp1.x-velrho[p2].x, dvy=velp1.y-velrho[p2].y, dvz=velp1.z-velrho[p2].z; //vji
+        const float nx=drx/rad, ny=dry/rad, nz=drz/rad; //-normal_ji             
+        const float vn=dvx*nx+dvy*ny+dvz*nz; //-vji.nji    
+        const float demvisc=0.2f/(3.21f*(pow(nu_mass/kn,0.4f)*pow(fabs(vn),-0.2f))/40.f);
+        if(demdtp1<demvisc)demdtp1=demvisc;
 
-      const float over_lap=1.0f*CTE.dp-rad; //-(ri+rj)-|dij|
-      if(over_lap>0.0f){ //-Contact.
-        //-Normal.
-        const float eij=(restitup1+demdatap2.w)/2;
-        const float gn=-(2.0f*log(eij)*sqrt(nu_mass*kn))/(sqrt(float(PI)+log(eij)*log(eij))); //-Generalized damping - Cummins 2010.
-        //const float gn=0.08f*sqrt(nu_mass*sqrt(CTE.dp/2)/((taup1+demdatap2.y)/2)); //-generalized damping - Lemieux 2008.
-        const float rep=kn*pow(over_lap,1.5f);
-        const float fn=rep-gn*pow(over_lap,0.25f)*vn;
-        float acef=fn/ftmassp1; //-Divides by the mass of particle to obtain the acceleration.
-        acep1.x+=(acef*nx); acep1.y+=(acef*ny); acep1.z+=(acef*nz); //-Force is applied in the normal between the particles.
-        //-Tangencial.
-        const float dvxt=dvx-vn*nx, dvyt=dvy-vn*ny, dvzt=dvz-vn*nz; //Vji_t
-        const float vt=sqrt(dvxt*dvxt + dvyt*dvyt + dvzt*dvzt);
-        const float tx=(vt!=0? dvxt/vt: 0), ty=(vt!=0? dvyt/vt: 0), tz=(vt!=0? dvzt/vt: 0); //-Tang vel unit vector.
-        const float ft_elast=2*(kn*dtforce-gn)*vt/7; //-Elastic frictional string -->  ft_elast=2*(kn*fdispl-gn*vt)/7; fdispl=dtforce*vt;
-        const float kfric_ij=(kfricp1+demdatap2.z)/2;
-        float ft=kfric_ij*fn*tanh(8*vt);  //-Coulomb.
-        ft=(ft<ft_elast? ft: ft_elast);   //-Not above yield criteria, visco-elastic model.
-        acef=ft/ftmassp1; //-Divides by the mass of particle to obtain the acceleration.
-        acep1.x+=(acef*tx); acep1.y+=(acef*ty); acep1.z+=(acef*tz);
+        const float over_lap=1.0f*CTE.dp-rad; //-(ri+rj)-|dij|
+        if(over_lap>0.0f){ //-Contact.
+          //-Normal.
+          const float eij=(restitup1+demdatap2.w)/2;
+          const float gn=-(2.f*log(eij)*sqrt(nu_mass*kn))/(sqrt(float(PI)+log(eij)*log(eij))); //-Generalized damping - Cummins 2010.
+          //const float gn=0.08f*sqrt(nu_mass*sqrt(CTE.dp/2)/((taup1+demdatap2.y)/2)); //-generalized damping - Lemieux 2008.
+          const float rep=kn*pow(over_lap,1.5f);
+          const float fn=rep-gn*pow(over_lap,0.25f)*vn;
+          float acef=fn/ftmassp1; //-Divides by the mass of particle to obtain the acceleration.
+          acep1.x+=(acef*nx); acep1.y+=(acef*ny); acep1.z+=(acef*nz); //-Force is applied in the normal between the particles.
+          //-Tangencial.
+          const float dvxt=dvx-vn*nx, dvyt=dvy-vn*ny, dvzt=dvz-vn*nz; //Vji_t
+          const float vt=sqrt(dvxt*dvxt + dvyt*dvyt + dvzt*dvzt);
+          const float tx=(vt!=0? dvxt/vt: 0), ty=(vt!=0? dvyt/vt: 0), tz=(vt!=0? dvzt/vt: 0); //-Tang vel unit vector.
+          const float ft_elast=(kn*dtforce-gn)*vt/3.5f; //-Elastic frictional string -->  ft_elast=2*(kn*fdispl-gn*vt)/7; fdispl=dtforce*vt;
+          const float kfric_ij=(kfricp1+demdatap2.z)/2;
+          float ft=kfric_ij*fn*tanh(vt*8);  //-Coulomb.
+          ft=(ft<ft_elast? ft: ft_elast);   //-Not above yield criteria, visco-elastic model.
+          acef=ft/ftmassp1; //-Divides by the mass of particle to obtain the acceleration.
+          acep1.x+=(acef*tx); acep1.y+=(acef*ty); acep1.z+=(acef*tz);
+        }
       }
     }
   }
@@ -1095,14 +1097,16 @@ __global__ void KerInteractionForcesDem(unsigned nfloat
       //-Interaction with boundaries.
       for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
         unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
-        if(pfin)KerInteractionForcesDemBox (true ,pini,pfin,demdata,dtforce,poscell,velrho,code,idp,pscellp1,velp1,tavp1,masstotp1,ftmassp1,taup1,kfricp1,restitup1,acep1,demdtp1);
+        if(pfin)KerInteractionForcesDemBox (true ,pini,pfin,demdata,dtforce,poscell,velrho,code,idp
+          ,pscellp1,velp1,tavp1,masstotp1,ftmassp1,taup1,kfricp1,restitup1,acep1,demdtp1);
       }
 
       //-Interaction with fluids.
       ini3+=cellfluid; fin3+=cellfluid;
       for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
         unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
-        if(pfin)KerInteractionForcesDemBox (false,pini,pfin,demdata,dtforce,poscell,velrho,code,idp,pscellp1,velp1,tavp1,masstotp1,ftmassp1,taup1,kfricp1,restitup1,acep1,demdtp1);
+        if(pfin)KerInteractionForcesDemBox (false,pini,pfin,demdata,dtforce,poscell,velrho,code,idp
+          ,pscellp1,velp1,tavp1,masstotp1,ftmassp1,taup1,kfricp1,restitup1,acep1,demdtp1);
       }
 
       //-Stores results.
@@ -1144,10 +1148,10 @@ void Interaction_ForcesDemT_KerInfo(StKerInfo* kerinfo)
 //==============================================================================
 void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
   ,const StDivDataGpu& dvd,const unsigned* dcell
-  ,const unsigned* ftridp,const float4* demdata,const float* ftomassp,float dtforce
-  ,const float4* poscell,const float4* velrho
+  ,const unsigned* ftridp,const float4* demdata,const float* ftomassp
+  ,float dtforce,const float4* poscell,const float4* velrho
   ,const typecode* code,const unsigned* idp,float* viscdt,float3* ace
-  ,StKerInfo* kerinfo)
+  ,StKerInfo* kerinfo,cudaStream_t stm)
 {
   const int2* beginendcell=dvd.beginendcell;
   //-Collects kernel information.
@@ -1160,7 +1164,7 @@ void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
   //-Interaction Fluid-Fluid & Fluid-Bound.
   if(nfloat){
     dim3 sgrid=GetSimpleGridSize(nfloat,bsize);
-    KerInteractionForcesDem <<<sgrid,bsize>>> (nfloat
+    KerInteractionForcesDem <<<sgrid,bsize,0,stm>>> (nfloat
       ,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcell,dvd.cellfluid,dcell
       ,ftridp,demdata,ftomassp,dtforce,poscell,velrho,code,idp,viscdt,ace);
   }

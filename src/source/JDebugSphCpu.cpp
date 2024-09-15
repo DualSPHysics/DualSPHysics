@@ -22,6 +22,7 @@
 #include "JException.h"
 #include "Functions.h"
 #include "JVtkLib.h"
+#include "JOutputCsv.h"
 #include "JDataArrays.h"
 
 #include "JSphCpuSingle.h"
@@ -128,6 +129,12 @@ std::string JDebugSphCpu::GetFileName(std::string filename,int numfile){
 }
 
 //==============================================================================
+/// Applies special filters to data arrays.
+//============================================================================== 
+void JDebugSphCpu::RunUserFilters(JDataArrays& arrays){
+}
+
+//==============================================================================
 /// Loads particle data in object ffdata
 /// Carga datos de las particulas en el objeto ffdata.
 //==============================================================================
@@ -147,7 +154,7 @@ void JDebugSphCpu::LoadParticlesData(const JSphCpuSingle* cp,unsigned pini
   arrays->Reset();
   if(all || FindVar("idp",vars)){
     const unsigned* idp=AC_CPTRV(cp->Idp_c,pini);
-    arrays->AddArray("Idp",n,idp,false);
+    arrays->AddArray("Idp",n,JDataArrays::NewArrayCpyUint(n,idp),true);
   }
   if(all || FindVar("seq",vars)){
     arrays->AddArray("Seq",n,JDataArrays::NewArraySeqUint(n,pini,1),true);
@@ -166,7 +173,11 @@ void JDebugSphCpu::LoadParticlesData(const JSphCpuSingle* cp,unsigned pini
   //-Loads code.
   if(all || FindVar("code",vars)){
     const typecode* code=AC_CPTRV(cp->Code_c,pini);
-    arrays->AddArray("Code",n,code,false);
+    #ifdef CODE_SIZE4
+      arrays->AddArray("Code",n,JDataArrays::NewArrayCpyUint(n,code),true);
+    #else
+      arrays->AddArray("Code",n,JDataArrays::NewArrayCpyWord(n,code),true);
+    #endif
     arrays->AddArray("Type",n,GetCodeType(n,code),true);
     byte* typesp=new byte[n];
     for(unsigned p=0;p<n;p++)typesp[p]=byte(CODE_GetSpecialByte(code[p]));
@@ -176,36 +187,36 @@ void JDebugSphCpu::LoadParticlesData(const JSphCpuSingle* cp,unsigned pini
   //-Loads pos.
   {
     const tdouble3* pos=AC_CPTRV(cp->Pos_c,pini);
-    arrays->AddArray("Pos",n,pos,false);
+    arrays->AddArray("Pos",n,JDataArrays::NewArrayCpyDouble3(n,pos),true);
   }
   //-Loads boundnor.
   if(all || FindVar("boundnor",vars)){
     const tfloat3* ptr=AC_CPTRV(cp->BoundNor_c,pini);
-    if(ptr)arrays->AddArray("BoundNor",n,ptr,false);
+    if(ptr)arrays->AddArray("BoundNor",n,JDataArrays::NewArrayCpyFloat3(n,ptr),true);
     else if(!all)Run_ExceptioonFileSta("The variable BoundNorc is NULL.",file);
   }
   //-Loads motionvel.
   if(all || FindVar("motionvel",vars)){
     const tfloat3* ptr=AC_CPTRV(cp->MotionVel_c,pini);
-    if(ptr)arrays->AddArray("MotionVel",n,ptr,false);
+    if(ptr)arrays->AddArray("MotionVel",n,JDataArrays::NewArrayCpyFloat3(n,ptr),true);
     else if(!all)Run_ExceptioonFileSta("The variable MotionVelc is NULL.",file);
   }
   //-Loads motionace.
   if(all || FindVar("motionace",vars)){
     const tfloat3* ptr=AC_CPTRV(cp->MotionAce_c,pini);
-    if(ptr)arrays->AddArray("MotionAce",n,ptr,false);
+    if(ptr)arrays->AddArray("MotionAce",n,JDataArrays::NewArrayCpyFloat3(n,ptr),true);
     else if(!all)Run_ExceptioonFileSta("The variable MotionAcec is NULL.",file);
   }
   //-Loads ace.
   if(all || FindVar("ace",vars)){
     const tfloat3* ptr=AC_CPTRV(cp->Ace_c,pini);
-    if(ptr)arrays->AddArray("Ace",n,ptr,false);
+    if(ptr)arrays->AddArray("Ace",n,JDataArrays::NewArrayCpyFloat3(n,ptr),true);
     else if(!all)Run_ExceptioonFileSta("The variable Acec is NULL.",file);
   }
   //-Loads ar.
   if(all || FindVar("ar",vars)){
     const float* ptr=AC_CPTRV(cp->Ar_c,pini);
-    if(ptr)arrays->AddArray("Ar",n,ptr,false);
+    if(ptr)arrays->AddArray("Ar",n,JDataArrays::NewArrayCpyFloat(n,ptr),true);
     else if(!all)Run_ExceptioonFileSta("The variable Arc is NULL.",file);
   }
   //-Loads spstau.
@@ -269,9 +280,33 @@ void JDebugSphCpu::SaveVtk(std::string filename,int numfile,unsigned pini
   ,unsigned pfin,std::string vars,const JSphCpuSingle* cp)
 {
   const string file=GetFileName(filename,numfile);
+  //-Loads particle data.
   JDataArrays arrays;
   LoadParticlesData(cp,pini,pfin,vars,&arrays,file);
+  //-Run user filter.
+  RunUserFilters(arrays);
+  //-Saves VTK file.
   JVtkLib::SaveVtkData(file,arrays,"Pos");
+  arrays.Reset();
+}
+
+//==============================================================================
+/// Stores data in CSV format.
+//============================================================================== 
+void JDebugSphCpu::SaveCsv(std::string filename,int numfile,unsigned pini
+  ,unsigned pfin,std::string vars,const JSphCpuSingle* cp)
+{
+  const string file=GetFileName(filename,numfile);
+  //-Loads particle data.
+  JDataArrays arrays;
+  LoadParticlesData(cp,pini,pfin,vars,&arrays,file);
+  //-Sort by Idp when it exists.
+  if(arrays.ExistsName("Idp"))arrays.SortDataBy("Idp");
+  //-Run user filter.
+  RunUserFilters(arrays);
+  //-Saves CSV file.
+  JOutputCsv ocsv(AppInfo.GetCsvSepComa());
+  ocsv.SaveCsv(file,arrays);
   arrays.Reset();
 }
 

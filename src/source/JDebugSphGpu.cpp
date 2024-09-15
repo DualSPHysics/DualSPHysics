@@ -23,6 +23,7 @@
 #include "Functions.h"
 #include "FunctionsCuda.h"
 #include "JVtkLib.h"
+#include "JOutputCsv.h"
 #include "JDataArrays.h"
 
 #include "JSphGpuSingle.h"
@@ -167,7 +168,7 @@ std::string JDebugSphGpu::PrepareVars(const std::string& vlist){
 /// Checks list of variables and returns the unknown variable.
 //==============================================================================
 std::string JDebugSphGpu::CheckVars(std::string vlist){
-  string allvars= ",all,idp,gid,seq,cell,code,vel,rho,ace,ar,poscell";
+  string allvars= ",all,idp,gid,seq,cell,code,vel,rho,ace,ar,viscdt,poscell";
   allvars=allvars+",boundnor,motionvel,motionace,spstaurho2,sps2strain,";
   vlist=fun::StrLower(vlist);
   while(!vlist.empty()){
@@ -186,6 +187,12 @@ std::string JDebugSphGpu::GetFileName(std::string filename,int numfile,int gid){
     +(gid>=0? fun::PrintStr("_g%d",gid): "")+"."+fext;
   if(numfile>=0)file=fun::FileNameSec(file,numfile);
   return(file);
+}
+
+//==============================================================================
+/// Applies special filters to data arrays.
+//============================================================================== 
+void JDebugSphGpu::RunUserFilters(JDataArrays& arrays){
 }
 
 //==============================================================================
@@ -263,19 +270,19 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle* gp,unsigned pini
   } //<vs_tesmode_end> 
   //-Loads boundnor.
   if(all || FindVar("boundnor",vars)){
-    const float3* ptrg=gp->BoundNor_g->cptr();
+    const float3* ptrg=AG_CPTR(gp->BoundNor_g);
     if(ptrg)arrays->AddArray("BoundNor",n,fcuda::ToHostFloat3(pini,n,ptrg),true);
     else if(!all)Run_ExceptioonFileSta("The variable BoundNorg is NULL.",file);
   }
   //-Loads motionvel.
   if(all || FindVar("motionvel",vars)){
-    const float3* ptrg=gp->MotionVel_g->cptr();
+    const float3* ptrg=AG_CPTR(gp->MotionVel_g);
     if(ptrg)arrays->AddArray("MotionVel",n,fcuda::ToHostFloat3(pini,n,ptrg),true);
     else if(!all)Run_ExceptioonFileSta("The variable MotionVelg is NULL.",file);
   }
   //-Loads motionace.
   if(all || FindVar("motionace",vars)){
-    const float3* ptrg=gp->MotionAce_g->cptr();
+    const float3* ptrg=AG_CPTR(gp->MotionAce_g);
     if(ptrg)arrays->AddArray("MotionAce",n,fcuda::ToHostFloat3(pini,n,ptrg),true);
     else if(!all)Run_ExceptioonFileSta("The variable MotionAceg is NULL.",file);
   }
@@ -290,6 +297,12 @@ void JDebugSphGpu::LoadParticlesData(const JSphGpuSingle* gp,unsigned pini
     const float* ptrg=gp->Ar_g->cptr();
     if(ptrg)arrays->AddArray("Ar",n,fcuda::ToHostFloat(pini,n,ptrg),true);
     else if(!all)Run_ExceptioonFileSta("The variable Arg is NULL.",file);
+  }
+  //-Loads viscdt.
+  if(all || FindVar("viscdt",vars)){
+    const float* ptrg=AG_CPTR(gp->ViscDt_g);
+    if(ptrg)arrays->AddArray("ViscDt",n,fcuda::ToHostFloat(pini,n,ptrg),true);
+    else if(!all)Run_ExceptioonFileSta("The variable ViscDtg is NULL.",file);
   }
   //-Loads spstau.
   if(all || FindVar("spstaurho2",vars)){
@@ -356,9 +369,33 @@ void JDebugSphGpu::SaveVtk(std::string filename,int numfile,unsigned pini
   ,unsigned pfin,std::string vars,const JSphGpuSingle* gp)
 {
   const string file=GetFileName(filename,numfile);
+  //-Loads particle data.
   JDataArrays arrays;
   LoadParticlesData(gp,pini,pfin,vars,&arrays,file);
+  //-Run user filter.
+  RunUserFilters(arrays);
+  //-Saves VTK file.
   JVtkLib::SaveVtkData(file,arrays,"Pos");
+  arrays.Reset();
+}
+
+//==============================================================================
+/// Stores data in CSV format.
+//============================================================================== 
+void JDebugSphGpu::SaveCsv(std::string filename,int numfile,unsigned pini
+  ,unsigned pfin,std::string vars,const JSphGpuSingle* gp)
+{
+  const string file=GetFileName(filename,numfile);
+  //-Loads particle data.
+  JDataArrays arrays;
+  LoadParticlesData(gp,pini,pfin,vars,&arrays,file);
+  //-Sort by Idp when it exists.
+  if(arrays.ExistsName("Idp"))arrays.SortDataBy("Idp");
+  //-Run user filter.
+  RunUserFilters(arrays);
+  //-Saves CSV file.
+  JOutputCsv ocsv(AppInfo.GetCsvSepComa());
+  ocsv.SaveCsv(file,arrays);
   arrays.Reset();
 }
 

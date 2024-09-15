@@ -195,9 +195,10 @@ void Interaction_Forces(const StInterParmsg& t);
 //-Kernels for the calculation of the DEM forces.
 void Interaction_ForcesDem(unsigned bsize,unsigned nfloat
   ,const StDivDataGpu& dvd,const unsigned* dcell
-  ,const unsigned* ftridp,const float4* demdata,const float* ftomassp,float dtforce
-  ,const float4* poscell,const float4* velrho
-  ,const typecode* code,const unsigned* idp,float* viscdt,float3* ace,StKerInfo* kerinfo);
+  ,const unsigned* ftridp,const float4* demdata,const float* ftomassp
+  ,float dtforce,const float4* poscell,const float4* velrho
+  ,const typecode* code,const unsigned* idp,float* viscdt,float3* ace
+  ,StKerInfo* kerinfo,cudaStream_t stm=NULL);
 
 //-Kernels for calculating the Laminar+SPS viscosity.
 void ComputeSpsTau(unsigned np,unsigned npb,float smag,float blin

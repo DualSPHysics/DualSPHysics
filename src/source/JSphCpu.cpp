@@ -866,46 +866,48 @@ void JSphCpu::InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata
             const float dry=float(posp1.y-pos[p2].y);
             const float drz=float(posp1.z-pos[p2].z);
             const float rr2=drx*drx+dry*dry+drz*drz;
-            const float rad=sqrt(rr2);
+            if(rr2<=KernelSize2 && rr2>=ALMOSTZERO){
+              const float rad=sqrt(rr2);
 
-            //-Calculate max value of demdt. | Calcula valor maximo de demdt.
-            const typecode tavp2=CODE_GetTypeAndValue(code[p2]);
-            const float masstotp2=demdata[tavp2].mass;
-            const float taup2=demdata[tavp2].tau;
-            const float kfricp2=demdata[tavp2].kfric;
-            const float restitup2=demdata[tavp2].restitu;
-            //const StDemData* demp2=demobjs+CODE_GetTypeAndValue(code[p2]);
+              //-Calculate max value of demdt. | Calcula valor maximo de demdt.
+              const typecode tavp2=CODE_GetTypeAndValue(code[p2]);
+              const float masstotp2=demdata[tavp2].mass;
+              const float taup2=demdata[tavp2].tau;
+              const float kfricp2=demdata[tavp2].kfric;
+              const float restitup2=demdata[tavp2].restitu;
+              //const StDemData* demp2=demobjs+CODE_GetTypeAndValue(code[p2]);
 
-            const float nu_mass=(!tpfluid? masstotp1/2: masstotp1*masstotp2/(masstotp1+masstotp2)); //-Con boundary toma la propia masa del floating 1.
-            const float kn=4/(3*(taup1+taup2))*sqrt(float(Dp)/4); //-Generalized rigidity - Lemieux 2008.
-            const float dvx=velrho[p1].x-velrho[p2].x, dvy=velrho[p1].y-velrho[p2].y, dvz=velrho[p1].z-velrho[p2].z; //vji
-            const float nx=drx/rad, ny=dry/rad, nz=drz/rad; //normal_ji               
-            const float vn=dvx*nx+dvy*ny+dvz*nz; //vji.nji
-            const float demvisc=0.2f/(3.21f*(pow(nu_mass/kn,0.4f)*pow(fabs(vn),-0.2f))/40.f);
-            if(demdtp1<demvisc)demdtp1=demvisc;
+              const float nu_mass=(!tpfluid? masstotp1/2: masstotp1*masstotp2/(masstotp1+masstotp2)); //-Con boundary toma la propia masa del floating 1.
+              const float kn=4.f/(3.f*(taup1+taup2))*sqrt(float(Dp)/4); //-Generalized rigidity - Lemieux 2008.
+              const float dvx=velrho[p1].x-velrho[p2].x, dvy=velrho[p1].y-velrho[p2].y, dvz=velrho[p1].z-velrho[p2].z; //vji
+              const float nx=drx/rad, ny=dry/rad, nz=drz/rad; //normal_ji               
+              const float vn=dvx*nx+dvy*ny+dvz*nz; //vji.nji
+              const float demvisc=0.2f/(3.21f*(pow(nu_mass/kn,0.4f)*pow(fabs(vn),-0.2f))/40.f);
+              if(demdtp1<demvisc)demdtp1=demvisc;
 
-            const float over_lap=1.0f*float(Dp)-rad; //-(ri+rj)-|dij|
-            if(over_lap>0.0f){ //-Contact.
-              //-Normal.
-              const float eij=(restitup1+restitup2)/2;
-              const float gn=-(2.0f*log(eij)*sqrt(nu_mass*kn))/(sqrt(float(PI)+log(eij)*log(eij))); //-Generalized damping - Cummins 2010.
-              //const float gn=0.08f*sqrt(nu_mass*sqrt(float(Dp)/2)/((taup1+taup2)/2)); //-Generalized damping - Lemieux 2008.
-              const float rep=kn*pow(over_lap,1.5f);
-              const float fn=rep-gn*pow(over_lap,0.25f)*vn;
-              float acef=fn/ftmassp1; //-Divides by the mass of particle to obtain the acceleration.
-              acep1.x+=(acef*nx); acep1.y+=(acef*ny); acep1.z+=(acef*nz); //-Force is applied in the normal between the particles.
-              //-Tangential.
-              const float dvxt=dvx-vn*nx, dvyt=dvy-vn*ny, dvzt=dvz-vn*nz; //Vji_t
-              const float vt=sqrt(dvxt*dvxt + dvyt*dvyt + dvzt*dvzt);
-              float tx=0, ty=0, tz=0; //-Tang vel unit vector.
-              if(vt!=0){ tx=dvxt/vt; ty=dvyt/vt; tz=dvzt/vt; }
-              const float ft_elast=2*(kn*float(DemDtForce)-gn)*vt/7; //-Elastic frictional string -->  ft_elast=2*(kn*fdispl-gn*vt)/7; fdispl=dtforce*vt;
-              const float kfric_ij=(kfricp1+kfricp2)/2;
-              float ft=kfric_ij*fn*tanh(8*vt);  //-Coulomb.
-              ft=(ft<ft_elast? ft: ft_elast);   //-Not above yield criteria, visco-elastic model.
-              acef=ft/ftmassp1; //-Divides by the mass of particle to obtain the acceleration.
-              acep1.x+=(acef*tx); acep1.y+=(acef*ty); acep1.z+=(acef*tz);
-            } 
+              const float over_lap=1.0f*float(Dp)-rad; //-(ri+rj)-|dij|
+              if(over_lap>0.0f){ //-Contact.
+                //-Normal.
+                const float eij=(restitup1+restitup2)/2;
+                const float gn=-(2.f*log(eij)*sqrt(nu_mass*kn))/(sqrt(float(PI)+log(eij)*log(eij))); //-Generalized damping - Cummins 2010.
+                //const float gn=0.08f*sqrt(nu_mass*sqrt(float(Dp)/2)/((taup1+taup2)/2)); //-Generalized damping - Lemieux 2008.
+                const float rep=kn*pow(over_lap,1.5f);
+                const float fn=rep-gn*pow(over_lap,0.25f)*vn;
+                float acef=fn/ftmassp1; //-Divides by the mass of particle to obtain the acceleration.
+                acep1.x+=(acef*nx); acep1.y+=(acef*ny); acep1.z+=(acef*nz); //-Force is applied in the normal between the particles.
+                //-Tangential.
+                const float dvxt=dvx-vn*nx, dvyt=dvy-vn*ny, dvzt=dvz-vn*nz; //Vji_t
+                const float vt=sqrt(dvxt*dvxt + dvyt*dvyt + dvzt*dvzt);
+                float tx=0, ty=0, tz=0; //-Tang vel unit vector.
+                if(vt!=0){ tx=dvxt/vt; ty=dvyt/vt; tz=dvzt/vt; }
+                const float ft_elast=(kn*float(DemDtForce)-gn)*vt/3.5f; //-Elastic frictional string -->  ft_elast=2*(kn*fdispl-gn*vt)/7; fdispl=dtforce*vt;
+                const float kfric_ij=(kfricp1+kfricp2)/2;
+                float ft=kfric_ij*fn*tanh(vt*8);  //-Coulomb.
+                ft=(ft<ft_elast? ft: ft_elast);   //-Not above yield criteria, visco-elastic model.
+                acef=ft/ftmassp1; //-Divides by the mass of particle to obtain the acceleration.
+                acep1.x+=(acef*tx); acep1.y+=(acef*ty); acep1.z+=(acef*tz);
+              } 
+            }
           }
         }
       }

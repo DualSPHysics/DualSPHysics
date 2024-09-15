@@ -402,6 +402,7 @@ protected:
   //-Execution variables.
   JPartsLoad4* PartsLoaded;
   TpInterStep InterStep;
+  unsigned InterNum;       ///<Number of interaction forces calculation.
   int VerletStep;
   double SymplecticDtPre;  ///<Previous Dt to use with Symplectic.
   double DemDtForce;       ///<Dt for tangencial acceleration.

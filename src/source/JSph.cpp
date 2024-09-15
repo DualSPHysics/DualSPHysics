@@ -181,6 +181,7 @@ void JSph::InitVars(){
   FileXml="";
   TStep=STEP_None;
   InterStep=INTERSTEP_None;
+  InterNum=0;
   VerletSteps=40;
   TKernel=KERNEL_Wendland;
   KCubic ={0,0,0,0,0,0,0,0};

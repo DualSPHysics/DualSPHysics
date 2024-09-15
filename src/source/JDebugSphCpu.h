@@ -63,10 +63,14 @@ public:
 
   static std::string GetFileName(std::string filename,int numfile);
 
+  static void RunUserFilters(JDataArrays& arrays);
+
   static void LoadParticlesData(const JSphCpuSingle* cp,unsigned pini
     ,unsigned pfin,std::string vars,JDataArrays* arrays,std::string file="");
   static void SaveVtk(std::string filename,int numfile,unsigned pini
     ,unsigned pfin,std::string vars,const JSphCpuSingle* cp);
+  static void SaveCsv(std::string filename,int numfile,unsigned pini
+    ,unsigned pfin,std::string vars,const JSphCpuSingle* gp);
 
 };
 

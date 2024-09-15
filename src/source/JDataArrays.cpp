@@ -23,6 +23,7 @@
 #include "Functions.h"
 #include <cstring>
 #include <cstdio>
+#include <algorithm>
 
 using namespace std;
 
@@ -796,6 +797,72 @@ unsigned* JDataArrays::NewArraySeqUint(unsigned count,unsigned start,unsigned st
 }
 
 //==============================================================================
+/// Returns dynamic pointer with a copy of array. (this pointer must be deleted)
+//==============================================================================
+template<class T> T* JDataArrays::NewArrayCpyT(unsigned count,const T* data){
+  T* v=NULL;
+  try{
+    if(count){
+      v=new T[count];
+      if(data)memcpy(v,data,sizeof(T)*count);
+    }
+  }
+  catch(const std::bad_alloc){
+    Run_ExceptioonSta(fun::PrintStr(
+      "Could not allocate the requested memory (size=%u).",count));
+  }
+  return(v);
+}
+//==============================================================================
+byte*     JDataArrays::NewArrayCpyByte   (unsigned count,const byte*     data){
+  return(NewArrayCpyT<byte>(count,data));
+}
+//==============================================================================
+word*     JDataArrays::NewArrayCpyWord   (unsigned count,const word*     data){
+  return(NewArrayCpyT<word>(count,data));
+}
+//============================================================================
+unsigned* JDataArrays::NewArrayCpyUint   (unsigned count,const unsigned* data){
+  return(NewArrayCpyT<unsigned>(count,data));
+}
+//============================================================================
+int*      JDataArrays::NewArrayCpyInt    (unsigned count,const int*      data){
+  return(NewArrayCpyT<int>(count,data));
+}
+//============================================================================
+ullong*   JDataArrays::NewArrayCpyUllong (unsigned count,const ullong*   data){
+  return(NewArrayCpyT<ullong>(count,data));
+}
+//============================================================================
+llong*    JDataArrays::NewArrayCpyLlong  (unsigned count,const llong*    data){
+  return(NewArrayCpyT<llong>(count,data));
+}
+//============================================================================
+float*    JDataArrays::NewArrayCpyFloat  (unsigned count,const float*    data){
+  return(NewArrayCpyT<float>(count,data));
+}
+//============================================================================
+double*   JDataArrays::NewArrayCpyDouble (unsigned count,const double*   data){
+  return(NewArrayCpyT<double>(count,data));
+}
+//============================================================================
+tuint3*   JDataArrays::NewArrayCpyUint3  (unsigned count,const tuint3*   data){
+  return(NewArrayCpyT<tuint3>(count,data));
+}
+//============================================================================
+tint3*    JDataArrays::NewArrayCpyInt3   (unsigned count,const tint3*    data){
+  return(NewArrayCpyT<tint3>(count,data));
+}
+//============================================================================
+tfloat3*  JDataArrays::NewArrayCpyFloat3 (unsigned count,const tfloat3*  data){
+  return(NewArrayCpyT<tfloat3>(count,data));
+}
+//============================================================================
+tdouble3* JDataArrays::NewArrayCpyDouble3(unsigned count,const tdouble3* data){
+  return(NewArrayCpyT<tdouble3>(count,data));
+}
+
+//==============================================================================
 /// Obtains x,y,z values from tfloat4 values.
 //==============================================================================
 void JDataArrays::ToFloat3xyz(unsigned count,const tfloat4* data,tfloat3* dest){
@@ -844,6 +911,98 @@ template<class T> void JDataArrays::TReindexData(unsigned sreindex
     const unsigned p0=reindex[p];
     if(p0>=ndata || p>=ndata)Run_Exceptioon("Value number is invalid.");
     if(p!=p0)data[p]=aux[p0];
+  }
+}
+
+//==============================================================================
+/// Creates sort index according to a single array.
+//==============================================================================
+template<class T> void JDataArrays::MakeSortIndex(const T* data,
+  std::vector<unsigned>& sortindex)const
+{
+  const unsigned size=unsigned(sortindex.size());
+  //-Set initial index values.
+  for(unsigned c=0;c<size;c++)sortindex[c]=c;
+  //-Load index to sort data[].
+  sort(sortindex.begin(),sortindex.end()
+    ,[data](unsigned a,unsigned b){ return(data[a]<data[b]);});
+}
+
+//==============================================================================
+/// Creates sort index according to a triple array.
+//==============================================================================
+template<class T> void JDataArrays::MakeSortIndex3(const T* data,
+  std::vector<unsigned>& sortindex)const
+{
+  const unsigned size=unsigned(sortindex.size());
+  //-Set initial index values.
+  for(unsigned c=0;c<size;c++)sortindex[c]=c;
+  //-Load index to sort data[].
+  sort(sortindex.begin(),sortindex.end()
+    ,[data](unsigned a,unsigned b){
+      return(data[a].x<data[b].x || 
+       (data[a].x==data[b].x && data[a].y<data[b].y) || 
+       (data[a].x==data[b].x && data[a].y==data[b].y && data[a].z<data[b].z));
+    });
+}
+
+//==============================================================================
+/// Sorts arrays according to indicated array.
+//==============================================================================
+void JDataArrays::SortDataBy(const std::string& keyname){
+  const unsigned count=GetDataCount(false);
+  if(count!=GetDataCount(true))
+    Run_Exceptioon("All arrays must have the same number of values.");
+  if(count){
+    //-Creates index to sort all arrays.
+    JDataArrays::StDataArray& arr=GetArray(keyname);
+    vector<unsigned> sortindex(count);//-Sort index.
+    switch(arr.type){
+      case TypeUchar:   MakeSortIndex (GetArrayByte   (keyname),sortindex); break;
+      case TypeUshort:  MakeSortIndex (GetArrayWord   (keyname),sortindex); break;
+      case TypeUint:    MakeSortIndex (GetArrayUint   (keyname),sortindex); break;
+      case TypeInt:     MakeSortIndex (GetArrayInt    (keyname),sortindex); break;
+      case TypeUllong:  MakeSortIndex (GetArrayUllong (keyname),sortindex); break;
+      case TypeLlong:   MakeSortIndex (GetArrayLlong  (keyname),sortindex); break;
+      case TypeFloat:   MakeSortIndex (GetArrayFloat  (keyname),sortindex); break;
+      case TypeDouble:  MakeSortIndex (GetArrayDouble (keyname),sortindex); break;
+      case TypeUint3:   MakeSortIndex3(GetArrayUint3  (keyname),sortindex); break;
+      case TypeInt3:    MakeSortIndex3(GetArrayInt3   (keyname),sortindex); break;
+      case TypeFloat3:  MakeSortIndex3(GetArrayFloat3 (keyname),sortindex); break;
+      case TypeDouble3: MakeSortIndex3(GetArrayDouble3(keyname),sortindex); break;
+      default: Run_Exceptioon(fun::PrintStr(
+        "Type of pointer \'%s\' is invalid.",TypeToStr(arr.type)));
+    }
+    //-Create auxiliary memory to sort data.
+    const unsigned na=Count();
+    unsigned maxsize4b=0;
+    for(unsigned c=0;c<na;c++){
+      const unsigned s4b=(SizeOfType(Arrays[c].type)+3)/4;
+      //printf("00b> [%s].%s s4b:%u \n",Arrays[c].keyname.c_str(),TypeToStr(Arrays[c].type),s4b);
+      maxsize4b=(maxsize4b>=s4b? maxsize4b: s4b);
+    }
+    unsigned* aux=NewArrayUint(maxsize4b*GetDataCount(false));
+    //-Sorts all arrays.
+    const unsigned* reindex=sortindex.data();
+    for(unsigned c=0;c<na;c++){
+      StDataArray& arr=Arrays[c];
+      switch(arr.type){
+        case TypeUchar:    ReindexData(count,reindex,arr.count,(byte*    )arr.ptr,(byte*    )aux);  break;
+        case TypeUshort:   ReindexData(count,reindex,arr.count,(word*    )arr.ptr,(word*    )aux);  break;
+        case TypeUint:     ReindexData(count,reindex,arr.count,(unsigned*)arr.ptr,(unsigned*)aux);  break;
+        case TypeInt:      ReindexData(count,reindex,arr.count,(int*     )arr.ptr,(int*     )aux);  break;
+        case TypeUllong:   ReindexData(count,reindex,arr.count,(ullong*  )arr.ptr,(ullong*  )aux);  break;
+        case TypeLlong:    ReindexData(count,reindex,arr.count,(llong*   )arr.ptr,(llong*   )aux);  break;
+        case TypeFloat:    ReindexData(count,reindex,arr.count,(float*   )arr.ptr,(float*   )aux);  break;
+        case TypeDouble:   ReindexData(count,reindex,arr.count,(double*  )arr.ptr,(double*  )aux);  break;
+        case TypeUint3:    ReindexData(count,reindex,arr.count,(tuint3*  )arr.ptr,(tuint3*  )aux);  break;
+        case TypeInt3:     ReindexData(count,reindex,arr.count,(tint3*   )arr.ptr,(tint3*   )aux);  break;
+        case TypeFloat3:   ReindexData(count,reindex,arr.count,(tfloat3* )arr.ptr,(tfloat3* )aux);  break;
+        case TypeDouble3:  ReindexData(count,reindex,arr.count,(tdouble3*)arr.ptr,(tdouble3*)aux);  break;
+        default: Run_Exceptioon(fun::PrintStr("Type of pointer \'%s\' is invalid."
+          ,TypeToStr(arr.type)));
+      }
+    }
   }
 }
 

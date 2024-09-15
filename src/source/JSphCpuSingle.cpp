@@ -639,6 +639,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Calculates maximum value of Ace (periodic particles are ignored).
   AceMax=ComputeAceMax();
 
+  InterNum++;
   Timersc->TmStop(TMC_CfForces);
 }
 
