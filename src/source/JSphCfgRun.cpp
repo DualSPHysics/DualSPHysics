@@ -461,15 +461,15 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         if(FtPause<0)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="TMAX"){ 
-        TimeMax=float(atof(txoptfull.c_str())); 
+        TimeMax=atof(txoptfull.c_str()); 
         if(TimeMax<0)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="TOUT"){ 
-        TimePart=float(atof(txoptfull.c_str())); 
+        TimePart=atof(txoptfull.c_str()); 
         if(TimePart<0)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="TOUTX"){ 
-        TimePartExtra=float(atof(txoptfull.c_str())); 
+        TimePartExtra=atof(txoptfull.c_str()); 
       }
       else if(txword=="DOMAIN_FIXED"){
         LoadDouble6(txoptfull,0,DomainFixedMin,DomainFixedMax);

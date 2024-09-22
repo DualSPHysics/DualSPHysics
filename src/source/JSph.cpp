@@ -2375,7 +2375,8 @@ void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
   if(CaseNfloat && PartBegin)InitFloatingsRestart();
 
   Part=PartIni; Nstep=0; PartNstep=0; PartOut=0;
-  TimeStep=TimeStepIni; TimeStepM1=TimeStep;
+  TimeStep=TimeStepIni;
+  TimeStepM1=TimeStep;
   TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
 }
 
@@ -3332,7 +3333,9 @@ void JSph::CheckTermination(){
       pf.close();
     }
     if(tmax<TimeStep)tmax=TimeStep;
-    Log->PrintfWarning("TERMINATE file has updated TimeMax from %gs to %gs (current time: %fs).",TimeMax,tmax,TimeStep);
+    Log->PrintfWarning(
+      "TERMINATE file has updated TimeMax from %gs to %gs (current time: %fs)."
+      ,TimeMax,tmax,TimeStep);
     TerminateTimeMax=tmax;
     if(!Mgpu)TimeMax=tmax;
   }

@@ -36,6 +36,7 @@
 #define _JDsTimeOut_
 
 #include "JObject.h"
+#include "TypesDef.h"
 #include <string>
 #include <vector>
 
@@ -64,6 +65,9 @@ protected:
   unsigned TimeBase;
 
   bool SpecialConfig; ///<Configuration loaded from XML file in special section.
+
+  double SimpleTout;
+  ullong SimpleToutNum;
 
   void ReadXml(const JXml* sxml,TiXmlElement* ele);
   void LoadXml(const JXml* sxml,const std::string& place);

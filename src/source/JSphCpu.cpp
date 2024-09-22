@@ -1502,8 +1502,6 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
   Timersc->TmStop(TMC_SuComputeStep);
 }
 
-
-
 //==============================================================================
 /// Calculate variable Dt.
 /// Calcula un Dt variable.
@@ -1516,7 +1514,9 @@ double JSphCpu::DtVariable(bool final){
   //-dt new value of time step.
   double dt=CFLnumber*min(dt1,dt2);
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
-  if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,Nstep));
+  if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr(
+    "The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u."
+    ,dt,AceMax,VelMax,ViscDtMax,Nstep));
   if(dt<double(DtMin)){ 
     dt=double(DtMin); DtModif++;
     if(DtModif>=DtModifWrn){
@@ -1524,13 +1524,13 @@ double JSphCpu::DtVariable(bool final){
       DtModifWrn*=10;
     }
   }
-
   //-Saves information about dt.
   if(final){
     if(PartDtMin>dt)PartDtMin=dt;
     if(PartDtMax<dt)PartDtMax=dt;
     //-Saves detailed information about dt in SaveDt object.
-    if(SaveDt)SaveDt->AddValues(TimeStep,dt,dt1*CFLnumber,dt2*CFLnumber,AceMax,ViscDtMax,VelMax);
+    if(SaveDt)SaveDt->AddValues(TimeStep,dt,dt1*CFLnumber,dt2*CFLnumber
+      ,AceMax,ViscDtMax,VelMax);
   }
   return(dt);
 }

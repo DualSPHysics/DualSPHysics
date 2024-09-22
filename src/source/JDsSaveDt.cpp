@@ -91,9 +91,9 @@ void JDsSaveDt::LoadXml(const JXml* sxml,const std::string& place){
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
 void JDsSaveDt::ReadXml(const JXml* sxml,TiXmlElement* ele){
-  TimeStart=sxml->ReadElementFloat(ele,"start","value",true);
-  TimeFinish=sxml->ReadElementFloat(ele,"finish","value",true,-1);
-  TimeInterval=sxml->ReadElementFloat(ele,"interval","value",true,-1);
+  TimeStart=sxml->ReadElementDouble(ele,"start","value",true);
+  TimeFinish=sxml->ReadElementDouble(ele,"finish","value",true,-1);
+  TimeInterval=sxml->ReadElementDouble(ele,"interval","value",true,-1);
   AllDt=sxml->ReadElementBool(ele,"alldt","value",true,false);
   FullInfo=sxml->ReadElementBool(ele,"fullinfo","value",true,false);
 }
@@ -226,9 +226,11 @@ void JDsSaveDt::AddLastValues(){
 /// Saves indicated info for dt. If it matches with timestep.
 /// Guarda info del dt inicado. Si coincide timestep lo sobre
 //==============================================================================
-void JDsSaveDt::AddValues(double timestep,double dtfinal,double dt1,double dt2,double acemax,double viscdtmax,double velmax){
+void JDsSaveDt::AddValues(double timestep,double dtfinal,double dt1,double dt2
+  ,double acemax,double viscdtmax,double velmax)
+{
   if(TimeStart<=timestep && timestep<=TimeFinish){
-    unsigned interval=unsigned((timestep-TimeStart)/TimeInterval);
+    const unsigned interval=unsigned((timestep-TimeStart)/TimeInterval);
     if(LastInterval!=interval && LastDtf.num){
       AddLastValues();
       if(Count>=SizeValuesSave)SaveFileValues();

@@ -201,7 +201,7 @@ protected:
 
   double DtIni;              ///<Initial Dt
   double DtMin;              ///<Minimum allowed Dt (if the calculated value is lower is replaced by DTmin).
-  float CoefDtMin;           ///<Coefficient to calculate minimum time step. dtmin=coefdtmin*h/speedsound (def=0.05).
+  float  CoefDtMin;          ///<Coefficient to calculate minimum time step. dtmin=coefdtmin*h/speedsound (def=0.05).
   bool DtAllParticles;       ///<Velocity of particles used to calculate DT. 1:All, 0:Only fluid/floating (def=0).
   JDsFixedDt* FixedDt;
   JDsSaveDt* SaveDt;

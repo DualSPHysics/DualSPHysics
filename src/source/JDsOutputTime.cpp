@@ -50,6 +50,8 @@ void JDsOutputTime::Reset(){
   Times.clear();
   TimeBase=0;
   SpecialConfig=false;
+  SimpleTout=0;
+  SimpleToutNum=0;
   LastTimeInput=LastTimeOutput=-1;
 }
 
@@ -62,6 +64,8 @@ void JDsOutputTime::CopyFrom(const JDsOutputTime* tout){
   for(unsigned c=0;c<nt;c++)Times.push_back(tout->Times[c]);
   TimeBase=tout->TimeBase;
   SpecialConfig=tout->SpecialConfig;
+  SimpleTout=tout->SimpleTout;
+  SimpleToutNum=tout->SimpleToutNum;
   LastTimeInput=tout->LastTimeInput;
   LastTimeOutput=tout->LastTimeOutput;
 }
@@ -74,6 +78,8 @@ void JDsOutputTime::Config(double timeoutdef){
   if(timeoutdef<=0)Run_Exceptioon("Value timeout by default is invalid. It is not greater than zero.");
   AddTimeOut(0,timeoutdef);
   SpecialConfig=false;
+  SimpleTout=timeoutdef;
+  SimpleToutNum=0;
 }
 
 //==============================================================================
@@ -159,32 +165,43 @@ void JDsOutputTime::GetConfig(std::string txhead,std::string txfoot
 double JDsOutputTime::GetNextTime(double t){
   if(LastTimeInput>=0 && t==LastTimeInput)return(LastTimeOutput);
   LastTimeInput=t;
-  //printf("\n++> GetNextTime(%f)\n",t);
-  double nexttime=0;
-  double tb=Times[TimeBase].time;
-  double tnext=(TimeBase+1<GetCount()? Times[TimeBase+1].time: DBL_MAX);
-  //printf("++>INI TimeBase::%d tb:%f \n",TimeBase,tb);
-  //-Avanza hasta tb <= t < tnext.
-  while(t>=tnext){
-    TimeBase++;
-    tb=Times[TimeBase].time;
-    tnext=(TimeBase+1<GetCount()? Times[TimeBase+1].time: DBL_MAX);
-  }
-  //printf("++> TimeBase::%d tb:%f \n",TimeBase,tb);
-  if(t<tb)nexttime=tb;
-  else{
-    const double tbout=Times[TimeBase].tout;
-    unsigned nt=unsigned((t-tb)/tbout);
-    nexttime=tb+tbout*nt;
-    for(;nexttime<=t;nt++){
-      nexttime=tb+tbout*nt;
-      //printf("++> nexttime:%f dif:%f %20.12E\n",nexttime,nexttime-t,nexttime-t);
+  if(SpecialConfig){
+    //printf("\n++> GetNextTime(%f)\n",t);
+    double nexttime=0;
+    double tb=Times[TimeBase].time;
+    double tnext=(TimeBase+1<GetCount()? Times[TimeBase+1].time: DBL_MAX);
+    //printf("++>INI TimeBase::%d tb:%f \n",TimeBase,tb);
+    //-Avanza hasta tb <= t < tnext.
+    while(t>=tnext){
+      TimeBase++;
+      tb=Times[TimeBase].time;
+      tnext=(TimeBase+1<GetCount()? Times[TimeBase+1].time: DBL_MAX);
     }
-    if(nexttime>tnext)nexttime=tnext;
+    //printf("++> TimeBase::%d tb:%f \n",TimeBase,tb);
+    if(t<tb)nexttime=tb;
+    else{
+      const double tbout=Times[TimeBase].tout;
+      unsigned nt=unsigned((t-tb)/tbout);
+      nexttime=tb+tbout*nt;
+      for(;nexttime<=t;nt++){
+        nexttime=tb+tbout*nt;
+        //printf("++> nexttime:%f dif:%f %20.12E\n",nexttime,nexttime-t,nexttime-t);
+      }
+      if(nexttime>tnext)nexttime=tnext;
+    }
+    //printf("++> nexttime:%f\n",nexttime);
+    LastTimeOutput=nexttime;
   }
-  //printf("++> nexttime:%f\n",nexttime);
-  LastTimeOutput=nexttime;
-  return(nexttime);
+  else{
+    double nexttime=LastTimeOutput;
+    while(t>=nexttime){
+      SimpleToutNum++;
+      nexttime=SimpleTout*SimpleToutNum;
+    }
+    LastTimeOutput=nexttime;
+    //printf("+++++> nexttime:%f dif:%f %20.12E\n",nexttime,nexttime-t,nexttime-t);
+  }
+  return(LastTimeOutput);
 }
 
 
