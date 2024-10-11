@@ -32,6 +32,7 @@
 //:# - Comprueba que los valores enteros y reales sean validos. (17-03-2020)  
 //:# - Improved exception management. (18-03-2020)
 //:# - Cambio de nombre de J.SpaceEParms a J.CaseEParms. (28-06-2020)
+//:# - Nuevo atributo active para habilitar o deshabilitar paramtros. (11-10-2024)
 //:#############################################################################
 
 /// \file JCaseEParms.h \brief Declares the class \ref JCaseEParms.
@@ -59,6 +60,7 @@ public:
   typedef struct{
     std::string key;
     std::string value;
+    std::string active; //-Values: true (or empty value), false.
     std::string comment;
     std::string unitscomment;
   }JCaseEParmsItem;
@@ -87,13 +89,14 @@ private:
   std::string Posminx,Posminy,Posminz;
   std::string Posmaxx,Posmaxy,Posmaxz;
 
-  int CheckPosValue(const std::string& value,bool isposmin,JCaseEParmsPos& ps)const;
+  int CheckPosValue(const std::string& value,bool isposmin
+    ,JCaseEParmsPos& ps)const;
   std::string ReadPosValue(const JXml* sxml,TiXmlElement* ele
     ,const std::string& name,const std::string& subname)const;
 
   JCaseEParmsItem* GetItemPointer(const std::string& key);
   std::string GetValueNum(const std::string& key,int num);
-  void ReadXml(const JXml* sxml,TiXmlElement* lis);
+  void ReadXml(const JXml* sxml,TiXmlElement* lis,bool onlyactivated);
   void WriteXml(JXml* sxml,TiXmlElement* lis)const;
 public:
   JCaseEParms();
@@ -101,7 +104,8 @@ public:
   void Reset();
 
   void Add(const std::string& key,const std::string& value
-    ,const std::string& comment,const std::string& unitscomment="");
+    ,const std::string& active,const std::string& comment
+    ,const std::string& unitscomment);
   void SetValue(const std::string& key,const std::string& value);
   void SetComment(const std::string& key,const std::string& comment);
   bool Exists(const std::string& key){ return(GetItemPointer(key)!=NULL); }
@@ -145,10 +149,12 @@ public:
   unsigned Count()const{ return(unsigned(List.size())); }
   std::string ToString(unsigned pos)const;
   JCaseEParmsItem GetParm(unsigned pos)const;
-  void LoadFileXml(const std::string& file,const std::string& path);
+  void LoadFileXml(const std::string& file,const std::string& path
+    ,bool onlyactivated=true);
   void SaveFileXml(const std::string& file,const std::string& path
     ,bool newfile=true)const;
-  void LoadXml(const JXml* sxml,const std::string& place);
+  void LoadXml(const JXml* sxml,const std::string& place
+    ,bool onlyactivated=true);
   void SaveXml(JXml* sxml,const std::string& place)const;
 };
 

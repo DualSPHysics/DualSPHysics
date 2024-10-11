@@ -56,7 +56,8 @@ void JCaseEParms::Reset(){
 /// Adds element to the list.
 //==============================================================================
 void JCaseEParms::Add(const std::string& key,const std::string& value
-  ,const std::string& comment,const std::string& unitscomment)
+  ,const std::string& active,const std::string& comment
+  ,const std::string& unitscomment)
 {
   JCaseEParmsItem* item=GetItemPointer(key);
   string comment2=comment;
@@ -70,11 +71,17 @@ void JCaseEParms::Add(const std::string& key,const std::string& value
         comment2=string("**DEPRECATED** ")+comment2;
     }
   }
-  if(item){ item->value=value; item->comment=comment2; item->unitscomment=unitscomment; }
+  if(item){ 
+    item->value=value; 
+    item->active=active; 
+    item->comment=comment2; 
+    item->unitscomment=unitscomment;
+  }
   else{
     JCaseEParmsItem ite;
     ite.key=key;
     ite.value=value;
+    ite.active=active; 
     ite.comment=comment2;
     ite.unitscomment=unitscomment;
     List.push_back(ite);
@@ -282,10 +289,12 @@ JCaseEParms::JCaseEParmsItem JCaseEParms::GetParm(unsigned pos)const{
 //==============================================================================
 /// Loads data of a file in XML format.
 //==============================================================================
-void JCaseEParms::LoadFileXml(const std::string& file,const std::string& path){
+void JCaseEParms::LoadFileXml(const std::string& file,const std::string& path
+  ,bool onlyactivated)
+{
   JXml jxml;
   jxml.LoadFile(file);
-  LoadXml(&jxml,path);
+  LoadXml(&jxml,path,onlyactivated);
 }
 
 //==============================================================================
@@ -303,11 +312,13 @@ void JCaseEParms::SaveFileXml(const std::string& file,const std::string& path
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JCaseEParms::LoadXml(const JXml* sxml,const std::string& place){
+void JCaseEParms::LoadXml(const JXml* sxml,const std::string& place
+  ,bool onlyactivated)
+{
   Reset();
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(string("Cannot find the element \'")+place+"\'.");
-  ReadXml(sxml,node->ToElement());
+  ReadXml(sxml,node->ToElement(),onlyactivated);
 }
 
 //==============================================================================
@@ -390,7 +401,9 @@ std::string JCaseEParms::ReadPosValue(const JXml* sxml,TiXmlElement* ele
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JCaseEParms::ReadXml(const JXml* sxml,TiXmlElement* lis){
+void JCaseEParms::ReadXml(const JXml* sxml,TiXmlElement* lis
+  ,bool onlyactivated)
+{
   sxml->CheckElementNames(lis,true,"*parameter simulationdomain");
   TiXmlElement* ele=lis->FirstChildElement("parameter"); 
   while(ele){
@@ -398,12 +411,19 @@ void JCaseEParms::ReadXml(const JXml* sxml,TiXmlElement* lis){
     const string comment=sxml->GetAttributeStr(ele,"comment",true);
     const string units=sxml->GetAttributeStr(ele,"units_comment",true);
     string valuestr=sxml->GetAttributeStr(ele,"value");
+    string activestr=sxml->GetAttributeStr(ele,"active",true);
     //-Reads numeric values from XML as double values.
     if(!valuestr.empty() && valuestr[0]=='#' && int(valuestr.find(':'))<0){//-Ignores multiple values (v0:v1:v2).
-      double v=sxml->GetAttributeDouble(ele,"value");
+      const double v=sxml->GetAttributeDouble(ele,"value");
       valuestr=fun::DoubleStr(v);
     }
-    Add(key,valuestr,comment,units);
+    //-Reads active value from XML as bool value.
+    if(!activestr.empty()){
+      const bool active=sxml->GetAttributeBool(ele,"active");
+      activestr=(active? "true": "false");
+    }
+    if(activestr.empty() || activestr=="true" || !onlyactivated)
+      Add(key,valuestr,activestr,comment,units);
     ele=ele->NextSiblingElement("parameter");
   }
   if(sxml->ExistsElement(lis,"simulationdomain")){
@@ -426,6 +446,7 @@ void JCaseEParms::WriteXml(JXml* sxml,TiXmlElement* lis)const{
     TiXmlElement item("parameter");
     JXml::AddAttribute(&item,"key",ite.key);
     JXml::AddAttribute(&item,"value",ite.value);
+    if(!ite.active.empty())JXml::AddAttribute(&item,"active",ite.active);
     if(!ite.comment.empty())JXml::AddAttribute(&item,"comment",ite.comment);
     if(!ite.unitscomment.empty())JXml::AddAttribute(&item,"units_comment",ite.unitscomment);
     lis->InsertEndChild(item);
