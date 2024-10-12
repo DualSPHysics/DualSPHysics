@@ -149,7 +149,7 @@ private:
 
   void LoadXmlInit(const JXml* cxml,const std::string& place);
   void LoadFileXml(const std::string& file,const std::string& path
-    ,JNumexLib* nuxlib,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem);
+    ,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem);
   void LoadXml(const JXml* sxml,const std::string& place
     ,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem);
   void ReadXml(const JXml* sxml,TiXmlElement* ele
@@ -188,7 +188,7 @@ public:
 
   unsigned Config(double timestep,bool stable,byte periactive
     ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JDsPartsInit* partsdata
-    ,JGaugeSystem* gaugesystem,JNumexLib* nuxlib);
+    ,JGaugeSystem* gaugesystem);
     
   void LoadInitPartsData(unsigned idpfirst,unsigned npart,unsigned* idp
     ,typecode* code,tdouble3* pos,tfloat4* velrho);

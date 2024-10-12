@@ -916,16 +916,16 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco>
   void Interaction_Forces_gt2(const StInterParmsg& t)
 {
 #ifdef FAST_COMPILATION
-  if(t.shiftmode || t.tdensity!=DDT_DDT4)throw "Shifting and extra DDT are disabled for FastCompilation...";
-  Interaction_ForcesGpuT<tker,ftmode,tvisco,DDT_DDT4,false> (t);
+  if(t.shiftmode || t.tdensity!=DDT_DDT2)throw "Shifting and DDT!=DDT_DDT2 are disabled for FastCompilation...";
+  Interaction_ForcesGpuT<tker,ftmode,tvisco,DDT_DDT2,false> (t);
 #else
-  if(t.shiftmode){               const bool shift=true;
+  if(t.shiftmode){              const bool shift=true;
     if(t.tdensity==DDT_None)    Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_None    ,shift> (t);
     if(t.tdensity==DDT_DDT)     Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT     ,shift> (t);
     if(t.tdensity==DDT_DDT2)    Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT2    ,shift> (t);
     if(t.tdensity==DDT_DDT2Full)Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT2Full,shift> (t);
   }
-  else{                           const bool shift=false;
+  else{                         const bool shift=false;
     if(t.tdensity==DDT_None)    Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_None    ,shift> (t);
     if(t.tdensity==DDT_DDT)     Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT     ,shift> (t);
     if(t.tdensity==DDT_DDT2)    Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT2    ,shift> (t);

@@ -38,9 +38,6 @@ tdouble3 MoorDynPlus_GetNodePos(const unsigned line, const unsigned node){ retur
 unsigned MoorDynPlus_MooringsCount(){ return(0); }
 unsigned MoorDynPlus_GetMooringReference(const unsigned ftid){ return(0); }
 void MoorDynPlus_LogInit(JLog2* log){}
-#ifndef DISABLE_NUMEXLIB
-void MoorDynPlus_NuxLibInit(JNumx* nuxlib) {};
-#endif // !DISABLE_NUMEXLIB
 #endif
 
 #endif

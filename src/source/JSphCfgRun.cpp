@@ -387,8 +387,9 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         if(ViscoBoundFactor<0)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="DDT"){
-        TDensity=atoi(txoptfull.c_str()); 
-        if(TDensity<0 || TDensity>3)ErrorParm(opt,c,lv,file);
+        const int v=atoi(txoptfull.c_str());
+        if(v>=0 && v<=3)TDensity=TpDensity(v);
+        else ErrorParm(opt,c,lv,file);
       }
       else if(txword=="DDTVALUE"){
         DDTValue=float(atof(txoptfull.c_str())); 

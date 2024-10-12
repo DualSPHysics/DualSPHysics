@@ -79,7 +79,6 @@ class JDsPips;
 class JLinearValue;
 class JCaseEParms;
 class JDataArrays;
-class JNumexLib;
 class JDsExtraDataSave;
 class JDsOutputParts;//<vs_outpaarts>
 
@@ -308,8 +307,6 @@ protected:
 
   std::vector<std::string> InitializeInfo; ///<Stores information about initialize configuration applied.
 
-  JNumexLib* NuxLib;            ///<Object to evaluate user-defined expressions in XML (created in LoadCaseConfig()->LoadConfigVars()).
-
   JGaugeSystem* GaugeSystem;    ///<Object for automatic gauge system.
 
   JWaveGen* WaveGen;            ///<Object for wave generation.
@@ -425,8 +422,6 @@ protected:
   void LoadConfig(const JSphCfgRun* cfg);
   void LoadKernelSelection(const JSphCfgRun* cfg,const JXml* cxml);
   void LoadConfigCtes(const JXml* cxml);
-  void LoadConfigVars(const JXml* cxml);
-  void LoadConfigVarsExec();
   void LoadConfigParameters(const JXml* cxml);
   void LoadConfigCommands(const JSphCfgRun* cfg);
   void LoadCaseConfig(const JSphCfgRun* cfg);

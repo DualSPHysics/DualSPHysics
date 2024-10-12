@@ -80,7 +80,7 @@ void JSphCpuSingle::InOutInit(double timestepini){
   //-Configures InOut zones and prepares new inout particles to create.
   const unsigned newnp=InOut->Config(timestepini,Stable,PeriActive
     ,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid()
-    ,PartsInit,GaugeSystem,NuxLib);
+    ,PartsInit,GaugeSystem);
 
   //-Mark special fluid particles to ignore. | Marca las particulas fluidas especiales para ignorar.
   InOutIgnoreFluidDef(InOut->MkFluidList,Code_c->ptr());

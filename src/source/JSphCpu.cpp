@@ -597,6 +597,14 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
 }
 
 //==============================================================================
+/// van Albada limiter for Green DDT implementation.
+//==============================================================================
+float VanAlbadaLimiter(float beta){
+  const float beta2=beta*beta;
+  return(beta>0? (beta2+beta)/(1+beta2): 0);
+}
+
+//==============================================================================
 /// Perform interaction between particles: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 /// Realiza interaccion entre particulas: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 //==============================================================================
@@ -728,7 +736,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
             const float delta=visc_densi*dot3*massp2/velrhop2.w;
             deltap1=(boundp2? FLT_MAX: deltap1-delta); //-blocks it makes it boil - bloody DBC
           }
-          
+
           //-Shifting correction.
           if(shift && shiftposfsp1.x!=FLT_MAX){
             const float massrho=massp2/velrhop2.w;
@@ -1513,10 +1521,13 @@ double JSphCpu::DtVariable(bool final){
   const double dt2=double(KernelH)/(max(Cs0,VelMax*10.)+double(KernelH)*ViscDtMax);
   //-dt new value of time step.
   double dt=CFLnumber*min(dt1,dt2);
+  //-Use dt value defined by FixedDt object.
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
+  //-Check that the dt is valid.
   if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr(
     "The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u."
     ,dt,AceMax,VelMax,ViscDtMax,Nstep));
+  //-Correct dt with minimum allowed value.
   if(dt<double(DtMin)){ 
     dt=double(DtMin); DtModif++;
     if(DtModif>=DtModifWrn){

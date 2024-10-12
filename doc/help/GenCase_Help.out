@@ -1,20 +1,20 @@
 
 
- <GENCASE>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <GENCASE>  Copyright (c) 2024 by Dr Jose M. Dominguez
  All rights reserved.
 
  GenCase is a free tool for DualSPHysics simulations.
  DualSPHysics project is an international collaboration between
  University of Vigo (Spain) and University of Manchester (UK).
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- * Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+ Redistribution and use in binary form, without modification, are
+ permitted provided that the following conditions are met:
  * Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
+ * Redistributions or modifications of source code are not permitted 
+   unless expressly authorised, and must retain the above copyright 
+   notice, this list of conditions and the following disclaimer.
  * Neither the name of the GenCase nor the names of its contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
@@ -31,7 +31,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-GenCase v5.0.278 (24-04-2023)
+GenCase v5.4.346 (11-10-2024)
 ==============================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Execution parameters information:
@@ -43,7 +43,8 @@ Execution parameters information:
   Options:
     -h               Shows information about the different parameters
     -ver             Shows version information
-    -template        Generates the example file 'CaseTemplate.xml'
+    -templates       Generates the example file 'GenCase_CaseTemplate.xml'
+                     and other template files'
     -clean           Saves a clean version of the configuration XML file
 
     -evars:<str>     Defines new values for variables in XML file

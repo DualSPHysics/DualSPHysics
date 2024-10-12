@@ -235,15 +235,6 @@
     <ClInclude Include="..\source\DSphMoorDynPlusUndef.h">
       <Filter>Libs</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JNumexLib.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JNumexLibDef.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JNumexLibUndef.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JVtkLibDef.h">
       <Filter>Libs</Filter>
     </ClInclude>
@@ -371,9 +362,6 @@
       <Filter>CommonDsph</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JCaseProperties.h">
-      <Filter>CommonDsph</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JCaseUserVars.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JCaseVtkOut.h">
@@ -540,6 +528,9 @@
     </ClInclude>
     <ClInclude Include="..\source\JDebugSphCpu.h">
       <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JXmlDef.h">
+      <Filter>Common\JXml</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -754,9 +745,6 @@
       <Filter>CommonDsph</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JCaseProperties.cpp">
-      <Filter>CommonDsph</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JCaseUserVars.cpp">
       <Filter>CommonDsph</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JCaseVtkOut.cpp">

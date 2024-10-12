@@ -247,6 +247,20 @@ double JCaseEParms::GetValueNumDouble(const std::string& key,int num
   return(ret);
 }
 //==============================================================================
+float JCaseEParms::GetValueNumFloat(const std::string& key,int num
+  ,bool optional,float valdef)
+{
+  float ret=valdef;
+  std::string txval=GetValueNum(key,num);
+  if(!txval.empty()){
+    if(!fun::StrIsRealNumber(txval))
+      Run_Exceptioon(string("The requested value \'")+key+"\' is not a valid real number.");
+    ret=float(atof(txval.c_str()));
+  }
+  else if(!optional)Run_Exceptioon(string("The requested value \'")+key+"\' does not exist.");
+  return(ret);
+}
+//==============================================================================
 std::string JCaseEParms::GetValueNumStr(const std::string& key,int num
   ,bool optional,std::string valdef)
 {

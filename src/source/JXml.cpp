@@ -21,7 +21,7 @@
 #include "JXml.h"
 #include "Functions.h"
 
-#ifndef DISABLE_NUMEXLIB
+#ifdef JXml_UseNux
 #include "JNumexLib.h"
 #endif
 
@@ -468,7 +468,7 @@ std::string JXml::GetAttributeStr(const TiXmlElement* ele,const std::string& nam
   else ErrReadAtrib(ele,name,true);
   //-String should be evaluated.
   if(NuxLib!=NULL && !ret.empty() && ret[0]=='$'){
-    #ifndef DISABLE_NUMEXLIB
+    #ifdef JXml_UseNux
       ret=NuxLib->ComputeExprStr(ret,std::string("\nFile: ")+ErrGetFileRow(ele));
     #endif
   }
@@ -493,7 +493,7 @@ bool JXml::GetAttributeBool(const TiXmlElement* ele,const std::string& name
   if(ele->Attribute(name.c_str())){
     const string val=ele->Attribute(name.c_str());
     if(NuxLib!=NULL && !val.empty() && val[0]=='#'){
-      #ifndef DISABLE_NUMEXLIB
+      #ifdef JXml_UseNux
         ret=int(NuxLib->ComputeExprBool(val,std::string("\nFile: ")+ErrGetFileRow(ele)));
       #endif
     }
@@ -576,7 +576,7 @@ int JXml::GetAttributeInt(const TiXmlElement* ele,const std::string& name
   }
   else{
     if(NuxLib!=NULL && vchar[0]=='#'){
-      #ifndef DISABLE_NUMEXLIB
+      #ifdef JXml_UseNux
         ret=int(NuxLib->ComputeExpr(vchar,std::string("\nFile: ")+ErrGetFileRow(ele)));
       #endif
     }
@@ -626,7 +626,7 @@ llong JXml::GetAttributeLlong(const TiXmlElement* ele,const std::string& name
   }
   else{
     if(NuxLib!=NULL && vchar[0]=='#'){
-      #ifndef DISABLE_NUMEXLIB
+      #ifdef JXml_UseNux
       ret=llong(NuxLib->ComputeExpr(vchar,std::string("\nFile: ")+ErrGetFileRow(ele)));
       #endif
     }
@@ -658,7 +658,7 @@ double JXml::GetAttributeDouble(const TiXmlElement* ele,const std::string& name
   }
   else{
     if(NuxLib!=NULL && vchar[0]=='#'){
-      #ifndef DISABLE_NUMEXLIB
+      #ifdef JXml_UseNux
         ret=NuxLib->ComputeExpr(vchar,std::string("\nFile: ")+ErrGetFileRow(ele));
       #endif
     }

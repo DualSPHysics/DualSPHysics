@@ -158,7 +158,7 @@
       <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJNumexLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
       <AdditionalLibraryDirectories>$(CUDA_PATH_V11_7)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -215,7 +215,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJNumexLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
       <AdditionalLibraryDirectories>$(CUDA_PATH_V11_7)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -280,7 +280,7 @@
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
-      <AdditionalDependencies>dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_Release.lib;LibJNumexLib_$(PlatformName)_$(PlatformToolset)_Release.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_Release.lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_Release.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_Release.lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkStatus>
       </LinkStatus>
     </Link>
@@ -331,7 +331,7 @@
       </OptimizeReferences>
       <EnableCOMDATFolding>
       </EnableCOMDATFolding>
-      <AdditionalDependencies>dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_Debug.lib;LibJNumexLib_$(PlatformName)_$(PlatformToolset)_Debug.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_Debug.lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_Debug.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_Debug.lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkStatus>
       </LinkStatus>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
@@ -648,9 +648,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JMotionMov.h" />
     <ClInclude Include="..\source\JMotionObj.h" />
     <ClInclude Include="..\source\JMotionPos.h" />
-    <ClInclude Include="..\source\JNumexLib.h" />
-    <ClInclude Include="..\source\JNumexLibDef.h" />
-    <ClInclude Include="..\source\JNumexLibUndef.h" />
     <ClInclude Include="..\source\JObject.h" />
     <ClInclude Include="..\source\JObjectGpu.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
@@ -713,7 +710,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JSimpleNeigs.h" />
     <ClInclude Include="..\source\JCasePartsDef.h" />
     <ClInclude Include="..\source\JCaseProperties.h" />
-    <ClInclude Include="..\source\JCaseUserVars.h" />
     <ClInclude Include="..\source\JCaseVtkOut.h" />
     <ClInclude Include="..\source\JDsAccInput.h" />
     <ClInclude Include="..\source\JDsAccInput_ker.h">
@@ -764,6 +760,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     </ClInclude>
     <ClInclude Include="..\source\JWaveSpectrumGpu.h" />
     <ClInclude Include="..\source\JXml.h" />
+    <ClInclude Include="..\source\JXmlDef.h" />
     <ClInclude Include="..\source\OmpDefs.h" />
     <ClInclude Include="..\source\randomc.h" />
     <ClInclude Include="..\source\RunExceptionDef.h" />
@@ -887,7 +884,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JSphShifting.cpp" />
     <ClCompile Include="..\source\JSimpleNeigs.cpp" />
     <ClCompile Include="..\source\JCaseProperties.cpp" />
-    <ClCompile Include="..\source\JCaseUserVars.cpp" />
     <ClCompile Include="..\source\JCaseVtkOut.cpp" />
     <ClCompile Include="..\source\JDsAccInput.cpp" />
     <ClCompile Include="..\source\JSphCpuSingle_InOut.cpp" />

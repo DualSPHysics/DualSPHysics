@@ -33,7 +33,6 @@
 #include "JSimpleNeigs.h"
 #include "JTimeControl.h"
 #include "JDsGaugeSystem.h"
-#include "JNumexLib.h"
 
 #ifdef _WITHGPU
   #include "JDsTimersGpu.h"
@@ -186,11 +185,10 @@ void JSphInOut::LoadXmlInit(const JXml* sxml,const std::string& place){
 /// Loads data of a file in XML format.
 //==============================================================================
 void JSphInOut::LoadFileXml(const std::string& file,const std::string& path
-  ,JNumexLib* nuxlib,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem)
+  ,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem)
 {
   JXml jxml;
   jxml.LoadFile(file);
-  jxml.SetNuxLib(nuxlib); //-Enables the use of NuxLib in XML configuration.
   LoadXml(&jxml,path,partsdata,gaugesystem);
 }
 
@@ -531,8 +529,8 @@ void JSphInOut::SaveVtkVelGrid(){
 /// returns number of initial inlet particles.
 //==============================================================================
 unsigned JSphInOut::Config(double timestep,bool stable,byte periactive
-  ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart,const JDsPartsInit* partsdata
-  ,JGaugeSystem* gaugesystem,JNumexLib* nuxlib)
+  ,tdouble3 posmin,tdouble3 posmax,typecode codenewpart
+  ,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem)
 {
   Stable=stable;
   PeriActive=periactive;
@@ -541,7 +539,7 @@ unsigned JSphInOut::Config(double timestep,bool stable,byte periactive
   MapRealPosMin=posmin; MapRealPosMax=posmax;
   CodeNewPart=codenewpart;
   //-Loads Xml configuration.
-  LoadFileXml(XmlFile,XmlPath,nuxlib,partsdata,gaugesystem);
+  LoadFileXml(XmlFile,XmlPath,partsdata,gaugesystem);
 
   //-Calculates and saves domain zones.
   ComputeFreeDomain();

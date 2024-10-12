@@ -65,8 +65,6 @@
 #include "JDataArrays.h"
 #include "JOutputCsv.h"
 #include "JVtkLib.h"
-#include "JNumexLib.h"
-#include "JCaseUserVars.h"
 #include <algorithm>
 
 using namespace std;
@@ -114,7 +112,6 @@ JSph::JSph(int gpucount,bool withmpi):Cpu(gpucount==0)
   InOut=NULL;
   OutputParts=NULL; //<vs_outpaarts>
   DsPips=NULL;
-  NuxLib=NULL;
   //-Auxiliary variables for floating bodies calculations.
   Fto_ExForceLinAng=NULL;
   Fto_AceLinAng=NULL;
@@ -158,7 +155,6 @@ JSph::~JSph(){
   delete InOut;         InOut=NULL;
   delete DsPips;        DsPips=NULL;
   delete OutputParts;   OutputParts=NULL; //<vs_outpaarts>
-  delete NuxLib;        NuxLib=NULL;
 }
 
 //==============================================================================
@@ -524,7 +520,6 @@ std::string JSph::GetFeatureList(){
   if(AVAILABLE_MOORDYNPLUS)list=list+", MoorDynPlus coupling";
   if(AVAILABLE_WAVEGEN    )list=list+", Wave generation";
                            list=list+", mDBC no-slip"; //<vs_m2dbc>
-  if(AVAILABLE_NUMEXLIB   )list=list+", Numex vars";
   if(AVAILABLE_VTKLIB     )list=list+", VTK output";
   #ifdef CODE_SIZE4
                            list=list+", MkWord";
@@ -954,58 +949,6 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
 }
 
 //==============================================================================
-/// Creates and load NuxLib object to evaluate user-defined expressions.
-//==============================================================================
-void JSph::LoadConfigVars(const JXml* xml){
-  if(!JNumexLib::Available())Log->PrintWarning("Code for JNumex library is not included in the current compilation, so user-defined expressions in XML file are not evaluated.");
-  else{
-    NuxLib=new JNumexLib();
-    //-Loads user variables from XML.
-    JCaseUserVars uvars;
-    uvars.LoadXml(xml,"case.execution.uservars",true);
-    for(unsigned c=0;c<uvars.CountVars();c++){
-      const JCaseUserVars::StVar v=uvars.GetVar(c);
-      if(v.isnum)NuxLib->CreateVar(v.name,true,false,v.valuenum);
-      else       NuxLib->CreateVar(v.name,true,false,v.valuestr);
-    }
-    //-Defines basic constant values on NuxLib object.
-    bool rep=false;
-    rep|=NuxLib->CreateVar("CaseName"  ,true,true,CaseName);
-    rep|=NuxLib->CreateVar("Data2D"    ,true,true,Simulate2D);
-    rep|=NuxLib->CreateVar("Data2DPosy",true,true,Simulate2DPosY);
-    rep|=NuxLib->CreateVar("H"         ,true,true,KernelH);
-    rep|=NuxLib->CreateVar("KernelSize",true,true,KernelSize);
-    rep|=NuxLib->CreateVar("B"         ,true,true,CteB);
-    rep|=NuxLib->CreateVar("Gamma"     ,true,true,Gamma);
-    rep|=NuxLib->CreateVar("Rhop0"     ,true,true,RhopZero);
-    rep|=NuxLib->CreateVar("Dp"        ,true,true,Dp);
-    rep|=NuxLib->CreateVar("Gravity"   ,true,true,Gravity);
-    rep|=NuxLib->CreateVar("MassFluid" ,true,true,MassFluid);
-    rep|=NuxLib->CreateVar("MassBound" ,true,true,MassBound);
-    if(rep)Log->PrintWarning("Some user-defined variable from XML was replaced by values of constants.");
-    //-Shows list of available variables.
-    //Log->Printf("List of available variables for user expressions: %s\n",NuxLib->ListVarsToStr().c_str());
-    Log->Printf("XML-Vars (uservars + ctes): %s",NuxLib->ListVarsToStr().c_str());
-  }
-}
-
-//==============================================================================
-/// Loads execution parameters in NuxLib object to evaluate user-defined expressions.
-//==============================================================================
-void JSph::LoadConfigVarsExec(){
-  if(NuxLib){
-    const unsigned nv=NuxLib->CountVars();
-    bool rep=false;
-    rep|=NuxLib->CreateVar("TimeMax",true,true,TimeMax);
-    rep|=NuxLib->CreateVar("TimeOut",true,true,TimePart);
-    if(rep)Log->PrintWarning("Some user-defined variable from XML was replaced by values of parameters.");
-    //-Shows list of available variables.
-    //Log->Printf("List of available variables for user expressions: %s\n",NuxLib->ListVarsToStr().c_str());
-    Log->Printf("XML-Vars (parameters): %s",NuxLib->ListVarsToStr(nv).c_str());
-  }
-}
-
-//==============================================================================
 /// Loads the case configuration to be executed.
 //==============================================================================
 void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
@@ -1025,20 +968,12 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   //-Configures value of calculated constants and loads CSP structure.
   ConfigConstants1(Simulate2D);
 
-  //-Define variables on NuxLib object.
-  LoadConfigVars(cxml);
-  //-Enables the use of NuxLib in XML configuration.
-  xml.SetNuxLib(NuxLib);
-
   //-Execution parameters from XML.
   LoadConfigParameters(cxml);
   //-Execution parameters from commands.
   LoadConfigCommands(cfg);
   //-Configures other constants according to formulation options and loads more values in CSP structure.
   ConfigConstants2();
-
-  //-Define variables of execution parameters and shows list of available variables.
-  LoadConfigVarsExec();
 
   //-Particle data.
   JCaseParts parts;
@@ -1653,7 +1588,9 @@ void JSph::VisuConfig(){
     } //<vs_ddramp_end>
     ConfigInfo=ConfigInfo+cinfo;
   }
-  if(TDensity==DDT_DDT2Full && KernelH/Dp>1.5)Log->PrintWarning("It is advised that selected DDT: \'Fourtakas et al 2019 (full)\' is used with several boundary layers of particles when h/dp>1.5 (2h <= layers*Dp)");
+  if(TDensity==DDT_DDT2Full && KernelH/Dp>1.5)Log->PrintWarning(
+    "It is advised that selected DDT: \'Fourtakas et al 2019 (full)\' is used with several boundary layers of particles when h/dp>1.5 (2h <= layers*Dp)");
+  
   //-Shifting.
   if(Shifting){
     Shifting->VisuConfig();
@@ -1849,8 +1786,8 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3* pos
       ,Dp,KernelH,DirCase,CaseNbound,boundnor!=NULL);
     //-Loads configuration from XML.
     {
-      JXml xml; xml.LoadFile(FileXml);
-      xml.SetNuxLib(NuxLib); //-Enables the use of NuxLib in XML configuration.
+      JXml xml;
+      xml.LoadFile(FileXml);
       if(xml.GetNodeSimple("case.execution.special.initialize",true)){
         init.LoadXml(&xml,"case.execution.special.initialize");
       }
@@ -2272,8 +2209,8 @@ void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
   }
 
   //-Process Special configurations in XML.
-  JXml xml; xml.LoadFile(FileXml);
-  xml.SetNuxLib(NuxLib); //-Enables the use of NuxLib in XML configuration.
+  JXml xml;
+  xml.LoadFile(FileXml);
 
   //-Configuration of GaugeSystem.
   GaugeSystem->ConfigCtes(CSP,Symmetry,TimeMax,TimePart,Scell,ScellDiv
@@ -3621,9 +3558,9 @@ std::string JSph::GetSlipName(TpSlipMode tslip){
 //==============================================================================
 std::string JSph::GetDDTName(TpDensity tdensity)const{
   string tx;
-  if(tdensity==DDT_None)tx="None";
-  else if(tdensity==DDT_DDT)tx="Molteni and Colagrossi 2009";
-  else if(tdensity==DDT_DDT2)tx="Fourtakas et al 2019 (inner)";
+       if(tdensity==DDT_None    )tx="None";
+  else if(tdensity==DDT_DDT     )tx="Molteni and Colagrossi 2009";
+  else if(tdensity==DDT_DDT2    )tx="Fourtakas et al 2019 (inner)";
   else if(tdensity==DDT_DDT2Full)tx="Fourtakas et al 2019 (full)";
   else tx="???";
   return(tx);

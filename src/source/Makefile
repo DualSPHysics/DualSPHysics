@@ -1,11 +1,10 @@
-#DualSPHysics GPU/CPU v5.4.337 10-09-2024
+#DualSPHysics GPU/CPU v5.4.344 12-10-2024
 
 #=============== Compilation Options (YES/NO) ===============
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_VTKLIB=YES
-COMPILE_NUMEXLIB=YES
 COMPILE_CHRONO=YES
 COMPILE_WAVEGEN=YES
 COMPILE_MOORDYNPLUS=YES
@@ -33,9 +32,6 @@ CCLINKFLAGS=-fopenmp -lgomp
 
 ifeq ($(COMPILE_VTKLIB), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_VTKLIB
-endif
-ifeq ($(COMPILE_NUMEXLIB), NO)
-  CCFLAGS:=$(CCFLAGS) -DDISABLE_NUMEXLIB
 endif
 ifeq ($(COMPILE_CHRONO), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
@@ -111,7 +107,7 @@ endif
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
 OBJSPHMOTION=JMotion.o JMotionData.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JDsMotion.o
 OBCOMMON=Functions.o FunGeo3d.o FunSphKernelsCfg.o JAppInfo.o JBinaryData.o JCfgRunBase.o JDataArrays.o JException.o JLinearValue.o JLog2.o JObject.o JOutputCsv.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o JTrianglesMesh.o randomc.o
-OBCOMMONDSPH=JDsphConfig.o JDsPips.o JPartDataBi4.o JPartDataHead.o JDsPartFloatSave.o JDsPartMotionSave.o JPartFloatInfoBi4.o JPartMotRefBi4Save.o JPartOutBi4Save.o JCaseCtes.o JCaseEParms.o JCaseParts.o JCaseProperties.o JCaseUserVars.o JCaseVtkOut.o
+OBCOMMONDSPH=JDsphConfig.o JDsPips.o JPartDataBi4.o JPartDataHead.o JDsPartFloatSave.o JDsPartMotionSave.o JPartFloatInfoBi4.o JPartMotRefBi4Save.o JPartOutBi4Save.o JCaseCtes.o JCaseEParms.o JCaseParts.o JCaseProperties.o JCaseVtkOut.o
 OBSPH=JArraysCpu.o JCellDivCpu.o JDebugSphCpu.o JSphCfgRun.o JComputeMotionRef.o JDsDcell.o JDsDamping.o JDsExtraData.o JDsGaugeItem.o JDsGaugeSystem.o JDsOutputParts.o JDsPartsOut.o JDsSaveDt.o JSphShifting.o JSph.o JDsAccInput.o JSphCpu.o JSphCpu_mdbc.o JDsInitialize.o JSphMk.o JDsPartsInit.o JDsFixedDt.o JDsViscoInput.o JDsOutputTime.o JDsTimers.o JWaveSpectrumGpu.o main.o
 OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
 OBCOMMONGPU=FunctionsCuda.o JObjectGpu.o 
@@ -136,9 +132,6 @@ OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBMOORDYNPLUS) $(O
 JLIBS=${LIBS_DIRECTORIES}
 ifeq ($(COMPILE_VTKLIB), YES)
   JLIBS:=$(JLIBS) -ljvtklib_64
-endif
-ifeq ($(COMPILE_NUMEXLIB), YES)
-  JLIBS:=$(JLIBS) -ljnumexlib_64
 endif
 ifeq ($(COMPILE_CHRONO), YES)
   JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine 

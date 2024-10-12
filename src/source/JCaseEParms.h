@@ -123,9 +123,7 @@ public:
 
   int GetValueNumInt(const std::string& key,int num,bool optional=false,int valdef=0);
   double GetValueNumDouble(const std::string& key,int num,bool optional=false,double valdef=0);
-  float GetValueNumFloat(const std::string& key,int num,bool optional=false,float valdef=0){ 
-    return(float(GetValueNumDouble(key,num,optional,valdef))); 
-  }
+  float GetValueNumFloat(const std::string& key,int num,bool optional=false,float valdef=0);
   std::string GetValueNumStr(const std::string& key,int num,bool optional=false,std::string valdef="");
   
   int GetValueInt(const std::string& key,bool optional=false,int valdef=0){ 

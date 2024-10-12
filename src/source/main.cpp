@@ -37,8 +37,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.4.343
-\date 11-10-2024
+\version 5.4.344
+\date 12-10-2024
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -62,7 +62,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.4.343","11-10-2024");
+JAppInfo AppInfo("DualSPHysics5","v5.4.344","12-10-2024");
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
@@ -118,7 +118,6 @@ bool ShowsVersionInfo(int argc,char** argv,bool show=true){
     features.push_back(fun::JSONProperty("GPU",AVAILABLE_GPU));
     features.push_back(fun::JSONProperty("MultiGPU",AVAILABLE_MGPU));
     features.push_back(fun::JSONProperty("VTK_Output",AVAILABLE_VTKLIB));
-    features.push_back(fun::JSONProperty("Numex_Expressions",AVAILABLE_NUMEXLIB));
     features.push_back(fun::JSONProperty("CHRONO_Coupling",AVAILABLE_CHRONO));
     features.push_back(fun::JSONProperty("MoorDynPlus_Coupling",AVAILABLE_MOORDYNPLUS));
     features.push_back(fun::JSONProperty("WaveGen",AVAILABLE_WAVEGEN));

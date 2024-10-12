@@ -62,13 +62,13 @@
 #ifndef _JXml_
 #define _JXml_
 
+#include "JXmlDef.h"
 #include "TypesDef.h"
 #include "JObject.h"
 #include "tinyxml.h"
-#include "JNumexLibDef.h"   //Defines DISABLE_NUMEXLIB to compile without Numex library.
 #include <string>
 
-#ifndef DISABLE_NUMEXLIB
+#ifdef JXml_UseNux
   class JNumexLib;
   typedef JNumexLib JNumx;
 #else
@@ -93,10 +93,10 @@ public:
   /// Clear NuxLib pointer.
   void ClearNuxLib(){ NuxLib=NULL; }
   /// Sets NuxLib pointer to evaluate expressions in XML file.
-#ifdef DISABLE_NUMEXLIB
-  void SetNuxLib(JNumx* nux){ NuxLib=NULL; }
-#else
+#ifdef JXml_UseNux
   void SetNuxLib(JNumx* nux){ NuxLib=nux; }
+#else
+  void SetNuxLib(JNumx* nux){ NuxLib=NULL; }
 #endif
 
   //==============================================================================

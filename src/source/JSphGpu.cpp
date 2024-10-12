@@ -775,7 +775,7 @@ void JSphGpu::PreInteraction_Forces(){
   Ar_g->CuMemset(0,Np);                                             //Arg[]=0
   Ace_g->CuMemset(0,Np);                                            //Aceg[]=(0)
   if(AG_CPTR(Delta_g))Delta_g->CuMemset(0,Np);                      //Deltag[]=0
-  if(AG_CPTR(Sps2Strain_g))Sps2Strain_g->CuMemsetOffset(Npb,0,npf); //Sps2Straing[]=(0).
+  if(AG_CPTR(Sps2Strain_g))Sps2Strain_g->CuMemsetOffset(Npb,0,npf); //Sps2Straing[]=(0)
   
   //-Select particles for shifting.
   if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
@@ -938,10 +938,13 @@ double JSphGpu::DtVariable(bool final){
   const double dt2=double(KernelH)/(max(Cs0,VelMax*10.)+double(KernelH)*ViscDtMax);
   //-dt new value of time step.
   double dt=CFLnumber*min(dt1,dt2);
+  //-Use dt value defined by FixedDt object.
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
+  //-Check that the dt is valid.
   if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr(
     "The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u."
     ,dt,AceMax,VelMax,ViscDtMax,Nstep));
+  //-Correct dt with minimum allowed value.
   if(dt<double(DtMin)){ 
     dt=double(DtMin); DtModif++;
     if(DtModif>=DtModifWrn){

@@ -1,4 +1,4 @@
-//HEAD_DSCODES
+//HEAD_DSPH
 /*
  <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
@@ -16,4 +16,5 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-//#define DISABLE_NUMEXLIB   ///<It allows compile without Numex library.
+//#define JXml_UseNux  //-Enables or disables the use of JNumexLib.
+
