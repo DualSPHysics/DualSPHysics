@@ -275,6 +275,15 @@ size_t Malloc(word** ptr,unsigned count){
 }
 
 //==============================================================================
+/// Allocates memory for ushort2 on GPU.
+//==============================================================================
+size_t Malloc(ushort2** ptr,unsigned count){
+  const size_t size=sizeof(ushort2)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
+}
+
+//==============================================================================
 /// Allocates memory for unsigned on GPU.
 //==============================================================================
 size_t Malloc(unsigned** ptr,unsigned count){
@@ -507,6 +516,23 @@ word* ToHostWord(unsigned pini,unsigned n,const word* vg){
   try{
     word* v=new word[n];
     cudaMemcpy(v,vg+pini,sizeof(word)*n,cudaMemcpyDeviceToHost);
+    Check_CudaErroorFun("After cudaMemcpy().");
+    return(v);
+  }
+  catch(const std::bad_alloc){
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
+  }
+  return(NULL);
+}
+
+//==============================================================================
+/// Returns dynamic pointer with ushort2 data. (this pointer must be deleted)
+//==============================================================================
+ushort2* ToHostWord2(unsigned pini,unsigned n,const ushort2* vg){
+  Check_CudaErroorFun("At the beginning.");
+  try{
+    ushort2* v=new ushort2[n];
+    cudaMemcpy(v,vg+pini,sizeof(ushort2)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
   }

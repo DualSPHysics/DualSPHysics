@@ -29,7 +29,7 @@
 #define EULER 2.71828182845904523536   ///<Value of cte E (Euler's number or Napier's constant), E=std::exp(1.0);
 #define TOGALLON 0.2641720523581480    ///<Constant for conversion litres to US gallon. Gallon=3.785411784 litres
 #define MEBIBYTE 1048576               ///<Value of 1 MiB 2^20=1024*1024
-#define GIBIBYTE 1073741824            ///<Value of 1 MiB 2^30=1024*1024*1024
+#define GIBIBYTE 1073741824            ///<Value of 1 GiB 2^30=1024*1024*1024
 
 typedef unsigned char byte;
 typedef unsigned short word;

@@ -55,9 +55,10 @@ public:
   int SelectGpu(int gpuid);
   void ShowSelectGpusInfo(JLog2* log);
 
-  int         GetGpuId   ()const{ return(GpuId);    }
-  std::string GetName    ()const{ return(Name);     }
-  std::string GetHardware()const{ return(Hardware); }
+  int         GetGpuId    ()const{ return(GpuId);     }
+  std::string GetName     ()const{ return(Name);      }
+  std::string GetHardware ()const{ return(Hardware);  }
+  size_t      GetGlobalMem()const{ return(GlobalMem); }
 };
 
 #endif

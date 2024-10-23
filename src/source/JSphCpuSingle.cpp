@@ -648,7 +648,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
 void JSphCpuSingle::MdbcBoundCorrection(){
-  Timersc->TmStart(TMC_CfPreForces);
+  Timersc->TmStart(TMC_CfPreMDBC);
   if(SlipMode==SLIP_Vel0){
     Interaction_MdbcCorrection(DivData,Pos_c->cptr(),Code_c->cptr()
       ,Idp_c->cptr(),BoundNor_c->cptr(),Velrho_c->ptr());
@@ -665,7 +665,7 @@ void JSphCpuSingle::MdbcBoundCorrection(){
       ,Velrho_c->ptr(),BoundMode_c->ptr(),TangenVel_c->ptr());
   } //<vs_m2dbc_end>
   else Run_Exceptioon("Error: SlipMode is invalid.");
-  Timersc->TmStop(TMC_CfPreForces);
+  Timersc->TmStop(TMC_CfPreMDBC);
 }
 
 

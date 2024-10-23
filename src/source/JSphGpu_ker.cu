@@ -994,7 +994,6 @@ __device__ float4 KerComputePosCell(const double3& ps,const double3& mapposmin
 }
 
 
-
 //##############################################################################
 //# Kernels for DEM interaction.
 //# Kernels para interaccion DEM.
@@ -2190,6 +2189,7 @@ void PeriodicDuplicateNormals(unsigned n,unsigned pini,const unsigned* listp
   }
 }
 
+
 //##############################################################################
 //# Kernels for Damping.
 //##############################################################################
@@ -2792,4 +2792,5 @@ void ComputeOutputPartsMk(byte resmask,bool cmband,bool inverse
 //# Kernels para mDBC y mDBC2.
 //##############################################################################
 #include "JSphGpu_mdbc_iker.cu"
+
 

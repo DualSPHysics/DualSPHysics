@@ -110,6 +110,7 @@ int _ConvertSMVer2Cores(int major, int minor);
 //-Functions to allocate GPU memory.
 size_t Malloc(byte**    ,unsigned count);
 size_t Malloc(word**    ,unsigned count);
+size_t Malloc(ushort2** ,unsigned count);
 size_t Malloc(unsigned**,unsigned count);
 size_t Malloc(uint4**   ,unsigned count);
 size_t Malloc(int**     ,unsigned count);
@@ -139,6 +140,7 @@ size_t HostAlloc(tdouble2**,unsigned count);
 //-Functions to copy data to Host (debug).
 byte*     ToHostByte   (unsigned pini,unsigned n,const byte*     ptrg);
 word*     ToHostWord   (unsigned pini,unsigned n,const word*     ptrg);
+ushort2*  ToHostWord2  (unsigned pini,unsigned n,const ushort2*  ptrg);
 ushort4*  ToHostWord4  (unsigned pini,unsigned n,const ushort4*  ptrg);
 int*      ToHostInt    (unsigned pini,unsigned n,const int*      ptrg);
 unsigned* ToHostUint   (unsigned pini,unsigned n,const unsigned* ptrg);

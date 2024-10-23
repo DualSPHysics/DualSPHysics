@@ -564,7 +564,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
 void JSphGpuSingle::MdbcBoundCorrection(){
-  Timersg->TmStart(TMG_CfPreForces,false);
+  Timersg->TmStart(TMG_CfPreMDBC,false);
   if(SlipMode==SLIP_Vel0){
     const unsigned n=(UseNormalsFt? Np: NpbOk);
     cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,n,CaseNbound
@@ -585,7 +585,7 @@ void JSphGpuSingle::MdbcBoundCorrection(){
       ,BoundMode_g->ptr(),TangenVel_g->ptr());
   } //<vs_m2dbc_end>
   else Run_Exceptioon("Error: SlipMode is invalid.");
-  Timersg->TmStop(TMG_CfPreForces,true);
+  Timersg->TmStop(TMG_CfPreMDBC,true);
 }
 
 

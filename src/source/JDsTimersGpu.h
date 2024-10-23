@@ -34,19 +34,20 @@ typedef enum{
   ,TMG_NlSortData=5
   ,TMG_NlOutCheck=6
   ,TMG_CfPreForces=7
-  ,TMG_CfForces=8
-  ,TMG_SuShifting=9
-  ,TMG_SuComputeStep=10
-  ,TMG_SuFloating=11
-  ,TMG_SuMotion=12
-  ,TMG_SuPeriodic=13
-  ,TMG_SuResizeNp=14
-  ,TMG_SuDownData=15
-  ,TMG_SuSavePart=16
-  ,TMG_SuChrono=17
-  ,TMG_SuMoorings=18
-  ,TMG_SuInOut=19
-  ,TMG_SuGauges=20
+  ,TMG_CfPreMDBC=8
+  ,TMG_CfForces=10
+  ,TMG_SuShifting=11
+  ,TMG_SuComputeStep=12
+  ,TMG_SuFloating=13
+  ,TMG_SuMotion=14
+  ,TMG_SuPeriodic=15
+  ,TMG_SuResizeNp=16
+  ,TMG_SuDownData=17
+  ,TMG_SuSavePart=18
+  ,TMG_SuChrono=19
+  ,TMG_SuMoorings=20
+  ,TMG_SuInOut=21
+  ,TMG_SuGauges=22
 }TpTimersGPU;
 
 //##############################################################################
@@ -77,6 +78,7 @@ public:
     Add(TMG_NlSortData        ,"NL-SortData"   ,0,SvTimers);
     Add(TMG_NlOutCheck        ,"NL-OutCheck"   ,0,SvTimers);
     Add(TMG_CfPreForces       ,"CF-PreForces"  ,0,SvTimers);
+    Add(TMG_CfPreMDBC         ,"CF-PreMDBC"    ,0,SvTimers);
     Add(TMG_CfForces          ,"CF-Forces"     ,0,SvTimers);
     Add(TMG_SuShifting        ,"SU-Shifting"   ,0,SvTimers);
     Add(TMG_SuComputeStep     ,"SU-ComputeStep",0,SvTimers);
