@@ -202,9 +202,6 @@
     <ClInclude Include="..\source\JRelaxZone_ker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JSphGpu_InOut_ker.h">
-      <Filter>Cuda</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JLinearValueDef.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -236,15 +233,6 @@
       <Filter>Libs</Filter>
     </ClInclude>
     <ClInclude Include="..\source\DSphMoorDynPlusUndef.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JNumexLib.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JNumexLibDef.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JNumexLibUndef.h">
       <Filter>Libs</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JVtkLibDef.h">
@@ -374,9 +362,6 @@
       <Filter>CommonDsph</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JCaseProperties.h">
-      <Filter>CommonDsph</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JCaseUserVars.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JCaseVtkOut.h">
@@ -529,11 +514,23 @@
     <ClInclude Include="..\source\JMotionData.h">
       <Filter>Common\JMotion</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_cte.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
     <ClInclude Include="..\source\JTrianglesMesh.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_InOut_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_mdbc_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
     <ClInclude Include="..\source\JDebugSphCpu.h">
       <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JXmlDef.h">
+      <Filter>Common\JXml</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -750,9 +747,6 @@
     <ClCompile Include="..\source\JCaseProperties.cpp">
       <Filter>CommonDsph</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\JCaseUserVars.cpp">
-      <Filter>CommonDsph</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\JCaseVtkOut.cpp">
       <Filter>CommonDsph</Filter>
     </ClCompile>
@@ -855,6 +849,9 @@
     <ClCompile Include="..\source\JTrianglesMesh.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\JSphCpu_mdbc.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="..\source\JDebugSphCpu.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -883,9 +880,6 @@
     <CudaCompile Include="..\source\JRelaxZone_ker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
-    <CudaCompile Include="..\source\JSphGpu_InOut_ker.cu">
-      <Filter>Cuda</Filter>
-    </CudaCompile>
     <CudaCompile Include="..\source\JSphGpuSimple_ker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
@@ -905,6 +899,12 @@
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\FunctionsMath_iker.h">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_InOut_iker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_mdbc_iker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
   </ItemGroup>
