@@ -731,6 +731,7 @@ void JSph::LoadConfigParameters(const JXml* cxml){
       case 1:  shiftmode=SHIFT_NoBound;  break;
       case 2:  shiftmode=SHIFT_NoFixed;  break;
       case 3:  shiftmode=SHIFT_Full;     break;
+      case 4:  shiftmode=SHIFT_FS;      break;
       default: Run_ExceptioonFile("Shifting mode in <execution><parameters> is not valid.",FileXml);
     }
     if(shiftmode!=SHIFT_None){
@@ -903,6 +904,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
       case 1:  shiftmode=SHIFT_NoBound;  break;
       case 2:  shiftmode=SHIFT_NoFixed;  break;
       case 3:  shiftmode=SHIFT_Full;     break;
+      case 4:  shiftmode=SHIFT_FS;       break;
       default: Run_Exceptioon("Shifting mode is not valid.");
     }
     if(!Shifting)Shifting=new JSphShifting(Simulate2D,Dp,KernelH);

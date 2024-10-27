@@ -398,6 +398,17 @@ void JCellDivGpu::SortDataArrays(const float* a, float* a2){
   cudiv::SortDataParticles(Nptot,pini,SortPart,a,a2);
 }
 
+
+//==============================================================================
+/// Reorders data arrays according to SortPart (for uint values).
+/// Ordena arrays de datos segun SortPart (para valores uint).
+//==============================================================================
+void JCellDivGpu::SortDataArrays(const unsigned* a, const float4* b, unsigned* a2
+  ,float4* b2){
+  const unsigned pini=(DivideFull? 0: NpbFinal);
+  cudiv::SortDataParticles(Nptot,pini,SortPart,a,b,a2,b2);
+}
+
 //==============================================================================
 /// Returns a pointer with the auxiliary memory allocated in the GPU, only
 /// used as intermediate in some tasks, in order to use it in other tasks.

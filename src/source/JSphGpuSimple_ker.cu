@@ -389,9 +389,9 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
         double dz=(double(rvelrhopre.z)+double(rvelrhonew.z)) * dtm;
         if(shift){
           const float4 rshiftpos=shiftposfs[p];
-          dx+=double(rshiftpos.x);
-          dy+=double(rshiftpos.y);
-          dz+=double(rshiftpos.z);
+          dx+=double(rshiftpos.x)*dt;
+          dy+=double(rshiftpos.y)*dt;
+          dz+=double(rshiftpos.z)*dt;
         }
         bool outrho=(rvelrhonew.w<rhopoutmin || rvelrhonew.w>rhopoutmax);
         //-Restore data of inout particles.

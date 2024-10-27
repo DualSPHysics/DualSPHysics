@@ -61,6 +61,7 @@ typedef struct StrInterParmsg{
   TpDensity tdensity;
   TpShifting shiftmode;
   bool mdbc2;      //<vs_m2dbc>
+  bool corrector;  //<shifting,ale,ncpress>
   //-Execution values.
   float viscob,viscof;
   unsigned bsbound,bsfluid;
@@ -93,6 +94,7 @@ typedef struct StrInterParmsg{
   float*  delta;
   tsymatrix3f* sps2strain;
   float4* shiftposfs;
+  unsigned* fstype;             //<shifting,ale,ncpress>
   //-Other values and objects.
   cudaStream_t stm;
   StKerInfo* kerinfo;
@@ -107,6 +109,7 @@ typedef struct StrInterParmsg{
     ,TpDensity tdensity
     ,TpShifting shiftmode
     ,bool mdbc2                 //<vs_m2dbc>
+    ,bool corrector              //<shifting,ale,ncpress>
     ,float viscob,float viscof
     ,unsigned bsbound,unsigned bsfluid
     ,unsigned np,unsigned npb,unsigned npbok
@@ -128,6 +131,7 @@ typedef struct StrInterParmsg{
     ,float* delta
     ,tsymatrix3f* sps2strain
     ,float4* shiftposfs
+    ,unsigned* fstype     //<shifting,ale,ncpress>
     ,cudaStream_t stm
     ,StKerInfo* kerinfo)
   {
@@ -140,6 +144,7 @@ typedef struct StrInterParmsg{
     this->tdensity=tdensity;
     this->shiftmode=shiftmode;
     this->mdbc2=mdbc2;       //<vs_m2dbc>
+    this->corrector=corrector;  //<shifting,ale,ncpress>
     //-Execution values.
     this->viscob=viscob;   this->viscof=viscof;
     this->bsbound=bsbound; this->bsfluid=bsfluid;
@@ -166,6 +171,7 @@ typedef struct StrInterParmsg{
     this->delta=delta;
     this->sps2strain=sps2strain;
     this->shiftposfs=shiftposfs;
+    this->fstype=fstype;
     //-Other values and objects.
     this->stm=stm;
     this->kerinfo=kerinfo;

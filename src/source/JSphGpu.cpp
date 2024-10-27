@@ -175,6 +175,10 @@ void JSphGpu::InitVars(){
   Delta_g=NULL;
   ShiftPosfs_g=NULL;   //-Shifting.
 
+  FSType_g=NULL;       //-ShiftingImproved
+  FSMinDist_g=NULL;    //-ShiftingImproved
+  FSNormal_g=NULL;     //-ShiftingImproved
+
   SpsTauRho2_g=NULL;   //-Laminar+SPS.
   Sps2Strain_g=NULL;   //-Laminar+SPS.
 
@@ -350,6 +354,10 @@ void JSphGpu::FreeGpuMemoryParticles(){
   delete Delta_g;       Delta_g=NULL;
   delete ShiftPosfs_g;  ShiftPosfs_g=NULL;  //-Shifting.
 
+  delete FSType_g;      FSType_g=NULL;      //-ShiftingImproved
+  delete FSMinDist_g;   FSMinDist_g=NULL;   //-ShiftingImproved
+  delete FSNormal_g;    FSNormal_g=NULL;    //-ShiftingImproved
+
   delete SpsTauRho2_g;  SpsTauRho2_g=NULL;  //-Laminar+SPS.
   delete Sps2Strain_g;  Sps2Strain_g=NULL;  //-Laminar+SPS.
 
@@ -405,7 +413,13 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   Ar_g        =new agfloat ("Arg"    ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
   Delta_g     =new agfloat ("Deltag" ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
   //-Arrays for Shifting.
-  ShiftPosfs_g=new agfloat4("ShiftPosfsg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
+  if(ShiftingMode==SHIFT_FS){
+    ShiftPosfs_g  =new agfloat4 ("ShiftPosfsg",Arrays_Gpu,true); 
+    FSType_g      =new aguint   ("FS_g"       ,Arrays_Gpu,true);
+    FSNormal_g    =new agfloat3 ("FSNormal_g" ,Arrays_Gpu,false);  //-NO INITIAL MEMORY.
+    FSMinDist_g   =new agfloat  ("FSMinDist_g",Arrays_Gpu,false);  //-NO INITIAL MEMORY.
+  }
+  else ShiftPosfs_g=new agfloat4("ShiftPosfsg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
   //-Arrays for Laminar+SPS.
   if(TVisco==VISCO_LaminarSPS){
     SpsTauRho2_g=new agsymatrix3f("SpsTauRho2g",Arrays_Gpu,true);
@@ -641,6 +655,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,Symmetry  //<vs_syymmetry>
         ,TKernel,FtMode
         ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
+        ,false      //<shifting,ale,ncpress>
         ,0,0,0,0,100,0,0
         ,0,0,divdatag,NULL
         ,NULL,NULL,NULL
@@ -650,6 +665,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,NULL,NULL,NULL,NULL
         ,NULL
         ,NULL
+        ,NULL     //<shifting,ale,ncpress>
         ,NULL,&kerinfo);
       cusph::Interaction_Forces(parms);
       if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat,divdatag,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,&kerinfo);
@@ -752,6 +768,10 @@ void JSphGpu::InitRunGpu(){
   if(TVisco==VISCO_LaminarSPS)SpsTauRho2_g->CuMemset(0,Np);
   if(MotionVel_g)MotionVel_g->CuMemset(0,Np); //<vs_m2dbc>
   if(MotionAce_g)MotionAce_g->CuMemset(0,Np); //<vs_m2dbc>
+  if(ShiftingMode==SHIFT_FS){
+    ShiftPosfs_g->CuMemset(0,Np);
+    FSType_g->CuMemset(3,Np);
+  }
   Check_CudaErroor("Failed initializing variables for execution.");
 }
 
@@ -766,8 +786,10 @@ void JSphGpu::PreInteraction_Forces(){
   Ar_g->Reserve();
   Ace_g->Reserve();
   if(DDTArray)Delta_g->Reserve();
-  if(Shifting)ShiftPosfs_g->Reserve();
+  if(Shifting && ShiftingMode!=SHIFT_FS)ShiftPosfs_g->Reserve();
   if(TVisco==VISCO_LaminarSPS)Sps2Strain_g->Reserve();
+  if(Shifting && ShiftingMode==SHIFT_FS)FSMinDist_g->Reserve();
+  if(Shifting && ShiftingMode==SHIFT_FS)FSNormal_g->Reserve();
 
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
@@ -778,8 +800,12 @@ void JSphGpu::PreInteraction_Forces(){
   if(AG_CPTR(Sps2Strain_g))Sps2Strain_g->CuMemsetOffset(Npb,0,npf); //Sps2Straing[]=(0)
   
   //-Select particles for shifting.
-  if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
-    ,Posz_g->cptr(),ShiftPosfs_g->ptr());
+  if(AC_CPTR(ShiftPosfs_g) && ShiftingMode!=SHIFT_FS)Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
+                                                    ,Posz_g->cptr(),ShiftPosfs_g->ptr());
+
+  if(ShiftingMode==SHIFT_FS && InterStep==INTERSTEP_SymCorrector && (AC_CPTR(ShiftPosfs_g)))ShiftPosfs_g->CuMemset(0,Np); //Shifting improved
+  if(AC_CPTR(FSMinDist_g))FSMinDist_g->CuMemset(0,Np);
+  if(AC_CPTR(FSNormal_g))FSNormal_g->CuMemset(0,Np);
 
   //-Adds variable acceleration from input configuration.
   if(AccInput)AccInput->RunGpu(TimeStep,Gravity,npf,Npb,Code_g->cptr()
@@ -808,10 +834,12 @@ void JSphGpu::PosInteraction_Forces(){
   Ar_g->Free();
   Ace_g->Free();
   Delta_g->Free();
-  ShiftPosfs_g->Free();
+  if(ShiftingMode!=SHIFT_FS)ShiftPosfs_g->Free();
   if(Sps2Strain_g)Sps2Strain_g->Free();
   if(BoundMode_g)BoundMode_g->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
   if(TangenVel_g)TangenVel_g->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
+  if(FSMinDist_g)FSMinDist_g->Free(); //-ShiftingImproved
+  if(FSNormal_g)FSNormal_g->Free();   //-ShiftingImproved
 }
 
 //==============================================================================
@@ -1082,6 +1110,35 @@ void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,uns
   delete[] pos;
   delete[] idp;
   delete[] nor;
+}
+
+//==============================================================================
+/// Saves VTK file with particle data (degug).
+/// Graba fichero VTK con datos de las particulas (degug).
+//==============================================================================
+void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
+  ,unsigned pini,unsigned pfin,const double2* posxyg,const double* poszg
+  ,const typecode* codeg,const unsigned* idpg,const float4* velrhog,const float3* fsnormal)const
+{
+  const unsigned np=pfin-pini;
+  //-Copy data to CPU memory.
+  tdouble3* posh=fcuda::ToHostPosd3(pini,np,posxyg,poszg);
+  #ifdef CODE_SIZE4
+    typecode* codeh=fcuda::ToHostUint(pini,np,codeg);
+  #else
+    typecode* codeh=fcuda::ToHostWord(pini,np,codeg);
+  #endif
+  unsigned* idph=fcuda::ToHostUint(pini,np,idpg);
+  tfloat4*  velrhoh=fcuda::ToHostFloat4(pini,np,velrhog);
+  tfloat3*  fsnormalh=fcuda::ToHostFloat3(pini,np,fsnormal);
+  //-Creates VTK file.
+  DgSaveVtkParticlesCpu(filename,numfile,0,np,posh,codeh,idph,velrhoh,fsnormalh);
+  //-Deallocates memory.
+  delete[] posh;  
+  delete[] codeh;
+  delete[] idph;
+  delete[] velrhoh;
+  delete[] fsnormalh;
 }
 
 //==============================================================================
@@ -1412,5 +1469,8 @@ void JSphGpu::DgSaveCsvParticles2(std::string filename,int numfile
   }
   else Run_ExceptioonFile("File could not be opened.",filename);
 }
+
+const unsigned JSphGpu::MaxNStmFloatings;
+
 
 

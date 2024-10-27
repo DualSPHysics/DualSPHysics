@@ -166,6 +166,11 @@ protected:
   agfloat*  Delta_g;      ///<Sum of Delta-SPH value when DELTA_DynamicExt (Null).
   agfloat4* ShiftPosfs_g; ///<Particle displacement and free surface detection for Shifting (Null).
 
+
+  aguint* FSType_g;           ///<Free-surface identification.
+  agfloat* FSMinDist_g;       ///<Distance from the Free-Surface (needed for improved shifting).
+  agfloat3* FSNormal_g;       ///<Normals of Free-Surface particles (needed for improved shifting).
+
   double VelMax;      ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;      ///<Maximum value of Ace[] (ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
   float ViscDtMax;    ///<Maximum value of ViscDt computed in Interaction_Forces().
@@ -236,6 +241,9 @@ public:
 //-Functions for debug.
 //----------------------
 public:
+  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,const double2* posxyg,const double* poszg,const typecode* codeg,const unsigned* idpg
+    ,const float4* velrhog,const float3* fsnormal)const;
   void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
     ,const double2* posxyg,const double* poszg,const typecode* codeg,const unsigned* idpg
     ,const float4* velrhog)const;

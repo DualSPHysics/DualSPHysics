@@ -448,6 +448,7 @@ typedef enum{
 
 ///Types of Shifting applied to fluid particles. 
 typedef enum{
+  SHIFT_FS=4,               ///<Better detection of free-surface particles.
   SHIFT_Full=3,             ///<Shifting is applied to all fluid particles.
   SHIFT_NoFixed=2,          ///<Shifting is applied to fluid particles except those that interact with fixed boundaries.
   SHIFT_NoBound=1,          ///<Shifting is applied to fluid particles except those that interact with all boundaries.

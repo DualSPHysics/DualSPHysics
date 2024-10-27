@@ -11,6 +11,7 @@ src/source/___*
 
 ## Ignores output of examples in 01_DamBreak.
 examples/main/01_DamBreak/*_out
+examples/01_DamBreak/*
 
 ## Ignores other directories.
 __Tools__
