@@ -655,7 +655,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,Symmetry  //<vs_syymmetry>
         ,TKernel,FtMode
         ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
-        ,false      //<shifting,ale,ncpress>
+        ,false,AleForm      //<shifting,ale,ncpress>
         ,0,0,0,0,100,0,0
         ,0,0,divdatag,NULL
         ,NULL,NULL,NULL
@@ -779,7 +779,7 @@ void JSphGpu::InitRunGpu(){
 /// Prepares variables for interaction.
 /// Prepara variables para interaccion.
 //==============================================================================
-void JSphGpu::PreInteraction_Forces(){
+void JSphGpu::PreInteraction_Forces(TpInterStep instestep){
   Timersg->TmStart(TMG_CfPreForces,false);
   //-Assign memory.
   ViscDt_g->Reserve();
@@ -803,7 +803,7 @@ void JSphGpu::PreInteraction_Forces(){
   if(AC_CPTR(ShiftPosfs_g) && ShiftingMode!=SHIFT_FS)Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
                                                     ,Posz_g->cptr(),ShiftPosfs_g->ptr());
 
-  if(ShiftingMode==SHIFT_FS && InterStep==INTERSTEP_SymCorrector && (AC_CPTR(ShiftPosfs_g)))ShiftPosfs_g->CuMemset(0,Np); //Shifting improved
+  if(ShiftingMode==SHIFT_FS && instestep==INTERSTEP_SymPredictor && (AC_CPTR(ShiftPosfs_g)))ShiftPosfs_g->CuMemset(0,Np); //Shifting improved
   if(AC_CPTR(FSMinDist_g))FSMinDist_g->CuMemset(0,Np);
   if(AC_CPTR(FSNormal_g))FSNormal_g->CuMemset(0,Np);
 

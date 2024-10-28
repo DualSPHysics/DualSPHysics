@@ -512,19 +512,27 @@ void JSphGpuSingle::PreLoopProcedure(TpInterStep interstep){
     ComputeUmbrellaRegion();
   }
 
+  
+
+
 
   unsigned bsfluid=BlockSizes.forcesfluid;
   unsigned bsbound=BlockSizes.forcesbound;
-  if(runshift)cusph::PreLoopInteraction(TKernel,Simulate2D,runshift,Symmetry,bsfluid,Np-Npb,Npb,DivData
+  if(runshift)cusph::PreLoopInteraction(TKernel,Simulate2D,runshift,false,bsfluid,Np-Npb,Npb,DivData
     ,Dcell_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr(),FtoMasspg,ShiftPosfs_g->ptr()
     ,FSType_g->ptr(),FSNormal_g->ptr(),FSMinDist_g->ptr(),NULL);
-  
   
 
 
   if(runshift)cusph::ComputeShiftingVel(bsfluid,Np-Npb,Npb,Simulate2D,ShiftPosfs_g->ptr(),FSType_g->cptr(),FSNormal_g->cptr()
     ,FSMinDist_g->cptr(),SymplecticDtPre,Shifting->GetShiftCoef(),NULL);
 
+  double t1=TimeStep+LastDt;
+	double t2=TimePartNext;
+  if(t1>=t2 ){
+		if(interstep==INTERSTEP_SymPredictor && ShiftingMode>=SHIFT_FS)DgSaveVtkParticlesGpu("Compute_FreeSurface_",Part,0,Np,Posxy_g->cptr()
+        ,Posz_g->cptr(),Code_g->cptr(),FSType_g->cptr(),ShiftPosfs_g->cptr(),FSNormal_g->cptr());
+	}
   
 }
 
@@ -583,7 +591,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,Symmetry //<vs_syymmetry>
     ,TKernel,FtMode
     ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
-    ,InterStep==INTERSTEP_SymCorrector  //<shifting,ale,ncpress>
+    ,InterStep==INTERSTEP_SymCorrector,AleForm  //<shifting,ale,ncpress>
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
     ,0,Nstep,DivData,Dcell_g->cptr()
@@ -597,14 +605,6 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,AG_PTR(FSType_g)             //<shifting,ale,ncpress>
     ,NULL,NULL);
   cusph::Interaction_Forces(parms);
-
-
-  double t1=TimeStep+LastDt;
-	double t2=TimePartNext;
-  if(t1>=t2 ){
-		if(interstep==INTERSTEP_SymCorrector && ShiftingMode>=SHIFT_FS)DgSaveVtkParticlesGpu("Compute_FreeSurface_",Part,0,Np,Posxy_g->cptr()
-        ,Posz_g->cptr(),Code_g->cptr(),FSType_g->cptr(),ShiftPosfs_g->cptr(),FSNormal_g->cptr());
-	}
 
   //-Interaction DEM Floating-Bound & Floating-Floating. //(DEM)
   if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat
@@ -719,7 +719,7 @@ void JSphGpuSingle::RunInitialDDTRamp(){
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Ver(){
   MdbcBoundCorrection(INTERSTEP_SymPredictor); //-Mdbc correction
-  PreInteraction_Forces();                     //-Allocating temporary arrays.
+  PreInteraction_Forces(INTERSTEP_Verlet);                     //-Allocating temporary arrays.
   Interaction_Forces(INTERSTEP_Verlet);  //-Interaction.
   const double dt=DtVariable(true);      //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);         //-Calculate motion for moving bodies.
@@ -747,7 +747,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   //-----------
   DemDtForce=dt*0.5f;                          //-For DEM interaction.
   MdbcBoundCorrection(INTERSTEP_SymPredictor); //-Mdbc correction
-  PreInteraction_Forces();                     //-Allocating temporary arrays.
+  PreInteraction_Forces(INTERSTEP_SymPredictor);                     //-Allocating temporary arrays.
   PreLoopProcedure(INTERSTEP_SymPredictor);                          //-Calculate variables for interaction forces (Shifting,DDT,etc...).  
   Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
   const double dt_p=DtVariable(false);         //-Calculate dt of predictor step.
@@ -760,7 +760,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   DemDtForce=dt;                               //-For DEM interaction.
   RunCellDivide(true);
   MdbcBoundCorrection(INTERSTEP_SymCorrector); //-Mdbc correction
-  PreInteraction_Forces();                     //-Allocating temporary arrays.
+  PreInteraction_Forces(INTERSTEP_SymCorrector);                     //-Allocating temporary arrays.
   PreLoopProcedure(INTERSTEP_SymCorrector);                          //-Calculate variables for interaction forces (Shifting,DDT,etc...).
   Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
   const double dt_c=DtVariable(true);          //-Calculate dt of corrector step.

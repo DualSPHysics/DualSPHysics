@@ -367,7 +367,7 @@ namespace cusph{
     ,bool& bound_inter,float3& fsnormalp1)
   {
     for(int p2=pini;p2<pfin;p2++){
-    const float4 pscellp2=poscell[p2];
+      const float4 pscellp2=poscell[p2];
       float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
       float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
       float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
@@ -386,7 +386,7 @@ namespace cusph{
         ftmassp2=(ftp2? ftomassp[CODE_GetTypeValue(cod)]: massp2);
         
         if(shiftimpr){
-          const float massrho=(ftmassp2)/velrhop2.w;
+          const float massrho=(boundp2 ? CTE.massb/velrhop2.w : (massp2)/velrhop2.w);
 
           //-Compute gradient of concentration and partition of unity.        
           shiftposf1.x+=massrho*frx;    
@@ -436,6 +436,7 @@ namespace cusph{
       const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
       bool    nearfs=false;                     //-Bool for detecting near free-surface particles. <shiftImproved>
       float4  shiftposp1=make_float4(0,0,0,0);
+
       
       float mindist=CTE.kernelsize;            //-Set Min Distance from free-surface to kernel radius. <shiftImproved>
       float maxarccos=0.0;                      //-Variable for identify high-curvature free-surface particle <shiftImproved>
@@ -461,6 +462,7 @@ namespace cusph{
         } 
       }
 
+
       //-Interaction with bound.
       ini3-=cellfluid; fin3-=cellfluid;
       for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
@@ -473,9 +475,14 @@ namespace cusph{
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
             ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1); //<vs_syymmetry>
       }
+      }
+
+
 
       if(shiftimpr){
-      shiftposp1.w+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.f)*CTE.massf/velrhop1.w;
+
+            shiftposp1.w+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.0)*CTE.massf/velrhop1.w;
+
 
       fsmindist[p1]=mindist;
       //-Assign correct code to near free-surface particle and correct their normals by Shepard's Correction.
@@ -497,7 +504,7 @@ namespace cusph{
       
     }
   }
-}
+
   
   
   

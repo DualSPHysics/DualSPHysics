@@ -214,8 +214,8 @@ void JDsInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3* pos
     velrho[p].x=dir.x*v1;
     velrho[p].y=dir.y*v1;
     velrho[p].z=dir.z*v1;
-    velrho[p].x=-pos[p].z;
-    velrho[p].z=pos[p].x;
+    velrho[p].x=pos[p].z;
+    velrho[p].z=-pos[p].x;
     const double pi=3.141592653589793;
     double press=0.0;
     // 	  velrho[p].x=cos(2*pi*pos[p].x)*sin(2*pi*pos[p].z);
@@ -228,7 +228,7 @@ void JDsInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3* pos
           press+=(-32.0)/(m*n*pi*pi*((m*pi)*(m*pi)+(n*pi)*(n*pi)))*sin(m*pi*(pos[p].x+0.5))*sin(n*pi*(pos[p].z+0.5));
       }
     }
-        velrho[p].w=1+press/(7.07*7.07);
+        velrho[p].w=1+press/(100);
   }
 }
 

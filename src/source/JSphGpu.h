@@ -216,7 +216,7 @@ protected:
     ,double3* ftocenterg,float4* demdatag)const;
   void InitRunGpu();
 
-  void PreInteraction_Forces();
+  void PreInteraction_Forces(TpInterStep instersep);
   void PosInteraction_Forces();
   
   void ComputeVerlet(double dt);
