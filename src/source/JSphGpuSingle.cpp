@@ -46,6 +46,7 @@
 #include "JDataArrays.h"
 #include "JDebugSphGpu.h"
 #include "JSphShifting.h"
+#include "JSphShiftingAdv.h" //<ShiftingAdvanced>
 #include "JDsPips.h"
 #include "JDsExtraData.h"
 #include "FunctionsCuda.h"
@@ -433,13 +434,13 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
       MotionAce_g->SwapPtr(&maceg);
     }//<vs_m2dbc_end>
   }
-  if(ShiftingMode==SHIFT_FS){
+  if(ShiftingAdv!=NULL){
       aguint      fstypeg     ("-",Arrays_Gpu,true);
-      agfloat4    shiftposfsg ("-",Arrays_Gpu,true);
-      CellDivSingle->SortDataArrays(FSType_g->cptr(),ShiftPosfs_g->cptr(),fstypeg.ptr(),shiftposfsg.ptr());
-      FSType_g    ->SwapPtr(&fstypeg);
-      ShiftPosfs_g->SwapPtr(&shiftposfsg);
-    }
+      agfloat4    shiftvelg   ("-",Arrays_Gpu,true);
+      CellDivSingle->SortDataArrays(FSType_g->cptr(),ShiftVel_g->cptr(),fstypeg.ptr(),shiftvelg.ptr());
+      FSType_g  ->SwapPtr(&fstypeg);
+      ShiftVel_g->SwapPtr(&shiftvelg);
+  }
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
@@ -506,32 +507,32 @@ void JSphGpuSingle::SaveFluidOut(){
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void JSphGpuSingle::PreLoopProcedure(TpInterStep interstep){
-  bool runshift=(interstep==INTERSTEP_SymPredictor && Nstep!=0 && ShiftingMode==SHIFT_FS);
+  bool runshift=(interstep==INTERSTEP_SymPredictor && Nstep!=0 && ShiftingAdv!=NULL);
   if(runshift){
     ComputeFSParticles();
     ComputeUmbrellaRegion();
   }
-
   
+
 
 
 
   unsigned bsfluid=BlockSizes.forcesfluid;
   unsigned bsbound=BlockSizes.forcesbound;
   if(runshift)cusph::PreLoopInteraction(TKernel,Simulate2D,runshift,false,bsfluid,Np-Npb,Npb,DivData
-    ,Dcell_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr(),FtoMasspg,ShiftPosfs_g->ptr()
+    ,Dcell_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr()
     ,FSType_g->ptr(),FSNormal_g->ptr(),FSMinDist_g->ptr(),NULL);
   
+ 
 
+  if(runshift)cusph::ComputeShiftingVel(bsfluid,Np-Npb,Npb,Simulate2D,ShiftVel_g->ptr(),FSType_g->cptr(),FSNormal_g->cptr()
+    ,FSMinDist_g->cptr(),SymplecticDtPre,ShiftingAdv->GetShiftCoef(),NULL);
 
-  if(runshift)cusph::ComputeShiftingVel(bsfluid,Np-Npb,Npb,Simulate2D,ShiftPosfs_g->ptr(),FSType_g->cptr(),FSNormal_g->cptr()
-    ,FSMinDist_g->cptr(),SymplecticDtPre,Shifting->GetShiftCoef(),NULL);
-
-  double t1=TimeStep+LastDt;
+   double t1=TimeStep+LastDt;
 	double t2=TimePartNext;
   if(t1>=t2 ){
-		if(interstep==INTERSTEP_SymPredictor && ShiftingMode>=SHIFT_FS)DgSaveVtkParticlesGpu("Compute_FreeSurface_",Part,0,Np,Posxy_g->cptr()
-        ,Posz_g->cptr(),Code_g->cptr(),FSType_g->cptr(),ShiftPosfs_g->cptr(),FSNormal_g->cptr());
+		if(interstep==INTERSTEP_SymPredictor && ShiftingAdv!=NULL)DgSaveVtkParticlesGpu("Compute_FreeSurface_",Part,0,Np,Posxy_g->cptr()
+        ,Posz_g->cptr(),Code_g->cptr(),FSType_g->cptr(),ShiftVel_g->cptr(),FSNormal_g->cptr());
 	}
   
 }
@@ -548,7 +549,7 @@ void JSphGpuSingle::ComputeFSParticles(){
   aguint    inoutpartg("-",Arrays_Gpu,true);
   cusph::ComputeFSNormals(TKernel,Simulate2D,Symmetry,bsfluid,Npb,Np-Npb,DivData
     ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
-    ,Code_g->cptr(),FtoMasspg,ShiftPosfs_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
+    ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
     ,inoutpartg.ptr(),NULL);
 
 }
@@ -564,7 +565,7 @@ void JSphGpuSingle::ComputeUmbrellaRegion(){
   aguint    inoutpartg("-",Arrays_Gpu,true);
   cusph::ComputeUmbrellaRegion(TKernel,Simulate2D,Symmetry,bsfluid,Npb,Np-Npb,DivData
     ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
-    ,Code_g->cptr(),FtoMasspg,ShiftPosfs_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
+    ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
     ,inoutpartg.ptr(),NULL);
 
 }
@@ -586,12 +587,19 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   unsigned bsfluid=BlockSizes.forcesfluid;
   unsigned bsbound=BlockSizes.forcesbound;
 
+  //<ShiftingAdvanced>
+  bool shiftadv=ShiftingAdv!=NULL;
+  bool corrector= InterStep==INTERSTEP_SymCorrector;
+  bool aleform=shiftadv ? ShiftingAdv->GetAleActive() : false;
+  // if(interstep==INTERSTEP_SymPredictor && ShiftingAdv!=NULL)DgSaveVtkParticlesGpu("Compute_FreeSurface_",Nstep,0,Np,Posxy_g->cptr()
+  //       ,Posz_g->cptr(),Code_g->cptr(),FSType_g->cptr(),ShiftVel_g->cptr(),FSNormal_g->cptr());
+
   //-Interaction Fluid-Fluid/Bound & Bound-Fluid.
   const StInterParmsg parms=StrInterParmsg(Simulate2D
     ,Symmetry //<vs_syymmetry>
     ,TKernel,FtMode
     ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
-    ,InterStep==INTERSTEP_SymCorrector,AleForm  //<shifting,ale,ncpress>
+    ,shiftadv,corrector,aleform         //<ShiftingAdvanced>
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
     ,0,Nstep,DivData,Dcell_g->cptr()
@@ -602,9 +610,10 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,ViscDt_g->ptr(),Ar_g->ptr(),Ace_g->ptr(),AG_PTR(Delta_g)
     ,AG_PTR(Sps2Strain_g)
     ,AG_PTR(ShiftPosfs_g)
-    ,AG_PTR(FSType_g)             //<shifting,ale,ncpress>
+    ,AG_PTR(FSType_g),AG_CPTR(ShiftVel_g)           //<ShiftingAdvanced>
     ,NULL,NULL);
   cusph::Interaction_Forces(parms);
+
 
   //-Interaction DEM Floating-Bound & Floating-Floating. //(DEM)
   if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat
@@ -742,36 +751,36 @@ double JSphGpuSingle::ComputeStep_Ver(){
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Sym(){
   const double dt=SymplecticDtPre;
-  if(CaseNmoving)CalcMotion(dt);               //-Calculate motion for moving bodies.
+  if(CaseNmoving)CalcMotion(dt);                //-Calculate motion for moving bodies.
   //-Predictor
   //-----------
-  DemDtForce=dt*0.5f;                          //-For DEM interaction.
-  MdbcBoundCorrection(INTERSTEP_SymPredictor); //-Mdbc correction
-  PreInteraction_Forces(INTERSTEP_SymPredictor);                     //-Allocating temporary arrays.
-  PreLoopProcedure(INTERSTEP_SymPredictor);                          //-Calculate variables for interaction forces (Shifting,DDT,etc...).  
-  Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
-  const double dt_p=DtVariable(false);         //-Calculate dt of predictor step.
-  if(Shifting && ShiftingMode<SHIFT_FS)RunShifting(dt*.5);              //-Shifting.
-  ComputeSymplecticPre(dt);                    //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
-  if(CaseNfloat)RunFloating(dt*.5,true);       //-Control of floating bodies.
-  PosInteraction_Forces();                     //-Free memory used for interaction.
+  DemDtForce=dt*0.5f;                           //-For DEM interaction.
+  MdbcBoundCorrection(INTERSTEP_SymPredictor);  //-Mdbc correction
+  PreInteraction_Forces(INTERSTEP_SymPredictor);//-Allocating temporary arrays.
+  PreLoopProcedure(INTERSTEP_SymPredictor);     //-Calculate variables for interaction forces (Shifting,DDT,etc...).  
+  Interaction_Forces(INTERSTEP_SymPredictor);   //-Interaction.
+  const double dt_p=DtVariable(false);          //-Calculate dt of predictor step.
+  if(Shifting)RunShifting(dt*.5);               //-Shifting.
+  ComputeSymplecticPre(dt);                     //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
+  if(CaseNfloat)RunFloating(dt*.5,true);        //-Control of floating bodies.
+  PosInteraction_Forces();                      //-Free memory used for interaction.
   //-Corrector
   //-----------
-  DemDtForce=dt;                               //-For DEM interaction.
+  DemDtForce=dt;                                //-For DEM interaction.
   RunCellDivide(true);
-  MdbcBoundCorrection(INTERSTEP_SymCorrector); //-Mdbc correction
-  PreInteraction_Forces(INTERSTEP_SymCorrector);                     //-Allocating temporary arrays.
-  PreLoopProcedure(INTERSTEP_SymCorrector);                          //-Calculate variables for interaction forces (Shifting,DDT,etc...).
-  Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
-  const double dt_c=DtVariable(true);          //-Calculate dt of corrector step.
-  if(Shifting && ShiftingMode<SHIFT_FS)RunShifting(dt);                 //-Shifting.
-  ComputeSymplecticCorr(dt);                   //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
-  if(CaseNfloat)RunFloating(dt,false);         //-Control of floating bodies.
-  PosInteraction_Forces();                     //-Free memory used for interaction.
-  if(Damping)RunDamping(dt);                   //-Aplies Damping.
-  if(RelaxZones)RunRelaxZone(dt);              //-Generate waves using RZ.
+  MdbcBoundCorrection(INTERSTEP_SymCorrector);  //-Mdbc correction
+  PreInteraction_Forces(INTERSTEP_SymCorrector);//-Allocating temporary arrays.
+  PreLoopProcedure(INTERSTEP_SymCorrector);     //-Calculate variables for interaction forces (Shifting,DDT,etc...).
+  Interaction_Forces(INTERSTEP_SymCorrector);   //-Interaction.
+  const double dt_c=DtVariable(true);           //-Calculate dt of corrector step.
+  if(Shifting)RunShifting(dt);                  //-Shifting.
+  ComputeSymplecticCorr(dt);                    //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
+  if(CaseNfloat)RunFloating(dt,false);          //-Control of floating bodies.
+  PosInteraction_Forces();                      //-Free memory used for interaction.
+  if(Damping)RunDamping(dt);                    //-Aplies Damping.
+  if(RelaxZones)RunRelaxZone(dt);               //-Generate waves using RZ.
 
-  SymplecticDtPre=min(dt_p,dt_c);              //-Calculate dt for next ComputeStep.
+  SymplecticDtPre=min(dt_p,dt_c);               //-Calculate dt for next ComputeStep.
   return(dt);
 }
 

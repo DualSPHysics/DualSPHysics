@@ -61,7 +61,7 @@ typedef struct StrInterParmsg{
   TpDensity tdensity;
   TpShifting shiftmode;
   bool mdbc2;      //<vs_m2dbc>
-  bool corrector; bool aleform; //<shifting,ale,ncpress>
+  bool shiftadv; bool corrector; bool aleform; //<ShiftingAdvanced>
   //-Execution values.
   float viscob,viscof;
   unsigned bsbound,bsfluid;
@@ -94,7 +94,8 @@ typedef struct StrInterParmsg{
   float*  delta;
   tsymatrix3f* sps2strain;
   float4* shiftposfs;
-  unsigned* fstype;             //<shifting,ale,ncpress>
+  unsigned* fstype;             //<ShiftingAdvanced>
+  const float4* shiftvel;       //<ShiftingAdvanced>
   //-Other values and objects.
   cudaStream_t stm;
   StKerInfo* kerinfo;
@@ -109,7 +110,7 @@ typedef struct StrInterParmsg{
     ,TpDensity tdensity
     ,TpShifting shiftmode
     ,bool mdbc2                 //<vs_m2dbc>
-    ,bool corrector,bool aleform          //<shifting,ale,ncpress>
+    ,bool shiftadv,bool corrector,bool aleform          //<ShiftingAdvanced>
     ,float viscob,float viscof
     ,unsigned bsbound,unsigned bsfluid
     ,unsigned np,unsigned npb,unsigned npbok
@@ -131,7 +132,8 @@ typedef struct StrInterParmsg{
     ,float* delta
     ,tsymatrix3f* sps2strain
     ,float4* shiftposfs
-    ,unsigned* fstype     //<shifting,ale,ncpress>
+    ,unsigned* fstype           //<ShiftingAdvanced>
+    ,const float4* shiftvel     //<ShiftingAdvanced>
     ,cudaStream_t stm
     ,StKerInfo* kerinfo)
   {
@@ -144,7 +146,7 @@ typedef struct StrInterParmsg{
     this->tdensity=tdensity;
     this->shiftmode=shiftmode;
     this->mdbc2=mdbc2;       //<vs_m2dbc>
-    this->corrector=corrector; this->aleform=aleform;  //<shifting,ale,ncpress>
+    this->shiftadv=shiftadv; this->corrector=corrector; this->aleform=aleform;  //<ShiftingAdvanced>
     //-Execution values.
     this->viscob=viscob;   this->viscof=viscof;
     this->bsbound=bsbound; this->bsfluid=bsfluid;
@@ -171,7 +173,7 @@ typedef struct StrInterParmsg{
     this->delta=delta;
     this->sps2strain=sps2strain;
     this->shiftposfs=shiftposfs;
-    this->fstype=fstype;
+    this->fstype=fstype; this->shiftvel=shiftvel; //<ShiftingAdvanced>
     //-Other values and objects.
     this->stm=stm;
     this->kerinfo=kerinfo;

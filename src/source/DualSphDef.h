@@ -456,6 +456,13 @@ typedef enum{
 }TpShifting; 
 
 
+typedef enum{
+  SHIFT_Adv=2,
+  SHIFT_Std=1,
+  SHIFT_Null=0
+} TpShiftModel;
+
+
 
 ///Structure with main SPH constants and configurations.
 typedef struct{

@@ -166,10 +166,11 @@ protected:
   agfloat*  Delta_g;      ///<Sum of Delta-SPH value when DELTA_DynamicExt (Null).
   agfloat4* ShiftPosfs_g; ///<Particle displacement and free surface detection for Shifting (Null).
 
-
+  //-Variable for advanced shifting formulation.
+  agfloat4* ShiftVel_g;       ///<Shifting Velocity vector for advanced shifting.
   aguint* FSType_g;           ///<Free-surface identification.
-  agfloat* FSMinDist_g;       ///<Distance from the Free-Surface (needed for improved shifting).
-  agfloat3* FSNormal_g;       ///<Normals of Free-Surface particles (needed for improved shifting).
+  agfloat* FSMinDist_g;       ///<Distance from the Free-Surface (needed for advanced shifting).
+  agfloat3* FSNormal_g;       ///<Normals of Free-Surface particles (needed for advanced shifting).
 
   double VelMax;      ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;      ///<Maximum value of Ace[] (ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().

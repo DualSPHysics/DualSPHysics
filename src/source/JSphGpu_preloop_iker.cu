@@ -424,7 +424,7 @@ namespace cusph{
   __global__ void KerPreLoopInteraction(unsigned n
     ,unsigned pinit,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid
     ,const unsigned *dcell,const float4 *poscell,const float4 *velrhop,const typecode *code
-    ,const float* ftomassp,float4* shiftposfs,unsigned* fstype,float3* fsnormal,float* fsmindist)
+    ,const float* ftomassp,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist)
   {
     const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
     if(p<n){
@@ -499,7 +499,7 @@ namespace cusph{
 
 
       //-Compute shifting when <shiftImproved> true
-      shiftposfs[p1]=shiftposp1;
+      shiftvel[p1]=shiftposp1;
       }
       
     }
@@ -512,7 +512,7 @@ namespace cusph{
   template<TpKernel tker,bool simulate2d,bool shiftimpr> void PreLoopInteractionT3(bool symmetry
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftposfs,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
+    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
 {
 
   if(fluidnum){
@@ -520,11 +520,11 @@ namespace cusph{
     if(symmetry) //<vs_syymmetry_ini>
     KerPreLoopInteraction <tker,simulate2d,shiftimpr,true> <<<sgridf,bsfluid,0,stm>>> 
       (fluidnum,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
-      ,dcell,poscell,velrho,code,ftomassp,shiftposfs,fstype,fsnormal,fsmindist);
+      ,dcell,poscell,velrho,code,ftomassp,shiftvel,fstype,fsnormal,fsmindist);
     else //<vs_syymmetry_end>
     KerPreLoopInteraction <tker,simulate2d,shiftimpr,false> <<<sgridf,bsfluid,0,stm>>> 
       (fluidnum,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
-      ,dcell,poscell,velrho,code,ftomassp,shiftposfs,fstype,fsnormal,fsmindist);
+      ,dcell,poscell,velrho,code,ftomassp,shiftvel,fstype,fsnormal,fsmindist);
 
   }
 }
@@ -532,34 +532,34 @@ namespace cusph{
   template<TpKernel tker,bool simulate2d> void PreLoopInteractionT2(bool shiftimpr,bool symmetry
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftposfs,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
+    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
 {
   if(shiftimpr){
     PreLoopInteractionT3 <tker,simulate2d,true > (symmetry,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
-        ,shiftposfs,fstype,fsnormal,fsmindist,stm);
+        ,shiftvel,fstype,fsnormal,fsmindist,stm);
   }
   else{
     PreLoopInteractionT3 <tker,simulate2d,false> (symmetry,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
-        ,shiftposfs,fstype,fsnormal,fsmindist,stm);
+        ,shiftvel,fstype,fsnormal,fsmindist,stm);
   }
 }
 
   template<TpKernel tker> void PreLoopInteractionT(bool simulate2d,bool shiftimpr,bool symmetry
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftposfs,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
+    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
 {
   if(simulate2d){
     PreLoopInteractionT2 <tker,true > (shiftimpr,symmetry,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
-        ,shiftposfs,fstype,fsnormal,fsmindist,stm);
+        ,shiftvel,fstype,fsnormal,fsmindist,stm);
   }
   else{
     PreLoopInteractionT2 <tker,false> (shiftimpr,symmetry,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
-        ,shiftposfs,fstype,fsnormal,fsmindist,stm);
+        ,shiftvel,fstype,fsnormal,fsmindist,stm);
   }
 }
 
@@ -567,19 +567,19 @@ namespace cusph{
    void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftimpr,bool symmetry
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftposfs,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
+    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
   {
     switch(tkernel){
     case KERNEL_Wendland:{ const TpKernel tker=KERNEL_Wendland;
       PreLoopInteractionT <tker> (simulate2d,shiftimpr,symmetry,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
-        ,shiftposfs,fstype,fsnormal,fsmindist,stm);
+        ,shiftvel,fstype,fsnormal,fsmindist,stm);
     }break;
   #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:{ const TpKernel tker=KERNEL_Cubic;
       PreLoopInteractionT <tker> (simulate2d,shiftimpr,symmetry,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
-        ,shiftposfs,fstype,fsnormal,fsmindist,stm);
+        ,shiftvel,fstype,fsnormal,fsmindist,stm);
     }break;
 #endif
     default: throw "Kernel unknown at Interaction_MdbcCorrection().";
@@ -590,7 +590,7 @@ namespace cusph{
   }
 
   __global__ void KerComputeShiftingVel(unsigned n,unsigned pinit,bool simulate2d
-    ,float4* shiftposfs,const unsigned* fstype,const float3* fsnormal,const float* fsmindist
+    ,float4* shiftvel,const unsigned* fstype,const float3* fsnormal,const float* fsmindist
     ,float dt,float shiftcoef)
   {
     const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
@@ -598,7 +598,7 @@ namespace cusph{
       const unsigned p1=p+pinit;      //-Number of particle.
       //-Obtains basic data of particle p1.
       const unsigned  fstypep1=fstype[p1];
-      const float4    shiftp1=shiftposfs[p1];
+      const float4    shiftp1=shiftvel[p1];
       const float     fsmindistp1=fsmindist[p1];
       const float3    fsnormalp1=fsnormal[p1];
       const float     theta=min(1.f,max(0.f,(fsmindistp1-CTE.kernelsize)/(0.5*CTE.kernelsize-CTE.kernelsize)));
@@ -627,9 +627,9 @@ namespace cusph{
       shift_final.x=(fabs(umagn*shift_final.x)<maxdist? umagn*shift_final.x: (umagn*shift_final.x>=0? maxdist: -maxdist));
       shift_final.y=(fabs(umagn*shift_final.y)<maxdist? umagn*shift_final.y: (umagn*shift_final.y>=0? maxdist: -maxdist));
       shift_final.z=(fabs(umagn*shift_final.z)<maxdist? umagn*shift_final.z: (umagn*shift_final.z>=0? maxdist: -maxdist));
-      shiftposfs[p1].x=(shift_final.x)/dt;
-      shiftposfs[p1].y=(shift_final.y)/dt;
-      shiftposfs[p1].z=(shift_final.z)/dt;
+      shiftvel[p1].x=(shift_final.x)/dt;
+      shiftvel[p1].y=(shift_final.y)/dt;
+      shiftvel[p1].z=(shift_final.z)/dt;
       // float rhovar=abs(shiftp1.x*shiftp2.x+shiftp1.y*shiftp2.y+shiftp1.z*shiftp2.z);
       // const float dt=0.2*CTE.kernelh/CTE.cs0;
       // const float eps=5e-5;
@@ -648,14 +648,14 @@ namespace cusph{
 
 
 
-  void ComputeShiftingVel(unsigned bsfluid,unsigned fluidnum,unsigned fluidini,bool simulate2d,float4* shiftposfs
+  void ComputeShiftingVel(unsigned bsfluid,unsigned fluidnum,unsigned fluidini,bool simulate2d,float4* shiftvel
     ,const unsigned* fstype,const float3* fsnormal,const float* fsmindist,float dt,float shiftcoef,cudaStream_t stm)
 {
 
   if(fluidnum){
     dim3 sgridf=GetSimpleGridSize(fluidnum,bsfluid);
     KerComputeShiftingVel<<<sgridf,bsfluid,0,stm>>> 
-      (fluidnum,fluidini,simulate2d,shiftposfs,fstype,fsnormal,fsmindist,dt,shiftcoef);
+      (fluidnum,fluidini,simulate2d,shiftvel,fstype,fsnormal,fsmindist,dt,shiftcoef);
   }
 
 }

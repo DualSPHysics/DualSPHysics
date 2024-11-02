@@ -55,6 +55,7 @@
 #include "JDsExtraData.h"
 #include "JDsPartsOut.h"
 #include "JSphShifting.h"
+#include "JSphShiftingAdv.h"
 #include "JDsDamping.h"
 #include "JDsInitialize.h"
 #include "JSphInOut.h"
@@ -149,6 +150,7 @@ JSph::~JSph(){
   delete Moorings;      Moorings=NULL;
   delete ForcePoints;   ForcePoints=NULL;
   delete Shifting;      Shifting=NULL;
+  delete ShiftingAdv;   ShiftingAdv=NULL;    //<ShiftAdv>
   delete Damping;       Damping=NULL;
   delete AccInput;      AccInput=NULL; 
   delete PartsLoaded;   PartsLoaded=NULL;
@@ -741,8 +743,15 @@ void JSph::LoadConfigParameters(const JXml* cxml){
       if(shiftcoef==0)shiftmode=SHIFT_None;
       else shifttfs=eparms.GetValueFloat("ShiftTFS",true,0);
     }
-    Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
-    Shifting->ConfigBasic(shiftmode,shiftcoef,shifttfs);
+    if(shiftmode==SHIFT_FS){
+      bool aleform= (eparms.GetValueInt("ALEFormulation",true,0)!=0);
+      bool ncpress= (eparms.GetValueInt("NCPress",true,0)!=0);
+      ShiftingAdv= new JSphShiftingAdv(Simulate2D,Dp,KernelH);
+      ShiftingAdv->ConfigBasic(shiftcoef,aleform,ncpress);
+    } else {
+      Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
+      Shifting->ConfigBasic(shiftmode,shiftcoef,shifttfs);
+    }
   }
 
   //-ALE formulation for advanced shifting
