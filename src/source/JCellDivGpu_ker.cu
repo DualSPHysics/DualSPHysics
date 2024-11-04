@@ -824,6 +824,48 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
   }
 }
 
+
+//<ShiftingAdvanced_ini>
+//------------------------------------------------------------------------------
+/// Reorders PeriParent references.
+//------------------------------------------------------------------------------
+__global__ void KerReSortData(unsigned n,const unsigned* sortpart
+  ,unsigned* rsortpart)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n){
+    rsortpart[sortpart[p]]=p;
+  }
+}
+//------------------------------------------------------------------------------
+/// Reorders PeriParent references.
+//------------------------------------------------------------------------------
+__global__ void KerSortArrayPeriParent(unsigned n
+  ,const unsigned* sortpart,const unsigned* rsortpart,const unsigned* a
+  ,unsigned* a2)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n){
+    const unsigned pp=a[sortpart[p]];
+    a2[p]=(pp!=UINT_MAX? rsortpart[pp]: pp);
+  }
+}
+
+
+//==============================================================================
+/// Reorders PeriParent references.
+//==============================================================================
+void SortArrayPeriParent(unsigned np,const unsigned* sortpart
+  ,unsigned* rsortpart,const unsigned* a,unsigned* a2)
+{
+  if(np){
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
+    KerReSortData <<<sgrid,DIVBSIZE>>>(np,sortpart,rsortpart);
+    KerSortArrayPeriParent <<<sgrid,DIVBSIZE>>>(np,sortpart,rsortpart,a,a2);
+  }
+}
+//<ShiftingAdvanced_end>
+
 //------------------------------------------------------------------------------
 /// Compute minimum and maximum values starting from data[].
 /// Calcula valores minimo y maximo a partir de data[].

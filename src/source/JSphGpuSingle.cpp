@@ -269,6 +269,7 @@ void JSphGpuSingle::ResizeParticlesSizeData(unsigned ndatacpu,unsigned ndatagpu
 //==============================================================================
 void JSphGpuSingle::RunPeriodic(){
   Timersg->TmStart(TMG_SuPeriodic,false);
+  if(PeriParent_g)PeriParent_g->CuMemset(255,Np); //<ShiftingAdvanced>
   //-Stores the current number of periodic particles.
   //-Guarda numero de periodicas actuales.
   NpfPerM1=NpfPer;
@@ -341,6 +342,9 @@ void JSphGpuSingle::RunPeriodic(){
               cusph::PeriodicDuplicateNormals(count,Np,listpg.cptr()
                 ,BoundNor_g->ptr(),AG_PTR(MotionVel_g),AG_PTR(MotionAce_g)); //<vs_m2dbc>
             }
+            if(PeriParent_g){ //<ShiftingAdvanced_ini>
+              cusph::PeriodicSaveParent(count,Np,listpg.cptr(),PeriParent_g->ptr());
+            } //<ShiftingAdvanced_end>
             //-Update the total number of particles.
             Np+=count;
             //-Update number of new periodic particles.
@@ -441,6 +445,12 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
       FSType_g  ->SwapPtr(&fstypeg);
       ShiftVel_g->SwapPtr(&shiftvelg);
   }
+  if(PeriParent_g){//<ShiftingAdvanced_ini>
+    aguint auxg("-",Arrays_Gpu,true);
+    aguint periparentg("-",Arrays_Gpu,true);
+    CellDivSingle->SortArrayPeriParent(auxg.ptr(),PeriParent_g->cptr(),periparentg.ptr());
+    PeriParent_g->SwapPtr(&periparentg);
+  } //<ShiftingAdvanced_end>
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
@@ -528,7 +538,12 @@ void JSphGpuSingle::PreLoopProcedure(TpInterStep interstep){
   if(runshift)cusph::ComputeShiftingVel(bsfluid,Np-Npb,Npb,Simulate2D,ShiftVel_g->ptr(),FSType_g->cptr(),FSNormal_g->cptr()
     ,FSMinDist_g->cptr(),SymplecticDtPre,ShiftingAdv->GetShiftCoef(),NULL);
 
-   double t1=TimeStep+LastDt;
+  //-Updates preloop variables in periodic particles.
+  if(PeriParent_g){
+    cusph::PeriPreLoopCorr(Np,0,PeriParent_g->cptr(),FSType_g->ptr(),ShiftVel_g->ptr());
+  }
+
+  double t1=TimeStep+LastDt;
 	double t2=TimePartNext;
   if(t1>=t2 ){
 		if(interstep==INTERSTEP_SymPredictor && ShiftingAdv!=NULL)DgSaveVtkParticlesGpu("Compute_FreeSurface_",Part,0,Np,Posxy_g->cptr()

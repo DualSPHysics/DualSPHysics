@@ -107,6 +107,13 @@ void JSphCpu::InitVars(){
   Delta_c=NULL;
   ShiftPosfs_c=NULL;  //-Shifting.
 
+  ShiftVel_c=NULL;    //-ShiftingAdvanced //<ShiftingAdvanced>
+  FSType_c=NULL;      //-ShiftingAdvanced //<ShiftingAdvanced>
+  FSNormal_c=NULL;    //-ShiftingAdvanced //<ShiftingAdvanced>
+  FSMinDist_c=NULL;   //-ShiftingAdvanced //<ShiftingAdvanced>
+
+  PeriParent_c =NULL; //-ShiftingAdvanced //<ShiftingAdvanced>
+
   SpsTauRho2_c=NULL;  //-Laminar+SPS.
   Sps2Strain_c=NULL;  //-Laminar+SPS.
 
@@ -172,6 +179,14 @@ void JSphCpu::FreeCpuMemoryParticles(){
 
   delete SpsTauRho2_c;  SpsTauRho2_c=NULL;  //-Laminar+SPS.
   delete Sps2Strain_c;  Sps2Strain_c=NULL;  //-Laminar+SPS.
+
+  delete ShiftVel_c;    ShiftVel_c=NULL;    //-ShiftingAdvanced //<ShiftingAdvanced>
+  delete FSType_c;      FSType_c=NULL;      //-ShiftingAdvanced //<ShiftingAdvanced>
+  delete FSNormal_c;    FSNormal_c=NULL;    //-ShiftingAdvanced //<ShiftingAdvanced>
+  delete FSMinDist_c;   FSMinDist_c=NULL;   //-ShiftingAdvanced //<ShiftingAdvanced>
+
+  delete PeriParent_c;  PeriParent_c=NULL;  //-ShiftingAdvanced //<ShiftingAdvanced>
+  
   
   //-Free CPU memory for array objects.
   CpuParticlesSize=0;
@@ -224,6 +239,16 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np){
   if(TVisco==VISCO_LaminarSPS){
     SpsTauRho2_c=new acsymatrix3f("SpsTauRho2c",Arrays_Cpu,true);
     Sps2Strain_c=new acsymatrix3f("Sps2Strainc",Arrays_Cpu,false); //-NO INITIAL MEMORY.
+  }
+
+  if(ShiftingAdv!=NULL){
+    ShiftVel_c  =new acfloat4("ShiftVelc" ,Arrays_Cpu,true);
+    FSType_c    =new acuint  ("FStypec"   ,Arrays_Cpu,true);
+    FSNormal_c  =new acfloat3("FSNormalc" ,Arrays_Cpu,false); //-NO INITIAL MEMORY.
+    FSMinDist_c =new acfloat ("FSMinDistc",Arrays_Cpu,false); //-NO INITIAL MEMORY.
+    if(PeriActive){
+      PeriParent_c=new acuint("PeriParentc",Arrays_Cpu,true);
+    }
   }
 
 
@@ -397,13 +422,15 @@ void JSphCpu::InitRunCpu(){
   if(TVisco==VISCO_LaminarSPS)SpsTauRho2_c->Memset(0,Np);
   if(MotionVel_c)MotionVel_c->Memset(0,Np); //<vs_m2dbc>
   if(MotionAce_c)MotionAce_c->Memset(0,Np); //<vs_m2dbc>
+  if(ShiftVel_c)ShiftVel_c->Memset(0,Np);   //<ShiftingAdvanced>
+  if(FSType_c)FSType_c->Memset(0,Np);       //<ShiftingAdvanced>
 }
 
 //==============================================================================
 /// Prepare variables for interaction functions.
 /// Prepara variables para interaccion.
 //==============================================================================
-void JSphCpu::PreInteraction_Forces(){
+void JSphCpu::PreInteraction_Forces(TpInterStep interstep){
   Timersc->TmStart(TMC_CfPreForces);
   //-Assign memory.
   Ar_c->Reserve();
@@ -412,6 +439,9 @@ void JSphCpu::PreInteraction_Forces(){
   if(DDTArray)Delta_c->Reserve();
   if(Shifting)ShiftPosfs_c->Reserve();
   if(TVisco==VISCO_LaminarSPS)Sps2Strain_c->Reserve();
+
+  if(ShiftingAdv!=NULL)FSMinDist_c->Reserve();
+  if(ShiftingAdv!=NULL)FSNormal_c->Reserve();
 
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
@@ -423,6 +453,10 @@ void JSphCpu::PreInteraction_Forces(){
   //-Select particles for shifting.
   if(AC_CPTR(ShiftPosfs_c))Shifting->InitCpu(npf,Npb,Pos_c->cptr()
     ,ShiftPosfs_c->ptr());
+
+  if((AC_CPTR(ShiftVel_c))&& interstep==INTERSTEP_SymPredictor)ShiftVel_c->Memset(0,Np);  //<ShiftingAdvanced>
+  if(AC_CPTR(FSMinDist_c))FSMinDist_c->Memset(0,Np);                                      //<ShiftingAdvanced>
+  if(AC_CPTR(FSNormal_c))FSNormal_c->Memset(0,Np);                                        //<ShiftingAdvanced>
 
   //-Adds variable acceleration from input configuration.
   if(AccInput)AccInput->RunCpu(TimeStep,Gravity,npf,Npb,Code_c->cptr()
@@ -511,6 +545,8 @@ void JSphCpu::PosInteraction_Forces(){
   if(Sps2Strain_c)Sps2Strain_c->Free();
   if(BoundMode_c)BoundMode_c->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
   if(TangenVel_c)TangenVel_c->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
+  if(FSNormal_c)FSNormal_c->Free();   //<ShiftingAdvanced>
+  if(FSMinDist_c)FSMinDist_c->Free(); //<ShiftingAdvanced>
 }
 
 //==============================================================================
@@ -1390,6 +1426,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
   Timersc->TmStart(TMC_SuComputeStep);
   const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=(Shifting!=NULL);
+  const bool shiftadv=(ShiftingAdv!=NULL); //<ShiftingAdvanced>
   const double dt05=dt*.5;
   const int np=int(Np);
   const int npb=int(Npb);
@@ -1423,6 +1460,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
     const tfloat3*  acec=Ace_c->cptr();
     const tfloat4*  velrhoprec=VelrhoPre_c->cptr();
     const tfloat4*  shiftposfc=ShiftPosfs_c->cptr();
+    const tfloat4*  shiftvel=ShiftVel_c->cptr();
     typecode*       codec2=Code_c->ptr();
     tdouble3*       movc=mov_c.ptr();
     tfloat4*        velrhoc=Velrho_c->ptr();
@@ -1449,6 +1487,11 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
           dx+=double(shiftposfc[p].x);
           dy+=double(shiftposfc[p].y);
           dz+=double(shiftposfc[p].z);
+        }
+        if(shiftadv){
+          dx+=double(shiftvel[p].x)*dt;
+          dy+=double(shiftvel[p].y)*dt;
+          dz+=double(shiftvel[p].z)*dt;
         }
         bool outrho=(rhonew<RhopOutMin || rhonew>RhopOutMax);
         //-Restore data of inout particles.

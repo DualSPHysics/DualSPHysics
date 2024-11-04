@@ -107,6 +107,7 @@ JSph::JSph(int gpucount,bool withmpi):Cpu(gpucount==0)
   Moorings=NULL;
   ForcePoints=NULL;
   Shifting=NULL;
+  ShiftingAdv=NULL;   //<ShiftingAdvance>
   Damping=NULL;
   AccInput=NULL;
   PartsLoaded=NULL;
@@ -150,7 +151,7 @@ JSph::~JSph(){
   delete Moorings;      Moorings=NULL;
   delete ForcePoints;   ForcePoints=NULL;
   delete Shifting;      Shifting=NULL;
-  delete ShiftingAdv;   ShiftingAdv=NULL;    //<ShiftAdv>
+  delete ShiftingAdv;   ShiftingAdv=NULL;    //<ShiftingAdvance>
   delete Damping;       Damping=NULL;
   delete AccInput;      AccInput=NULL; 
   delete PartsLoaded;   PartsLoaded=NULL;

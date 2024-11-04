@@ -409,6 +409,20 @@ void JCellDivGpu::SortDataArrays(const unsigned* a, const float4* b, unsigned* a
   cudiv::SortDataParticles(Nptot,pini,SortPart,a,b,a2,b2);
 }
 
+
+
+//<ShiftingAdvanced_ini>
+//==============================================================================
+/// Reorders PeriParent references.
+//==============================================================================
+void JCellDivGpu::SortArrayPeriParent(unsigned* aux,const unsigned* a
+  ,unsigned* a2)
+{
+  //const unsigned pini=(DivideFull? 0: NpbFinal);
+  cudiv::SortArrayPeriParent(Nptot,SortPart,aux,a,a2);
+}
+//<ShiftingAdvanced_end>
+
 //==============================================================================
 /// Returns a pointer with the auxiliary memory allocated in the GPU, only
 /// used as intermediate in some tasks, in order to use it in other tasks.

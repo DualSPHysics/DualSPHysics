@@ -24,7 +24,60 @@
 
 namespace cusph{
 
+//------------------------------------------------------------------------------
+/// Saves particle index to access to the parent of periodic particles.
+//------------------------------------------------------------------------------
+__global__ void KerPeriodicSaveParent(unsigned n,unsigned pini
+  ,const unsigned* listp,unsigned* periparent)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned pnew=p+pini;
+    const unsigned rp=listp[p];
+    const unsigned pcopy=(rp&0x7FFFFFFF);
+    periparent[pnew]=pcopy;
+  }
+}
 
+//==============================================================================
+/// Saves particle index to access to the parent of periodic particles.
+//==============================================================================
+void PeriodicSaveParent(unsigned n,unsigned pini,const unsigned* listp
+  ,unsigned* periparent)
+{
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    KerPeriodicSaveParent <<<sgrid,SPHBSIZE>>> (n,pini,listp,periparent);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Updates PreLoop variables in periodic particles.
+//------------------------------------------------------------------------------
+ __global__ void KerPeriPreLoopCorr(unsigned n,unsigned pinit
+  ,const unsigned* periparent,unsigned* fstype,float4* shiftvel)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=p+pinit;//-Number of particle.
+    const unsigned pp=periparent[p1];
+    if(pp!=UINT_MAX)fstype[p]=fstype[pp];
+    if(pp!=UINT_MAX)shiftvel[p]=shiftvel[pp];
+  }
+}
+//==============================================================================
+/// Updates PreLoop variables in periodic particles.
+//==============================================================================
+void PeriPreLoopCorr(unsigned n,unsigned pinit
+  ,const unsigned* periparent,unsigned* fstype,float4* shiftvel)
+{
+  if(n){
+    const unsigned bsize=256;
+    dim3 sgrid=GetSimpleGridSize(n,bsize);
+    //-Calculates Kernel Gradient Correction.
+    KerPeriPreLoopCorr <<<sgrid,bsize>>> (n,pinit,periparent,fstype,shiftvel);
+  }
+}
 
 
 
@@ -90,7 +143,6 @@ namespace cusph{
       //-Obtains basic data of particle p1.
       const float4 pscellp1=poscell[p1];
       const float4 velrhop1=velrhop[p1];
-      const float pressp1=cufsph::ComputePressCte(velrhop1.w);
       const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
       
       float fs_treshold=0.f;                            //-Divergence of the position.
@@ -102,12 +154,12 @@ namespace cusph{
       tmatrix3f lcorr_inv; cumath::Tmatrix3fReset(lcorr_inv);     //-Inverse of the correction matrix.
 
       //-Calculate approx. number of neighbours when uniform distribution (in the future on the constant memory?)
-      float Nzero=0.f;
-      if(simulate2d){
-        Nzero=(3.141592)*CTE.kernelsize2/(CTE.dp*CTE.dp);
-      } else{
-        Nzero=(4.f/3.f)*(3.141592)*CTE.kernelsize2*CTE.kernelsize/(CTE.dp*CTE.dp*CTE.dp);
-      }
+      // float Nzero=0.f;
+      // if(simulate2d){
+      //   Nzero=(3.141592)*CTE.kernelsize2/(CTE.dp*CTE.dp);
+      // } else{
+      //   Nzero=(4.f/3.f)*(3.141592)*CTE.kernelsize2*CTE.kernelsize/(CTE.dp*CTE.dp*CTE.dp);
+      // }
 
       //-Copy the value of shift to gradc. For single resolution is zero, but in Vres take in account virtual stencil.
       gradc=make_float3(shiftposfs[p1].x,shiftposfs[p1].y,shiftposfs[p1].z); 
@@ -386,7 +438,7 @@ namespace cusph{
         ftmassp2=(ftp2? ftomassp[CODE_GetTypeValue(cod)]: massp2);
         
         if(shiftimpr){
-          const float massrho=(boundp2 ? CTE.massb/velrhop2.w : (massp2)/velrhop2.w);
+          const float massrho=(boundp2 ? CTE.massb/velrhop2.w : (ftmassp2)/velrhop2.w);
 
           //-Compute gradient of concentration and partition of unity.        
           shiftposf1.x+=massrho*frx;    

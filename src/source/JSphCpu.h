@@ -155,6 +155,14 @@ protected:
   acfloat*    Delta_c;      ///<Sum of Delta-SPH value when DELTA_DynamicExt (Null).
   acfloat4*   ShiftPosfs_c; ///<Particle displacement and free surface detection for Shifting (Null).
 
+  //-Variable for advanced shifting formulation.
+  acfloat4* ShiftVel_c;       ///<Shifting Velocity vector for advanced shifting.
+  acuint*   FSType_c;         ///<Free-surface identification.
+  acfloat*  FSMinDist_c;      ///<Distance from the Free-Surface (needed for advanced shifting).
+  acfloat3* FSNormal_c;       ///<Normals of Free-Surface particles (needed for advanced shifting).
+
+  acuint*   PeriParent_c;     ///<Particle index to access to the parent of periodic particles (Opt). //<ShiftingAdvanced>
+
   double VelMax;        ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;        ///<Maximum value of Ace[] sqrt(ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
   float ViscDtMax;      ///<Max value of ViscDt calculated in Interaction_Forces().
@@ -192,7 +200,7 @@ protected:
   float CalcVelMaxSeq(unsigned np,const tfloat4* velrho)const;
   float CalcVelMaxOmp(unsigned np,const tfloat4* velrho)const;
 
-  void PreInteraction_Forces();
+  void PreInteraction_Forces(TpInterStep interstep);
   void PosInteraction_Forces();
 
   template<TpKernel tker,TpFtMode ftmode> void InteractionForcesBound
@@ -268,6 +276,59 @@ protected:
     ,const tfloat4* velrho,tfloat3* motionvel,tfloat3* motionace)const;
   //------------------------------------------
   //<vs_m2dbc_end>
+
+  //<ShiftingAdvanced_ini>
+  //------------------------------------------
+  //-Shifting Advanced implementation in JSphCpu_preloop.cpp
+  //------------------------------------------
+
+  template<TpKernel tker,bool sim2d> void InteractionComputeFSNormals
+  (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
+  ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
+  ,unsigned* fstype,tfloat3* fsnormal)const;
+  template<TpKernel tker,bool sim2d> void CallComputeFSNormalsT1
+  (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
+  ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
+  ,unsigned* fstype,tfloat3* fsnormal)const;
+  void CallComputeFSNormals(const StDivDataCpu& divdata
+  ,const unsigned* dcell,const tdouble3* pos,const typecode* code
+  ,const tfloat4* velrho,unsigned* fstype,tfloat3* fsnormal)const;
+
+  template<TpKernel tker,bool sim2d> void InteractionCallScanUmbrellaRegion
+  (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
+  ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
+  ,unsigned* fstype,const tfloat3* fsnormal)const;
+  template<TpKernel tker,bool sim2d> void CallScanUmbrellaRegionT1
+  (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
+  ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
+  ,unsigned* fstype,const tfloat3* fsnormal)const;
+  void CallScanUmbrellaRegion(const StDivDataCpu& divdata
+  ,const unsigned* dcell,const tdouble3* pos,const typecode* code
+  ,const tfloat4* velrho,unsigned* fstype,const tfloat3* fsnormal)const;
+
+
+  template<TpKernel tker,bool sim2d,bool shiftadv> void PreLoopInteraction
+  (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
+  ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
+  ,unsigned* fstype,tfloat4* shiftvel,tfloat3* fsnormal,float* fsmindist)const;
+  template<TpKernel tker,bool sim2d,bool shiftadv> void PreLoopInteraction_ct2
+  (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
+  ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
+  ,unsigned* fstype,tfloat4* shiftvel,tfloat3* fsnormal,float* fsmindist)const;
+  template<TpKernel tker,bool sim2d> void PreLoopInteraction_ct1
+  (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
+  ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
+  ,unsigned* fstype,tfloat4* shiftvel,tfloat3* fsnormal,float* fsmindist)const;
+  void PreLoopInteraction_ct(const StDivDataCpu& divdata
+  ,const unsigned* dcell,const tdouble3* pos,const typecode* code
+  ,const tfloat4* velrho,unsigned* fstype,tfloat4* shiftvel,tfloat3* fsnormal,float* fsmindist)const;
+
+  void ComputeShiftingVel(bool simulate2d,tfloat4* shiftvel
+    ,const unsigned* fstype,const tfloat3* fsnormal,const float* fsmindist,double dt,float shiftcoef)const;
+
+  //------------------------------------------
+  //<ShiftingAdvanced_end>
+
 
   void ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrho
     ,const tsymatrix3f* sps2strain,tsymatrix3f* tau_rho2)const;

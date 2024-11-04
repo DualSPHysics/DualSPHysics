@@ -180,6 +180,8 @@ public:
   void SortArray(tfloat3* vec);
   void SortArray(tfloat4* vec);
   void SortArray(tsymatrix3f* vec);
+  void SortArrayPeriParent(unsigned* vec); //<ShiftingAdvanced>
+
 
   TpCellMode GetCellMode()const{ return(CellMode); }
   int GetScellDiv()const{ return(ScellDiv); }

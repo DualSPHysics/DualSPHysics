@@ -180,6 +180,8 @@ void JSphGpu::InitVars(){
   FSMinDist_g=NULL;    //-ShiftingAdvanced
   FSNormal_g=NULL;     //-ShiftingAdvanced
 
+  PeriParent_g=NULL;   //-PreLoop.  //<ShiftingAdvanced>
+
   SpsTauRho2_g=NULL;   //-Laminar+SPS.
   Sps2Strain_g=NULL;   //-Laminar+SPS.
 
@@ -360,6 +362,8 @@ void JSphGpu::FreeGpuMemoryParticles(){
   delete FSMinDist_g;   FSMinDist_g=NULL;   //-ShiftingAdvanced
   delete FSNormal_g;    FSNormal_g=NULL;    //-ShiftingAdvanced
 
+  delete PeriParent_g;  PeriParent_g=NULL;  //-ShiftingAdvanced
+
   delete SpsTauRho2_g;  SpsTauRho2_g=NULL;  //-Laminar+SPS.
   delete Sps2Strain_g;  Sps2Strain_g=NULL;  //-Laminar+SPS.
 
@@ -420,6 +424,9 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
     FSType_g      =new aguint   ("FSType_g"   ,Arrays_Gpu,true);
     FSNormal_g    =new agfloat3 ("FSNormal_g" ,Arrays_Gpu,false);  //-NO INITIAL MEMORY.
     FSMinDist_g   =new agfloat  ("FSMinDist_g",Arrays_Gpu,false);  //-NO INITIAL MEMORY.
+    if(PeriActive){
+      PeriParent_g=new aguint(  "PeriParentg" ,Arrays_Gpu,true);
+    }
   }
   ShiftPosfs_g=new agfloat4("ShiftPosfsg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
   //-Arrays for Laminar+SPS.
@@ -781,7 +788,7 @@ void JSphGpu::InitRunGpu(){
 /// Prepares variables for interaction.
 /// Prepara variables para interaccion.
 //==============================================================================
-void JSphGpu::PreInteraction_Forces(TpInterStep instestep){
+void JSphGpu::PreInteraction_Forces(TpInterStep interstep){
   Timersg->TmStart(TMG_CfPreForces,false);
   //-Assign memory.
   ViscDt_g->Reserve();
@@ -805,7 +812,7 @@ void JSphGpu::PreInteraction_Forces(TpInterStep instestep){
   if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
                                                     ,Posz_g->cptr(),ShiftPosfs_g->ptr());
 
-  if((AC_CPTR(ShiftVel_g))&& instestep==INTERSTEP_SymPredictor)ShiftVel_g->CuMemset(0,Np);  //<ShiftingAdvanced>
+  if(AC_CPTR(ShiftVel_g) && interstep==INTERSTEP_SymPredictor)ShiftVel_g->CuMemset(0,Np);   //<ShiftingAdvanced>
   if(AC_CPTR(FSMinDist_g))FSMinDist_g->CuMemset(0,Np);                                      //<ShiftingAdvanced>
   if(AC_CPTR(FSNormal_g))FSNormal_g->CuMemset(0,Np);                                        //<ShiftingAdvanced>
 

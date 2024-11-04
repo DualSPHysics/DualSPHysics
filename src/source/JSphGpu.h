@@ -168,9 +168,11 @@ protected:
 
   //-Variable for advanced shifting formulation.
   agfloat4* ShiftVel_g;       ///<Shifting Velocity vector for advanced shifting.
-  aguint* FSType_g;           ///<Free-surface identification.
-  agfloat* FSMinDist_g;       ///<Distance from the Free-Surface (needed for advanced shifting).
+  aguint*   FSType_g;           ///<Free-surface identification.
+  agfloat*  FSMinDist_g;       ///<Distance from the Free-Surface (needed for advanced shifting).
   agfloat3* FSNormal_g;       ///<Normals of Free-Surface particles (needed for advanced shifting).
+
+  aguint*   PeriParent_g;     ///<Particle index to access to the parent of periodic particles (Opt). //<ShiftingAdvanced>
 
   double VelMax;      ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;      ///<Maximum value of Ace[] (ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
@@ -217,7 +219,7 @@ protected:
     ,double3* ftocenterg,float4* demdatag)const;
   void InitRunGpu();
 
-  void PreInteraction_Forces(TpInterStep instersep);
+  void PreInteraction_Forces(TpInterStep interstep);
   void PosInteraction_Forces();
   
   void ComputeVerlet(double dt);
