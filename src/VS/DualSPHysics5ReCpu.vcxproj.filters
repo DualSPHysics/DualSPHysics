@@ -532,6 +532,12 @@
     <ClInclude Include="..\source\JXmlDef.h">
       <Filter>Common\JXml</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_preloop_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphShiftingAdv.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -855,6 +861,12 @@
     <ClCompile Include="..\source\JDebugSphCpu.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\JSphShiftingAdv.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpu_preloop.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuildStep Include="..\source\JSphGpu.h">
@@ -905,6 +917,9 @@
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\JSphGpu_mdbc_iker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_preloop_iker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
   </ItemGroup>
