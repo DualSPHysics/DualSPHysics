@@ -462,7 +462,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
           }
 
           //-Check maximum curvature.
-          if(fs[p1]>1 and fs[p2]>1){
+          if(fs[p1]>1 && fs[p2]>1){
           const float norm1=sqrt(fsnormal[p1].x*fsnormal[p1].x+fsnormal[p1].y*fsnormal[p1].y+fsnormal[p1].z*fsnormal[p1].z);
           const float norm2=sqrt(fsnormal[p2].x*fsnormal[p2].x+fsnormal[p2].y*fsnormal[p2].y+fsnormal[p2].z*fsnormal[p2].z);
           maxarccos=max(maxarccos,(acos((fsnormal[p1].x*fsnormal[p2].x+fsnormal[p2].y*fsnormal[p1].y+fsnormal[p2].z*fsnormal[p1].z))));
