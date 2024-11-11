@@ -48,7 +48,7 @@ void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftimpr,bool sym
 
 
 void ComputeShiftingVel(unsigned bsfluid,unsigned fluidnum,unsigned fluidini,bool simulate2d,float4* shiftvel
-    ,const unsigned* fstype,const float3* fsnormal,const float* fsmindist,float dt,float shiftcoef,cudaStream_t stm);    
+    ,const unsigned* fstype,const float3* fsnormal,const float* fsmindist,float dt,float shiftcoef,bool ale,cudaStream_t stm);    
 
 void PeriodicSaveParent(unsigned n,unsigned pini,const unsigned* listp,unsigned* periparent);
 

@@ -533,7 +533,8 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   ,float2& two_strainp1_xx_xy,float2& two_strainp1_xz_yy,float2& two_strainp1_yz_zz
   ,float3& acep1,float& arp1,float& visc,float& deltap1
   ,TpShifting shiftmode,float4& shiftposfsp1
-  ,bool shiftadv,float& fs_treshold,unsigned& neigh,float& pou,bool aleform,const float4* shiftvel) //<ShiftingAdvanced>
+  ,bool shiftadv,float& fs_treshold,unsigned& neigh,float& pou,bool aleform //<ShiftingAdvanced>
+  ,const float4* shiftvel,bool ncpress,float3& presssym,float3& pressasym,tmatrix3f& lcorr)  //<ShiftingAdvanced>
 {
   for(int p2=pini;p2<pfin;p2++){
     const float4 pscellp2=poscell[p2];
@@ -573,12 +574,23 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       if(symm)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
 
       //-Velocity derivative (Momentum equation).
-      if(compute){
+      if(compute && !ncpress){
         const float pressp2=cufsph::ComputePressCte(velrhop2.w);
         const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)
           +(tker==KERNEL_Cubic? cufsph::GetKernelCubic_Tensil(rr2,velrhop1.w,pressp1,velrhop2.w,pressp2): 0);
         const float p_vpm=-prs*(USE_FLOATING? ftmassp2: massp2);
         acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
+      }
+
+      if(ncpress){
+        const float pressp2=cufsph::ComputePressCte(velrhop2.w);
+        const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)
+          +(tker==KERNEL_Cubic? cufsph::GetKernelCubic_Tensil(rr2,velrhop1.w,pressp1,velrhop2.w,pressp2): 0);
+        const float p_vpm=-prs*(USE_FLOATING? ftmassp2: massp2);
+        const float ncprs=(-pressp1+pressp2)/(velrhop1.w*velrhop2.w);
+        const float ncp_vpm=-ncprs*(USE_FLOATING? ftmassp2: massp2);
+        presssym.x+=p_vpm*frx; presssym.y+=p_vpm*fry; presssym.z+=p_vpm*frz;
+        pressasym.x+=ncp_vpm*frx; pressasym.y+=ncp_vpm*fry; pressasym.z+=ncp_vpm*frz;
       }
 
       if(aleform){
@@ -659,6 +671,11 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
         const float wab=cufsph::GetKernel_Wab<KERNEL_Wendland>(rr2);
         pou+=wab*massrho;
         fs_treshold-=massrho*(drx*frx+dry*fry+drz*frz);
+        if(ncpress){
+          lcorr.a11+=-drx*frx*massrho; lcorr.a12+=-drx*fry*massrho; lcorr.a13+=-drx*frz*massrho;
+          lcorr.a21+=-dry*frx*massrho; lcorr.a22+=-dry*fry*massrho; lcorr.a23+=-dry*frz*massrho;
+          lcorr.a31+=-drz*frx*massrho; lcorr.a32+=-drz*fry*massrho; lcorr.a33+=-drz*frz*massrho;
+        }
       }
 
       //===== Viscosity ===== 
@@ -734,7 +751,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   ,const byte* boundmode,const float3* tangenvel,const float3* motionvel //<vs_m2dbc>
   ,float* viscdt,float* ar,float3* ace,float* delta
   ,TpShifting shiftmode,float4* shiftposfs
-  ,unsigned* fstype,const float4* shiftvel,bool shiftadv,bool corrector,bool simulate2d,bool aleform) //<ShiftingAdvanced>
+  ,unsigned* fstype,const float4* shiftvel,bool shiftadv,bool corrector,bool simulate2d,bool aleform,bool ncpress) //<ShiftingAdvanced>
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -750,6 +767,10 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
     unsigned neigh=0;
     float fs_treshold=0;
     float pou=0;
+    float3 presssym=make_float3(0,0,0);
+    float3 pressasym=make_float3(0,0,0);
+    tmatrix3f LCorr;      cumath::Tmatrix3fReset(LCorr);
+    tmatrix3f LCorr_inv;  cumath::Tmatrix3fReset(LCorr_inv);
     float Nzero=0.f;
     if(simulate2d){
       Nzero=(3.141592)*CTE.kernelsize2/(CTE.dp*CTE.dp);
@@ -802,7 +823,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
                             ,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
                             ,deltap1,shiftmode,shiftposfsp1
-                            ,shiftadv,fs_treshold,neigh,pou,aleform,shiftvel); //<ShiftingAdvanced>
+                            ,shiftadv,fs_treshold,neigh,pou,aleform,shiftvel,ncpress,presssym,pressasym,LCorr); //<ShiftingAdvanced>
 
         //<vs_syymmetry_ini>
         if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,tvisco,tdensity,shift,mdbc2,true >
@@ -811,7 +832,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
                             ,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
                             ,deltap1,shiftmode,shiftposfsp1
-                            ,shiftadv,fs_treshold,neigh,pou,aleform,shiftvel); //<ShiftingAdvanced>
+                            ,shiftadv,fs_treshold,neigh,pou,aleform,shiftvel,ncpress,presssym,pressasym,LCorr); //<ShiftingAdvanced>
         //<vs_syymmetry_end>
       }
     }
@@ -826,7 +847,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
                             ,CTE.massb,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
                             ,deltap1,shiftmode,shiftposfsp1
-                            ,shiftadv,fs_treshold,neigh,pou,aleform,shiftvel); //<ShiftingAdvanced>
+                            ,shiftadv,fs_treshold,neigh,pou,aleform,shiftvel,ncpress,presssym,pressasym,LCorr); //<ShiftingAdvanced>
         //<vs_syymmetry_ini>
         if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,tvisco,tdensity,shift,mdbc2,true >
                             (true,p1,pini,pfin,viscob,ftomassp,tauff,NULL,poscell,velrho,code,idp
@@ -834,10 +855,35 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
                             ,CTE.massb,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
                             ,deltap1,shiftmode,shiftposfsp1
-                            ,shiftadv,fs_treshold,neigh,pou,aleform,shiftvel); //<ShiftingAdvanced>
+                            ,shiftadv,fs_treshold,neigh,pou,aleform,shiftvel,ncpress,presssym,pressasym,LCorr); //<ShiftingAdvanced>
         //<vs_syymmetry_end>
       }
     }
+
+    
+    pou+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.f)*CTE.massf/velrhop1.w;
+    if(ncpress){
+    if(fstype[p1]==0 && pou>0.95){
+      if(simulate2d){
+      tmatrix2f Lcorr2D;
+      tmatrix2f Lcorr2D_inv;
+      Lcorr2D.a11=LCorr.a11; Lcorr2D.a12=LCorr.a13;
+      Lcorr2D.a21=LCorr.a31; Lcorr2D.a22=LCorr.a33;
+      float lcorr_det=(Lcorr2D.a11*Lcorr2D.a22-Lcorr2D.a12*Lcorr2D.a21);
+      Lcorr2D_inv.a11=Lcorr2D.a22/lcorr_det; Lcorr2D_inv.a12=-Lcorr2D.a12/lcorr_det; Lcorr2D_inv.a22=Lcorr2D.a11/lcorr_det; Lcorr2D_inv.a21=-Lcorr2D.a21/lcorr_det;
+      LCorr_inv.a11=Lcorr2D_inv.a11;  LCorr_inv.a13=Lcorr2D_inv.a12;
+      LCorr_inv.a31=Lcorr2D_inv.a21;  LCorr_inv.a33=Lcorr2D_inv.a22;
+    } else {
+      const float determ = cumath::Determinant3x3(LCorr);
+      LCorr_inv = cumath::InverseMatrix3x3(LCorr, determ);
+    }
+      acep1.x+=pressasym.x*LCorr_inv.a11 + pressasym.y*LCorr_inv.a12 + pressasym.z*LCorr_inv.a13;
+      acep1.y+=pressasym.x*LCorr_inv.a21 + pressasym.y*LCorr_inv.a22 + pressasym.z*LCorr_inv.a23;
+      acep1.z+=pressasym.x*LCorr_inv.a31 + pressasym.y*LCorr_inv.a32 + pressasym.z*LCorr_inv.a33;
+    } else{
+      acep1.x+=presssym.x; acep1.y+=presssym.y; acep1.z+=presssym.z;
+    }
+  }
 
     if(corrector && shiftadv){
       unsigned fstypep1=0;
@@ -850,6 +896,8 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       }
       fstype[p1]=fstypep1;
     }
+
+    
 
 
 
@@ -892,7 +940,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       ,const unsigned*
       ,const byte*,const float3*,const float3* //<vs_m2dbc>
       ,float*,float*,float3*,float*,TpShifting,float4*
-      ,unsigned*,const float4*,bool,bool,bool,bool); //<ShiftingAdvanced>
+      ,unsigned*,const float4*,bool,bool,bool,bool,bool); //<ShiftingAdvanced>
 
     fun_ptr ptr=&KerInteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2,symm>;
     int qblocksize=0,mingridsize=0;
@@ -949,14 +997,14 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
       ,t.ftomassp,(const float2*)t.spstaurho2,(float2*)t.sps2strain,t.dengradcorr,t.poscell,t.velrho,t.code,t.idp
       ,t.boundmode,t.tangenvel,t.motionvel //<vs_m2dbc>
       ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs
-      ,t.fstype,t.shiftvel,t.shiftadv,t.corrector,t.simulate2d,t.aleform); //<ShiftingAdvanced>
+      ,t.fstype,t.shiftvel,t.shiftadv,t.corrector,t.simulate2d,t.aleform,t.ncpress); //<ShiftingAdvanced>
     else //<vs_syymmetry_end>
       KerInteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2,false> <<<sgridf,t.bsfluid,0,t.stm>>> 
       (t.fluidnum,t.fluidini,t.viscob,t.viscof,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,t.dcell
       ,t.ftomassp,(const float2*)t.spstaurho2,(float2*)t.sps2strain,t.dengradcorr,t.poscell,t.velrho,t.code,t.idp
       ,t.boundmode,t.tangenvel,t.motionvel //<vs_m2dbc>
       ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs
-      ,t.fstype,t.shiftvel,t.shiftadv,t.corrector,t.simulate2d,t.aleform); //<ShiftingAdvanced>
+      ,t.fstype,t.shiftvel,t.shiftadv,t.corrector,t.simulate2d,t.aleform,t.ncpress); //<ShiftingAdvanced>
       //KerInteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.scelldiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.poscell,t.velrho,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
   }
   //-Interaction Boundary-Fluid.

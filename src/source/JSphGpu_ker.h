@@ -61,7 +61,7 @@ typedef struct StrInterParmsg{
   TpDensity tdensity;
   TpShifting shiftmode;
   bool mdbc2;      //<vs_m2dbc>
-  bool shiftadv; bool corrector; bool aleform; //<ShiftingAdvanced>
+  bool shiftadv; bool corrector; bool aleform; bool ncpress; //<ShiftingAdvanced>
   //-Execution values.
   float viscob,viscof;
   unsigned bsbound,bsfluid;
@@ -110,7 +110,7 @@ typedef struct StrInterParmsg{
     ,TpDensity tdensity
     ,TpShifting shiftmode
     ,bool mdbc2                 //<vs_m2dbc>
-    ,bool shiftadv,bool corrector,bool aleform          //<ShiftingAdvanced>
+    ,bool shiftadv,bool corrector,bool aleform, bool ncpress       //<ShiftingAdvanced>
     ,float viscob,float viscof
     ,unsigned bsbound,unsigned bsfluid
     ,unsigned np,unsigned npb,unsigned npbok
@@ -146,7 +146,7 @@ typedef struct StrInterParmsg{
     this->tdensity=tdensity;
     this->shiftmode=shiftmode;
     this->mdbc2=mdbc2;       //<vs_m2dbc>
-    this->shiftadv=shiftadv; this->corrector=corrector; this->aleform=aleform;  //<ShiftingAdvanced>
+    this->shiftadv=shiftadv; this->corrector=corrector; this->aleform=aleform; this->ncpress=ncpress; //<ShiftingAdvanced>
     //-Execution values.
     this->viscob=viscob;   this->viscof=viscof;
     this->bsbound=bsbound; this->bsfluid=bsfluid;

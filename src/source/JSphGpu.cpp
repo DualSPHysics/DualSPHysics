@@ -664,7 +664,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,Symmetry  //<vs_syymmetry>
         ,TKernel,FtMode
         ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
-        ,false,false,false      //<ShiftingAdvanced>
+        ,false,false,false,false      //<ShiftingAdvanced>
         ,0,0,0,0,100,0,0
         ,0,0,divdatag,NULL
         ,NULL,NULL,NULL
