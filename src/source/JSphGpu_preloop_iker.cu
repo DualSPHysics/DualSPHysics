@@ -154,12 +154,12 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
       tmatrix3f lcorr_inv; cumath::Tmatrix3fReset(lcorr_inv);     //-Inverse of the correction matrix.
 
       //-Calculate approx. number of neighbours when uniform distribution (in the future on the constant memory?)
-      // float Nzero=0.f;
-      // if(simulate2d){
-      //   Nzero=(3.141592)*CTE.kernelsize2/(CTE.dp*CTE.dp);
-      // } else{
-      //   Nzero=(4.f/3.f)*(3.141592)*CTE.kernelsize2*CTE.kernelsize/(CTE.dp*CTE.dp*CTE.dp);
-      // }
+      float Nzero=0.f;
+      if(simulate2d){
+        Nzero=(3.141592)*CTE.kernelsize2/(CTE.dp*CTE.dp);
+      } else{
+        Nzero=(4.f/3.f)*(3.141592)*CTE.kernelsize2*CTE.kernelsize/(CTE.dp*CTE.dp*CTE.dp);
+      }
 
       //-Copy the value of shift to gradc. For single resolution is zero, but in Vres take in account virtual stencil.
       gradc=make_float3(shiftposfs[p1].x,shiftposfs[p1].y,shiftposfs[p1].z); 
@@ -181,7 +181,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
         }
       }
 
-      //-Interaction with boundaries.
+      // -Interaction with boundaries.
       ini3-=cellfluid; fin3-=cellfluid;
       for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
         unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
@@ -191,6 +191,16 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
                                                           fs_treshold,gradc,lcorr,neigh,pou,ftomassp); //<vs_syymmetry>
         }
       }
+
+      unsigned fstypep1=0;
+      if(simulate2d){
+        if(fs_treshold<1.7) fstypep1=2;
+        if(fs_treshold<1.1 && Nzero/float(neigh)<0.4f) fstypep1=3;
+      } else {
+        if(fs_treshold<2.75) fstypep1=2;
+        if(fs_treshold<1.8 && Nzero/float(neigh)<0.4f) fstypep1=3;
+      }
+      fstype[p1]=fstypep1;
 
       //-Add the contribution of the particle itself
       pou+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.f)*CTE.massf/velrhop1.w;
@@ -448,10 +458,10 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
           shiftposf1.w+=wab*massrho;
 
           //-Check if the particle is too close to solid or floating object
-          if((boundp2 || ftp2) && sqrt(rr2)<1.8f*CTE.dp) bound_inter=true;
+          if((boundp2 || ftp2)) bound_inter=true;
 
           //-Check if it close to the free-surface, calculate distance from free-surface and smoothing of free-surface normals.
-          if(fs[p2]>1  && !boundp2 ) {
+          if(fs[p2]>1 && fs[p2]<3 && !boundp2 ) {
             nearfs=true;
             mindist=min(sqrt(rr2),mindist);
 
@@ -490,7 +500,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
       float4  shiftposp1=make_float4(0,0,0,0);
 
       
-      float mindist=CTE.kernelsize;            //-Set Min Distance from free-surface to kernel radius. <shiftImproved>
+      float mindist=CTE.kernelh;                //-Set Min Distance from free-surface to kernel radius. <shiftImproved>
       float maxarccos=0.0;                      //-Variable for identify high-curvature free-surface particle <shiftImproved>
       bool bound_inter=false;                   //-Variable for identify free-surface that interact with boundary <shiftImproved>
       float3 fsnormalp1=make_float3(0,0,0);     //-Normals for near free-surface particles <shiftImproved>
@@ -533,7 +543,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
 
       if(shiftimpr){
 
-            shiftposp1.w+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.0)*CTE.massf/velrhop1.w;
+        shiftposp1.w+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.0)*CTE.massf/velrhop1.w;
 
 
       fsmindist[p1]=mindist;
@@ -544,6 +554,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
       float norm=sqrt(fsnormalp1.x*fsnormalp1.x+fsnormalp1.y*fsnormalp1.y+fsnormalp1.z*fsnormalp1.z);
       fsnormal[p1]=make_float3(fsnormalp1.x/norm,fsnormalp1.y/norm,fsnormalp1.z/norm);
       fstype[p1]=1;
+      if(bound_inter) fstype[p1]=3;
       }
       
       //-Check if free-surface particle interact with bound or has high-curvature.
@@ -643,7 +654,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
 
   __global__ void KerComputeShiftingVel(unsigned n,unsigned pinit,bool simulate2d
     ,float4* shiftvel,const unsigned* fstype,const float3* fsnormal,const float* fsmindist
-    ,float dt,float shiftcoef)
+    ,float dt,float shiftcoef,bool ale)
   {
     const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
     if(p<n){
@@ -662,9 +673,13 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
         shift_final=shiftp1;
       }
       else if(fstypep1==1 || fstypep1==2){
+        if(ale){
         shift_final.x=shiftp1.x-theta*fsnormalp1.x*normshift;
         shift_final.y=shiftp1.y-theta*fsnormalp1.y*normshift;
         shift_final.z=shiftp1.z-theta*fsnormalp1.z*normshift;
+        }else{
+          shift_final=make_float4(0,0,0,0);
+        }
       } else if(fstypep1==3){
         shift_final=make_float4(0,0,0,0);
       }
@@ -673,8 +688,12 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
 
       if(simulate2d) shift_final.y=0.f;
 
-    
-      const float umagn= shiftcoef*CTE.kernelh*fsmindistp1;
+      const float rhovar=abs(shiftp1.x*shift_final.x+shiftp1.y*shift_final.y+shiftp1.z*shift_final.z)*min(CTE.kernelh,fsmindistp1);
+      const float eps=1e-5;
+      const float umagn_1=shiftcoef*CTE.kernelh/dt;
+      const float umagn_2=abs(eps/(2.f*dt*rhovar));
+      const float umagn=min(umagn_1,umagn_2)*(min(CTE.kernelh,fsmindistp1)*dt);
+      // const float umagn= shiftcoef*CTE.kernelh*fsmindistp1;
       const float maxdist=0.1f*CTE.dp;
       shift_final.x=(fabs(umagn*shift_final.x)<maxdist? umagn*shift_final.x: (umagn*shift_final.x>=0? maxdist: -maxdist));
       shift_final.y=(fabs(umagn*shift_final.y)<maxdist? umagn*shift_final.y: (umagn*shift_final.y>=0? maxdist: -maxdist));
@@ -682,17 +701,6 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
       shiftvel[p1].x=(shift_final.x)/dt;
       shiftvel[p1].y=(shift_final.y)/dt;
       shiftvel[p1].z=(shift_final.z)/dt;
-      // float rhovar=abs(shiftp1.x*shiftp2.x+shiftp1.y*shiftp2.y+shiftp1.z*shiftp2.z);
-      // const float dt=0.2*CTE.kernelh/CTE.cs0;
-      // const float eps=5e-5;
-      // const float umagn=((umagn_s)<0 ? -min(fabs(umagn_s),fabs(eps/(2.f*dt*rhovar))): min(fabs(umagn_s),fabs(eps/(2.f*dt*rhovar))));
-      // const float umagn=(umagn_s<0 ? -fabs(umagn_s): fabs(umagn_s));
-
-      
-      
-    
-
-
     }
   }
 
@@ -701,13 +709,13 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
 
 
   void ComputeShiftingVel(unsigned bsfluid,unsigned fluidnum,unsigned fluidini,bool simulate2d,float4* shiftvel
-    ,const unsigned* fstype,const float3* fsnormal,const float* fsmindist,float dt,float shiftcoef,cudaStream_t stm)
+    ,const unsigned* fstype,const float3* fsnormal,const float* fsmindist,float dt,float shiftcoef,bool ale,cudaStream_t stm)
 {
 
   if(fluidnum){
     dim3 sgridf=GetSimpleGridSize(fluidnum,bsfluid);
     KerComputeShiftingVel<<<sgridf,bsfluid,0,stm>>> 
-      (fluidnum,fluidini,simulate2d,shiftvel,fstype,fsnormal,fsmindist,dt,shiftcoef);
+      (fluidnum,fluidini,simulate2d,shiftvel,fstype,fsnormal,fsmindist,dt,shiftcoef,ale);
   }
 
 }

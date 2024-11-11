@@ -536,7 +536,7 @@ void JSphGpuSingle::PreLoopProcedure(TpInterStep interstep){
  
 
   if(runshift)cusph::ComputeShiftingVel(bsfluid,Np-Npb,Npb,Simulate2D,ShiftVel_g->ptr(),FSType_g->cptr(),FSNormal_g->cptr()
-    ,FSMinDist_g->cptr(),SymplecticDtPre,ShiftingAdv->GetShiftCoef(),NULL);
+    ,FSMinDist_g->cptr(),SymplecticDtPre,ShiftingAdv->GetShiftCoef(),ShiftingAdv->GetAleActive(),NULL);
 
   //-Updates preloop variables in periodic particles.
   if(PeriParent_g){
@@ -606,6 +606,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   bool shiftadv=ShiftingAdv!=NULL;
   bool corrector= InterStep==INTERSTEP_SymCorrector;
   bool aleform=shiftadv ? ShiftingAdv->GetAleActive() : false;
+  bool ncpress=shiftadv ? ShiftingAdv->GetNcPress()   : false;
   // if(interstep==INTERSTEP_SymPredictor && ShiftingAdv!=NULL)DgSaveVtkParticlesGpu("Compute_FreeSurface_",Nstep,0,Np,Posxy_g->cptr()
   //       ,Posz_g->cptr(),Code_g->cptr(),FSType_g->cptr(),ShiftVel_g->cptr(),FSNormal_g->cptr());
 
@@ -614,7 +615,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,Symmetry //<vs_syymmetry>
     ,TKernel,FtMode
     ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
-    ,shiftadv,corrector,aleform         //<ShiftingAdvanced>
+    ,shiftadv,corrector,aleform,ncpress         //<ShiftingAdvanced>
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
     ,0,Nstep,DivData,Dcell_g->cptr()
