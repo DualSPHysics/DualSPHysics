@@ -582,7 +582,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
         acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
       }
 
-      if(ncpress){
+      if(ncpress && compute){
         const float pressp2=cufsph::ComputePressCte(velrhop2.w);
         const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)
           +(tker==KERNEL_Cubic? cufsph::GetKernelCubic_Tensil(rr2,velrhop1.w,pressp1,velrhop2.w,pressp2): 0);
@@ -593,7 +593,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
         pressasym.x+=ncp_vpm*frx; pressasym.y+=ncp_vpm*fry; pressasym.z+=ncp_vpm*frz;
       }
 
-      if(aleform){
+      if(aleform && compute){
         float3 shiftp2=make_float3(0.f,0.f,0.f);
         float3 shiftp1=make_float3(0.f,0.f,0.f);
 
@@ -669,9 +669,10 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       if(shiftadv){
         const float massrho=(USE_FLOATING? ftmassp2: massp2)/velrhop2.w;        
         const float wab=cufsph::GetKernel_Wab<KERNEL_Wendland>(rr2);
-        pou+=wab*massrho;
-        fs_treshold-=massrho*(drx*frx+dry*fry+drz*frz);
-        if(ncpress){
+        
+        if(ncpress && compute){
+          pou+=wab*massrho;
+          fs_treshold-=massrho*(drx*frx+dry*fry+drz*frz);
           lcorr.a11+=-drx*frx*massrho; lcorr.a12+=-drx*fry*massrho; lcorr.a13+=-drx*frz*massrho;
           lcorr.a21+=-dry*frx*massrho; lcorr.a22+=-dry*fry*massrho; lcorr.a23+=-dry*frz*massrho;
           lcorr.a31+=-drz*frx*massrho; lcorr.a32+=-drz*fry*massrho; lcorr.a33+=-drz*frz*massrho;
