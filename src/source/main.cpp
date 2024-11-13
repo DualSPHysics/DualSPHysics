@@ -57,6 +57,9 @@ Please download source files and documentation from <a href="http://dual.sphysic
 #ifdef _WITHGPU
   #include "JSphGpuSingle.h"
 #endif
+#ifdef _WITHMR
+  #include "JSphGpuWrapper.h"
+#endif
 
 #pragma warning(disable : 4996) //Cancels sprintf() deprecated.
 
@@ -189,7 +192,15 @@ int main(int argc, char** argv){
         JSphCpuSingle sph;
         sph.Run(appname,&cfg,log);
       }
-      #ifdef _WITHGPU
+      #if defined(_WITHGPU) && defined(_WITHMR)               //<vs_vrres_ini>
+      if(cfg.VRes){                             
+        JSphGpuWrapper sph;
+        sph.Run(appname,&cfg,log);
+      }else{
+        JSphGpuSingle sph;
+        sph.Run(appname,&cfg,log);
+      }
+      #elif defined(_WITHGPU)                                 //<vs_vrres_end>
       else{
         JSphGpuSingle sph;
         sph.Run(appname,&cfg,log);

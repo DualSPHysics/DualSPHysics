@@ -490,6 +490,14 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         if(PipsMode>2)ErrorParm(opt,c,lv,file);
         if(!txopt2.empty())PipsSteps=(unsigned)atoi(txopt2.c_str());
       }
+#ifdef _WITHMR //<vs_vrres_ini>
+      else if(txword=="VRES")VRes=true;
+      else if(txword=="MR_FAST")MRFastSingle=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
+      else if(txword=="MR_ORDER")MROrder=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
+      else if(txword=="MRTHRESHOLD"){ 
+        MRThreshold=float(atof(txoptfull.c_str())); 
+      }
+#endif         //<vs_vrres_end>
       else if(txword=="OPT" && c+1<optn){ LoadFile(optlis[c+1],lv+1); c++; }
       else if(txword=="H" || txword=="HELP" || txword=="?")PrintInfo=true;
       else ErrorParm(opt,c,lv,file);

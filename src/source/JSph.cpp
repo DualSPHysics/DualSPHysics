@@ -1408,7 +1408,7 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
   SaveVtkNormals(file2,-1,np,npb,pos,idp,boundnor,1.f);
   if(nerr  >0)Log->PrintfWarning("There are %u of %u fixed or moving boundary particles without normal data.",nerr,npb);
   if(nerrft>0)Log->PrintfWarning("There are %u of %u floating particles without normal data.",nerrft,CaseNfloat);
-  if(TBoundary==BC_MDBC && nerr==npb && nerrft==CaseNfloat)Run_Exceptioon("No valid normal vectors for using mDBC.");
+  // if(TBoundary==BC_MDBC && nerr==npb && nerrft==CaseNfloat)Run_Exceptioon("No valid normal vectors for using mDBC.");  //This exception must be eliminated for vres //<vs_vrres>
   if(UseNormalsFt && (!UseChrono || !ChronoObjects->GetUseCollision()))
     Log->PrintWarning("When mDBC is applied to floating bodies, their collisions should be solved using Chrono (RigidAlgorithm=3).");
 }
@@ -3716,5 +3716,175 @@ void JSph::DgSaveCsvParticlesCpu(std::string filename,int numfile
   }
   else Run_ExceptioonFile("File could not be opened.",filename);
 }
+
+
+#ifdef _WITHMR //<vs_vrres_ini>
+void JSph::DgSaveVtkParticlesCpuMR(std::string filename,int numfile,unsigned pini,unsigned pfin
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop
+  ,const tfloat3 *ace,const float *arc,const float *pou,const tfloat4 *shiftpos)const
+{
+  int mpirank=Log->GetMpiRank();
+  if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
+  if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
+  filename=DirDataOut+filename;
+  //-Allocates memory.
+  const unsigned np=pfin-pini;
+  unsigned count=0;
+  for(unsigned p=0;p<np;p++){
+      if(CODE_IsFluid(code[p]) && !CODE_IsFluidBuffer(code[p])&&CODE_IsNormal(code[p])&&!CODE_IsFluidFixed(code[p]))count++;
+  }
+  tfloat3 *xpos=new tfloat3[count];
+  tfloat3 *xvel=new tfloat3[count];
+  // tfloat3 *xace=(ace? new tfloat3[count]: NULL);
+  // float *xarc=(arc?new float[count]: NULL);
+  // float *xpou=(pou? new float[count]:NULL);
+  float *xrhop=new float[count];
+  unsigned short *xcode= new  unsigned short[count];
+  // tfloat3 *xshift=(shiftpos? new tfloat3[count]:NULL);
+
+  unsigned index=0;
+  for(unsigned p=0;p<np;p++){
+      if(CODE_IsFluid(code[p]) && !CODE_IsFluidBuffer(code[p])&&CODE_IsNormal(code[p])&&!CODE_IsFluidFixed(code[p])){
+	xpos[index]=ToTFloat3(pos[p]);
+	tfloat4 vr=velrhop[p];
+	xvel[index]=TFloat3(vr.x,vr.y,vr.z);
+	// tfloat4 sh=(shiftpos?shiftpos[p]: TFloat4(0.0,0.0,0.0,0.0));
+	// if(xshift)xshift[index]=TFloat3(sh.x,sh.y,sh.z);
+	// if(xace)xace[index]=ace[p];
+	xrhop[index]=vr.w;
+	xcode[index]=code[p];
+	// if(xarc)xarc[index]=arc[p];
+	// if(xpou)xpou[index]=pou[p];
+
+	index++;
+      }
+  }
+  //-Generates VTK file.
+  JDataArrays arrays;
+  arrays.AddArray("Pos" ,count,xpos,true);
+  if(idp)  arrays.AddArray("Idp" ,count,idp,false);
+  if(xcode)arrays.AddArray("Code" ,count,xcode,true);
+  if(xvel) arrays.AddArray("Vel" ,count,xvel ,true);
+  if(xrhop)arrays.AddArray("Rhop",count,xrhop,true);
+  // if(xace) arrays.AddArray("Ace" ,count,xace ,true);
+  // if(xarc) arrays.AddArray("Arc" ,count,xarc ,true);
+  // if(xpou) arrays.AddArray("Pou" ,count,xpou ,true);
+  // if(xshift) arrays.AddArray("Shift" ,count,xshift ,true);
+//   delete[] xpos;
+//  delete[] xvel;
+//  delete[] xrhop;
+//  if(xace) delete[] xace;
+//  if(xarc) delete[] xarc;
+//  if(xpou) delete[] xpou;
+
+  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  arrays.Reset();
+
+ 
+}
+
+
+
+void JSph::DgSaveVtkParticlesCpuMRBuffer(std::string filename,int numfile,unsigned pini,unsigned pfin
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop
+  ,const tfloat3 *ace,const double *rcond,const tfloat4 *shiftpos)const
+{
+  int mpirank=Log->GetMpiRank();
+  if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
+  if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
+  filename=DirDataOut+filename;
+  //-Allocates memory.
+  const unsigned np=pfin-pini;
+  unsigned count=0;
+  for(unsigned p=0;p<np;p++){
+      if(CODE_IsFluidBuffer(code[p]))count++;
+  }
+  tfloat3 *xpos=new tfloat3[count];
+  tfloat3 *xvel=new tfloat3[count];
+  // tfloat3 *xace=(ace? new tfloat3[count]: NULL);
+  // double  *xrcond=(rcond? new double[count]: NULL);
+  float *xrhop=new float[count];
+  // tfloat3 *xshift=(shiftpos ? new tfloat3[count]:NULL);
+
+  unsigned index=0;
+  for(unsigned p=0;p<np;p++){
+      if(CODE_IsFluidBuffer(code[p])){
+	xpos[index]=ToTFloat3(pos[p]);
+	tfloat4 vr=velrhop[p];
+	xvel[index]=TFloat3(vr.x,vr.y,vr.z);
+	tfloat4 sh=(shiftpos?shiftpos[p]: TFloat4(0.0,0.0,0.0,0.0));
+	// if(xshift)xshift[index]=TFloat3(sh.x,sh.y,sh.z);
+	// if(xace)xace[index]=ace[p];
+	// if(xrcond)xrcond[index]=rcond[p];
+	xrhop[index]=vr.w;
+	index++;
+      }
+  }
+  //-Generates VTK file.
+  JDataArrays arrays;
+  arrays.AddArray("Pos" ,count,xpos,true);
+  if(idp)  arrays.AddArray("Idp" ,count,idp,false);
+  if(xvel) arrays.AddArray("Vel" ,count,xvel ,true);
+  if(xrhop)arrays.AddArray("Rhop",count,xrhop,true);
+  // if(xace) arrays.AddArray("Ace" ,count,xace ,true);
+  // if(xrcond) arrays.AddArray("Rcond" ,count,xrcond ,true);
+  // if(xshift) arrays.AddArray("Shift" ,count,xshift ,true);
+  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  arrays.Reset();
+
+//  delete[] xpos;
+//    delete[] xvel;
+//    delete[] xrhop;
+//    if(xace) delete[] xace;
+//  if(xrcond) delete [] xrcond;
+}
+
+
+void JSph::DgSaveVtkParticlesCpuMRBound(std::string filename,int numfile,unsigned pini,unsigned pfin
+  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,const tfloat4 *velrhop
+  ,const tfloat3 *ace)const
+{
+  int mpirank=Log->GetMpiRank();
+  if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
+  if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
+  filename=DirDataOut+filename;
+  //-Allocates memory.
+  const unsigned np=pfin-pini;
+  unsigned count=0;
+  for(unsigned p=0;p<np;p++){
+      if(!CODE_IsFluid(code[p]))count++;
+  }
+  tfloat3 *xpos=new tfloat3[count];
+  tfloat3 *xvel=new tfloat3[count];
+  tfloat3 *xace=(ace? new tfloat3[count]: NULL);
+  float *xrhop=new float[count];
+
+  unsigned index=0;
+  for(unsigned p=0;p<np;p++){
+      if(!CODE_IsFluid(code[p])){
+	xpos[index]=ToTFloat3(pos[p]);
+	tfloat4 vr=velrhop[p];
+	xvel[index]=TFloat3(vr.x,vr.y,vr.z);
+	if(xace)xace[index]=ace[p];
+	xrhop[index]=vr.w;
+	index++;
+      }
+  }
+  //-Generates VTK file.
+  JDataArrays arrays;
+  arrays.AddArray("Pos" ,count,xpos,true);
+  if(idp)  arrays.AddArray("Idp" ,count,idp,false);
+  if(xvel) arrays.AddArray("Vel" ,count,xvel ,true);
+  if(xrhop)arrays.AddArray("Rhop",count,xrhop,true);
+  if(xace) arrays.AddArray("Ace" ,count,xace ,true);
+  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  arrays.Reset();
+
+//  delete[] xpos;
+//    delete[] xvel;
+//    delete[] xrhop;
+//    if(xace) delete[] xace;
+}
+#endif        //<vs_vrres_end>
 
 

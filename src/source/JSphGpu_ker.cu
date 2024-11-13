@@ -263,7 +263,7 @@ __global__ void KerComputeAceMod(unsigned n,const typecode* code
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
     const typecode rcod=code[p];
-    const float3 r=(CODE_IsNormal(rcod) && !CODE_IsFluidInout(rcod)? ace[p]: make_float3(0,0,0));
+    const float3 r=(CODE_IsNormal(rcod) && !CODE_IsFluidInout(rcod) && !CODE_IsFluidBuffer(rcod)? ace[p]: make_float3(0,0,0));  //<vs_vrres
     acemod[p]=r.x*r.x+r.y*r.y+r.z*r.z;
   }
 }
@@ -2921,5 +2921,10 @@ void ComputeOutputPartsMk(byte resmask,bool cmband,bool inverse
 //##############################################################################
 #include "JSphGpu_preloop_iker.cu"
 
+//##############################################################################
+//# Kernels for MultiRes (JSphBuffer).
+//# Kernels para MultiRes (JSphBuffer).
+//##############################################################################
 
+#include "JSphGpu_Buffer_iker.cu"
 

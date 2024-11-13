@@ -271,6 +271,11 @@ public:
     ,std::string head,const tfloat3* pos=NULL,const unsigned* idp=NULL
     ,const tfloat3* vel=NULL,const float* rho=NULL,const tfloat4* pospres=NULL
     ,const tfloat4* velrho=NULL);
+    
+#ifdef _WITHMR //<vs_vrres_ini>
+  void DgSaveVtkParticlesGpuMultiRes(std::string filename,int numfile,unsigned pini,unsigned pfin,const double2 *posxyg
+  ,const double *poszg,const typecode *codeg,const unsigned *idpg,const float4 *velrhopg, const double* rcond=NULL,const float4 *shiftposg=NULL)const;
+#endif        //<vs_vrres_end>
 };
 
 #endif

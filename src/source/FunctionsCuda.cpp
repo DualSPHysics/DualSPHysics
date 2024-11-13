@@ -391,6 +391,26 @@ size_t Malloc(double3** ptr,unsigned count){
   return(size);
 }
 
+//<vs_vrres_ini>
+//==============================================================================
+/// Allocates memory for bool on GPU.
+//==============================================================================
+size_t Malloc(bool** ptr,unsigned count){
+  const size_t size=sizeof(bool)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
+}
+
+//==============================================================================
+/// Allocates memory for tmatrix4f on GPU.
+//==============================================================================
+size_t Malloc(tmatrix4f** ptr,unsigned count){
+  const size_t size=sizeof(tmatrix4f)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
+}
+//<vs_vrres_end>
+
 
 //##############################################################################
 //## Functions to allocate pinned CPU memory.

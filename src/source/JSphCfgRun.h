@@ -95,6 +95,13 @@ public:
   unsigned PipsMode;   ///<Defines mode of PIPS calculation (0:No computed (default), 1:Computed, 2:computed and save detail).
   unsigned PipsSteps;  ///<Number of steps per interval to compute PIPS (100 by default).
 
+  #ifdef _WITHMR //<vs_vrres_ini>
+  bool VRes;          ///<Define use of variable resolution zones (false by default).
+  int MRFastSingle;   
+  unsigned MROrder;
+  float MRThreshold;
+#endif         //<vs_vrres_end>
+
 public:
   JSphCfgRun();
   void Reset();

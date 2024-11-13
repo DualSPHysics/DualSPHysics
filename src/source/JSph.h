@@ -133,6 +133,10 @@ protected:
   const bool Mgpu;
   const int  GpuCount; ///<Number of GPUs (units) in use.
   const bool WithMpi;
+#ifdef _WITHMR //<vs_vrres_ini>
+  unsigned VResCount;    ///<Number of variable resolution zones (default=0).
+  unsigned VResId;       ///<Id of variable resolution zone (default=0).
+#endif         //<vs_vrres_end>
   JLog2* Log;
 
   const JSphCfgRun* CfgRun;
@@ -559,6 +563,16 @@ public:
     ,unsigned pini,unsigned pfin,std::string head,const tfloat3* pos
     ,const unsigned* idp=NULL,const tfloat3* vel=NULL,const float* rho=NULL
     ,const float* ar=NULL,const tfloat3* ace=NULL,const tfloat3* vcorr=NULL);
+#ifdef _WITHMR //<vs_vrres_ini>
+  void DgSaveVtkParticlesCpuMR(std::string filename,int numfile,unsigned pini,unsigned pfin,const tdouble3 *pos
+    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const tfloat3 *ace=NULL,const float *arc=NULL
+    ,const float *pou=NULL,const tfloat4 *shiftpos=NULL)const;
+  void DgSaveVtkParticlesCpuMRBuffer(std::string filename,int numfile,unsigned pini,unsigned pfin,const tdouble3 *pos
+    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const tfloat3 *ace=NULL,const double *rcond=NULL
+    ,const tfloat4 *shiftpos=NULL)const;
+  void DgSaveVtkParticlesCpuMRBound(std::string filename,int numfile,unsigned pini,unsigned pfin,const tdouble3 *pos
+    ,const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const tfloat3 *ace=NULL)const;
+#endif        //<vs_vrres_end>
 };
 
 /*:

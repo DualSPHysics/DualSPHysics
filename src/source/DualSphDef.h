@@ -215,6 +215,23 @@
 #define CODE_ToFluidInout(code,izone) (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FLUID_INOUT|izone)
 #define CODE_GetIzoneFluidInout(code) (code&CODE_TYPE_FLUID_INOUTMASK)
 
+//<vs_vrres_ini>
+  #define CODE_TYPE_FLUID_BUFFER 	0x1fc0    //First buffer code:8128
+  #define CODE_TYPE_FLUID_BUFFERNUM 	16
+  #define CODE_TYPE_FLUID_BUFFERMASK 	31
+  #define CODE_TYPE_FLUID_BUFFER015MASK 15
+    #define CODE_TYPE_FLUID_FIXED 0x1f80
+
+
+  #define CODE_IsFluidBuffer(code)    (CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_BUFFER && CODE_GetTypeAndValue(code)<CODE_TYPE_FLUID_INOUT)
+  #define CODE_IsFluidNotBuffer(code) (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)< CODE_TYPE_FLUID_BUFFER)
+  #define CODE_ToFluidBuffer(code,izone) (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FLUID_BUFFER|izone)
+  #define CODE_GetIzoneFluidBuffer(code) (code&CODE_TYPE_FLUID_BUFFERMASK)
+  #define CODE_IsFluidFixed(code)    (CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_FIXED && CODE_GetTypeAndValue(code)<CODE_TYPE_FLUID_BUFFER)
+  #define CODE_ToFluidFixed(code,izone) (code&(~CODE_MASKTYPEVALUE))|(CODE_TYPE_FLUID_FIXED|izone)
+  #define CODE_GetIzoneFluidFixed(code) (code&CODE_TYPE_FLUID_BUFFERMASK)
+//<vs_vrres_end>
+
 
 ///Structure with the information of the floating object.
 typedef struct{

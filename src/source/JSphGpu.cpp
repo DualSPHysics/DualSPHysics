@@ -1484,4 +1484,37 @@ void JSphGpu::DgSaveCsvParticles2(std::string filename,int numfile
 const unsigned JSphGpu::MaxNStmFloatings;
 
 
+#ifdef _WITHMR //<vs_vrres_ini>
+void JSphGpu::DgSaveVtkParticlesGpuMultiRes(std::string filename,int numfile,unsigned pini,unsigned pfin
+ ,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg
+ ,const float4 *velrhopg,const double* rcond,const float4 *shiftposg)const
+{
+  const unsigned np=pfin-pini;
+  //-Copy data to CPU memory.
+  tdouble3 *posh=fcuda::ToHostPosd3(pini,np,posxyg,poszg);
+  #ifdef CODE_SIZE4
+    typecode *codeh=fcuda::ToHostUint(pini,np,codeg);
+  #else
+    typecode *codeh=fcuda::ToHostWord(pini,np,codeg);
+  #endif
+  unsigned *idph=fcuda::ToHostUint(pini,np,idpg);
+  tfloat4  *velrhoph=fcuda::ToHostFloat4(pini,np,velrhopg);
+  tfloat4  *shiftpos=NULL;
+  if(shiftposg)shiftpos=fcuda::ToHostFloat4(pini,np,shiftposg);
+  double   *rcondh=NULL;
+  if(rcond)rcondh=fcuda::ToHostDouble(pini,np,rcond);
+  //-Creates VTK file.
+  DgSaveVtkParticlesCpuMR(filename+"Fluid.vtk",numfile,0,np,posh,codeh,idph,velrhoph,NULL,NULL,NULL,shiftpos);
+  DgSaveVtkParticlesCpuMRBuffer(filename+"Buffer.vtk",numfile,0,np,posh,codeh,idph,velrhoph,NULL,rcondh,shiftpos);
+  DgSaveVtkParticlesCpuMRBound(filename+"Bound.vtk",numfile,0,np,posh,codeh,idph,velrhoph,NULL);
+  //-Deallocates memory.
+  delete[] posh;
+  delete[] codeh;
+  delete[] idph;
+  delete[] velrhoph;
+  delete[] rcondh;
+}
+#endif  //<vs_vrres_end>
+
+
 

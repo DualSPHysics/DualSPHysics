@@ -297,6 +297,9 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepSymp
         rvelrhonew.x=float(double(rvelrhopre.x) + (double(race.x)+gravity.x) * dtm);
         rvelrhonew.y=float(double(rvelrhopre.y) + (double(race.y)+gravity.y) * dtm);
         rvelrhonew.z=float(double(rvelrhopre.z) + (double(race.z)+gravity.z) * dtm);
+
+        if(CODE_IsFluidBuffer(rcode)) rvelrhonew=rvelrhopre; //-Restore data of vres buffer particles. //<vs_vrres
+
         //-Restore data of inout particles.
         if(inout && CODE_IsFluidInout(rcode)){
           outrho=false;
@@ -395,6 +398,9 @@ template<bool floating,bool shift,bool shiftadv,bool inout> __global__ void KerC
         rvelrhonew.x=float(double(rvelrhopre.x) + (double(race.x)+gravity.x) * dt);
         rvelrhonew.y=float(double(rvelrhopre.y) + (double(race.y)+gravity.y) * dt);
         rvelrhonew.z=float(double(rvelrhopre.z) + (double(race.z)+gravity.z) * dt);
+
+        if(CODE_IsFluidBuffer(rcode)) rvelrhonew=velrho[p];   //-Restore data of vres buffer particles. //<vs_vrres
+
         //-Calculate displacement. | Calcula desplazamiento.
         double dx=(double(rvelrhopre.x)+double(rvelrhonew.x)) * dtm;
         double dy=(double(rvelrhopre.y)+double(rvelrhonew.y)) * dtm;

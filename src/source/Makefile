@@ -1,7 +1,7 @@
 #DualSPHysics GPU/CPU v5.4.344 12-10-2024
 
 #=============== Compilation Options (YES/NO) ===============
-USE_DEBUG=NO
+USE_DEBUG=YES
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_VTKLIB=YES
@@ -17,9 +17,9 @@ EXECS_DIRECTORY=../../bin/linux
 
 # -std=c++0x ---> Used to avoid errors for calls to enums
 ifeq ($(USE_DEBUG), YES)
-  CCFLAGS=-c -O0 -g -Wall -fopenmp -D_WITHGPU -std=c++0x
+  CCFLAGS=-c -O0 -g -Wall -fopenmp -D_WITHGPU -std=c++0x -D_WITHMR
 else
-  CCFLAGS=-c -O3 -fopenmp -D_WITHGPU -std=c++0x
+  CCFLAGS=-c -O3 -fopenmp -D_WITHGPU -std=c++0x -D_WITHMR
   ifeq ($(USE_FAST_MATH), YES)
     CCFLAGS+= -ffast-math
   endif
@@ -121,10 +121,11 @@ OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphInOut.o JSphInOutZone.o JSphIn
 OBINOUTGPU=JSphGpuSingle_InOut.o
 OBMDBC=JPartNormalData.o
 OBMESH=JMeshData.o JMeshTDatas.o JMeshTDatasLoad.o JMeshTDatasSave.o JMeshTDatasDsVel.o JMeshTDatasXml.o
+OBVRES=JSphGpuWrapper.o JSphBuffer.o JSphBufferZone.o JSphGpuSingle_Mr.o JCaseVRes.o JVResDataLimits.o JDsVresData.o JBoxDef.o
 
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
 OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)
-OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBMOORDYNPLUS) $(OBINOUT) $(OBINOUTGPU) $(OBMDBC) $(OBMESH)
+OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBMOORDYNPLUS) $(OBINOUT) $(OBINOUTGPU) $(OBMDBC) $(OBMESH) $(OBVRES)
 
 #=============== DualSPHysics libs to be included ===============
 JLIBS=${LIBS_DIRECTORIES}
@@ -148,7 +149,7 @@ NCC=nvcc
 ifeq ($(USE_DEBUG), NO)
   NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC)
 else
-  NCCFLAGS+=-c $(GENCODE) -O0 -ccbin $(CC) -g -G
+  NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC) 
 endif
 ifeq ($(USE_FAST_MATH), YES)
   NCCFLAGS+= -use_fast_math

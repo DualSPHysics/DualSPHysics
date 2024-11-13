@@ -123,6 +123,10 @@ size_t Malloc(float4**  ,unsigned count);
 size_t Malloc(double**  ,unsigned count);
 size_t Malloc(double2** ,unsigned count);
 size_t Malloc(double3** ,unsigned count);
+//<vs_vrres_ini>
+size_t Malloc(bool**    ,unsigned count);               
+size_t Malloc(tmatrix4f** ,unsigned count);
+//<vs_vrres_end>
 //:cudaFree(GpuMem);
 
 //-Functions to allocate pinned CPU memory.

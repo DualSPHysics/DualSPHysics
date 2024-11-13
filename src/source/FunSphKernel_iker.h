@@ -136,6 +136,23 @@ __device__ float GetKernelWendland_WabFac(float rr2,float& fac){
   const float wqq=qq+qq+1.f;
   return(CTE.awen*wqq*wqq2*wqq2);
 }
+//<vs_vrres_ini>
+//------------------------------------------------------------------------------
+/// Returns wab (the kernel) and fac (module of the gradient of the kernel 
+/// divided by the distance between particles) and facc  (module of the second derivative of the kernel).
+//------------------------------------------------------------------------------
+__device__ float GetKernelWendland_WabFacFacc(float rr2,float &fac,float &facc){
+  const float rad=sqrt(rr2);
+  const float qq=rad/CTE.kernelh;
+  const float wqq1=1.f-0.5f*qq;
+  const float wqq2=wqq1*wqq1;
+  fac=CTE.bwenh*wqq2*wqq1;
+  const float wqq=qq+qq+1.f;
+  facc=-CTE.bwenh*(qq*0.5f-1.f)*(qq*0.5f-1.f)*(qq+qq-1.f)/(CTE.kernelh);
+  return(CTE.awen*wqq*wqq2*wqq2);
+}
+//<vs_vrres_end>
+
 //------------------------------------------------------------------------------
 /// Returns the kernel (wab).
 //------------------------------------------------------------------------------
@@ -181,6 +198,18 @@ template<TpKernel tker> __device__ float GetKernel_WabFac(float rr2,float& fac){
   else if(tker==KERNEL_Cubic     )return(GetKernelCubic_WabFac     (rr2,fac));
   else return(0);
 }
+
+//<vs_vrres_ini>
+    //------------------------------------------------------------------------------
+    /// Returns wab (the kernel) and fac (module of the gradient of the kernel 
+    /// divided by the distance between particles) and facc  (module of the second derivative of the kernel).
+    //------------------------------------------------------------------------------
+template<TpKernel tker> __device__ float GetKernel_WabFacFacc(float rr2,float &fac,float &facc){
+          if(tker==KERNEL_Wendland  )return(GetKernelWendland_WabFacFacc  (rr2,fac,facc));
+      else return(0);
+}
+//<vs_vrres_end>
+
 #endif
 //------------------------------------------------------------------------------
 /// Returns the kernel (wab) according to temaplate.
