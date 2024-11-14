@@ -571,7 +571,8 @@ void JSphGpuSingle::MdbcBoundCorrection(){
       ,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr()
       ,Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr(),Velrho_g->ptr());
   }
-  else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
+  else{
+  //else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
     //const unsigned fnum=(InterStep==STEP_Verlet? Nstep: (InterStep==INTERSTEP_SymCorrector? Nstep*2+1: Nstep*2));
     //JDebugSphGpu::SaveVtk("vtkdg/PreMdbcCorr.vtk",fnum,0,Np,"all",this);
     const unsigned n=(UseNormalsFt? Np: Npb);
@@ -584,7 +585,7 @@ void JSphGpuSingle::MdbcBoundCorrection(){
       ,MotionVel_g->cptr(),MotionAce_g->cptr(),Velrho_g->ptr()
       ,BoundMode_g->ptr(),TangenVel_g->ptr());
   } //<vs_m2dbc_end>
-  else Run_Exceptioon("Error: SlipMode is invalid.");
+  //else Run_Exceptioon("Error: SlipMode is invalid.");
   Timersg->TmStop(TMG_CfPreMDBC,true);
 }
 

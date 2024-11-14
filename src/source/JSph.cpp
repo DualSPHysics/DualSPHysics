@@ -856,10 +856,10 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
       default: Run_Exceptioon("Slip mode for mDBC is not valid.");
     }
   }
-  if(TBoundary==BC_MDBC){
-    if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip)Run_Exceptioon(
-      "Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
-  }
+ // if(TBoundary==BC_MDBC){
+  //  if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip && SlipMode != SLIP_FreeSlip)Run_Exceptioon(
+  //    "Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
+  //}
   MdbcCorrector=(SlipMode>=SLIP_NoSlip);
   UseNormals=(TBoundary==BC_MDBC);
     

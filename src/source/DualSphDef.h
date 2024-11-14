@@ -429,6 +429,7 @@ typedef enum{
 #define BMODE_DBC 0       ///<Boundary particle use DBC.
 #define BMODE_MDBC2 1     ///<Boundary particle use mDBC2.
 #define BMODE_MDBC2OFF 2  ///<Boundary particle use mDBC2 but mass is disabled.
+#define BMODE_MDBC2SLIP 3 ///<Boundary particle use mDBC2 with free slip // SHABA 
 
 ///Types of interaction step.
 typedef enum{ 

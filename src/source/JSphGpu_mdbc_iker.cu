@@ -461,7 +461,17 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip,bool sp>
           #endif
           tangenvel[p1]=KerMdbc2TangenVel(bnormalp1,v2);
         }
-        //if(tslip==SLIP_FreeSlip){//-No-Penetration and free slip.
+        if(tslip==SLIP_FreeSlip){//-No-Penetration and free slip.
+            boundmode[p1] = BMODE_MDBC2SLIP;
+            // copy velocity from ghost node
+            const float3 v2 = make_float3(velrhofinal.x,velrhofinal.y,velrhofinal.z);
+            #ifndef MDBC2_KEEPVEL
+                velrho[p1] = make_float4(v2.x, v2.y, v2.z, rhofinal);
+            #else
+                velrho[p1].w = rhofinal;
+            #endif
+            tangenvel[p1] = KerMdbc2TangenVel(bnormalp1, v2);
+
         //  float3 fsvelfinal; //-Final free slip boundary velocity.
         //  const float3 v=motionvel[p1];
         //  const float motion=sqrt(v.x*v.x + v.y*v.y + v.z*v.z); //-To check if boundary moving.
@@ -486,7 +496,7 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip,bool sp>
         //  }
         //  //-Save the velocity and density.
         //  velrho[p1]=make_float4(fsvelfinal.x,fsvelfinal.y,fsvelfinal.z,rhofinal);
-        //}
+        }
       }
       else{//-If unsubmerged switch off boundary particle.
         boundmode[p1]=BMODE_MDBC2OFF;
@@ -548,6 +558,20 @@ template<TpKernel tker> void Interaction_Mdbc2CorrectionT(bool simulate2d
           ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel
           ,motionace,velrho,boundmode,tangenvel,stm);
       }
+    }
+    case SLIP_FreeSlip: { const TpSlipMode tslip = SLIP_FreeSlip;
+        if (simulate2d) {
+            const bool sim2d = true;
+            Interaction_Mdbc2CorrectionT2 <tker, sim2d, tslip>(n, nbound, gravity
+                , dvd, mapposmin, posxy, posz, poscell, code, idp, boundnor, motionvel
+                , motionace, velrho, boundmode, tangenvel, stm);
+        }
+        else {
+            const bool sim2d = false;
+            Interaction_Mdbc2CorrectionT2 <tker, sim2d, tslip>(n, nbound, gravity
+                , dvd, mapposmin, posxy, posz, poscell, code, idp, boundnor, motionvel
+                , motionace, velrho, boundmode, tangenvel, stm);
+        }
     }break;
     //case SLIP_FreeSlip:{ const TpSlipMode tslip=SLIP_FreeSlip;
     //}break;
