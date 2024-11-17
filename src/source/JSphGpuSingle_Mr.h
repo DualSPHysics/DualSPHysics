@@ -58,6 +58,9 @@ public:
 
   void BufferExtrapolateData(StInterParmsbg *parms);
   void ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,StInterParmsbg *parms);
+  void ComputeUmbrellaRegionVRes();
+  void ComputeFSParticlesVRes();
+  void PreLoopProcedureVRes(TpInterStep interstep);
 
 
   double GetTimeStep(){return TimeStep;};

@@ -13,6 +13,7 @@
 #include "JSphShifting.h"
 #include "JSphShiftingAdv.h"
 #include "JSphBuffer.h"
+#include "JSphGpu_preloop_iker.h"
 
 
 
@@ -110,11 +111,11 @@ double JSphGpuSingle_Mr::ComputeStep_SymB(){
   if(CaseNmoving)CalcMotion(dt);               //-Calculate motion for moving bodies.
   //-Predictor
   //-----------
-   DemDtForce=dt*0.5f;                           //-For DEM interaction.
+   DemDtForce=dt*0.5f;                          //-For DEM interaction.
   MdbcBoundCorrection(INTERSTEP_SymPredictor);  //-Mdbc correction
   PreInteraction_Forces(INTERSTEP_SymPredictor);//-Allocating temporary arrays.
-  PreLoopProcedure(INTERSTEP_SymPredictor);     //-Calculate variables for interaction forces (Shifting,DDT,etc...).  
-  Interaction_ForcesB(INTERSTEP_SymPredictor);   //-Interaction.
+  PreLoopProcedureVRes(INTERSTEP_SymPredictor); //-Calculate variables for interaction forces (Shifting,DDT,etc...).  
+  Interaction_ForcesB(INTERSTEP_SymPredictor);  //-Interaction.
   const double dt_p=DtVariable(false);          //-Calculate dt of predictor step.
   if(Shifting)RunShifting(dt*.5);               //-Shifting.
   ComputeSymplecticPre(dt);                     //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
@@ -126,8 +127,8 @@ double JSphGpuSingle_Mr::ComputeStep_SymB(){
   RunCellDivide(true);
   MdbcBoundCorrection(INTERSTEP_SymCorrector);  //-Mdbc correction
   PreInteraction_Forces(INTERSTEP_SymCorrector);//-Allocating temporary arrays.
-  PreLoopProcedure(INTERSTEP_SymCorrector);     //-Calculate variables for interaction forces (Shifting,DDT,etc...).
-  Interaction_ForcesB(INTERSTEP_SymCorrector);   //-Interaction.
+  PreLoopProcedureVRes(INTERSTEP_SymCorrector); //-Calculate variables for interaction forces (Shifting,DDT,etc...).
+  Interaction_ForcesB(INTERSTEP_SymCorrector);  //-Interaction.
   const double dt_c=DtVariable(true);           //-Calculate dt of corrector step.
   if(Shifting)RunShifting(dt);                  //-Shifting.
   ComputeSymplecticCorr(dt);                    //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
@@ -211,39 +212,6 @@ StInterParmsbg JSphGpuSingle_Mr::getParms(){
 
 void JSphGpuSingle_Mr::CollectCTEdata(){
   GetConstantData(CTE);
-  // CTE.nbound=CaseNbound;
-  // CTE.massb=MassBound; CTE.massf=MassFluid;
-  // CTE.kernelh=KernelH;
-  // CTE.kernelsize2=KernelSize2; 
-  // CTE.poscellsize=PosCellSize; 
-  // //-Wendland constants are always computed since this kernel is used in some parts where other kernels are not defined (e.g. mDBC, inlet/outlet...).
-  // CTE.awen=KWend.awen; CTE.bwenh=KWend.bwenh;
-  // //-Copies constants for other kernels.
-  // if(TKernel==KERNEL_Cubic){
-  //   CTE.cubic_a1=KCubic.a1; CTE.cubic_a2=KCubic.a2; CTE.cubic_aa=KCubic.aa; CTE.cubic_a24=KCubic.a24;
-  //   CTE.cubic_c1=KCubic.c1; CTE.cubic_c2=KCubic.c2; CTE.cubic_d1=KCubic.d1; CTE.cubic_odwdeltap=KCubic.od_wdeltap;
-  // }
-  // CTE.cs0=float(Cs0); CTE.eta2=Eta2;
-  // CTE.ddtkh=DDTkh;
-  // CTE.ddtgz=DDTgz;
-  // CTE.scell=Scell; 
-  // CTE.kernelsize=KernelSize;
-  // CTE.dp=float(Dp);
-  // CTE.cteb=CteB; CTE.gamma=Gamma;
-  // CTE.rhopzero=RhopZero;
-  // CTE.ovrhopzero=1.f/RhopZero;
-  // CTE.movlimit=MovLimit;
-  // CTE.maprealposminx=MapRealPosMin.x; CTE.maprealposminy=MapRealPosMin.y; CTE.maprealposminz=MapRealPosMin.z;
-  // CTE.maprealsizex=MapRealSize.x; CTE.maprealsizey=MapRealSize.y; CTE.maprealsizez=MapRealSize.z;
-  // CTE.symmetry=Symmetry;   //<vs_syymmetry>
-  // CTE.tboundary=unsigned(TBoundary);
-  // CTE.periactive=PeriActive;
-  // CTE.xperincx=PeriXinc.x; CTE.xperincy=PeriXinc.y; CTE.xperincz=PeriXinc.z;
-  // CTE.yperincx=PeriYinc.x; CTE.yperincy=PeriYinc.y; CTE.yperincz=PeriYinc.z;
-  // CTE.zperincx=PeriZinc.x; CTE.zperincy=PeriZinc.y; CTE.zperincz=PeriZinc.z;
-  // CTE.axis=MGDIV_Z;//-Necessary to avoid errors in KerGetInteraction_Cells().
-  // CTE.cellcode=DomCellCode;
-  // CTE.domposminx=DomPosMin.x; CTE.domposminy=DomPosMin.y; CTE.domposminz=DomPosMin.z;
 }
 
 void JSphGpuSingle_Mr::BufferInit(StInterParmsbg *parms){
@@ -368,7 +336,7 @@ void JSphGpuSingle_Mr::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,St
 
 void JSphGpuSingle_Mr::BufferShifting(){
   StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
-	cusphbuffer::BufferShiftingGpu(Np,Npb,Posxy_g->ptr(),Posz_g->ptr(),ShiftPosfs_g->ptr(),Code_g->ptr(),vresgdata,NULL);
+	cusphbuffer::BufferShiftingGpu(Np,Npb,Posxy_g->ptr(),Posz_g->ptr(),ShiftVel_g->ptr(),Code_g->ptr(),vresgdata,NULL);
 }
 
 
@@ -376,6 +344,76 @@ void JSphGpuSingle_Mr::BufferShifting(){
 void JSphGpuSingle_Mr::CallRunCellDivide(){
   	cusph::CteInteractionUp(&CTE);
     RunCellDivide(true);
+}
+
+
+//==============================================================================
+/// PreLoop for additional models computation.
+/// Interaccion para el calculo de fuerzas.
+//==============================================================================
+void JSphGpuSingle_Mr::PreLoopProcedureVRes(TpInterStep interstep){
+  bool runshift=(interstep==INTERSTEP_SymPredictor && Nstep!=0 && ShiftingAdv!=NULL);
+  if(runshift){
+    ComputeFSParticlesVRes();
+    ComputeUmbrellaRegionVRes();
+  }
+  
+  unsigned bsfluid=BlockSizes.forcesfluid;
+  StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
+
+  if(runshift)cusphbuffer::PreLoopInteraction(TKernel,Simulate2D,runshift,false,bsfluid,Np-Npb,Npb,DivData
+    ,Posxy_g->cptr(),Posz_g->cptr(),Dcell_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr()
+    ,FSType_g->ptr(),FSNormal_g->ptr(),FSMinDist_g->ptr(),vresgdata,NULL);
+  
+  if(runshift)cusph::ComputeShiftingVel(bsfluid,Np-Npb,Npb,Simulate2D,ShiftVel_g->ptr(),FSType_g->cptr(),FSNormal_g->cptr()
+    ,FSMinDist_g->cptr(),SymplecticDtPre,ShiftingAdv->GetShiftCoef(),ShiftingAdv->GetAleActive(),NULL);
+
+  if(runshift )BufferShifting();
+  //-Updates preloop variables in periodic particles.
+  if(PeriParent_g){
+    cusph::PeriPreLoopCorr(Np,0,PeriParent_g->cptr(),FSType_g->ptr(),ShiftVel_g->ptr());
+  }
+
+  double t1=TimeStep+LastDt;
+	double t2=TimePartNext;
+  if(t1>=t2 ){
+		if(interstep==INTERSTEP_SymPredictor && ShiftingAdv!=NULL)DgSaveVtkParticlesGpu("Compute_FreeSurface_",Part,0,Np,Posxy_g->cptr()
+        ,Posz_g->cptr(),Code_g->cptr(),FSType_g->cptr(),ShiftVel_g->cptr(),FSNormal_g->cptr());
+	}
+  
+}
+
+
+//==============================================================================
+/// Compute free-surface particles and their normals.
+/// Interaccion para el calculo de fuerzas.
+//==============================================================================
+void JSphGpuSingle_Mr::ComputeFSParticlesVRes(){
+  unsigned bsfluid=BlockSizes.forcesfluid;
+  StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
+
+  aguint    inoutpartg("-",Arrays_Gpu,true);
+  cusphbuffer::ComputeFSNormals(TKernel,Simulate2D,Symmetry,bsfluid,Npb,Np-Npb,DivData
+    ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
+    ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
+    ,inoutpartg.ptr(),vresgdata,NULL);
+
+}
+
+//==============================================================================
+/// Scan Umbrella region to identify free-surface particle.
+/// Interaccion para el calculo de fuerzas.
+//==============================================================================
+void JSphGpuSingle_Mr::ComputeUmbrellaRegionVRes(){
+  unsigned bsfluid=BlockSizes.forcesfluid;
+  StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
+
+  aguint    inoutpartg("-",Arrays_Gpu,true);
+  cusphbuffer::ComputeUmbrellaRegion(TKernel,Simulate2D,Symmetry,bsfluid,Npb,Np-Npb,DivData
+    ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
+    ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
+    ,inoutpartg.ptr(),vresgdata,NULL);
+
 }
 
 

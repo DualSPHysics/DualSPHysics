@@ -421,7 +421,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
 
 
 
-  template<TpKernel tker,bool simulate2d,bool shiftimpr,bool symm>
+  template<TpKernel tker,bool simulate2d,bool shiftadv,bool symm>
   __device__ void KerPreLoopInteractionBox(bool boundp2,unsigned p1
     ,const unsigned &pini,const unsigned &pfin,const float4 *poscell,const float4 *velrhop
     ,const typecode *code,float massp2,const float4 &pscellp1,const float4 &velrhop1,const float* ftomassp
@@ -447,7 +447,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
         ftp2=CODE_IsFloating(cod);
         ftmassp2=(ftp2? ftomassp[CODE_GetTypeValue(cod)]: massp2);
         
-        if(shiftimpr){
+        if(shiftadv){
           const float massrho=(boundp2 ? CTE.massb/velrhop2.w : (ftmassp2)/velrhop2.w);
 
           //-Compute gradient of concentration and partition of unity.        
@@ -482,7 +482,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
     }
   }
 
-  template<TpKernel tker,bool simulate2d,bool shiftimpr,bool symm>
+  template<TpKernel tker,bool simulate2d,bool shiftadv,bool symm>
   __global__ void KerPreLoopInteraction(unsigned n
     ,unsigned pinit,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid
     ,const unsigned *dcell,const float4 *poscell,const float4 *velrhop,const typecode *code
@@ -515,10 +515,10 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
       for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
         unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
         if(pfin){
-          KerPreLoopInteractionBox<tker,simulate2d,shiftimpr,false> (false,p1,pini,pfin,poscell,velrhop
+          KerPreLoopInteractionBox<tker,simulate2d,shiftadv,false> (false,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
             ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1);
-          if(symm && rsymp1)KerPreLoopInteractionBox<tker,simulate2d,shiftimpr,true> (false,p1,pini,pfin,poscell,velrhop
+          if(symm && rsymp1)KerPreLoopInteractionBox<tker,simulate2d,shiftadv,true> (false,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
             ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1); //<vs_syymmetry>
         } 
@@ -530,10 +530,10 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
       for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
         unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
         if(pfin){
-        KerPreLoopInteractionBox<tker,simulate2d,shiftimpr,false> (true,p1,pini,pfin,poscell,velrhop
+        KerPreLoopInteractionBox<tker,simulate2d,shiftadv,false> (true,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
             ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1);
-        if(symm && rsymp1)KerPreLoopInteractionBox<tker,simulate2d,shiftimpr,true> (true,p1,pini,pfin,poscell,velrhop
+        if(symm && rsymp1)KerPreLoopInteractionBox<tker,simulate2d,shiftadv,true> (true,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
             ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1); //<vs_syymmetry>
       }
@@ -541,7 +541,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
 
 
 
-      if(shiftimpr){
+      if(shiftadv){
 
         shiftposp1.w+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.0)*CTE.massf/velrhop1.w;
 
@@ -572,7 +572,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
   
   
   
-  template<TpKernel tker,bool simulate2d,bool shiftimpr> void PreLoopInteractionT3(bool symmetry
+  template<TpKernel tker,bool simulate2d,bool shiftadv> void PreLoopInteractionT3(bool symmetry
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
     ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
@@ -581,23 +581,23 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
   if(fluidnum){
     dim3 sgridf=GetSimpleGridSize(fluidnum,bsfluid);
     if(symmetry) //<vs_syymmetry_ini>
-    KerPreLoopInteraction <tker,simulate2d,shiftimpr,true> <<<sgridf,bsfluid,0,stm>>> 
+    KerPreLoopInteraction <tker,simulate2d,shiftadv,true> <<<sgridf,bsfluid,0,stm>>> 
       (fluidnum,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
       ,dcell,poscell,velrho,code,ftomassp,shiftvel,fstype,fsnormal,fsmindist);
     else //<vs_syymmetry_end>
-    KerPreLoopInteraction <tker,simulate2d,shiftimpr,false> <<<sgridf,bsfluid,0,stm>>> 
+    KerPreLoopInteraction <tker,simulate2d,shiftadv,false> <<<sgridf,bsfluid,0,stm>>> 
       (fluidnum,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
       ,dcell,poscell,velrho,code,ftomassp,shiftvel,fstype,fsnormal,fsmindist);
 
   }
 }
 
-  template<TpKernel tker,bool simulate2d> void PreLoopInteractionT2(bool shiftimpr,bool symmetry
+  template<TpKernel tker,bool simulate2d> void PreLoopInteractionT2(bool shiftadv,bool symmetry
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
     ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
 {
-  if(shiftimpr){
+  if(shiftadv){
     PreLoopInteractionT3 <tker,simulate2d,true > (symmetry,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,stm);
@@ -609,42 +609,42 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
   }
 }
 
-  template<TpKernel tker> void PreLoopInteractionT(bool simulate2d,bool shiftimpr,bool symmetry
+  template<TpKernel tker> void PreLoopInteractionT(bool simulate2d,bool shiftadv,bool symmetry
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
     ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
 {
   if(simulate2d){
-    PreLoopInteractionT2 <tker,true > (shiftimpr,symmetry,bsfluid
+    PreLoopInteractionT2 <tker,true > (shiftadv,symmetry,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,stm);
   }
   else{
-    PreLoopInteractionT2 <tker,false> (shiftimpr,symmetry,bsfluid
+    PreLoopInteractionT2 <tker,false> (shiftadv,symmetry,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,stm);
   }
 }
 
 
-   void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftimpr,bool symmetry
+   void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv,bool symmetry
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
     ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
   {
     switch(tkernel){
     case KERNEL_Wendland:{ const TpKernel tker=KERNEL_Wendland;
-      PreLoopInteractionT <tker> (simulate2d,shiftimpr,symmetry,bsfluid
+      PreLoopInteractionT <tker> (simulate2d,shiftadv,symmetry,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,stm);
     }break;
   #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:{ const TpKernel tker=KERNEL_Cubic;
-      PreLoopInteractionT <tker> (simulate2d,shiftimpr,symmetry,bsfluid
+      PreLoopInteractionT <tker> (simulate2d,shiftadv,symmetry,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,stm);
     }break;
-#endif
+  #endif
     default: throw "Kernel unknown at Interaction_MdbcCorrection().";
   }
   
