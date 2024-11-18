@@ -380,6 +380,8 @@ void JSphGpuSingle_Mr::PreLoopProcedureVRes(TpInterStep interstep){
 		if(interstep==INTERSTEP_SymPredictor && ShiftingAdv!=NULL)DgSaveVtkParticlesGpu("Compute_FreeSurface_",Part,0,Np,Posxy_g->cptr()
         ,Posz_g->cptr(),Code_g->cptr(),FSType_g->cptr(),ShiftVel_g->cptr(),FSNormal_g->cptr());
 	}
+
+  
   
 }
 

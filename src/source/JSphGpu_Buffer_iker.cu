@@ -880,8 +880,8 @@ template<bool sim2d,TpKernel tker,unsigned order> __global__ void KerInteraction
         else if ((ShiftTFS > 1.5 || sqrt(mindist) < mindp) )
         fluxes[p1] += -sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt;
       } else {
-        if((ShiftTFS>2.75 || sqrt(mindist)<mindp)  && fluxes[p1]<0.0 && posp1.z>0.1*CTE.dp ) fluxes[p1]+=max(0.0,-sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt);
-          else if((ShiftTFS>2.75 || sqrt(mindist)<mindp)  && posp1.z>0.1*CTE.dp)               fluxes[p1]+= -sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt;
+        if((ShiftTFS>2.75 || sqrt(mindist)<mindp)  && fluxes[p1]<0.0 ) fluxes[p1]+=max(0.0,-sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt);
+          else if((ShiftTFS>2.75 || sqrt(mindist)<mindp) )               fluxes[p1]+= -sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt;
           
       }
          
@@ -1102,27 +1102,27 @@ __global__ void KerBufferShiftingGpu(unsigned n,unsigned pini,const double2 *pos
       // }
       bool inn=inner[izone];
       if((fabs(disx)>boxsize.x/2.0 )){
-        // float3 normal=make_float3(mat[izone].a11,mat[izone].a21,mat[izone].a31);
-        // shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
-        // shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
-        // shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
-                shiftpos[p1].x=0.0f;
+        float3 normal=make_float3(mat[izone].a11,mat[izone].a21,mat[izone].a31);
+        shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+        shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+        shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+                // shiftpos[p1].x=0.0f;
 
       } 
       if((fabs(disy)>boxsize.y/2.0)){
-        // float3 normal=make_float3(mat[izone].a12,mat[izone].a22,mat[izone].a32);
-        // shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
-        // shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
-        // shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
-                shiftpos[p1].y=0.0f;
+        float3 normal=make_float3(mat[izone].a12,mat[izone].a22,mat[izone].a32);
+        shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+        shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+        shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+                // shiftpos[p1].y=0.0f;
 
       }
       if((fabs(disz)>boxsize.z/2.0)){
-        // float3 normal=make_float3(mat[izone].a13,mat[izone].a23,mat[izone].a33);
-        // shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
-        // shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
-        // shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
-                        shiftpos[p1].z=0.0f;
+        float3 normal=make_float3(mat[izone].a13,mat[izone].a23,mat[izone].a33);
+        shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+        shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+        shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+                        // shiftpos[p1].z=0.0f;
 
       }
       if((fabs(disx)>boxsize.x/2.0) && (fabs(disz)>boxsize.z/2.0)){
@@ -1159,13 +1159,13 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
 {    
       
   float3 minpos=make_float3(0,0,0);
-  minpos.x=posp1.x-CTE.kernelsize;
-  minpos.y=(sim2d? 0.0f: posp1.y-CTE.kernelsize);
-  minpos.z=posp1.z-CTE.kernelsize;
-  float3 maxpos=make_float3(0,0,0);
-  maxpos.x=posp1.x+CTE.kernelsize;
-  maxpos.y=(sim2d? 0.0f: posp1.y+CTE.kernelsize);
-  maxpos.z=posp1.z+CTE.kernelsize;
+    minpos.x=posp1.x-CTE.kernelsize;
+    minpos.y=(sim2d? 0.0f: posp1.y-CTE.kernelsize);
+    minpos.z=posp1.z-CTE.kernelsize;
+    float3 maxpos=make_float3(0,0,0);
+    maxpos.x=posp1.x+CTE.kernelsize;
+    maxpos.y=(sim2d? 0.0f: posp1.y+CTE.kernelsize);
+    maxpos.z=posp1.z+CTE.kernelsize;
 
   float dp=CTE.dp;
   for (float rx=minpos.x; rx<=maxpos.x; rx+=dp) for (float ry=minpos.y; ry<=maxpos.y; ry+=dp)
@@ -1422,13 +1422,13 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
         (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
             ,poscell,velrho,code,fstype,fsnormal,simulate2d,shiftposfs
             ,ftomassp,listp
-            ,posxy,posz,vresgdata->boxlimitmin,vresgdata->boxlimitmax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
+            ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
       else //<vs_syymmetry_end>
         KerComputeNormals<false> <<<sgridf,bsfluid,0,stm>>> 
         (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
             ,poscell,velrho,code,fstype,fsnormal,simulate2d,shiftposfs
             ,ftomassp,listp
-            ,posxy,posz,vresgdata->boxlimitmin,vresgdata->boxlimitmax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
+            ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
     }
     
     cudaDeviceSynchronize();
@@ -1628,12 +1628,12 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
         KerScanUmbrellaRegion<true> <<<sgridf,bsfluid,0,stm>>> 
         (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
             ,poscell,code,fstype,fsnormal,simulate2d,listp
-            ,posxy,posz,vresgdata->boxlimitmin,vresgdata->boxlimitmax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
+            ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
       else //<vs_syymmetry_end>
         KerScanUmbrellaRegion<false> <<<sgridf,bsfluid,0,stm>>> 
         (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
             ,poscell,code,fstype,fsnormal,simulate2d,listp
-            ,posxy,posz,vresgdata->boxlimitmin,vresgdata->boxlimitmax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
+            ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
     }
     
     cudaDeviceSynchronize();
@@ -1865,12 +1865,12 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
     KerPreLoopInteraction <tker,simulate2d,shiftadv,true> <<<sgridf,bsfluid,0,stm>>> 
       (fluidnum,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
       ,dcell,poscell,velrho,code,ftomassp,shiftvel,fstype,fsnormal,fsmindist
-      ,posxy,posz,vresgdata->boxlimitmin,vresgdata->boxlimitmax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
+      ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
     else //<vs_syymmetry_end>
     KerPreLoopInteraction <tker,simulate2d,shiftadv,false> <<<sgridf,bsfluid,0,stm>>> 
       (fluidnum,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
       ,dcell,poscell,velrho,code,ftomassp,shiftvel,fstype,fsnormal,fsmindist
-      ,posxy,posz,vresgdata->boxlimitmin,vresgdata->boxlimitmax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
+      ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
 
   }
 }

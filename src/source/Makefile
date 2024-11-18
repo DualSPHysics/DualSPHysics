@@ -149,7 +149,7 @@ NCC=nvcc
 ifeq ($(USE_DEBUG), NO)
   NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC)
 else
-  NCCFLAGS+=-c $(GENCODE) -O0 -ccbin $(CC) -g -G
+  NCCFLAGS+=-c $(GENCODE) -O0 -ccbin $(CC) -g -G -lineinfo
 endif
 ifeq ($(USE_FAST_MATH), YES)
   NCCFLAGS+= -use_fast_math
