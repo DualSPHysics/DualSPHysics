@@ -622,9 +622,9 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       }
 
       //-Changing the mass of boundary particle with boundmode. //<vs_m2dbcFS_ini>
-      if (mdbc2 && boundp2 && !ftp2) {
-          if (boundmode[p2] == BMODE_MDBC2SLIP)compute = false;
-      } //<vs_m2dbcFS_end>
+      //if (mdbc2 && boundp2 && !ftp2) {
+      //    if (boundmode[p2] == BMODE_MDBC2SLIP)compute = false;
+      //} //<vs_m2dbcFS_end>
       //===== Viscosity ===== 
       if(compute){
         if(mdbc2 && boundp2 && !ftp2){ //<vs_m2dbc_ini>
