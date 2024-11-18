@@ -83,6 +83,7 @@ typedef struct StrInterParmsg{
   const byte*      boundmode;    //<vs_m2dbc>
   const float3*    tangenvel;    //<vs_m2dbc>
   const float3*    motionvel;    //<vs_m2dbc>
+  const float3*    boundnormal;  //<vs_m2dbc> // SHABA
   const float*     ftomassp;
   const tsymatrix3f* spstaurho2;
   const float3*    dengradcorr;
@@ -93,6 +94,7 @@ typedef struct StrInterParmsg{
   float*  delta;
   tsymatrix3f* sps2strain;
   float4* shiftposfs;
+  float4* nopenshift; // SHABA
   //-Other values and objects.
   cudaStream_t stm;
   StKerInfo* kerinfo;
@@ -119,6 +121,7 @@ typedef struct StrInterParmsg{
     ,const byte*   boundmode    //<vs_m2dbc>
     ,const float3* tangenvel    //<vs_m2dbc>
     ,const float3* motionvel    //<vs_m2dbc>
+    ,const float3* boundnormal  //<vs_m2dbc> // SHABA
     ,const float* ftomassp
     ,const tsymatrix3f* spstaurho2
     ,const float3* dengradcorr
@@ -128,6 +131,7 @@ typedef struct StrInterParmsg{
     ,float* delta
     ,tsymatrix3f* sps2strain
     ,float4* shiftposfs
+    ,float4* nopenshift // SHABA
     ,cudaStream_t stm
     ,StKerInfo* kerinfo)
   {
@@ -153,9 +157,10 @@ typedef struct StrInterParmsg{
     this->dcell=dcell;
     this->posxy=posxy; this->posz=posz; this->poscell=poscell;
     this->velrho=velrho; this->idp=idp; this->code=code;
-    this->boundmode=boundmode;   //<vs_m2dbc>
-    this->tangenvel=tangenvel;   //<vs_m2dbc>
-    this->motionvel=motionvel;   //<vs_m2dbc>
+    this->boundmode=boundmode;    //<vs_m2dbc>
+    this->tangenvel=tangenvel;    //<vs_m2dbc>
+    this->motionvel=motionvel;    //<vs_m2dbc>
+    this->boundnormal=boundnormal;//<vs_m2dbc> //SHABA
     this->ftomassp=ftomassp;
     this->spstaurho2=spstaurho2;
     this->dengradcorr=dengradcorr;
@@ -166,6 +171,7 @@ typedef struct StrInterParmsg{
     this->delta=delta;
     this->sps2strain=sps2strain;
     this->shiftposfs=shiftposfs;
+    this->nopenshift=nopenshift; // SHABA
     //-Other values and objects.
     this->stm=stm;
     this->kerinfo=kerinfo;

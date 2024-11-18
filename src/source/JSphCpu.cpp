@@ -412,7 +412,7 @@ void JSphCpu::PreInteraction_Forces(){
   if(DDTArray)Delta_c->Reserve();
   if(Shifting)ShiftPosfs_c->Reserve();
   if(TVisco==VISCO_LaminarSPS)Sps2Strain_c->Reserve();
-
+  
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
   Ar_c->Memset(0,Np);                                             //Arc[]=0

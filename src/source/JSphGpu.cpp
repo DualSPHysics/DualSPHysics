@@ -174,6 +174,7 @@ void JSphGpu::InitVars(){
   Ar_g=NULL;
   Delta_g=NULL;
   ShiftPosfs_g=NULL;   //-Shifting.
+  NoPenShift_g = NULL; //SHABA
 
   SpsTauRho2_g=NULL;   //-Laminar+SPS.
   Sps2Strain_g=NULL;   //-Laminar+SPS.
@@ -349,6 +350,7 @@ void JSphGpu::FreeGpuMemoryParticles(){
   delete Ar_g;          Ar_g=NULL;
   delete Delta_g;       Delta_g=NULL;
   delete ShiftPosfs_g;  ShiftPosfs_g=NULL;  //-Shifting.
+  delete NoPenShift_g;  NoPenShift_g = NULL;  //-No Penetration SHABA
 
   delete SpsTauRho2_g;  SpsTauRho2_g=NULL;  //-Laminar+SPS.
   delete Sps2Strain_g;  Sps2Strain_g=NULL;  //-Laminar+SPS.
@@ -406,6 +408,8 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   Delta_g     =new agfloat ("Deltag" ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
   //-Arrays for Shifting.
   ShiftPosfs_g=new agfloat4("ShiftPosfsg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
+  //-Arrays for No Pentration.
+  NoPenShift_g = new agfloat4("NoPenShiftg", Arrays_Gpu, false); //-NO INITIAL MEMORY.
   //-Arrays for Laminar+SPS.
   if(TVisco==VISCO_LaminarSPS){
     SpsTauRho2_g=new agsymatrix3f("SpsTauRho2g",Arrays_Gpu,true);
@@ -768,6 +772,7 @@ void JSphGpu::PreInteraction_Forces(){
   if(DDTArray)Delta_g->Reserve();
   if(Shifting)ShiftPosfs_g->Reserve();
   if(TVisco==VISCO_LaminarSPS)Sps2Strain_g->Reserve();
+  if(SlipMode>=SLIP_NoSlip)NoPenShift_g->Reserve(); // SHABA
 
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
@@ -776,6 +781,7 @@ void JSphGpu::PreInteraction_Forces(){
   Ace_g->CuMemset(0,Np);                                            //Aceg[]=(0)
   if(AG_CPTR(Delta_g))Delta_g->CuMemset(0,Np);                      //Deltag[]=0
   if(AG_CPTR(Sps2Strain_g))Sps2Strain_g->CuMemsetOffset(Npb,0,npf); //Sps2Straing[]=(0)
+  if(AG_CPTR(NoPenShift_g))NoPenShift_g->CuMemset(0,Np);            //NoPenShiftg[]=(0) SHABA
   
   //-Select particles for shifting.
   if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
