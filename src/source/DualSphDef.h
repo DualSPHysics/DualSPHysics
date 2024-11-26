@@ -53,7 +53,6 @@
 #define DISABLE_CHRONO_OMP   ///<It allows compile without parallel module of Chrono (ignores ChronoEngine_parallel.dll).
 //#define DISABLE_WAVEGEN    ///<It allows compile without Wave-Paddles, Multi-Layer Pistons and Relaxation Zones libraries.
 //#define DISABLE_MOORDYNPLUS    ///<It allows compile without LibDSphMoorDynPlus library.
-//#define DISABLE_GAUGEFLOW  ///<It allows compile without GaugeFlow code.
 
 
 //-Defines AVAILABLE_VTKLIB when this feature is compiled.

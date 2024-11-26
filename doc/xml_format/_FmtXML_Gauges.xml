@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics v5.4.332 (24-07-2024) *** -->
+<!-- *** DualSPHysics v5.4.350 (26-11-2024) *** -->
 <!-- *** class: JGaugeSystem *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -103,17 +103,6 @@
 			<output value="true" comment="Creates CSV and binary files of measurements (default=false)" />
 			<buffersize value="30" comment="Output buffer size (default=30)" />
 		</mesh>
-		<!-- Calculates flow in a mesh of points. -->
-		<flow name="Flow">
-			<point x="0.2" y="0.0" z="0.0"  comment="Initial measurement position" units_comment="m" />
-			<vec1 x="0.0" y="1.0" z="0.0" comment="First axis vector to define the measurement grid" />
-			<vec2 x="0.0" y="0.0" z="1.0" comment="Second axis vector to define the measurement grid" />
-			<size1 length="0.2" distpt="#Dp/5" comment="Length and distance between measurement points for first direction" units_comment="m" />
-			<size2 length="0.2" distpt="#Dp/5" comment="Length and distance between measurement points for second direction" units_comment="m" />
-			<dirdat x="1.0" y="0.0" z="0.0" comment="Direction vector for computed flow" />
-			<buffersize value="30" comment="Output buffer size (default=30)" />
-			<kclimit value="NONE" comment="Minimum value of sum_wab_vol to apply the Kernel Correction. Use NONE to disable (default=NONE)" />
-		</flow>
 	</gauges>
 </special>
 <!-------------------------------------------------------------------------------------->
