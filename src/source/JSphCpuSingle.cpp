@@ -622,16 +622,18 @@ void JSphCpuSingle::PreLoopProcedure(TpInterStep interstep){
   if(runshift){
     ComputeFSParticles();
     ComputeUmbrellaRegion();
-
-  
   }
+
   if(runshift)PreLoopInteraction_ct(DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr(),Velrho_c->cptr()
     ,FSType_c->ptr(),ShiftVel_c->ptr(),FSNormal_c->ptr(),FSMinDist_c->ptr());
 
   if(runshift)ComputeShiftingVel(Simulate2D,ShiftVel_c->ptr()
-    ,FSType_c->ptr(),FSNormal_c->ptr(),FSMinDist_c->ptr(),SymplecticDtPre,ShiftingAdv->GetShiftCoef());
+    ,FSType_c->ptr(),FSNormal_c->ptr(),FSMinDist_c->ptr(),SymplecticDtPre,ShiftingAdv->GetShiftCoef(),ShiftingAdv->GetAleActive());
 
-  //-Updates DenGradCorrc[] in periodic particles.
+  if(runshift)DgSaveVtkParticlesCpu("Compute_FreeSurface_",Part,0,Np,Pos_c->cptr(),Code_c->cptr()
+    ,FSType_c->cptr(),ShiftVel_c->cptr(),FSNormal_c->cptr());
+
+  //-Updates values computed in the pre-loop in periodic particles.
   if(PeriParent_c){
     const unsigned* periparent=PeriParent_c->ptr();
     unsigned* fstype  =FSType_c->ptr();
@@ -641,21 +643,22 @@ void JSphCpuSingle::PreLoopProcedure(TpInterStep interstep){
       shiftvel[p] =shiftvel[periparent[p]];
     }
   }
-  if(runshift)DgSaveVtkParticlesCpu("Compute_FreeSurface_",Part,0,Np,Pos_c->cptr(),Code_c->cptr()
-    ,FSType_c->cptr(),ShiftVel_c->cptr(),FSNormal_c->cptr());
+  
   
 }
 
 
 void JSphCpuSingle::ComputeFSParticles(){
+  acuint fspart("-",Arrays_Cpu,true);
   CallComputeFSNormals(DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr(),Velrho_c->cptr()
-    ,FSType_c->ptr(),FSNormal_c->ptr());
+    ,FSType_c->ptr(),FSNormal_c->ptr(),fspart.ptr());
 
 }
 
 void JSphCpuSingle::ComputeUmbrellaRegion(){
+  acuint fspart("-",Arrays_Cpu,true);
   CallScanUmbrellaRegion(DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr(),Velrho_c->cptr()
-    ,FSType_c->ptr(),FSNormal_c->cptr());
+    ,FSType_c->ptr(),FSNormal_c->cptr(),fspart.ptr());
 
 }
 
@@ -682,6 +685,8 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     ,Ar_c->ptr(),Ace_c->ptr(),AC_PTR(Delta_c)
     ,ShiftingMode,AC_PTR(ShiftPosfs_c)
     ,AC_PTR(SpsTauRho2_c),AC_PTR(Sps2Strain_c)
+    ,AC_PTR(FSType_c),AC_PTR(ShiftVel_c),AC_PTR(LCorr_c)
+    ,AC_PTR(FSTresh_c),AC_PTR(PressSym_c),AC_PTR(PressAsym_c)
   );
   StInterResultc res;
   res.viscdt=0;

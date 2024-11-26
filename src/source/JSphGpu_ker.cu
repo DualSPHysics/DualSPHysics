@@ -669,13 +669,13 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       if(shiftadv){
         const float massrho=(USE_FLOATING? ftmassp2: massp2)/velrhop2.w;        
         const float wab=cufsph::GetKernel_Wab<KERNEL_Wendland>(rr2);
-        
+        pou+=wab*massrho;
+        fs_treshold-=massrho*(drx*frx+dry*fry+drz*frz);
         if(ncpress && compute){
-          pou+=wab*massrho;
-          fs_treshold-=massrho*(drx*frx+dry*fry+drz*frz);
-          lcorr.a11+=-drx*frx*massrho; lcorr.a12+=-drx*fry*massrho; lcorr.a13+=-drx*frz*massrho;
-          lcorr.a21+=-dry*frx*massrho; lcorr.a22+=-dry*fry*massrho; lcorr.a23+=-dry*frz*massrho;
-          lcorr.a31+=-drz*frx*massrho; lcorr.a32+=-drz*fry*massrho; lcorr.a33+=-drz*frz*massrho;
+          float vfrx=frx*massrho; float vfry=fry*massrho; float vfrz=frz*massrho;
+          lcorr.a11+=-drx*vfrx; lcorr.a12+=-drx*vfry; lcorr.a13+=-drx*vfrz;
+          lcorr.a21+=-dry*vfrx; lcorr.a22+=-dry*vfry; lcorr.a23+=-dry*vfrz;
+          lcorr.a31+=-drz*vfrx; lcorr.a32+=-drz*vfry; lcorr.a33+=-drz*vfrz;
         }
       }
 
