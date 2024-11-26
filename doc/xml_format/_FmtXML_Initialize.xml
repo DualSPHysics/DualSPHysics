@@ -47,19 +47,6 @@
 				<posmax x="2" y="1" z="3" />
 			</onlypos>
 		</boundnormal_set>
-		<boundnormal_plane mkbound="2">
-		    ...
-			<onlypos>
-				<posmin x="2" />
-				<posmax x="4" />
-			</onlypos>
-		</boundnormal_plane>
-		<boundnormal_sphere mkbound="3">
-		    ...
-			<onlypos>
-				<posmax z="1" />
-			</onlypos>
-		</boundnormal_plane>
 	</initialize>
 </special>
 <!------------------------------------------------------------------------------------------>
