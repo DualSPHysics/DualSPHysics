@@ -258,14 +258,15 @@ class JPartDataBi4 : protected JObject
   unsigned Get_ArrayCount(std::string name)const{ return((unsigned)GetArray(name)->GetCount()); }
   bool Get_IdpSimple()const{ return(ArrayExists("Idp")); }
   bool Get_PosSimple()const{ return(ArrayExists("Pos")); }
-  unsigned Get_Idp  (unsigned size,unsigned* data)const{ return((unsigned)GetArray("Idp" ,JBinaryDataDef::DatUint   )->GetDataCopy(size,data)); }
-  unsigned Get_Idpd (unsigned size,ullong*   data)const{ return((unsigned)GetArray("Idpd",JBinaryDataDef::DatUllong )->GetDataCopy(size,data)); }
-  unsigned Get_Pos  (unsigned size,tfloat3*  data)const{ return((unsigned)GetArray("Pos" ,JBinaryDataDef::DatFloat3 )->GetDataCopy(size,data)); }
-  unsigned Get_Posd (unsigned size,tdouble3* data)const{ return((unsigned)GetArray("Posd",JBinaryDataDef::DatDouble3)->GetDataCopy(size,data)); }
-  unsigned Get_Vel  (unsigned size,tfloat3*  data)const{ return((unsigned)GetArray("Vel" ,JBinaryDataDef::DatFloat3 )->GetDataCopy(size,data)); }
-  unsigned Get_Rhop (unsigned size,float*    data)const{ return((unsigned)GetArray("Rhop",JBinaryDataDef::DatFloat  )->GetDataCopy(size,data)); }
-  unsigned Get_Mass (unsigned size,float*    data)const{ return((unsigned)GetArray("Mass",JBinaryDataDef::DatFloat  )->GetDataCopy(size,data)); }
-  unsigned Get_Hvar (unsigned size,float*    data)const{ return((unsigned)GetArray("Hvar",JBinaryDataDef::DatFloat  )->GetDataCopy(size,data)); }
+  unsigned Get_Idp     (unsigned size,unsigned* data)const{ return((unsigned)GetArray("Idp"     ,JBinaryDataDef::DatUint   )->GetDataCopy(size,data)); }
+  unsigned Get_Idpd    (unsigned size,ullong*   data)const{ return((unsigned)GetArray("Idpd"    ,JBinaryDataDef::DatUllong )->GetDataCopy(size,data)); }
+  unsigned Get_Pos     (unsigned size,tfloat3*  data)const{ return((unsigned)GetArray("Pos"     ,JBinaryDataDef::DatFloat3 )->GetDataCopy(size,data)); }
+  unsigned Get_Posd    (unsigned size,tdouble3* data)const{ return((unsigned)GetArray("Posd"    ,JBinaryDataDef::DatDouble3)->GetDataCopy(size,data)); }
+  unsigned Get_Vel     (unsigned size,tfloat3*  data)const{ return((unsigned)GetArray("Vel"     ,JBinaryDataDef::DatFloat3 )->GetDataCopy(size,data)); }
+  unsigned Get_Rhop    (unsigned size,float*    data)const{ return((unsigned)GetArray("Rhop"    ,JBinaryDataDef::DatFloat  )->GetDataCopy(size,data)); }
+  unsigned Get_Mass    (unsigned size,float*    data)const{ return((unsigned)GetArray("Mass"    ,JBinaryDataDef::DatFloat  )->GetDataCopy(size,data)); }
+  unsigned Get_Hvar    (unsigned size,float*    data)const{ return((unsigned)GetArray("Hvar"    ,JBinaryDataDef::DatFloat  )->GetDataCopy(size,data)); }
+  unsigned Get_BoundNor(unsigned size,tfloat3*  data)const{ return((unsigned)GetArray("BoundNor",JBinaryDataDef::DatFloat3 )->GetDataCopy(size,data)); }
 
   double Get_Particles2dPosY()const;
 };

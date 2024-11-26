@@ -660,7 +660,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JParticlesDef.h" />
     <ClInclude Include="..\source\JPartMotionDef.h" />
     <ClInclude Include="..\source\JPartMotRefBi4Save.h" />
-    <ClInclude Include="..\source\JPartNormalData.h" />
     <ClInclude Include="..\source\JPartOutBi4Save.h" />
     <ClInclude Include="..\source\JPartsLoad4.h" />
     <ClInclude Include="..\source\JPeriodicDef.h" />
@@ -868,7 +867,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JPartDataHead.cpp" />
     <ClCompile Include="..\source\JPartFloatInfoBi4.cpp" />
     <ClCompile Include="..\source\JPartMotRefBi4Save.cpp" />
-    <ClCompile Include="..\source\JPartNormalData.cpp" />
     <ClCompile Include="..\source\JPartOutBi4Save.cpp" />
     <ClCompile Include="..\source\JPartsLoad4.cpp" />
     <ClCompile Include="..\source\JRadixSort.cpp" />

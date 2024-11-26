@@ -61,7 +61,6 @@
 #include "JDsOutputParts.h" //<vs_outpaarts>
 #include "JDsPips.h"
 #include "JLinearValue.h"
-#include "JPartNormalData.h"
 #include "JDataArrays.h"
 #include "JOutputCsv.h"
 #include "JVtkLib.h"
@@ -1315,39 +1314,6 @@ void JSph::LoadCodeParticles(unsigned np,const unsigned* idp,typecode* code)cons
 }
 
 //==============================================================================
-/// Load normals for boundary particles (fixed and moving).
-//==============================================================================
-void JSph::LoadBoundNormals(unsigned np,const unsigned* idp,const typecode* code
-  ,tfloat3* boundnor)
-{
-  memset(boundnor,0,sizeof(tfloat3)*np);
-  if(!PartBegin){
-    const string filenormals=JPartNormalData::GetNormalDataFile(false,DirCase+CaseName);
-    if(fun::FileExists(filenormals)){
-      //-Loads final normals.
-      const tdouble3* pnor=NULL;
-      unsigned pnorsize=0;
-      JPartNormalData nd;
-      nd.LoadFile(false,DirCase+CaseName);
-      pnor=nd.GetPartNormals();
-      pnorsize=nd.GetNbound();
-      //-Applies final normals. Loads normals from boundary particle to boundary limit.
-      if(pnorsize){
-        Log->Printf("NormalDataFile=\"%s\"",filenormals.c_str());
-        if(pnorsize!=CaseNbound)Run_ExceptioonFile("The number of final normals does not match boundary particles.",filenormals);
-        for(unsigned p=0;p<pnorsize;p++)boundnor[p]=ToTFloat3(pnor[p]);
-      }
-    }
-    else{
-      const string filenormals=JPartNormalData::GetNormalDataFile(true,DirCase+CaseName);
-      if(fun::FileExists(filenormals)){
-        Run_ExceptioonFile("Old normal data file format (XXX_NormalData.nbi4) is invalid for current version. Use GenCase version 5.0.268 or higher to generate a supported file with normal data (XXX_Normals.nbi4).",filenormals);
-      }
-    }
-  }
-}
-
-//==============================================================================
 /// Config normals to point from boundary particle to ghost node (full distance).
 //==============================================================================
 void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
@@ -1792,8 +1758,6 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3* pos
         init.LoadXml(&xml,"case.execution.special.initialize");
       }
     }
-    //-Loads configuration from execution parameters.
-    init.LoadExecParms(CfgRun->InitParms);
     //-Executes initialize tasks.
     if(init.Count()){
       //-Creates array with mktype value.
@@ -2641,9 +2605,9 @@ void JSph::FtUpdateFloatings(double dt,const tfloat6* fto_vellinang
   ,const tdouble3* fto_center)
 {
   for(unsigned cf=0;cf<FtCount;cf++){
-    const tfloat3  fvel   =Fto_VelLinAng[cf].getlo();
-    const tfloat3  fomega =Fto_VelLinAng[cf].gethi();
-    const tdouble3 fcenter=Fto_Center[cf];
+    const tfloat3  fvel   =fto_vellinang[cf].getlo();
+    const tfloat3  fomega =fto_vellinang[cf].gethi();
+    const tdouble3 fcenter=fto_center[cf];
     //-Stores floating data.
     FtObjs[cf].center=(PeriActive? UpdatePeriodicPos(fcenter): fcenter);
     FtObjs[cf].angles=ToTFloat3(ToTDouble3(FtObjs[cf].angles)+ToTDouble3(fomega)*dt);

@@ -123,10 +123,14 @@ void JSphCpuSingle::ConfigDomain(){
   //-Allocates CPU memory for particles.
   AllocCpuMemoryParticles(Np);
 
-  //-Copies particle data.
+  //-Copies particle data from input file.
   Pos_c   ->CopyFrom(PartsLoaded->GetPos(),Np);
   Idp_c   ->CopyFrom(PartsLoaded->GetIdp(),Np);
   Velrho_c->CopyFrom(PartsLoaded->GetVelRho(),Np);
+  if(UseNormals){
+    BoundNor_c->Memset(0,Np);
+    BoundNor_c->CopyFrom(PartsLoaded->GetBoundNor(),CaseNbound);
+  }
 
   //-Computes radius of floating bodies.
   if(CaseNfloat && PeriActive!=0 && !PartBegin)
@@ -137,9 +141,6 @@ void JSphCpuSingle::ConfigDomain(){
 
   //-Load particle code. | Carga code de particulas.
   LoadCodeParticles(Np,Idp_c->cptr(),Code_c->ptr());
-
-  //-Load normals for boundary particles (fixed and moving).
-  if(UseNormals)LoadBoundNormals(Np,Idp_c->cptr(),Code_c->cptr(),BoundNor_c->ptr());
 
   //-Creates PartsInit object with initial particle data for automatic configurations.
   CreatePartsInit(Np,Pos_c->cptr(),Code_c->cptr());

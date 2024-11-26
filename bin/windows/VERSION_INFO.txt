@@ -1,4 +1,4 @@
-GenCase      v5.4.349    20-11-2024
+GenCase      v5.4.350    26-11-2024
 IsoSurface   v5.4.257    12-09-2024
 MeasureTool  v5.4.257    12-09-2024
 PartVTK      v5.4.257    12-09-2024

@@ -11,7 +11,7 @@
 			<savevtkpart value="false" comment="Creates VTK files for each PART (default=false)" />
 			<computedt value="0.001" comment="Time between measurements. 0:all steps (default=TimeOut)" units_comment="s" />
 			<computetime start="0.1" end="0.2" comment="Start and end of measures. (default=simulation time)" units_comment="s" />
-			<output value="true" comment="Creates CSV files of measurements (default=false)" />
+			<output value="true" comment="Creates CSV and binary files of measurements (default=false)" />
 			<outputdt value="0" comment="Time between output measurements. 0:all computed measurements (default=TimeOut)" units_comment="s" />
 			<outputtime start="0" end="10" comment="Start and end of output measures. (default=simulation time)" units_comment="s" />
 		</default>
@@ -85,6 +85,7 @@
 			<masslimit coef="0.45" comment="Coefficient to calculate mass of free-surface (default=0.5 on 3D and 0.4 on 2D)" />
 			<outputdata value="vel,veldir,rhop,zsurf" comment="Type of results requested (vel, veldir, rhop, zsurf)" />
 			<outputfmt value="bin,csv" comment="Output formats (bin, csv) (default=csv)" />
+			<output value="true" comment="Creates CSV and binary files of measurements (default=false)" />
 			<buffersize value="30" comment="Output buffer size (default=30)" />
 			<kclimit value="0.2" comment="Minimum value of sum_wab_vol to apply the Kernel Correction. Use NONE to disable (default=0.5)" />
 			<kcdummy value="0" comment="Dummy value for non-corrected values. Use NONE to disable (default=0)" />
@@ -99,6 +100,7 @@
 			<masslimit coef="0.4" comment="Coefficient to calculate mass of free-surface (default=0.5 on 3D and 0.4 on 2D)" />
 			<outputdata value="zsurf" comment="Type of results requested (vel, veldir, rhop, zsurf)" />
 			<outputfmt value="bin,csv" comment="Output formats (bin, csv) (default=csv)" />
+			<output value="true" comment="Creates CSV and binary files of measurements (default=false)" />
 			<buffersize value="30" comment="Output buffer size (default=30)" />
 		</mesh>
 		<!-- Calculates flow in a mesh of points. -->
