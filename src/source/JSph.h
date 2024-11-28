@@ -181,7 +181,6 @@ protected:
   bool UseNormals;            ///<Indicates use of normals for mDBC.
   bool UseNormalsFt;          ///<Indicates use of normals of floating bodies for mDBC.
   bool SvNormals;             ///<Saves normals VTK each PART (default=false).
-  bool AleForm;               ///<ALE formulation for advanced shifting> <ShiftImpr>
 
   bool RhopOut;               ///<Indicates whether the RhopOut density correction is active or not.    | Indica si activa la correccion de densidad RhopOut o no.                       
   float RhopOutMin;           ///<Minimum limit for Rhopout correction.                                 | Limite minimo para la correccion de RhopOut.

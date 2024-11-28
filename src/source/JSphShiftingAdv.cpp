@@ -62,6 +62,27 @@ void JSphShiftingAdv::Reset(){
   ConfigBasic(-0.01,false,false);
 }
 
+//==============================================================================
+/// Shows object configuration using Log.
+//==============================================================================
+void JSphShiftingAdv::VisuConfig(std::string txhead,std::string txfoot){
+  if(!txhead.empty())Log->Print(txhead);
+  Log->Print(fun::VarStr("Shifting Advanced","active"));
+  Log->Print(fun::VarStr("  ShiftCoef",ShiftCoef));
+  if(AleActive)Log->Print(fun::VarStr("  AleActive","true"));
+  if(NcPress)Log->Print(fun::VarStr("  NcPress","true"));
+}
+
+//==============================================================================
+/// Returns configuration information in one string line.
+//==============================================================================
+std::string JSphShiftingAdv::GetConfigInfo()const{
+  string ret;
+    ret=string("Shifting Advanced(")+"true"
+      +fun::PrintStr(",%g,%s,%s)",ShiftCoef,AleActive?"true":"false",NcPress?"true":"false");
+  return(ret);
+}
+
 
 //==============================================================================
 /// Explicit configuration from execution parameters.
