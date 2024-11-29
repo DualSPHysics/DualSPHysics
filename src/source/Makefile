@@ -147,7 +147,7 @@ CCFLAGS := $(CCFLAGS) -I./ -I$(DIRTOOLKIT)/include
 CCLINKFLAGS := $(CCLINKFLAGS) -L$(DIRTOOLKIT)/lib64 -lcudart_static -ldl -lrt
 NCC=nvcc
 ifeq ($(USE_DEBUG), NO)
-  NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC)
+  NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC) -lineinfo
 else
   NCCFLAGS+=-c $(GENCODE) -O0 -ccbin $(CC) -g -G -lineinfo
 endif

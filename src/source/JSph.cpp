@@ -301,8 +301,6 @@ void JSph::InitVars(){
   MaxNumbers.Clear();
 
   SaveFtAce=false;
-
-  AleForm=false;
 }
 
 //==============================================================================
@@ -754,9 +752,6 @@ void JSph::LoadConfigParameters(const JXml* cxml){
       Shifting->ConfigBasic(shiftmode,shiftcoef,shifttfs);
     }
   }
-
-  //-ALE formulation for advanced shifting
-  if(eparms.Exists("ALEFormulation"))AleForm=(eparms.GetValueInt("ALEFormulation",true,0)!=0);
 
 
   WrnPartsOut=(eparms.GetValueInt("WrnPartsOut",true,1)!=0);
@@ -1613,9 +1608,11 @@ void JSph::VisuConfig(){
   if(Shifting){
     Shifting->VisuConfig();
     ConfigInfo=ConfigInfo+sep+Shifting->GetConfigInfo();
+  } else if(ShiftingAdv){
+    ShiftingAdv->VisuConfig();
+    ConfigInfo=ConfigInfo+sep+ShiftingAdv->GetConfigInfo();
   }
   else Log->Print(fun::VarStr("Shifting","None"));
-  Log->Print(fun::VarStr("ALEFormulation",AleForm));
   //-RigidAlgorithm.
   string rigidalgorithm=(!FtCount? "None": GetNameRigidMode(RigidMode));
   Log->Print(fun::VarStr("RigidAlgorithm",rigidalgorithm));

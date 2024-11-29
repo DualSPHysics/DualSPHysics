@@ -28,6 +28,26 @@
 #include <cmath>
 
 using namespace std;
+
+
+//==============================================================================
+/// Creates list with free-surface particle (normal and periodic).
+//==============================================================================
+unsigned JSphCpu::CountFreeSurfaceParticles(unsigned npf,unsigned pini
+  ,const unsigned* fstype,unsigned* fspart) const
+{
+  unsigned count=0;
+  const unsigned pfin=pini+npf;
+  for(unsigned p=pini;p<pfin;p++){
+    const unsigned fstypep=fstype[p];
+    if(fstypep){//-It includes normal and periodic particles.
+        fspart[count]=p; count++;
+    }
+  }
+  
+  //Log->Printf("%u> -------->CreateListXXX>> InOutcount:%u",nstep,count);
+  return(count);
+}
 //==============================================================================
 /// Perform interaction between particles: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 /// Realiza interaccion entre particulas: Fluid/Float-Fluid/Float or Fluid/Float-Bound
@@ -36,14 +56,16 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionComputeFSNormals
   (unsigned n,unsigned pinit
   ,StDivDataCpu divdata,const unsigned* dcell
   ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-  ,unsigned* fstype,tfloat3* fsnormal)const
+  ,unsigned* fstype,tfloat3* fsnormal,unsigned* listp)const
 {
   //-Initialise execution with OpenMP. | Inicia ejecucion con OpenMP.
-  const int pfin=int(pinit+n);
+  // const int pfin=int(pinit+n);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
-  for(int p1=int(pinit);p1<pfin;p1++){
+  for(int p=0;p<n;p++){
+    int p1=listp[p];
+
     
     float fs_treshold=0.f;                              //-Divergence of the position.
     tfloat3 gradc=TFloat3(0);                           //-Gradient of the concentration
@@ -127,7 +149,7 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionComputeFSNormals
       }
       fstype[p1]=fstypep1;
     
-    if(fstypep1==2){
+    // if(fstypep1==2){
     //-Calculation of the inverse of the correction matrix (Don't think there is a better way, create function for Determinant2x2 for clarity?).
       if(sim2d){
         tmatrix2f lcorr2d;
@@ -152,9 +174,9 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionComputeFSNormals
       fsnormal[p1].x=-gradc1.x/gradc_norm;
       fsnormal[p1].y=-gradc1.y/gradc_norm;
       fsnormal[p1].z=-gradc1.z/gradc_norm;
-    }else{
-      fsnormal[p1]=TFloat3(0);
-    }
+    // }else{
+      // fsnormal[p1]=TFloat3(0);
+    // }
     
   }
 }
@@ -169,32 +191,33 @@ template<TpKernel tker,bool sim2d> void JSphCpu::CallComputeFSNormalsT1
   (unsigned n,unsigned pinit
   ,StDivDataCpu divdata,const unsigned* dcell
   ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-  ,unsigned* fstype,tfloat3* fsnormal)const
+  ,unsigned* fstype,tfloat3* fsnormal,unsigned* listp)const
 {
   if(n){
+    unsigned count=CountFreeSurfaceParticles(n,pinit,fstype,listp);
     //-Interaction Fluid-Fluid.
     InteractionComputeFSNormals<tker,sim2d> 
-      (n,pinit,divdata,dcell,pos,code,velrho,fstype,fsnormal);
+      (count,pinit,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);
   }
 }
 
 void JSphCpu::CallComputeFSNormals(const StDivDataCpu& divdata
   ,const unsigned* dcell,const tdouble3* pos,const typecode* code
-  ,const tfloat4* velrho,unsigned* fstype,tfloat3* fsnormal)const
+  ,const tfloat4* velrho,unsigned* fstype,tfloat3* fsnormal,unsigned* listp)const
 {
   const unsigned npf=Np-Npb;
   if(npf){
     if(Simulate2D){ const bool sim2d=true;
       switch(TKernel){
-        case KERNEL_Cubic:       CallComputeFSNormalsT1 <KERNEL_Cubic     ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal);  break;
-        case KERNEL_Wendland:    CallComputeFSNormalsT1 <KERNEL_Wendland  ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal);  break;
+        case KERNEL_Cubic:       CallComputeFSNormalsT1 <KERNEL_Cubic     ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
+        case KERNEL_Wendland:    CallComputeFSNormalsT1 <KERNEL_Wendland  ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
         default: Run_Exceptioon("Kernel unknown.");
       }
     }
     else{ const bool sim2d=false;
       switch(TKernel){
-        case KERNEL_Cubic:       CallComputeFSNormalsT1 <KERNEL_Cubic     ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal);  break;
-        case KERNEL_Wendland:    CallComputeFSNormalsT1 <KERNEL_Wendland  ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal);  break;
+        case KERNEL_Cubic:       CallComputeFSNormalsT1 <KERNEL_Cubic     ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
+        case KERNEL_Wendland:    CallComputeFSNormalsT1 <KERNEL_Wendland  ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
         default: Run_Exceptioon("Kernel unknown.");
       }
     }
@@ -206,16 +229,17 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionCallScanUmbrellaRegi
   (unsigned n,unsigned pinit
   ,StDivDataCpu divdata,const unsigned* dcell
   ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-  ,unsigned* fstype,const tfloat3* fsnormal)const
+  ,unsigned* fstype,const tfloat3* fsnormal,unsigned* listp)const
 {
   //-Initialise execution with OpenMP. | Inicia ejecucion con OpenMP.
-  const int pfin=int(pinit+n);
+  // const int pfin=int(pinit+n);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
   
-  for(int p1=int(pinit);p1<pfin;p1++){
-  if(fstype[p1]>1){ 
+  for(int p=0;p<n;p++){
+    int p1=listp[p];
+  
     
     bool fs_flag=false;
 
@@ -276,7 +300,7 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionCallScanUmbrellaRegi
       if(CODE_IsPeriodic(code[p1])) fstype[p1]=0;
     
     
-  }
+  
   }
 }
 
@@ -290,32 +314,33 @@ template<TpKernel tker,bool sim2d> void JSphCpu::CallScanUmbrellaRegionT1
   (unsigned n,unsigned pinit
   ,StDivDataCpu divdata,const unsigned* dcell
   ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-  ,unsigned* fstype,const tfloat3* fsnormal)const
+  ,unsigned* fstype,const tfloat3* fsnormal,unsigned* listp)const
 {
   if(n){
+    unsigned count=CountFreeSurfaceParticles(n,pinit,fstype,listp);
     //-Interaction Fluid-Fluid.
     InteractionCallScanUmbrellaRegion<tker,sim2d> 
-      (n,pinit,divdata,dcell,pos,code,velrho,fstype,fsnormal);
+      (count,pinit,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);
   }
 }
 
 void JSphCpu::CallScanUmbrellaRegion(const StDivDataCpu& divdata
   ,const unsigned* dcell,const tdouble3* pos,const typecode* code
-  ,const tfloat4* velrho,unsigned* fstype,const tfloat3* fsnormal)const
+  ,const tfloat4* velrho,unsigned* fstype,const tfloat3* fsnormal,unsigned* listp)const
 {
   const unsigned npf=Np-Npb;
   if(npf){
     if(Simulate2D){ const bool sim2d=true;
       switch(TKernel){
-        case KERNEL_Cubic:       CallScanUmbrellaRegionT1 <KERNEL_Cubic     ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal);  break;
-        case KERNEL_Wendland:    CallScanUmbrellaRegionT1 <KERNEL_Wendland  ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal);  break;
+        case KERNEL_Cubic:       CallScanUmbrellaRegionT1 <KERNEL_Cubic     ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
+        case KERNEL_Wendland:    CallScanUmbrellaRegionT1 <KERNEL_Wendland  ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
         default: Run_Exceptioon("Kernel unknown.");
       }
     }
     else{ const bool sim2d=false;
       switch(TKernel){
-        case KERNEL_Cubic:       CallScanUmbrellaRegionT1 <KERNEL_Cubic     ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal);  break;
-        case KERNEL_Wendland:    CallScanUmbrellaRegionT1 <KERNEL_Wendland  ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal);  break;
+        case KERNEL_Cubic:       CallScanUmbrellaRegionT1 <KERNEL_Cubic     ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
+        case KERNEL_Wendland:    CallScanUmbrellaRegionT1 <KERNEL_Wendland  ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
         default: Run_Exceptioon("Kernel unknown.");
       }
     }
@@ -341,9 +366,9 @@ template<TpKernel tker,bool sim2d,bool shiftadv> void JSphCpu::PreLoopInteractio
     tfloat4 shiftvelp1=TFloat4(0);            //-Shifting Velocity vector
     tfloat3 fsnormalp1=TFloat3(0);            //-Free-surface vector
     bool    nearfs=false;                     //-Bool for detecting near free-surface particles.                <ShiftingAdvanced>
-
+    float   pou=false;                        //-Partition of unity for normal correction.                      <ShiftingAdvanced>
       
-    float mindist=KernelSize;             //-Set Min Distance from free-surface to kernel radius.           <ShiftingAdvanced>
+    float mindist=KernelSize;                 //-Set Min Distance from free-surface to kernel radius.           <ShiftingAdvanced>
     float maxarccos=0.0;                      //-Variable for identify high-curvature free-surface particle     <ShiftingAdvanced>
     bool bound_inter=false;                   //-Variable for identify free-surface that interact with boundary <ShiftingAdvanced>
     unsigned fsp1=fstype[p1];         
@@ -392,16 +417,16 @@ template<TpKernel tker,bool sim2d,bool shiftadv> void JSphCpu::PreLoopInteractio
             shiftvelp1.y+=massrho*fry;
             shiftvelp1.z+=massrho*frz;          
             const float wab=fsph::GetKernel_Wab<tker>(CSP,rr2);
-            shiftvelp1.w+=wab*massrho;
+             shiftvelp1.w+=wab*massrho;
 
             //-Check if the particle is too close to solid or floating object
-            if((boundp2 || ftp2) && sqrt(rr2)<1.8f*Dp) bound_inter=true;
+            if(boundp2 || ftp2) bound_inter=true;
 
             //-Check if it close to the free-surface, calculate distance from free-surface and smoothing of free-surface normals.
-            if(fstype[p2]>1  && !boundp2 ) {
+            if(fstype[p2]==2  && !boundp2 ) {
               nearfs=true;
               mindist=min(sqrt(rr2),mindist);
-
+              pou+=wab*massrho;
               fsnormalp1.x+=fsnormal[p2].x*wab*massrho;
               fsnormalp1.y+=fsnormal[p2].y*wab*massrho;
               fsnormalp1.z+=fsnormal[p2].z*wab*massrho;
@@ -428,12 +453,14 @@ template<TpKernel tker,bool sim2d,bool shiftadv> void JSphCpu::PreLoopInteractio
 
       fsmindist[p1]=mindist;
       //-Assign correct code to near free-surface particle and correct their normals by Shepard's Correction.
-      if(fsp1==0 && nearfs && shiftvelp1.w>0.01){
-
-      fsnormalp1=TFloat3(fsnormalp1.x/shiftvelp1.w,fsnormalp1.y/shiftvelp1.w,fsnormalp1.z/shiftvelp1.w);
-      float norm=sqrt(fsnormalp1.x*fsnormalp1.x+fsnormalp1.y*fsnormalp1.y+fsnormalp1.z*fsnormalp1.z);
-      fsnormal[p1]=TFloat3(fsnormalp1.x/norm,fsnormalp1.y/norm,fsnormalp1.z/norm);
+      if(fsp1==0 && nearfs){
+        if(pou>1e-6){
+          fsnormalp1=TFloat3(fsnormalp1.x,fsnormalp1.y,fsnormalp1.z);
+          float norm=sqrt(fsnormalp1.x*fsnormalp1.x+fsnormalp1.y*fsnormalp1.y+fsnormalp1.z*fsnormalp1.z);
+          fsnormal[p1]=TFloat3(fsnormalp1.x/norm,fsnormalp1.y/norm,fsnormalp1.z/norm);
+        }
       fstype[p1]=1;
+      if(bound_inter) fstype[p1]=3;
       }
       
       //-Check if free-surface particle interact with bound or has high-curvature.
@@ -508,7 +535,7 @@ void JSphCpu::PreLoopInteraction_ct(const StDivDataCpu& divdata
 /// turbulence model.   
 //==============================================================================
 void JSphCpu::ComputeShiftingVel(bool simulate2d,tfloat4* shiftvel
-    ,const unsigned* fstype,const tfloat3* fsnormal,const float* fsmindist,double dt,float shiftcoef)const
+    ,const unsigned* fstype,const tfloat3* fsnormal,const float* fsmindist,double dt,float shiftcoef,bool ale)const
 {
   const int np=int(Np);
   const int npb=int(Npb);
@@ -530,19 +557,27 @@ void JSphCpu::ComputeShiftingVel(bool simulate2d,tfloat4* shiftvel
         shift_final=shiftp1;
       }
       else if(fstypep1==1 || fstypep1==2){
+        if(ale){
         shift_final.x=shiftp1.x-theta*fsnormalp1.x*normshift;
         shift_final.y=shiftp1.y-theta*fsnormalp1.y*normshift;
         shift_final.z=shiftp1.z-theta*fsnormalp1.z*normshift;
+        }else{
+          shift_final=TFloat4(0,0,0,0);
+        }
       } else if(fstypep1==3){
         shift_final=TFloat4(0,0,0,0);
       }
 
 
 
-      if(simulate2d) shift_final.y=0.f;
+      if(simulate2d) shift_final.y=0.0;
 
-    
-      const float umagn= shiftcoef*KernelH*fsmindistp1;
+      const float rhovar=abs(shiftp1.x*shift_final.x+shiftp1.y*shift_final.y+shiftp1.z*shift_final.z)*min(KernelH,fsmindistp1);
+      const float eps=1e-5;
+      const float umagn_1=shiftcoef*KernelH/dt;
+      const float umagn_2=abs(eps/(2.0*dt*rhovar));
+      const float umagn=min(umagn_1,umagn_2)*min(KernelH,fsmindistp1)*dt;
+
       const float maxdist=0.1f*Dp;
       shift_final.x=(fabs(umagn*shift_final.x)<maxdist? umagn*shift_final.x: (umagn*shift_final.x>=0? maxdist: -maxdist));
       shift_final.y=(fabs(umagn*shift_final.y)<maxdist? umagn*shift_final.y: (umagn*shift_final.y>=0? maxdist: -maxdist));

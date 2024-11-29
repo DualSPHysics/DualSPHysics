@@ -13,6 +13,7 @@ src/source/___*
 examples/main/01_DamBreak/*_out
 examples/01_DamBreak/*
 examples_vres/*
+examples_vres/*
 
 ## Ignores other directories.
 __Tools__

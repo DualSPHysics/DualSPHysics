@@ -426,7 +426,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
     ,const unsigned &pini,const unsigned &pfin,const float4 *poscell,const float4 *velrhop
     ,const typecode *code,float massp2,const float4 &pscellp1,const float4 &velrhop1,const float* ftomassp
     ,float4 &shiftposf1,unsigned* fs,float3* fsnormal,bool& nearfs,float &mindist,float& maxarccos
-    ,bool& bound_inter,float3& fsnormalp1)
+    ,bool& bound_inter,float3& fsnormalp1,float& pou)
   {
     for(int p2=pini;p2<pfin;p2++){
       const float4 pscellp2=poscell[p2];
@@ -457,6 +457,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
           const float wab=cufsph::GetKernel_Wab<KERNEL_Wendland>(rr2);
           shiftposf1.w+=wab*massrho;
 
+
           //-Check if the particle is too close to solid or floating object
           if((boundp2 || ftp2)) bound_inter=true;
 
@@ -464,6 +465,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
           if(fs[p2]>1 && fs[p2]<3 && !boundp2 ) {
             nearfs=true;
             mindist=min(sqrt(rr2),mindist);
+            pou+=wab*massrho;
 
             fsnormalp1.x+=fsnormal[p2].x*wab*massrho;
             fsnormalp1.y+=fsnormal[p2].y*wab*massrho;
@@ -505,6 +507,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
       bool bound_inter=false;                   //-Variable for identify free-surface that interact with boundary <shiftImproved>
       float3 fsnormalp1=make_float3(0,0,0);     //-Normals for near free-surface particles <shiftImproved>
       unsigned fsp1=fstype[p1];                 //-Free-surface identification code: 0-internal, 1-close to free-surface, 2 free-surface, 3-isolated.
+      float   pou=false;                        //-Partition of unity for normal correction.                      <ShiftingAdvanced>
     
       //-Obtains neighborhood search limits.
       int ini1,fin1,ini2,fin2,ini3,fin3;
@@ -517,10 +520,10 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
         if(pfin){
           KerPreLoopInteractionBox<tker,simulate2d,shiftadv,false> (false,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1);
+            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou);
           if(symm && rsymp1)KerPreLoopInteractionBox<tker,simulate2d,shiftadv,true> (false,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1); //<vs_syymmetry>
+            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou); //<vs_syymmetry>
         } 
       }
 
@@ -532,10 +535,10 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
         if(pfin){
         KerPreLoopInteractionBox<tker,simulate2d,shiftadv,false> (true,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1);
+            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou);
         if(symm && rsymp1)KerPreLoopInteractionBox<tker,simulate2d,shiftadv,true> (true,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1); //<vs_syymmetry>
+            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou); //<vs_syymmetry>
       }
       }
 
@@ -548,11 +551,12 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
 
       fsmindist[p1]=mindist;
       //-Assign correct code to near free-surface particle and correct their normals by Shepard's Correction.
-      if(fsp1==0 && nearfs && shiftposp1.w>0.01){
-
-      fsnormalp1=make_float3(fsnormalp1.x/shiftposp1.w,fsnormalp1.y/shiftposp1.w,fsnormalp1.z/shiftposp1.w);
-      float norm=sqrt(fsnormalp1.x*fsnormalp1.x+fsnormalp1.y*fsnormalp1.y+fsnormalp1.z*fsnormalp1.z);
-      fsnormal[p1]=make_float3(fsnormalp1.x/norm,fsnormalp1.y/norm,fsnormalp1.z/norm);
+      if(fsp1==0 && nearfs){
+      if(pou>1e-6){
+        fsnormalp1=make_float3(fsnormalp1.x,fsnormalp1.y,fsnormalp1.z);
+        float norm=sqrt(fsnormalp1.x*fsnormalp1.x+fsnormalp1.y*fsnormalp1.y+fsnormalp1.z*fsnormalp1.z);
+        fsnormal[p1]=make_float3(fsnormalp1.x/norm,fsnormalp1.y/norm,fsnormalp1.z/norm);
+      }      
       fstype[p1]=1;
       if(bound_inter) fstype[p1]=3;
       }
