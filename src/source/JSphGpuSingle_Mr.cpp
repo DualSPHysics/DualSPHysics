@@ -218,14 +218,12 @@ void JSphGpuSingle_Mr::BufferInit(StInterParmsbg *parms){
     cusph::CteInteractionUp(&CTE);
 
 	for(unsigned i=0;i<Multires->GetCount();i++){
-		int *bufferpart=NULL;
-		cudaMalloc((void**)&bufferpart, sizeof(int)*(Np+1));
-		unsigned buffercountpre=0;
+		agint bufferpartg("-",Arrays_Gpu,true);
+		unsigned buffercountpre;
 
 //		DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-		buffercountpre=Multires->CreateListGpuInit(Np,0,Posxy_g->cptr(),Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize,bufferpart,i);
+		buffercountpre=Multires->CreateListGpuInit(Np,0,Posxy_g->cptr(),Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize,bufferpartg.ptr(),i);
 		// std::cout << buffercountpre << std::endl;
-		cudaFree(bufferpart);
 
 	}
 

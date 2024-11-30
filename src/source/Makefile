@@ -121,7 +121,7 @@ OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphInOut.o JSphInOutZone.o JSphIn
 OBINOUTGPU=JSphGpuSingle_InOut.o
 OBMDBC=JPartNormalData.o
 OBMESH=JMeshData.o JMeshTDatas.o JMeshTDatasLoad.o JMeshTDatasSave.o JMeshTDatasDsVel.o JMeshTDatasXml.o
-OBVRES=JSphGpuWrapper.o JSphBuffer.o JSphBufferZone.o JSphGpuSingle_Mr.o JCaseVRes.o JVResDataLimits.o JDsVresData.o JBoxDef.o
+OBVRES=JSphBuffer.o JSphBufferZone.o JSphCpuSingle_Mr.o JSphGpuSingle_Mr.o JSphCpu_Buffer.o JCaseVRes.o JVResDataLimits.o JDsVresData.o JBoxDef.o
 
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
 OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)

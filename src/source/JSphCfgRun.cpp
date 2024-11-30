@@ -95,6 +95,7 @@ void JSphCfgRun::Reset(){
   PipsMode=0; PipsSteps=100;
   CreateDirs=true;
   CsvSepComa=false;
+  VRes=false;
 }
 
 //==============================================================================

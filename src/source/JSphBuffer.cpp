@@ -405,6 +405,18 @@ StrDataVresGpu JSphBuffer::GetZoneFluxInfoGpu(unsigned nzone){
   float*    mass    =PtMassg    ;
   return(StrDataVresGpu(npoints,nini,posxyg,poszg,normals,velmot,mass));
 }
+
+
+StrDataVresCpu JSphBuffer::GetZoneFluxInfoCpu(unsigned nzone){
+  unsigned nini=NIni[nzone];
+  unsigned npoints=NPoints[nzone];
+
+  tdouble3*  points  =PtPoints   ;
+  tfloat3*   normals =PtNormals  ;
+  tfloat3*   velmot  =PtVelMot   ;
+  float*     mass    =PtMass     ;
+  return(StrDataVresCpu(npoints,nini,points,normals,velmot,mass));
+}
 // StrGeomVresGpu JSphBuffer::GetGeomInfoVres(){
 //   double3*    boxlimitmin = BoxLimitMing;
 //   double3*    boxlimitmax = BoxLimitMaxg;
@@ -513,6 +525,8 @@ unsigned count=0;
     }
 return(count);
 }
+
+
 unsigned JSphBuffer::CreateListCpuInit(unsigned npf,unsigned pini
 		  ,const tdouble3 *pos,const unsigned *idp,typecode *code,int *inoutpart,unsigned nzone)
 {
@@ -584,17 +598,14 @@ unsigned JSphBuffer::CreateListGpu(unsigned npf, unsigned pini, const double2 *p
 #endif
 //
 //
-unsigned JSphBuffer::ComputeStepCpu(unsigned bufferpartcount,int *bufferpart,
-		const unsigned idnext,unsigned *dcell,typecode *code,tdouble3 *pos,unsigned *idp,
-		tfloat4 *velrhop,const JSphCpu *sphcpu,byte *newizone,unsigned np,double dt,StDivDataCpu divdata,StCteSph CSP,unsigned nzone,const tdouble3 *normals,const tdouble3 *points,const tdouble4 *vel){
+  unsigned JSphBuffer::ComputeStepCpu(unsigned bufferpartcount,int *bufferpart
+		,typecode *code,const tdouble3 *pos,unsigned nzone){
 //	/-Updates code according to particle position and define new particles to create.
 	  const int ncp=int(bufferpartcount);
 	  //Log->Printf("%d>==>> ComputeStepCpu  ncp:%d",nstep,ncp);
 	  #ifdef OMP_USE
 	    #pragma omp parallel for schedule (static)
 	  #endif
-	//  unsigned count=0;
-	  //for(unsigned i=0;i<nzone;i++)count+=ListNum[nzone];
 	  for(int cp=0;cp<ncp;cp++){
 		  typecode cod=0;
 		  byte newiz=255;
@@ -604,62 +615,57 @@ unsigned JSphBuffer::ComputeStepCpu(unsigned bufferpartcount,int *bufferpart,
 		  const unsigned izone=(izone0&CODE_TYPE_FLUID_BUFFER015MASK); //-Substract 16 to obtain the actual zone (0-15).
 		  const tdouble3 ps=pos[p];
 
-		  if(izone0>=16){//-Normal fluid particle in zone inlet/outlet.
-			  cod= rcode^0x10 ; //-Converts to inout particle or not.
+		  if(izone0>=16){//-Normal fluid particle in buffer zone.
+			  cod= rcode^0x10 ; //-Converts to buffer particle or not.
 			  code[p]=cod;
-			  List[nzone]->PartFluidToBuffer++;
-//			  cod=CODE_SetOutIgnore(rcode); //-Particle is moved out domain.
-//			  				  code[p]=cod;
-		  }
+ 		  }
 		  else{//-Previous inout fluid particle.
 			  const bool isnormal=List[nzone]->is_Normal(ps);
 			  if(List[nzone]->is_Out(ps)){
 				  cod=CODE_SetOutIgnore(rcode); //-Particle is moved out domain.
 				  code[p]=cod;
-				  List[nzone]->Partout++;
 			  }
 			  else if(isnormal){
 				  cod=CODE_TYPE_FLUID; //-Particle become normal;
 				  code[p]=cod;
-				  List[nzone]->PartBufferToFluid++;
 			  }
 		  }
 	  }
 
 	  unsigned newcp=0;
-	  for(unsigned i=0;i<List[nzone]->getCount();i++){
-		  double flux=List[nzone]->getFluxes()[i];
-		  if(flux>CSP.massfluid){
-			  flux-=CSP.massfluid;
-			  List[nzone]->getFluxes()[i]=flux;
-			  tdouble3 rpos=List[nzone]->getPoints()[i];
-			  tdouble3 normal1=normals[i];//List[nzone]->getNormals()[i];
-			  tdouble4 vel1=vel[i];//List[nzone]->getVelrhop()[i];
-			  const double dis=0.5*CSP.dp/*+std::max(dp*0.5,Shiftpos[i+NZonePoints[nzone]]*(2*dp*dp))*/;
-			  const double vel2=-(vel1.x*normal1.x+vel1.z*normal1.z);
-			  const double dt1=CSP.dp/vel2;
-			  const double dis_transx=0.5*dt1*(abs(vel1.x*normal1.z));
-			  const double dis_transz=0.5*dt1*(abs(vel1.z*normal1.x));
-			  rpos.x-=dis*normal1.x;
-			  rpos.y-=dis*normal1.y;
-			  rpos.z-=dis*normal1.z;
-//			  rpos.x+=dis_transx;
-//			  rpos.z+=dis_transz;
-			  const unsigned p2=np+newcp;
-			  	        code[p2]=CODE_ToFluidBuffer(CODE_TYPE_FLUID,0);
-			  	        if(List[nzone]->is_Normal(rpos))code[p2]=CODE_TYPE_FLUID;
-//			  	        code[p2]=CODE_TYPE_FLUID;
-			  	  	  	sphcpu->UpdatePos(rpos,0,0,0,false,p2,pos,dcell,code);
-			  	        idp[p2]=idnext+newcp;
-//			  	        velrhop[p2]=TFloat4(Fluxvelrhop[i+NZonePoints[nzone]].x,Fluxvelrhop[i+NZonePoints[nzone]].y,Fluxvelrhop[i+NZonePoints[nzone]].z,Fluxvelrhop[i+NZonePoints[nzone]].w);
-			  	        velrhop[p2]=TFloat4(0,0,0,1000);
-			  	        newcp++;
-			  	      List[nzone]->PartNew++;
-		  }
-	  }
-	      return(unsigned(newcp));
-}
+    const unsigned nini=NIni[nzone];
+    const unsigned npoints=NPoints[nzone];
+	  for(unsigned i=nini;i<npoints;i++){
+		  float mass=PtMass[i];
+      if(mass>CSP.massfluid) newcp++;
+    }
+	  return(newcp);
+  }
 
+  void JSphBuffer::CreateNewPart(const unsigned idnext,unsigned *dcell,typecode *code,tdouble3 *pos,unsigned *idp,
+		tfloat4 *velrhop,const JSphCpu *sphcpu,unsigned np,unsigned nzone){    
+    unsigned newcp=0;
+    const unsigned nini=NIni[nzone];
+    const unsigned npoints=NPoints[nzone];
+	  for(unsigned i=nini;i<npoints;i++){
+		  float mass=PtMass[i];
+      if(mass>CSP.massfluid){
+        tdouble3 rpos=PtPoints[i];
+        tfloat3  normal=PtNormals[i];
+        PtMass[i]-=CSP.massfluid;
+        const double dis=0.5*CSP.dp;
+        rpos.x-=(double)dis*normal.x;
+        rpos.y-=(double)dis*normal.y;
+        rpos.z-=(double)dis*normal.z;
+        const unsigned p2=np+newcp;
+        code[p2]=CODE_ToFluidBuffer(CODE_TYPE_FLUID,byte(nzone));
+			  sphcpu->UpdatePos(rpos,0,0,0,false,p2,pos,dcell,code);
+			  idp[p2]=idnext+newcp;
+			  velrhop[p2]=TFloat4(0,0,0,1000);
+			  newcp++;
+      }
+    }
+  }
 #ifdef _WITHGPU
 //==============================================================================
 /// ComputeStep over inlet/outlet particles:

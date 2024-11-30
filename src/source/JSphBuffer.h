@@ -35,26 +35,24 @@ class JDsVResDataSave;
 class JDsVResDataLoad;
 
 
-	// typedef struct StrDataVresCpu{
-  //   //-Info Vres zone data.
-  //   const tfloat3*	boxlimitmin;
-	// 	const tfloat3*	boxlimitmax; 
-	// 	const bool*			inner;
-	// 	const bool*			tracking;
+	
+	typedef struct StrDataVresCpu{
+    //-Info Vres zone data.
+    unsigned ntot;
+    unsigned nini;
 
-  //   //-Arrays with points data.
-  //   tfloat3*	points;
-  //   tfloat3* 	normals;
-  //   tfloat3*  velmot;
-  //   float*   	mass;
-  //   //-Methods.
-  //   StrDataVresCpu(const tfloat3* boxlimitmin,const tfloat3*boxlimitmax,const bool* inner,
-	// 		const bool* tracking,tfloat3* points,tfloat3* normals,tfloat3* velmot,float* mass){ 
-  //     this->boxlimitmin=boxlimitmin;	this->boxlimitmax=boxlimitmax;
-	// 		this->inner=inner;	this->tracking=tracking;
-	// 		this->points=points;	this->normals=normals;	this->velmot=velmot; this->mass=mass;
-  //   }
-  // }StrDataVresCpu;
+    //-Arrays with points data.
+    tdouble3*	points;
+    tfloat3* 	normals;
+    tfloat3*  velmot;
+    float*   	mass;
+    //-Methods.
+    StrDataVresCpu(const unsigned npoints,const unsigned nini,tdouble3* points
+      ,tfloat3* normals,tfloat3* velmot,float* mass){ 
+      this->ntot=npoints; this->nini=nini;
+			this->points=points;	this->normals=normals;	this->velmot=velmot; this->mass=mass;
+    }
+  }StrDataVresCpu;
   
 
 // #ifdef _WITHGPU
@@ -219,6 +217,7 @@ public:
   void Reset();
   void Config();
   StrDataVresGpu GetZoneFluxInfoGpu(unsigned nzone);
+  StrDataVresCpu GetZoneFluxInfoCpu(unsigned nzone);
   StrGeomVresGpu* GetGeomInfoVres(){return GeomInfo;};
   void SaveVResData(int part,double timestep,int nstep);
   void LoadVResData();
@@ -246,8 +245,10 @@ public:
 
   unsigned CreateListCpu(unsigned npf, unsigned pini, const tdouble3 *pos, const unsigned *idp, typecode *code, int *inoutpart, unsigned nzone);
   unsigned CreateListCpuInit(unsigned npf, unsigned pini, const tdouble3 *pos, const unsigned *idp, typecode *code, int *inoutpart, unsigned nzone);
-  unsigned ComputeStepCpu(unsigned bufferpartcount, int *bufferpart,const unsigned idnext, unsigned *dcell, typecode *code, tdouble3 *pos, unsigned *idp,
-                            tfloat4 *velrhop, const JSphCpu *sphcpu, byte *newizone, unsigned np, double dt, StDivDataCpu divdata, StCteSph CSP, unsigned i, const tdouble3 *normals, const tdouble3 *points, const tdouble4 *vel);
+  unsigned ComputeStepCpu(unsigned bufferpartcount,int *bufferpart
+		,typecode *code,const tdouble3 *pos,unsigned nzone);
+  void CreateNewPart(const unsigned idnext,unsigned *dcell,typecode *code,tdouble3 *pos,unsigned *idp,
+		tfloat4 *velrhop,const JSphCpu *sphcpu,unsigned np,unsigned nzone);  
 #ifdef _WITHGPU
   unsigned CreateListGpuInit(unsigned npf, unsigned pini, const double2 *posxyg, const double *poszg, typecode *codeg, unsigned size, int *inoutpartg, unsigned nzone);
   unsigned CreateListGpu(unsigned npf, unsigned pini, const double2 *posxyg, const double *poszg, typecode *codeg, unsigned size, int *inoutpartg, unsigned nzone);
