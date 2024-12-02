@@ -601,7 +601,7 @@ void JDsOutputPartsOp_Cylinder::ComputeFilterCpu(unsigned np,const unsigned* idp
       if(ok && isvertical){
         const double dx=(ps.x-Point1.x);
         const double dy=(ps.y-Point1.y);
-        ok=(dx*dx+dy*dy<=Radius);
+        ok=(sqrt(dx*dx+dy*dy)<=Radius);
       }
       if(ok && !isvertical){
         //fgeo::LinePointDist(ps,Point1,Point2)
