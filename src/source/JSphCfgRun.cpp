@@ -356,10 +356,6 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
       //  TBoundary=int(BC_MDBC);
       //  SlipMode=int(SLIP_FreeSlip);
       //}
-      else if(txword=="INITNORPLA"){
-        InitParms.push_back(opt);
-      }
-      else if(txword=="INITNORPART")InitParms.push_back(opt);
       else if(txword=="SYMPLECTIC")TStep=STEP_Symplectic;
       else if(txword=="VERLET"){
         TStep=STEP_Verlet; 

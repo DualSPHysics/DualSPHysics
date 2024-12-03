@@ -56,7 +56,7 @@
 class JLog2;
 class JSphMk;
 class JXml;
-class JVtkLib;
+class JSpVtkShape;
 class TiXmlElement;
 class JChronoData;
 class JChValues;
@@ -98,9 +98,6 @@ protected:
   bool WithMotion;       ///<Some Chrono object with geometry is a moving object.
   const tfloat3 Gravity; ///<Gravity acceleration. | Aceleracion por gravedad.
 
-  void* Ptr_VtkSimple_AutoActual;
-  void* Ptr_VtkSimple_AutoDp;
-
   JChronoData* ChronoDataXml; ///<Chrono data loaded from XML. | Datos de Chrono cargados del XML.
   DSPHChronoLib* ChronoLib;   ///<Object for the integrarion with Chrono Engine library. | Objeto para integracion con libreria de Chrono Engine.
 
@@ -112,9 +109,6 @@ protected:
   double NextTime;
   double LastTimeOk;
 
-  void LoadPtrAutoActual(const JXml* sxml,std::string xmlrow);
-  void LoadPtrAutoDp(const JXml* sxml,std::string xmlrow);
-  
   unsigned CreateObjFiles(std::string idname,const std::vector<unsigned>& mkbounds
     ,std::string datadir,std::string mfile,byte normalmode,std::string diroutobj,std::string xmlrow);
 
@@ -129,7 +123,7 @@ protected:
   void VisuValues(const JChValues* values)const;
   void VisuBody(const JChBody* body)const;
   void VisuLink(const JChLink* link)const;
-  void SaveVtkScheme_Spring(JVtkLib* sh,word mk,word mk1,tdouble3 pt0,tdouble3 pt1
+  void SaveVtkScheme_Spring(JSpVtkShape* ss,word mk,word mk1,tdouble3 pt0,tdouble3 pt1
     ,double restlength,double radius,double revlength,int nside)const;
   void SaveVtkScheme()const;
 

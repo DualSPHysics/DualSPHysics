@@ -43,7 +43,7 @@
 #include "JSphInOut.h"
 #include "JSphShifting.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
+#include "JSpVtkData.h"
 
 #include <climits>
 
@@ -1277,7 +1277,7 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
   if(rhom1) arrays.AddArray("Rhom1",n,rhom1,true);
   if(ace)   arrays.AddArray("Ace"  ,n,ace  ,true);
   if(type)  arrays.AddArray("Typex",n,type ,true);
-  JVtkLib::SaveVtkData(fun::FileNameSec(filename,numfile),arrays,"Pos");
+  JSpVtkData::Save(fun::FileNameSec(filename,numfile),arrays,"Pos");
   arrays.Reset();
 }
 
@@ -1323,7 +1323,7 @@ void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
 #else
   if(code)arrays.AddArray("Code" ,n,(word*)    Code_c->cptr(),false);
 #endif
-  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  JSpVtkData::Save(filename,arrays,"Pos");
   arrays.Reset();
 }
 

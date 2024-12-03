@@ -28,7 +28,7 @@
 #include "JDsMooredFloatings.h"
 #include "JXml.h"
 #include "JLog2.h"
-#include "JVtkLib.h"
+#include "JSpVtkShape.h"
 #include "Functions.h"
 #include "FunGeo3d.h"
 #include "JSaveCsv2.h"
@@ -316,7 +316,7 @@ void JDsMooredFloatings::VisuConfig(std::string txhead,std::string txfoot)const{
 /// Saves VTK with moorings full or only lines.
 //==============================================================================
 void JDsMooredFloatings::SaveVtkMoorings(unsigned numfile,bool svlines)const{
-  JVtkLib sh;
+  JSpVtkShape ss;
   unsigned vpossize=0;
   tfloat3* vpos=NULL;
   const unsigned nlines=MoorDynPlus_LinesCount();
@@ -327,22 +327,22 @@ void JDsMooredFloatings::SaveVtkMoorings(unsigned numfile,bool svlines)const{
       vpos=fun::ResizeAlloc(vpos,0,vpossize);
     }
     for(unsigned cn=0;cn<nodes;cn++)vpos[cn]=ToTFloat3(MoorDynPlus_GetNodePos(cl,cn));
-    sh.AddShapePolyLine(nodes,vpos,int(cl));
-    if(svlines)sh.AddShapePoints(nodes,vpos,int(cl));
+    ss.AddLines(nodes,vpos,word(cl));
+    if(svlines)ss.AddPoints(nodes,vpos,word(cl));
     const float dist=(nodes>=2? fgeo::PointsDist(vpos[0],vpos[1])/10: 1);
-    if(!svlines)for(unsigned cn=0;cn<nodes;cn++)sh.AddShapeSphere(vpos[cn],dist,16,int(cl));
+    if(!svlines)for(unsigned cn=0;cn<nodes;cn++)ss.AddSphere(vpos[cn],dist,word(cl));
   }
   delete[] vpos; vpos=NULL;
   //-Genera fichero VTK.
   if(svlines){
     Log->AddFileInfo(AppInfo.GetDirOut()+"MooringsVtk/MooringsLines_????.vtk","Saves VTK file with moorings.");
     const string file=AppInfo.GetDirOut()+fun::FileNameSec("MooringsVtk/MooringsLines.vtk",numfile);
-    sh.SaveShapeVtk(file,"Line");
+    ss.SaveVtk(file,"Line");
   }
   else{
     Log->AddFileInfo(AppInfo.GetDirOut()+"MooringsVtk/Moorings_????.vtk","Saves VTK file with moorings.");
     const string file=AppInfo.GetDirOut()+fun::FileNameSec("MooringsVtk/Moorings.vtk",numfile);
-    sh.SaveShapeVtk(file,"Line");
+    ss.SaveVtk(file,"Line");
   }
 }
 

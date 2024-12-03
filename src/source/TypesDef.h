@@ -21,6 +21,8 @@
 #ifndef _TypesDef_
 #define _TypesDef_
 
+#include <cstring>
+
 #define PI 3.14159265358979323846      ///<Value of cte PI. 
 #define TWOPI 6.28318530717958647692   ///<Value of cte PI*2. 
 #define PIHALF 1.57079632679489661923  ///<Value of cte PI/2. 
@@ -686,7 +688,7 @@ inline const char* TypeToStr(TpTypeData type){
 }
 
 ///Returns size of the data type.
-inline unsigned SizeOfType(TpTypeData type){
+inline size_t TypeSize(TpTypeData type){
   switch(type){
     case TypeBool:       return(sizeof(int));
     case TypeChar:       return(sizeof(char));
@@ -715,9 +717,42 @@ inline unsigned SizeOfType(TpTypeData type){
   }
   return(0);
 }
+///Returns size of the data type as unsigned.
+inline unsigned TypeSizeU(TpTypeData type){ return(unsigned(TypeSize(type))); }
 
-///Returns number of components.
-inline int DimOfType(TpTypeData type){
+///Returns parent type.
+inline TpTypeData TypeParent(TpTypeData type){
+  switch(type){
+    case TypeBool:
+    case TypeChar:
+    case TypeUchar:
+    case TypeShort:
+    case TypeUshort:
+    case TypeInt:
+    case TypeUint:
+    case TypeLlong:
+    case TypeUllong:
+    case TypeFloat:
+    case TypeDouble:     return(type);
+    case TypeInt2:       return(TypeInt);
+    case TypeUint2:      return(TypeUint);
+    case TypeFloat2:     return(TypeFloat);
+    case TypeDouble2:    return(TypeDouble);
+    case TypeInt3:       return(TypeInt);
+    case TypeUint3:      return(TypeUint);
+    case TypeFloat3:     return(TypeFloat);
+    case TypeDouble3:    return(TypeDouble);
+    case TypeInt4:       return(TypeInt);
+    case TypeUint4:      return(TypeUint);
+    case TypeFloat4:     return(TypeFloat);
+    case TypeDouble4:    return(TypeDouble);
+    case TypeSyMatrix3f: return(TypeFloat);
+  }
+  return(TypeNull);
+}
+
+///Returns dimension of type.
+inline int TypeDim(TpTypeData type){
   return(type<TypeChar? 0: (type<TypeInt2? 1: (type<TypeInt3? 2: (type<TypeInt4? 3: (type<TypeSyMatrix3f? 4: 6)))));
 }
 

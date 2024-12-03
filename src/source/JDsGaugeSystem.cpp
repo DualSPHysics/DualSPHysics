@@ -27,7 +27,7 @@
 #include "FunGeo3d.h"
 #include "JSphMk.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
+#include "JSpVtkData.h"
 #include <cfloat>
 #include <climits>
 #include <algorithm>
@@ -368,34 +368,6 @@ void JGaugeSystem::ReadXml(const JXml* sxml,TiXmlElement* lis,const JSphMk* mkin
           gau=AddGaugeMesh(name,cfg.computestart,cfg.computeend,cfg.computedt
             ,true,mesh,outdata,tfmt,buffersize,kclimit,kcdummy,masslimit);
         }  //<vs_meeshdat_end>
-      #ifndef DISABLE_GAUGEFLOW //<vs_flowdat_ini>
-        else if(cmd=="flow"){
-          sxml->CheckElementNames(ele,true,"kclimit buffersize dirdat point vec1 vec2 size1 size2 savevtkpart computedt computetime output outputdt outputtime");
-          jmsh::StMeshBasic mesh={TDouble3(0),TDouble3(0),TDouble3(0),TDouble3(0),0,0,0,0,0,0,TFloat3(0)};
-          mesh.ptref=sxml->ReadElementDouble3(ele,"point");
-          mesh.vec1=sxml->ReadElementDouble3(ele,"vec1",true);
-          mesh.vec2=sxml->ReadElementDouble3(ele,"vec2",true);
-          if(mesh.vec1!=TDouble3(0)){
-            mesh.dis1  =sxml->ReadElementDouble(ele,"size1","length");
-            mesh.dispt1=sxml->ReadElementDouble(ele,"size1","distpt");
-          }
-          if(mesh.vec2!=TDouble3(0)){
-            mesh.dis2  =sxml->ReadElementDouble(ele,"size2","length");
-            mesh.dispt2=sxml->ReadElementDouble(ele,"size2","distpt");
-          }
-          mesh.dirdat=sxml->ReadElementFloat3(ele,"dirdat",true,TDouble3(1,0,0));
-          mesh.dirdat=fgeo::VecUnitary(mesh.dirdat);
-          //-Reads kclimit.
-          float kclimit=0.5f;
-          if(fun::StrLower(sxml->ReadElementStr(ele,"kclimit","value",true))=="none")kclimit=FLT_MAX;
-          else kclimit=sxml->ReadElementFloat(ele,"kclimit","value",true,0.5f);
-          //-Reads buffersize.
-          unsigned buffersize=sxml->ReadElementUnsigned(ele,"buffersize","value",true,0);
-          //-Creates gauge object.
-          gau=AddGaugeFlow(name,cfg.computestart,cfg.computeend,cfg.computedt
-            ,true,mesh,kclimit,buffersize);
-        }
-      #endif //<vs_flowdat_end>
         else Run_ExceptioonFile(fun::PrintStr("Gauge type \'%s\' is invalid.",cmd.c_str()),sxml->ErrGetFileRow(ele));
         gau->SetSaveVtkPart(cfg.savevtkpart);
         //gau->ConfigComputeTiming(cfg.computestart,cfg.computeend,cfg.computedt);
@@ -496,30 +468,6 @@ JGaugeMesh* JGaugeSystem::AddGaugeMesh(std::string name,double computestart
 }
 //<vs_meeshdat_end>
 
-#ifndef DISABLE_GAUGEFLOW //<vs_flowdat_ini>
-//==============================================================================
-/// Creates new gauge-Mesh and returns pointer.
-//==============================================================================
-JGaugeFlow* JGaugeSystem::AddGaugeFlow(std::string name,double computestart
-  ,double computeend,double computedt,bool fixed
-  ,const jmsh::StMeshBasic& meshbas ,float  kclimit,unsigned buffersize)
-{
-  if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
-  //-Creates object.
-  JGaugeFlow* gau=new JGaugeFlow(GetCount(),name,meshbas,
-    kclimit,buffersize,GpuCount);
-  gau->Config(CSP,Symmetry,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
-  gau->ConfigDomMCel(fixed);
-  gau->ConfigComputeTiming(computestart,computeend,computedt);
-  //-Uses common configuration.
-  gau->SetSaveVtkPart(CfgDefault.savevtkpart);
-  gau->ConfigOutputTiming(CfgDefault.output,CfgDefault.outputstart
-    ,CfgDefault.outputend,CfgDefault.outputdt);
-  Gauges.push_back(gau);
-  return(gau);
-}
-#endif //<vs_flowdat_end>
-
 //==============================================================================
 /// Creates new gauge-Force and returns pointer.
 //==============================================================================
@@ -573,47 +521,45 @@ void JGaugeSystem::VisuConfig(std::string txhead,std::string txfoot){
 /// Saves VTK file with points.
 //==============================================================================
 void JGaugeSystem::SaveVtkInitPoints()const{
-  if(JVtkLib::Available()){
-    //-Save individual schemes for complex gauges.
-    for(unsigned cg=0;cg<GetCount();cg++)Gauges[cg]->SaveVtkScheme();
-    //-Save VKT file with all initial gauge points.
-    unsigned* vidx=NULL;
-    unsigned* vtype=NULL;
-    byte* vout=NULL;
-    std::vector<tfloat3> points;
-    unsigned ndata=0;
-    for(unsigned cg=0;cg<GetCount();cg++){
-      const unsigned idx=Gauges[cg]->Idx;
-      const unsigned type=Gauges[cg]->Type;
-      const unsigned np=Gauges[cg]->GetPointDef(points);
-      //-Resizes allocated memory.
-      vidx =fun::ResizeAlloc(vidx ,ndata,ndata+np);
-      vtype=fun::ResizeAlloc(vtype,ndata,ndata+np);
-      vout =fun::ResizeAlloc(vout ,ndata,ndata+np);
-      for(unsigned p=0;p<np;p++){
-        const unsigned pp=ndata+p;
-        vidx[pp]=idx;
-        vtype[pp]=type;
-        const tdouble3 ps=ToTDouble3(points[pp]);
-        vout[pp]=(DomPosMin<=ps && ps<DomPosMax? 0: 1);
-      }
-      ndata+=np;
+  //-Save individual schemes for complex gauges.
+  for(unsigned cg=0;cg<GetCount();cg++)Gauges[cg]->SaveVtkScheme();
+  //-Save VKT file with all initial gauge points.
+  unsigned* vidx=NULL;
+  unsigned* vtype=NULL;
+  byte* vout=NULL;
+  std::vector<tfloat3> points;
+  unsigned ndata=0;
+  for(unsigned cg=0;cg<GetCount();cg++){
+    const unsigned idx=Gauges[cg]->Idx;
+    const unsigned type=Gauges[cg]->Type;
+    const unsigned np=Gauges[cg]->GetPointDef(points);
+    //-Resizes allocated memory.
+    vidx =fun::ResizeAlloc(vidx ,ndata,ndata+np);
+    vtype=fun::ResizeAlloc(vtype,ndata,ndata+np);
+    vout =fun::ResizeAlloc(vout ,ndata,ndata+np);
+    for(unsigned p=0;p<np;p++){
+      const unsigned pp=ndata+p;
+      vidx[pp]=idx;
+      vtype[pp]=type;
+      const tdouble3 ps=ToTDouble3(points[pp]);
+      vout[pp]=(DomPosMin<=ps && ps<DomPosMax? 0: 1);
     }
-    //-Prepares data.
-    JDataArrays arrays;
-    arrays.AddArray("Pos",ndata,points.data(),false);
-    arrays.AddArray("Idx",ndata,vidx,false);
-    arrays.AddArray("Type",ndata,vtype,false);
-    arrays.AddArray("Out",ndata,vout,false);
-    const string filevtk=AppInfo.GetDirOut()+"CfgGauge_InitPoints.vtk";
-    Log->AddFileInfo(filevtk,"Saves points used for gauge calculations (by JGaugeSystem).");
-    JVtkLib::SaveVtkData(filevtk,arrays,"Pos");
-    arrays.Reset();
-    //-Frees memory.
-    delete[] vidx;
-    delete[] vtype;
-    delete[] vout;
+    ndata+=np;
   }
+  //-Prepares data.
+  JDataArrays arrays;
+  arrays.AddArray("Pos",ndata,points.data(),false);
+  arrays.AddArray("Idx",ndata,vidx,false);
+  arrays.AddArray("Type",ndata,vtype,false);
+  arrays.AddArray("Out",ndata,vout,false);
+  const string filevtk=AppInfo.GetDirOut()+"CfgGauge_InitPoints.vtk";
+  Log->AddFileInfo(filevtk,"Saves points used for gauge calculations (by JGaugeSystem).");
+  JSpVtkData::Save(filevtk,arrays,"Pos");
+  arrays.Reset();
+  //-Frees memory.
+  delete[] vidx;
+  delete[] vtype;
+  delete[] vout;
 }
 
 //==============================================================================

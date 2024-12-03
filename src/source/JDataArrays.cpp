@@ -93,7 +93,7 @@ void JDataArrays::CopyDataFrom(const JDataArrays& arr,bool filterarrays){
       "Type of array \'%s\' does not match.",ar.keyname.c_str()));
     if(ar.count!=ar2.count)Run_Exceptioon(fun::PrintStr(
       "Size of array \'%s\' does not match.",ar.keyname.c_str()));
-    memcpy(ar.ptr,ar2.ptr,SizeOfType(ar.type)*ar.count);
+    memcpy(ar.ptr,ar2.ptr,TypeSize(ar.type)*ar.count);
   }
   if(!filterarrays){
     const unsigned na2=arr.Count();
@@ -450,7 +450,7 @@ JDataArrays::StDataArray JDataArrays::GetArrayData(const std::string& keyname)co
 //==============================================================================
 int JDataArrays::GetArrayDim(unsigned idx)const{
   if(idx>=Count())Run_Exceptioon("Array idx is invalid.");
-  return(DimOfType(Arrays[idx].type));
+  return(TypeDim(Arrays[idx].type));
 }
 
 //==============================================================================
@@ -977,7 +977,7 @@ void JDataArrays::SortDataBy(const std::string& keyname){
     const unsigned na=Count();
     unsigned maxsize4b=0;
     for(unsigned c=0;c<na;c++){
-      const unsigned s4b=(SizeOfType(Arrays[c].type)+3)/4;
+      const unsigned s4b=(TypeSizeU(Arrays[c].type)+3)/4;
       //printf("00b> [%s].%s s4b:%u \n",Arrays[c].keyname.c_str(),TypeToStr(Arrays[c].type),s4b);
       maxsize4b=(maxsize4b>=s4b? maxsize4b: s4b);
     }
@@ -1054,7 +1054,7 @@ unsigned JDataArrays::SortData(unsigned count,const unsigned* reindex){
   //-Create auxiliary memory to sort data.
   unsigned maxsize4b=0;
   for(unsigned c=0;c<na;c++){
-    const unsigned s4b=(SizeOfType(Arrays[c].type)+3)/4;
+    const unsigned s4b=(TypeSizeU(Arrays[c].type)+3)/4;
     //printf("00b> [%s].%s s4b:%u \n",Arrays[c].keyname.c_str(),TypeToStr(Arrays[c].type),s4b);
     maxsize4b=(maxsize4b>=s4b? maxsize4b: s4b);
   }

@@ -62,10 +62,10 @@
 #include "JDsOutputParts.h" //<vs_outpaarts>
 #include "JDsPips.h"
 #include "JLinearValue.h"
-#include "JPartNormalData.h"
 #include "JDataArrays.h"
 #include "JOutputCsv.h"
-#include "JVtkLib.h"
+#include "JSpVtkData.h"
+#include "JSpVtkShape.h"
 #include <algorithm>
 
 using namespace std;
@@ -523,7 +523,6 @@ std::string JSph::GetFeatureList(){
   if(AVAILABLE_MOORDYNPLUS)list=list+", MoorDynPlus coupling";
   if(AVAILABLE_WAVEGEN    )list=list+", Wave generation";
                            list=list+", mDBC no-slip"; //<vs_m2dbc>
-  if(AVAILABLE_VTKLIB     )list=list+", VTK output";
   #ifdef CODE_SIZE4
                            list=list+", MkWord";
   #endif
@@ -576,7 +575,6 @@ void JSph::LoadConfig(const JSphCfgRun* cfg){
   printf("\n");
   RunTimeDate=fun::GetDateTime();
   Log->Printf("[Initialising %s  %s]",ClassName.c_str(),RunTimeDate.c_str());
-  if(!JVtkLib::Available())Log->PrintWarning("Code for VTK format files is not included in the current compilation, so no output VTK files will be created.");
   const string runpath=AppInfo.GetRunPath();
   Log->Printf("ProgramFile=\"%s\"",fun::GetPathLevels(fun::GetCanonicalPath(runpath,AppInfo.GetRunCommand()),3).c_str());
   Log->Printf("Available features: %s.",GetFeatureList().c_str());
@@ -1328,39 +1326,6 @@ void JSph::LoadCodeParticles(unsigned np,const unsigned* idp,typecode* code)cons
 }
 
 //==============================================================================
-/// Load normals for boundary particles (fixed and moving).
-//==============================================================================
-void JSph::LoadBoundNormals(unsigned np,const unsigned* idp,const typecode* code
-  ,tfloat3* boundnor)
-{
-  memset(boundnor,0,sizeof(tfloat3)*np);
-  if(!PartBegin){
-    const string filenormals=JPartNormalData::GetNormalDataFile(false,DirCase+CaseName);
-    if(fun::FileExists(filenormals)){
-      //-Loads final normals.
-      const tdouble3* pnor=NULL;
-      unsigned pnorsize=0;
-      JPartNormalData nd;
-      nd.LoadFile(false,DirCase+CaseName);
-      pnor=nd.GetPartNormals();
-      pnorsize=nd.GetNbound();
-      //-Applies final normals. Loads normals from boundary particle to boundary limit.
-      if(pnorsize){
-        Log->Printf("NormalDataFile=\"%s\"",filenormals.c_str());
-        if(pnorsize!=CaseNbound)Run_ExceptioonFile("The number of final normals does not match boundary particles.",filenormals);
-        for(unsigned p=0;p<pnorsize;p++)boundnor[p]=ToTFloat3(pnor[p]);
-      }
-    }
-    else{
-      const string filenormals=JPartNormalData::GetNormalDataFile(true,DirCase+CaseName);
-      if(fun::FileExists(filenormals)){
-        Run_ExceptioonFile("Old normal data file format (XXX_NormalData.nbi4) is invalid for current version. Use GenCase version 5.0.268 or higher to generate a supported file with normal data (XXX_Normals.nbi4).",filenormals);
-      }
-    }
-  }
-}
-
-//==============================================================================
 /// Config normals to point from boundary particle to ghost node (full distance).
 //==============================================================================
 void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
@@ -1808,8 +1773,6 @@ void JSph::RunInitialize(unsigned np,unsigned npb,const tdouble3* pos
         init.LoadXml(&xml,"case.execution.special.initialize");
       }
     }
-    //-Loads configuration from execution parameters.
-    init.LoadExecParms(CfgRun->InitParms);
     //-Executes initialize tasks.
     if(init.Count()){
       //-Creates array with mktype value.
@@ -2657,9 +2620,9 @@ void JSph::FtUpdateFloatings(double dt,const tfloat6* fto_vellinang
   ,const tdouble3* fto_center)
 {
   for(unsigned cf=0;cf<FtCount;cf++){
-    const tfloat3  fvel   =Fto_VelLinAng[cf].getlo();
-    const tfloat3  fomega =Fto_VelLinAng[cf].gethi();
-    const tdouble3 fcenter=Fto_Center[cf];
+    const tfloat3  fvel   =fto_vellinang[cf].getlo();
+    const tfloat3  fomega =fto_vellinang[cf].gethi();
+    const tdouble3 fcenter=fto_center[cf];
     //-Stores floating data.
     FtObjs[cf].center=(PeriActive? UpdatePeriodicPos(fcenter): fcenter);
     FtObjs[cf].angles=ToTFloat3(ToTDouble3(FtObjs[cf].angles)+ToTDouble3(fomega)*dt);
@@ -2861,7 +2824,7 @@ void JSph::AbortBoundOut(JLog2* log,unsigned nout,const unsigned* idp
   if(outzmax)log->Print("Some boundary particle exceeded the +Z limit (top limit) of the simulation domain.");
   log->Print(" ");
   //-Creates VTK file.
-  if(JVtkLib::Available()){
+  {
     JDataArrays arrays;
     arrays.AddArray("Pos"   ,nout,pos   ,false);
     arrays.AddArray("Idp"   ,nout,idp   ,false);
@@ -2871,7 +2834,7 @@ void JSph::AbortBoundOut(JLog2* log,unsigned nout,const unsigned* idp
     arrays.AddArray("Motive",nout,motive,false);
     const string file=DirOut+"Error_BoundaryOut.vtk";
     log->AddFileInfo(file,"Saves the excluded boundary particles.");
-    JVtkLib::SaveVtkData(file,arrays,"Pos");
+    JSpVtkData::Save(file,arrays,"Pos");
   }
   //-Aborts execution.
   Run_Exceptioon("Fixed, moving or floating particles were excluded. Check VTK file Error_BoundaryOut.vtk with excluded particles.");
@@ -3141,7 +3104,7 @@ void JSph::SavePartData(unsigned npsave,unsigned nout,const JDataArrays& arrays
     arrays2.MoveArray(arrays2.Count()-1,4);
     //-Defines fields to be stored.
     if(SvData&SDAT_Vtk){
-      JVtkLib::SaveVtkData(DirVtkOut+fun::FileNameSec("PartVtk.vtk",Part),arrays2,"Pos");
+      JSpVtkData::Save(DirVtkOut+fun::FileNameSec("PartVtk.vtk",Part),arrays2,"Pos");
     }
     if(SvData&SDAT_Csv){ 
       JOutputCsv ocsv(AppInfo.GetCsvSepComa());
@@ -3301,8 +3264,10 @@ void JSph::CheckTermination(){
 //==============================================================================
 void JSph::SaveDomainVtk(unsigned ndom,const tdouble6* vdom)const{ 
   if(vdom){
-    string fname=fun::FileNameSec("Domain.vtk",Part);
-    JVtkLib::SaveVtkBoxes(DirDataOut+fname,ndom,(const tdouble3*)vdom,KernelH*0.5f);
+    const string file=DirDataOut+fun::FileNameSec("Domain.vtk",Part);
+    JSpVtkShape ss;
+    ss.AddBoxes(ndom,(const tdouble3*)vdom,KernelH*0.5f);
+    ss.SaveVtk(file,"Box");
   }
 }
 
@@ -3326,7 +3291,9 @@ void JSph::SaveInitialDomainVtk()const{
   }
   const string file=DirOut+"CfgInit_Domain.vtk";
   Log->AddFileInfo(file,"Saves the limits of the case and the simulation domain limits.");
-  JVtkLib::SaveVtkBoxes(file,nbox,vdomf3,0);
+  JSpVtkShape ss;
+  ss.AddBoxes(nbox,vdomf3,0);
+  ss.SaveVtk(file,"Box");
   delete[] vdomf3;
 }
 
@@ -3355,27 +3322,27 @@ void JSph::SaveMapCellsVtk(float scell)const{
   tdouble3 pmax=pmin+TDouble3(scell*cells.x,scell*cells.y,scell*cells.z);
   if(Simulate2D)pmin.y=pmax.y=Simulate2DPosY;
   //-Creates lines.
-  JVtkLib sh;
+  JSpVtkShape ss;
   //-Back lines.
   tdouble3 p0=TDouble3(pmin.x,pmax.y,pmin.z),p1=TDouble3(pmin.x,pmax.y,pmax.z);
-  for(unsigned cx=0;cx<=cells.x;cx++)sh.AddShapeLine(p0+TDouble3(scell*cx,0,0),p1+TDouble3(scell*cx,0,0),0);
+  for(unsigned cx=0;cx<=cells.x;cx++)ss.AddLine(p0+TDouble3(scell*cx,0,0),p1+TDouble3(scell*cx,0,0),0);
   p1=TDouble3(pmax.x,pmax.y,pmin.z);
-  for(unsigned cz=0;cz<=cells.z;cz++)sh.AddShapeLine(p0+TDouble3(0,0,scell*cz),p1+TDouble3(0,0,scell*cz),0);
+  for(unsigned cz=0;cz<=cells.z;cz++)ss.AddLine(p0+TDouble3(0,0,scell*cz),p1+TDouble3(0,0,scell*cz),0);
   if(!Simulate2D){
     //-Bottom lines.
     p0=TDouble3(pmin.x,pmin.y,pmin.z),p1=TDouble3(pmax.x,pmin.y,pmin.z);
-    for(unsigned cy=0;cy<=cells.y;cy++)sh.AddShapeLine(p0+TDouble3(0,scell*cy,0),p1+TDouble3(0,scell*cy,0),1);
+    for(unsigned cy=0;cy<=cells.y;cy++)ss.AddLine(p0+TDouble3(0,scell*cy,0),p1+TDouble3(0,scell*cy,0),1);
     p1=TDouble3(pmin.x,pmax.y,pmin.z);
-    for(unsigned cx=0;cx<=cells.x;cx++)sh.AddShapeLine(p0+TDouble3(scell*cx,0,0),p1+TDouble3(scell*cx,0,0),1);
+    for(unsigned cx=0;cx<=cells.x;cx++)ss.AddLine(p0+TDouble3(scell*cx,0,0),p1+TDouble3(scell*cx,0,0),1);
     //-Left lines.
     p0=TDouble3(pmin.x,pmin.y,pmin.z),p1=TDouble3(pmin.x,pmax.y,pmin.z);
-    for(unsigned cz=0;cz<=cells.z;cz++)sh.AddShapeLine(p0+TDouble3(0,0,scell*cz),p1+TDouble3(0,0,scell*cz),2);
+    for(unsigned cz=0;cz<=cells.z;cz++)ss.AddLine(p0+TDouble3(0,0,scell*cz),p1+TDouble3(0,0,scell*cz),2);
     p1=TDouble3(pmin.x,pmin.y,pmax.z);
-    for(unsigned cy=0;cy<=cells.y;cy++)sh.AddShapeLine(p0+TDouble3(0,scell*cy,0),p1+TDouble3(0,scell*cy,0),2);
+    for(unsigned cy=0;cy<=cells.y;cy++)ss.AddLine(p0+TDouble3(0,scell*cy,0),p1+TDouble3(0,scell*cy,0),2);
   }
   const string file=DirOut+"CfgInit_MapCells.vtk";
   Log->AddFileInfo(file,"Saves the cell division of the simulation domain.");
-  sh.SaveShapeVtk(file,"axis");
+  ss.SaveVtk(file,"Axis");
 }
 
 //==============================================================================
@@ -3387,47 +3354,45 @@ void JSph::SaveMapCellsVtk(float scell)const{
 void JSph::SaveVtkNormals(std::string filename,int numfile,unsigned np,unsigned npb
   ,const tdouble3* pos,const unsigned* idp,const tfloat3* boundnor,float resize)const
 {
-  if(JVtkLib::Available()){
-    if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
-    //-Find floating particles.
-    unsigned nfloat=0;
-    unsigned* ftidx=NULL;
-    if(UseNormalsFt){
-      const unsigned size=min(CaseNfloat,np);
-      ftidx=new unsigned[size];
-      for(unsigned p=npb;p<np;p++)if(idp[p]<CaseNbound)ftidx[nfloat++]=p;
-      if(nfloat>CaseNfloat)Run_Exceptioon("More floating particles were found than expected.");
-    }
-    //-Allocate memory for boundary particles.
-    const unsigned npsel=npb+nfloat;
-    JDataArrays arrays;
-    tdouble3* vpos =arrays.CreateArrayPtrDouble3("Pos",npsel);
-    unsigned* vidp =arrays.CreateArrayPtrUint   ("Idp",npsel);
-    word*     vmk  =arrays.CreateArrayPtrWord   ("Mk" ,npsel);
-    tfloat3*  vnor =arrays.CreateArrayPtrFloat3 ("Normal",npsel);
-    float*    vsnor=arrays.CreateArrayPtrFloat  ("NormalSize",npsel);
-    //-Loads data of fixed and moving particles.
-    memcpy(vpos,pos,sizeof(tdouble3)*npb);
-    memcpy(vidp,idp,sizeof(unsigned)*npb);
-    MkInfo->GetMkByIds(npb,idp,vmk);
-    memcpy(vnor,boundnor,sizeof(tfloat3)*npb);
-    //-Loads data of floating particles.
-    for(unsigned p=0;p<nfloat;p++){
-      const unsigned idx=ftidx[p];
-      vpos[npb+p]=pos[idx];
-      vidp[npb+p]=idp[idx];
-      vmk [npb+p]=MkInfo->GetMkById(idp[idx]);
-      vnor[npb+p]=boundnor[idx];
-    }
-    delete[] ftidx; ftidx=NULL;
-    //-Computes normalsize.
-    if(resize!=1.f)for(unsigned p=0;p<npsel;p++)vnor[p]=vnor[p]*resize;
-    for(unsigned p=0;p<npsel;p++)vsnor[p]=fgeo::PointDist(vnor[p]);
-    //-Saves VTK file.
-    JVtkLib::SaveVtkData(filename,arrays,"Pos");
-    //-Frees memory.
-    arrays.Reset();
+  if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
+  //-Find floating particles.
+  unsigned nfloat=0;
+  unsigned* ftidx=NULL;
+  if(UseNormalsFt){
+    const unsigned size=min(CaseNfloat,np);
+    ftidx=new unsigned[size];
+    for(unsigned p=npb;p<np;p++)if(idp[p]<CaseNbound)ftidx[nfloat++]=p;
+    if(nfloat>CaseNfloat)Run_Exceptioon("More floating particles were found than expected.");
   }
+  //-Allocate memory for boundary particles.
+  const unsigned npsel=npb+nfloat;
+  JDataArrays arrays;
+  tdouble3* vpos =arrays.CreateArrayPtrDouble3("Pos",npsel);
+  unsigned* vidp =arrays.CreateArrayPtrUint   ("Idp",npsel);
+  word*     vmk  =arrays.CreateArrayPtrWord   ("Mk" ,npsel);
+  tfloat3*  vnor =arrays.CreateArrayPtrFloat3 ("Normal",npsel);
+  float*    vsnor=arrays.CreateArrayPtrFloat  ("NormalSize",npsel);
+  //-Loads data of fixed and moving particles.
+  memcpy(vpos,pos,sizeof(tdouble3)*npb);
+  memcpy(vidp,idp,sizeof(unsigned)*npb);
+  MkInfo->GetMkByIds(npb,idp,vmk);
+  memcpy(vnor,boundnor,sizeof(tfloat3)*npb);
+  //-Loads data of floating particles.
+  for(unsigned p=0;p<nfloat;p++){
+    const unsigned idx=ftidx[p];
+    vpos[npb+p]=pos[idx];
+    vidp[npb+p]=idp[idx];
+    vmk [npb+p]=MkInfo->GetMkById(idp[idx]);
+    vnor[npb+p]=boundnor[idx];
+  }
+  delete[] ftidx; ftidx=NULL;
+  //-Computes normalsize.
+  if(resize!=1.f)for(unsigned p=0;p<npsel;p++)vnor[p]=vnor[p]*resize;
+  for(unsigned p=0;p<npsel;p++)vsnor[p]=fgeo::PointDist(vnor[p]);
+  //-Saves VTK file.
+  JSpVtkData::Save(filename,arrays,"Pos");
+  //-Frees memory.
+  arrays.Reset();
 }
 
 //==============================================================================
@@ -3636,7 +3601,7 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile
   if(xvel) arrays.AddArray("Vel" ,np,xvel ,true);
   if(xrho) arrays.AddArray("Rhop",np,xrho ,true);
   if(xace) arrays.AddArray("Ace" ,np,xace ,true);
-  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  JSpVtkData::Save(filename,arrays,"Pos");
   arrays.Reset();
 }
 
@@ -3664,7 +3629,7 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile
   if(rho)  arrays.AddArray("Rho"  ,n,rho+pini,false);
   if(check)arrays.AddArray("Check",n,check+pini,false);
   if(num)  arrays.AddArray("Num"  ,n,num,true);
-  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  JSpVtkData::Save(filename,arrays,"Pos");
   arrays.Reset();
 }
 

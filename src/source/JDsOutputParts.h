@@ -38,7 +38,7 @@
 
 class JXml;
 class TiXmlElement;
-class JVtkLib;
+class JSpVtkShape;
 class JSphMk;
 
 //##############################################################################
@@ -105,7 +105,7 @@ public:
   virtual void ReadXmlExtra(const JXml* sxml,const TiXmlElement* ele)=0;
   virtual void UpdateFtPos(const tdouble3& ftcenter)=0;
   virtual void GetConfig(std::vector<std::string>& lines)const=0;
-  virtual void SaveVtkConfig(double size,JVtkLib* sh)const{ };
+  virtual void SaveVtkConfig(double size,JSpVtkShape* ss)const{ };
 
   virtual void ComputeFilterCpu(unsigned np,const unsigned* idp
     ,const tdouble3* pos,const typecode* code,byte* sel)const=0;
@@ -198,7 +198,7 @@ public:
   void ReadXmlExtra(const JXml* sxml,const TiXmlElement* ele);
   void UpdateFtPos(const tdouble3& ftcenter);
   void GetConfig(std::vector<std::string>& lines)const;
-  void SaveVtkConfig(double size,JVtkLib* sh)const;
+  void SaveVtkConfig(double size,JSpVtkShape* ss)const;
 
   void ComputeFilterCpu(unsigned np,const unsigned* idp
     ,const tdouble3* pos,const typecode* code,byte* sel)const;
@@ -233,7 +233,7 @@ public:
   void ReadXmlExtra(const JXml* sxml,const TiXmlElement* ele);
   void UpdateFtPos(const tdouble3& ftcenter);
   void GetConfig(std::vector<std::string>& lines)const;
-  void SaveVtkConfig(double size,JVtkLib* sh)const;
+  void SaveVtkConfig(double size,JSpVtkShape* ss)const;
 
   void ComputeFilterCpu(unsigned np,const unsigned* idp
     ,const tdouble3* pos,const typecode* code,byte* sel)const;
@@ -266,7 +266,7 @@ public:
   void ReadXmlExtra(const JXml* sxml,const TiXmlElement* ele);
   void UpdateFtPos(const tdouble3& ftcenter);
   void GetConfig(std::vector<std::string>& lines)const;
-  void SaveVtkConfig(double size,JVtkLib* sh)const;
+  void SaveVtkConfig(double size,JSpVtkShape* ss)const;
 
   void ComputeFilterCpu(unsigned np,const unsigned* idp
     ,const tdouble3* pos,const typecode* code,byte* sel)const;
@@ -303,7 +303,7 @@ public:
   void ReadXmlExtra(const JXml* sxml,const TiXmlElement* ele);
   void UpdateFtPos(const tdouble3& ftcenter);
   void GetConfig(std::vector<std::string>& lines)const;
-  void SaveVtkConfig(double size,JVtkLib* sh)const;
+  void SaveVtkConfig(double size,JSpVtkShape* ss)const;
 
   void ComputeFilterCpu(unsigned np,const unsigned* idp
     ,const tdouble3* pos,const typecode* code,byte* sel)const;

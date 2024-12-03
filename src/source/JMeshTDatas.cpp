@@ -29,8 +29,6 @@
 #include "FunGeo3d.h"
 #include "JTimeControl.h"
 
-//#include "JVtkLib.h"  //-Only for debug...
- 
 
 #include <fstream>
 #include <cmath>
@@ -485,7 +483,7 @@ void JMeshTDatas::IntpComputePosArray(unsigned ctime,JDataArrays* ars){
   //      for(unsigned p=0;p<np;p++)pos[p].z=zs[p];
   //    }
   //    const string file=string("DgOut/_DG_InterpolatedData")+(cf? "_Zsurf.vtk": ".vtk");
-  //    JVtkLib::SaveVtkData(fun::FileNameSec(file,ctime),arrays,"Pos");
+  //    JSpVtkData::Save(fun::FileNameSec(file,ctime),arrays,"Pos");
   //  }
   //}
 }
@@ -514,7 +512,7 @@ void JMeshTDatas::IntpComputePosIntervals(double t){
         const unsigned na=Arrays2->Count();
         for(unsigned ca=0;ca<na;ca++){
           const JDataArrays::StDataArray& ar2=Arrays2->GetArray(ca);
-          const size_t sizetot=size_t(SizeOfType(ar2.type))*ar2.count;
+          const size_t sizetot=TypeSize(ar2.type)*ar2.count;
           const void* ptr1=(const void*)Arrays1->GetArrayCte(ca).ptr;
           memcpy(ar2.ptr,ptr1,sizetot);
         }

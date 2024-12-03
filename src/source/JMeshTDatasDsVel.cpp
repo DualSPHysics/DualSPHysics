@@ -24,7 +24,6 @@
 #include "JMeshTDatasLoad.h"
 #include "JMeshData.h"
 #include "JDataArrays.h"
-//#include "JVtkLib.h"  //-Only for debug...
 
 #ifdef _WITHGPU
   #include "FunctionsCuda.h"
