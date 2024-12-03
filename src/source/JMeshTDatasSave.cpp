@@ -21,7 +21,9 @@
 #include "JMeshTDatasSave.h"
 #include "Functions.h"
 #include "JMeshData.h"
-#include "JVtkLib.h"
+#include "JSpVtkData.h"
+#include "JDataArrays.h"
+#include "JSpVtkShape.h"
 #include "JSaveCsv2.h"
 #include "JException.h"
 
@@ -293,7 +295,7 @@ void JMeshTDatasSave::SaveCsvHead(const StMeshPts& m,std::string name,std::strin
   scsv << m.dirdat;
   scsv << jcsv::Endl();
   //-Data headers.
-  const int tdim=DimOfType(type);
+  const int tdim=TypeDim(type);
   if(tdim!=1 && tdim!=3)Run_ExceptioonFileSta("Dimension of type of data is invalid.",scsv.GetFileName());
   scsv << "time [s]";
   if(tdim==1){
@@ -368,37 +370,35 @@ void JMeshTDatasSave::SaveCsv(const JMeshData* mdat,unsigned cdata
 void JMeshTDatasSave::SaveVtk(std::string file,int fnum,const JMeshData* mdat
   ,bool svdata12)
 {
-  if(JVtkLib::Available()){
-    if(fun::GetExtension(file).empty())file=fun::AddExtension(file,"vtk");
-    if(fnum>=0)file=fun::FileNameSec(file,fnum);
-    //-Loads data in arrays.
-    JDataArrays arrays;
-    const StMeshPts m=mdat->GetMeshPt();
-    //JMeshData::PrintMeshPts("JMeshTDatasSave::SaveVtk\n",m);
-    const unsigned np=(svdata12? m.npt1*m.npt2: m.npt);
-    //printf("--> np:%u\n",np);
-    const JDataArrays* ars=mdat->GetArrays();
-    const unsigned na=ars->Count();
-    for(unsigned ca=0;ca<na;ca++){
-      const JDataArrays::StDataArray& ar=ars->GetArrayCte(ca);
-      if(svdata12==(ar.tag==JMeshData::TAGDATA12)){
-        if(ar.count!=np)Run_ExceptioonFileSta(fun::PrintStr("Size of array \'%s\' is invalid.",ar.keyname.c_str()),file);
-        arrays.AddArray(ar.keyname,ar.type,ar.count,ar.ptr,false);
-      }
+  if(fun::GetExtension(file).empty())file=fun::AddExtension(file,"vtk");
+  if(fnum>=0)file=fun::FileNameSec(file,fnum);
+  //-Loads data in arrays.
+  JDataArrays arrays;
+  const StMeshPts m=mdat->GetMeshPt();
+  //JMeshData::PrintMeshPts("JMeshTDatasSave::SaveVtk\n",m);
+  const unsigned np=(svdata12? m.npt1*m.npt2: m.npt);
+  //printf("--> np:%u\n",np);
+  const JDataArrays* ars=mdat->GetArrays();
+  const unsigned na=ars->Count();
+  for(unsigned ca=0;ca<na;ca++){
+    const JDataArrays::StDataArray& ar=ars->GetArrayCte(ca);
+    if(svdata12==(ar.tag==JMeshData::TAGDATA12)){
+      if(ar.count!=np)Run_ExceptioonFileSta(fun::PrintStr("Size of array \'%s\' is invalid.",ar.keyname.c_str()),file);
+      arrays.AddArray(ar.keyname,ar.type,ar.count,ar.ptr,false);
     }
-    //-Loads positions.
-    if(arrays.Count()){
-      tfloat3* pos=arrays.CreateArrayPtrFloat3("Pos",np,false);
-      mdat->GetPosf(np,pos);
-      //-Updates z of position when Zsurf data is available.
-      const unsigned idx=arrays.GetIdxName("Zsurf");
-      if(idx!=UINT_MAX){
-        const float* zsurf=arrays.GetArrayFloat(idx);
-        for(unsigned p=0;p<np;p++)pos[p].z=zsurf[p];
-      }
-      //-Saves VTK file.
-      JVtkLib::SaveVtkData(file,arrays,"Pos");
+  }
+  //-Loads positions.
+  if(arrays.Count()){
+    tfloat3* pos=arrays.CreateArrayPtrFloat3("Pos",np,false);
+    mdat->GetPosf(np,pos);
+    //-Updates z of position when Zsurf data is available.
+    const unsigned idx=arrays.GetIdxName("Zsurf");
+    if(idx!=UINT_MAX){
+      const float* zsurf=arrays.GetArrayFloat(idx);
+      for(unsigned p=0;p<np;p++)pos[p].z=zsurf[p];
     }
+    //-Saves VTK file.
+    JSpVtkData::Save(file,arrays,"Pos");
   }
 }
 
@@ -408,14 +408,14 @@ void JMeshTDatasSave::SaveVtk(std::string file,int fnum,const JMeshData* mdat
 void JMeshTDatasSave::SaveVtkScheme(std::string file,StMeshPts m){
   //JMeshData::PrintMeshPts("SaveVtkSchem>\n",m);
   //if(!CheckMeshVectors(m))Run_ExceptioonFileSta("Mesh definition invalid to create scheme.",file);
-  JVtkLib sh;
+  JSpVtkShape ss;
   if(CheckMeshVectors(m)){
     const int ndef=(m.npt1>1? 1: 0)+(m.npt2>1? 1: 0)+(m.npt3>1? 1: 0);
-    if(!ndef)sh.AddShapePoint(m.ptref,0);
+    if(!ndef)ss.AddPoint(m.ptref);
     else if(ndef==1){//-Grid-Line.
-      if(m.npt1>1)sh.AddShapeLine(m.ptref,m.ptref+(m.vdp1*(m.npt1-1)),0);
-      if(m.npt2>1)sh.AddShapeLine(m.ptref,m.ptref+(m.vdp2*(m.npt2-1)),0);
-      if(m.npt3>1)sh.AddShapeLine(m.ptref,m.ptref+(m.vdp3*(m.npt3-1)),0);
+      if(m.npt1>1)ss.AddLine(m.ptref,m.ptref+(m.vdp1*(m.npt1-1)));
+      if(m.npt2>1)ss.AddLine(m.ptref,m.ptref+(m.vdp2*(m.npt2-1)));
+      if(m.npt3>1)ss.AddLine(m.ptref,m.ptref+(m.vdp3*(m.npt3-1)));
     }
     else if(ndef==2){//-Grid-Plane.
       if(m.npt1>1 && m.npt2>1){
@@ -425,7 +425,7 @@ void JMeshTDatasSave::SaveVtkScheme(std::string file,StMeshPts m){
         const tdouble3 p1=p0+(v1*n1);
         const tdouble3 p2=p1+(v2*n2);
         const tdouble3 p3=p0+(v2*n2);
-        sh.AddShapeQuad(p0,p1,p2,p3,0);
+        ss.AddQuad(p0,p1,p2,p3);
       }
       else if(m.npt1>1 && m.npt3>1){
         const unsigned n1=m.npt1-1,n2=m.npt3-1;
@@ -434,7 +434,7 @@ void JMeshTDatasSave::SaveVtkScheme(std::string file,StMeshPts m){
         const tdouble3 p1=p0+(v1*n1);
         const tdouble3 p2=p1+(v2*n2);
         const tdouble3 p3=p0+(v2*n2);
-        sh.AddShapeQuad(p0,p1,p2,p3,0);
+        ss.AddQuad(p0,p1,p2,p3);
       }
       else{//-Grid-Box.
         const unsigned n1=m.npt2-1,n2=m.npt3-1;
@@ -443,15 +443,15 @@ void JMeshTDatasSave::SaveVtkScheme(std::string file,StMeshPts m){
         const tdouble3 p1=p0+(v1*n1);
         const tdouble3 p2=p1+(v2*n2);
         const tdouble3 p3=p0+(v2*n2);
-        sh.AddShapeQuad(p0,p1,p2,p3,0);
+        ss.AddQuad(p0,p1,p2,p3);
       }
     }
     else if(ndef==3){
-      sh.AddShapeBox(m.ptref,m.vdp1*(m.npt1-1),m.vdp2*(m.npt2-1),m.vdp3*(m.npt3-1),0);
+      ss.AddBoxSizeVec(m.ptref,m.vdp1*(m.npt1-1),m.vdp2*(m.npt2-1),m.vdp3*(m.npt3-1));
     }
   }
-  else sh.AddShapePoint(m.ptref,0);
-  sh.SaveShapeVtk(file,"num");
+  else ss.AddPoint(m.ptref);
+  ss.SaveVtk(file,"num");
 }
 
 }

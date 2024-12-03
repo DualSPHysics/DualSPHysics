@@ -155,7 +155,7 @@
       <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
       <AdditionalLibraryDirectories>$(CUDA_PATH_V11_7)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -212,7 +212,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
       <AdditionalLibraryDirectories>$(CUDA_PATH_V11_7)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -277,7 +277,7 @@
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>false</EnableCOMDATFolding>
-      <AdditionalDependencies>dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_Release.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_Release.lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dsphchrono.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_Release.lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkStatus>
       </LinkStatus>
     </Link>
@@ -328,7 +328,7 @@
       </OptimizeReferences>
       <EnableCOMDATFolding>
       </EnableCOMDATFolding>
-      <AdditionalDependencies>dsphchrono.lib;LibJVtkLib_$(PlatformName)_$(PlatformToolset)_Debug.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_Debug.lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dsphchrono.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_Debug.lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkStatus>
       </LinkStatus>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
@@ -582,6 +582,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JCfgRunBase.h" />
     <ClInclude Include="..\source\JCfgRunBaseDef.h" />
     <ClInclude Include="..\source\JChronoData.h" />
+    <ClInclude Include="..\source\JChronoGeoObj.h" />
     <ClInclude Include="..\source\JChronoObjects.h" />
     <ClInclude Include="..\source\JChronoObjectsUndef.h" />
     <ClInclude Include="..\source\JComputeMotionRef.h" />
@@ -706,7 +707,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JSimpleNeigs.h" />
     <ClInclude Include="..\source\JCasePartsDef.h" />
     <ClInclude Include="..\source\JCaseProperties.h" />
-    <ClInclude Include="..\source\JCaseVtkOut.h" />
     <ClInclude Include="..\source\JDsAccInput.h" />
     <ClInclude Include="..\source\JDsAccInput_ker.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
@@ -737,6 +737,8 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JDsViscoInput.h" />
     <ClInclude Include="..\source\JDsPartsOut.h" />
     <ClInclude Include="..\source\JSphCpuSingle.h" />
+    <ClInclude Include="..\source\JSpVtkData.h" />
+    <ClInclude Include="..\source\JSpVtkShape.h" />
     <ClInclude Include="..\source\JTimeControl.h" />
     <ClInclude Include="..\source\JDsOutputTime.h" />
     <ClInclude Include="..\source\JTimer.h" />
@@ -745,9 +747,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     </ClInclude>
     <ClInclude Include="..\source\JTrianglesMesh.h" />
     <ClInclude Include="..\source\JViscosityDef.h" />
-    <ClInclude Include="..\source\JVtkLib.h" />
-    <ClInclude Include="..\source\JVtkLibDef.h" />
-    <ClInclude Include="..\source\JVtkLibUndef.h" />
     <ClInclude Include="..\source\JWaveGen.h" />
     <ClInclude Include="..\source\JWaveGenUndef.h" />
     <ClInclude Include="..\source\JWaveOrder2_ker.h">
@@ -810,6 +809,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\source\JCfgRunBase.cpp" />
+    <ClCompile Include="..\source\JChronoGeoObj.cpp" />
     <ClCompile Include="..\source\JChronoObjects.cpp" />
     <ClCompile Include="..\source\JComputeMotionRef.cpp" />
     <ClCompile Include="..\source\JDebugSphCpu.cpp" />
@@ -879,7 +879,6 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JSphShifting.cpp" />
     <ClCompile Include="..\source\JSimpleNeigs.cpp" />
     <ClCompile Include="..\source\JCaseProperties.cpp" />
-    <ClCompile Include="..\source\JCaseVtkOut.cpp" />
     <ClCompile Include="..\source\JDsAccInput.cpp" />
     <ClCompile Include="..\source\JSphCpuSingle_InOut.cpp" />
     <ClCompile Include="..\source\JSphCpu_InOut.cpp" />
@@ -904,6 +903,8 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JDsViscoInput.cpp" />
     <ClCompile Include="..\source\JDsPartsOut.cpp" />
     <ClCompile Include="..\source\JSphCpuSingle.cpp" />
+    <ClCompile Include="..\source\JSpVtkData.cpp" />
+    <ClCompile Include="..\source\JSpVtkShape.cpp" />
     <ClCompile Include="..\source\JTimeControl.cpp" />
     <ClCompile Include="..\source\JDsOutputTime.cpp" />
     <ClCompile Include="..\source\JSphCfgRun.cpp" />

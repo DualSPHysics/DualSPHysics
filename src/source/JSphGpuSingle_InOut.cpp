@@ -32,7 +32,6 @@
 #include "JAppInfo.h"
 #include "JTimeControl.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
 #include <climits>
 
 using namespace std;

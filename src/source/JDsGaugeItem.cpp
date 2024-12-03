@@ -29,7 +29,7 @@
 #include "Functions.h"
 #include "FunGeo3d.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
+#include "JSpVtkData.h"
 #include "JMeshData.h"        //<vs_meeshdat>
 #include "JMeshTDatasSave.h"  //<vs_meeshdat>
 #ifdef _WITHGPU
@@ -406,14 +406,12 @@ void JGaugeVelocity::SaveResults(){
 /// Saves last result in VTK file.
 //==============================================================================
 void JGaugeVelocity::SaveVtkResult(unsigned cpart){
-  if(JVtkLib::Available()){
-    //-Prepares data.
-    JDataArrays arrays;
-    arrays.AddArray("Pos",1,&(Result.point),false);
-    arrays.AddArray("Vel",1,&(Result.vel),false);
-    Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
-    JVtkLib::SaveVtkData(fun::FileNameSec(GetResultsFileVtk(),cpart),arrays,"Pos");
-  }
+  //-Prepares data.
+  JDataArrays arrays;
+  arrays.AddArray("Pos",1,&(Result.point),false);
+  arrays.AddArray("Vel",1,&(Result.vel),false);
+  Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
+  JSpVtkData::Save(fun::FileNameSec(GetResultsFileVtk(),cpart),arrays,"Pos");
 }
 
 //==============================================================================
@@ -703,12 +701,10 @@ void JGaugeSwl::SaveResults(){
 /// Saves last result in VTK file.
 //==============================================================================
 void JGaugeSwl::SaveVtkResult(unsigned cpart){
-  if(JVtkLib::Available()){
-    JDataArrays arrays;
-    arrays.AddArray("Pos",1,&(Result.posswl),false);
-    Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
-    JVtkLib::SaveVtkData(fun::FileNameSec(GetResultsFileVtk(),cpart),arrays,"Pos");
-  }
+  JDataArrays arrays;
+  arrays.AddArray("Pos",1,&(Result.posswl),false);
+  Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
+  JSpVtkData::Save(fun::FileNameSec(GetResultsFileVtk(),cpart),arrays,"Pos");
 }
 
 //==============================================================================
@@ -991,18 +987,16 @@ void JGaugeMaxZ::SaveResults(){
 /// Saves last result in VTK file.
 //==============================================================================
 void JGaugeMaxZ::SaveVtkResult(unsigned cpart){
-  if(JVtkLib::Available()){
-    //-Prepares data.
-    const tfloat3 pt0=Result.point0;
-    const tfloat3 ptz=TFloat3(pt0.x,pt0.y,Result.zmax);
-    const float height=ptz.z-pt0.z;
-    //Log->Printf("---->ptz:(%g,%g,%g)  h:%g",ptz.x,ptz.y,ptz.z,height);
-    JDataArrays arrays;
-    arrays.AddArray("Pos",1,&ptz,false);
-    arrays.AddArray("Height",1,&height,false);
-    Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
-    JVtkLib::SaveVtkData(fun::FileNameSec(GetResultsFileVtk(),cpart),arrays,"Pos");
-  }
+  //-Prepares data.
+  const tfloat3 pt0=Result.point0;
+  const tfloat3 ptz=TFloat3(pt0.x,pt0.y,Result.zmax);
+  const float height=ptz.z-pt0.z;
+  //Log->Printf("---->ptz:(%g,%g,%g)  h:%g",ptz.x,ptz.y,ptz.z,height);
+  JDataArrays arrays;
+  arrays.AddArray("Pos",1,&ptz,false);
+  arrays.AddArray("Height",1,&height,false);
+  Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
+  JSpVtkData::Save(fun::FileNameSec(GetResultsFileVtk(),cpart),arrays,"Pos");
 }
 
 //==============================================================================
@@ -1436,15 +1430,13 @@ void JGaugeMesh::SaveResults(){
 /// Saves last result in VTK file.
 //==============================================================================
 void JGaugeMesh::SaveVtkResult(unsigned cpart){
-  if(JVtkLib::Available()){
-    //-Saves VTK with npt size data.
-    Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
-    jmsh::JMeshTDatasSave::SaveVtk(GetResultsFileVtk(),int(cpart),MeshDat,false);
-    //-Saves VTK with zsurf data.
-    if(ComputeZsurf){
-      Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk("_Zsurf"),UINT_MAX),FileInfo);
-      jmsh::JMeshTDatasSave::SaveVtk(GetResultsFileVtk("_Zsurf"),int(cpart),MeshDat,true);
-    }
+  //-Saves VTK with npt size data.
+  Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
+  jmsh::JMeshTDatasSave::SaveVtk(GetResultsFileVtk(),int(cpart),MeshDat,false);
+  //-Saves VTK with zsurf data.
+  if(ComputeZsurf){
+    Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk("_Zsurf"),UINT_MAX),FileInfo);
+    jmsh::JMeshTDatasSave::SaveVtk(GetResultsFileVtk("_Zsurf"),int(cpart),MeshDat,true);
   }
 }
 
@@ -1834,13 +1826,11 @@ void JGaugeForce::SaveResults(){
 /// Saves last result in VTK file.
 //==============================================================================
 void JGaugeForce::SaveVtkResult(unsigned cpart){
-  if(JVtkLib::Available()){
-    JDataArrays arrays;
-    arrays.AddArray("Pos",1,&InitialCenter,false);
-    arrays.AddArray("Force",1,&(Result.force),false);
-    Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
-    JVtkLib::SaveVtkData(fun::FileNameSec(GetResultsFileVtk(),cpart),arrays,"Pos");
-  }
+  JDataArrays arrays;
+  arrays.AddArray("Pos",1,&InitialCenter,false);
+  arrays.AddArray("Force",1,&(Result.force),false);
+  Log->AddFileInfo(fun::FileNameSec(GetResultsFileVtk(),UINT_MAX),FileInfo);
+  JSpVtkData::Save(fun::FileNameSec(GetResultsFileVtk(),cpart),arrays,"Pos");
 }
 
 //==============================================================================

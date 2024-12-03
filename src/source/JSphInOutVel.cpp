@@ -30,7 +30,7 @@
 #include "JSphInOutGridData.h"
 #include "JMeshTDatasDsVel.h"  //<vs_meeshdat>
 #include "JMeshTDatasXml.h"  //<vs_meeshdat>
-#include "JVtkLib.h"
+#include "JSpVtkShape.h"
 
 #ifdef _WITHGPU
   #include "FunctionsCuda.h"
@@ -307,12 +307,12 @@ TpInVelMode JSphInOutVel::ReadXml(const JXml* sxml,TiXmlElement* ele
 //==============================================================================
 void JSphInOutVel::ConfigCircleRadius(double radius){ 
   CircleRadius=radius; 
-  JVtkLib sh;
-  sh.AddShapeCircle(PtPlane,float(CircleRadius),Direction,64,IdZone);
+  JSpVtkShape ss;
+  ss.AddCircle(PtPlane,Direction,CircleRadius,IdZone);
   const tdouble3 pcen2=PtPlane+(Direction*InputJetDistance);
-  sh.AddShapeCircle(pcen2,float(InputJetRadius),Direction,64,IdZone);
+  ss.AddCircle(pcen2,Direction,InputJetRadius,IdZone);
   string filevtk=AppInfo.GetDirOut()+fun::PrintStr("CfgInOut_Zone%02u.vtk",IdZone);
-  sh.SaveShapeVtk(filevtk,"izone");
+  ss.SaveVtk(filevtk,"izone");
 }
 
 //==============================================================================

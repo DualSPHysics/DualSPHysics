@@ -21,7 +21,7 @@
 #include "JLog2.h"
 #include "JException.h"
 #include "Functions.h"
-#include "JVtkLib.h"
+#include "JSpVtkData.h"
 #include "JOutputCsv.h"
 #include "JDataArrays.h"
 
@@ -286,7 +286,7 @@ void JDebugSphCpu::SaveVtk(std::string filename,int numfile,unsigned pini
   //-Run user filter.
   RunUserFilters(arrays);
   //-Saves VTK file.
-  JVtkLib::SaveVtkData(file,arrays,"Pos");
+  JSpVtkData::Save(file,arrays,"Pos");
   arrays.Reset();
 }
 

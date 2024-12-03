@@ -30,7 +30,7 @@
 #include "Functions.h"
 #include "FunGeo3d.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
+#include "JSpVtkData.h"
 #include "JSaveCsv2.h"
 #include "JAppInfo.h"
 #include "JSphMk.h"
@@ -423,7 +423,7 @@ void JDsFtForcePoints::SaveVtkPoints(unsigned numfile)const{
   if(PtForce)arrays.AddArray("Force",PtCount,PtForce,false);
   const string files=AppInfo.GetDirOut()+"MooringsVtk/FtForcesPoints.vtk";
   Log->AddFileInfo(fun::FileNameSec(files,UINT_MAX),"Saves VTK file with force points (MoorDynPlus coupling).");
-  JVtkLib::SaveVtkData(fun::FileNameSec(files,numfile),arrays,"Pos");
+  JSpVtkData::Save(fun::FileNameSec(files,numfile),arrays,"Pos");
 }
 
 //==============================================================================

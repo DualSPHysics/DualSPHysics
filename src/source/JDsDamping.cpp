@@ -24,7 +24,7 @@
 #include "JXml.h"
 #include "Functions.h"
 #include "FunGeo3d.h"
-#include "JVtkLib.h"
+#include "JSpVtkShape.h"
 #include <cfloat>
 #include <algorithm>
 
@@ -132,24 +132,24 @@ void JDsDampingOp_Plane::ReadXml(const JXml* sxml,TiXmlElement* ele){
 //==============================================================================
 /// Saves VTK file with scheme of configuration.
 //==============================================================================
-void JDsDampingOp_Plane::SaveVtkConfig(double dp,JVtkLib* sh)const{
+void JDsDampingOp_Plane::SaveVtkConfig(double dp,JSpVtkShape* ss)const{
   const double sizequad=dp*16;
   const double sizedir=dp*4;
-  const int cv=int(Id);
+  const word cv=word(Id);
   const tdouble3 ps=LimitMin;
   const tdouble3 ve=fgeo::VecUnitary(LimitMax-ps);
   //-Adds limit quad.
-  sh->AddShapeQuad(LimitMin,ve,sizequad,cv);
-  sh->AddShapeQuadWire(LimitMin,ve,sizequad,cv);
+  ss->AddQuadOrtho(LimitMin,ve,sizequad,cv);
+  ss->AddQuadOrthoWire(LimitMin,ve,sizequad,cv);
   //-Adds limitmax quad.
-  sh->AddShapeQuad(LimitMax,ve,sizequad/3,cv);
-  sh->AddShapeQuadWire(LimitMax,ve,sizequad/3,cv);
+  ss->AddQuadOrtho(LimitMax,ve,sizequad/3,cv);
+  ss->AddQuadOrthoWire(LimitMax,ve,sizequad/3,cv);
   //-Adds overlimit quad.
   const tdouble3 pt=LimitMax+(ve*double(OverLimit));
-  sh->AddShapeQuad(pt,ve,sizequad/3,cv);
-  sh->AddShapeQuadWire(pt,ve,sizequad/3,cv);
+  ss->AddQuadOrtho(pt,ve,sizequad/3,cv);
+  ss->AddQuadOrthoWire(pt,ve,sizequad/3,cv);
   //-Adds direction line.
-  sh->AddShapeLine(LimitMin,pt,cv);
+  ss->AddLine(LimitMin,pt,cv);
   if(UseDomain){
     const tdouble3 p0=TDouble3(DomPt0.x,DomPt0.y,DomzMin);
     const tdouble3 p1=TDouble3(DomPt1.x,DomPt1.y,DomzMin);
@@ -159,12 +159,12 @@ void JDsDampingOp_Plane::SaveVtkConfig(double dp,JVtkLib* sh)const{
     const tdouble3 q1=TDouble3(DomPt1.x,DomPt1.y,DomzMax);
     const tdouble3 q2=TDouble3(DomPt2.x,DomPt2.y,DomzMax);
     const tdouble3 q3=TDouble3(DomPt3.x,DomPt3.y,DomzMax);
-    sh->AddShapeQuad(p0,p1,p2,p3,cv); //-Bottom.
-    sh->AddShapeQuad(q3,q2,q1,q0,cv); //-Top.
-    sh->AddShapeQuad(p0,p1,q1,q0,cv);
-    sh->AddShapeQuad(p1,p2,q2,q1,cv);
-    sh->AddShapeQuad(p2,p3,q3,q2,cv);
-    sh->AddShapeQuad(p3,p0,q0,q3,cv);
+    ss->AddQuad(p0,p1,p2,p3,cv); //-Bottom.
+    ss->AddQuad(q3,q2,q1,q0,cv); //-Top.
+    ss->AddQuad(p0,p1,q1,q0,cv);
+    ss->AddQuad(p1,p2,q2,q1,cv);
+    ss->AddQuad(p2,p3,q3,q2,cv);
+    ss->AddQuad(p3,p0,q0,q3,cv);
   }
 }
 
@@ -392,17 +392,15 @@ void JDsDampingOp_Box::ReadXml(const JXml* sxml,TiXmlElement* ele){
 //==============================================================================
 /// Saves VTK file with scheme of configuration.
 //==============================================================================
-void JDsDampingOp_Box::SaveVtkConfig(double dp,JVtkLib* sh)const{
-  const int cv=int(Id);
+void JDsDampingOp_Box::SaveVtkConfig(double dp,JSpVtkShape* ss)const{
+  const word cv=word(Id);
   const tdouble3 smin=LimitMin2-LimitMin1;
   const tdouble3 smax=LimitMax2-LimitMax1;
   const tdouble3 sove=LimitOver2-LimitOver1;
   //-Domains.
-  sh->SetShapeWireMode(true);
-  sh->AddShapeBoxSize(LimitMin1,smin,cv);
-  sh->AddShapeBoxSize(LimitMax1,smax,cv);
-  sh->AddShapeBoxSize(LimitOver1,sove,cv);
-  sh->SetShapeWireMode(false);
+  ss->AddBoxSizeWire(LimitMin1,smin,cv);
+  ss->AddBoxSizeWire(LimitMax1,smax,cv);
+  ss->AddBoxSizeWire(LimitOver1,sove,cv);
   //-Lines from LimitMin box to LimitMax box.
   const tdouble3 pt1=LimitMin1,pt1b=LimitMax1;
   const tdouble3 pt2=pt1+TDouble3(0     ,0     ,smin.z),pt2b=pt1b+TDouble3(0     ,0     ,smax.z);
@@ -412,21 +410,21 @@ void JDsDampingOp_Box::SaveVtkConfig(double dp,JVtkLib* sh)const{
   const tdouble3 pt6=pt1+TDouble3(smin.x,0     ,smin.z),pt6b=pt1b+TDouble3(smax.x,0     ,smax.z);
   const tdouble3 pt7=pt1+TDouble3(smin.x,smin.y,0     ),pt7b=pt1b+TDouble3(smax.x,smax.y,0     );
   const tdouble3 pt8=pt1+TDouble3(smin.x,smin.y,smin.z),pt8b=pt1b+TDouble3(smax.x,smax.y,smax.z);
-  sh->AddShapeLine(pt1,pt1b,cv);
-  sh->AddShapeLine(pt2,pt2b,cv);
-  sh->AddShapeLine(pt3,pt3b,cv);
-  sh->AddShapeLine(pt4,pt4b,cv);
-  sh->AddShapeLine(pt5,pt5b,cv);
-  sh->AddShapeLine(pt6,pt6b,cv);
-  sh->AddShapeLine(pt7,pt7b,cv);
-  sh->AddShapeLine(pt8,pt8b,cv);
+  ss->AddLine(pt1,pt1b,cv);
+  ss->AddLine(pt2,pt2b,cv);
+  ss->AddLine(pt3,pt3b,cv);
+  ss->AddLine(pt4,pt4b,cv);
+  ss->AddLine(pt5,pt5b,cv);
+  ss->AddLine(pt6,pt6b,cv);
+  ss->AddLine(pt7,pt7b,cv);
+  ss->AddLine(pt8,pt8b,cv);
   //-Active directions.
-  if(Directions&BDIR_Top   )sh->AddShapeQuad(pt2,pt6,pt8,pt4,cv);
-  if(Directions&BDIR_Bottom)sh->AddShapeQuad(pt1,pt3,pt7,pt5,cv);
-  if(Directions&BDIR_Left  )sh->AddShapeQuad(pt1,pt2,pt4,pt3,cv);
-  if(Directions&BDIR_Right )sh->AddShapeQuad(pt5,pt7,pt8,pt6,cv);
-  if(Directions&BDIR_Front )sh->AddShapeQuad(pt1,pt5,pt6,pt2,cv);
-  if(Directions&BDIR_Back  )sh->AddShapeQuad(pt3,pt4,pt8,pt7,cv);
+  if(Directions&BDIR_Top   )ss->AddQuad(pt2,pt6,pt8,pt4,cv);
+  if(Directions&BDIR_Bottom)ss->AddQuad(pt1,pt3,pt7,pt5,cv);
+  if(Directions&BDIR_Left  )ss->AddQuad(pt1,pt2,pt4,pt3,cv);
+  if(Directions&BDIR_Right )ss->AddQuad(pt5,pt7,pt8,pt6,cv);
+  if(Directions&BDIR_Front )ss->AddQuad(pt1,pt5,pt6,pt2,cv);
+  if(Directions&BDIR_Back  )ss->AddQuad(pt3,pt4,pt8,pt7,cv);
 }
 
 //==============================================================================
@@ -545,14 +543,11 @@ void JDsDampingOp_Cylinder::ReadXml(const JXml* sxml,TiXmlElement* ele){
 //==============================================================================
 /// Saves VTK file with scheme of configuration.
 //==============================================================================
-void JDsDampingOp_Cylinder::SaveVtkConfig(double dp,JVtkLib* sh)const{
-  const int cv=int(Id);
-  sh->SetShapeWireMode(true);
-  sh->AddShapeCylinder(Point1,Point2,LimitMin,28,cv,3);
-  sh->SetShapeWireMode(false);
-  sh->AddShapeCylinder(Point1,Point2,LimitMax,28,cv,3);
-  sh->SetShapeWireMode(true);
-  sh->AddShapeCylinder(Point1,Point2,LimitMax+OverLimit,28,cv,3);
+void JDsDampingOp_Cylinder::SaveVtkConfig(double dp,JSpVtkShape* ss)const{
+  const word cv=word(Id);
+  ss->AddCylinderWire(Point1,Point2,LimitMin,cv);
+  ss->AddCylinder(Point1,Point2,LimitMax,cv);
+  ss->AddCylinderWire(Point1,Point2,LimitMax+OverLimit,cv);
 }
 
 //==============================================================================
@@ -703,10 +698,10 @@ void JDsDamping::VisuConfig(std::string txhead,std::string txfoot){
 //==============================================================================
 void JDsDamping::SaveVtkConfig(double dp)const{
   if(Count()){
-    JVtkLib sh;
-    for(unsigned c=0;c<Count();c++)List[c]->SaveVtkConfig(dp,&sh);
+    JSpVtkShape ss;
+    for(unsigned c=0;c<Count();c++)List[c]->SaveVtkConfig(dp,&ss);
     string filevtk=AppInfo.GetDirOut()+"CfgDamping_Scheme.vtk";
-    sh.SaveShapeVtk(filevtk,(Count()>1? "num": ""));
+    ss.SaveVtk(filevtk,(Count()>1? "num": ""));
     Log->AddFileInfo(filevtk,"Saves VTK file with Damping configurations.");
   }
 }

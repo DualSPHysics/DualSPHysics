@@ -22,7 +22,7 @@
 #include "Functions.h"
 #include "JXml.h"
 #include "FunGeo3d.h"
-#include "JVtkLib.h"
+#include "JSpVtkShape.h"
 #include "JLog2.h"
 #include "JAppInfo.h"
 #include "JSphMk.h"
@@ -185,7 +185,7 @@ void JDsOutputPartsOp_Pos::GetConfig(std::vector<std::string>& lines)const{
 //==============================================================================
 /// Saves VTK file with scheme of configuration.
 //==============================================================================
-void JDsOutputPartsOp_Pos::SaveVtkConfig(double size,JVtkLib* sh)const{
+void JDsOutputPartsOp_Pos::SaveVtkConfig(double size,JSpVtkShape* ss)const{
   const double size05=size/2;
   const bool defx=(PosMin.x!=-DBL_MAX && PosMax.x!=DBL_MAX);
   const bool defy=(PosMin.y!=-DBL_MAX && PosMax.y!=DBL_MAX);
@@ -193,25 +193,25 @@ void JDsOutputPartsOp_Pos::SaveVtkConfig(double size,JVtkLib* sh)const{
   const bool undefx=(PosMin.x==-DBL_MAX && PosMax.x==DBL_MAX);
   const bool undefy=(PosMin.y==-DBL_MAX && PosMax.y==DBL_MAX);
   const bool undefz=(PosMin.z==-DBL_MAX && PosMax.z==DBL_MAX);
-  sh->SetShapeWireMode(false);
+  const word id=word(Id);
   if(defx && defy && defz){
     tdouble3 p1=PosMin,p2=PosMax;
-    sh->AddShapeBoxSize(p1,p2-p1,int(Id));
+    ss->AddBoxSize(p1,p2-p1,id);
   }
   else if(defx && undefy && defz){
     tdouble3 p1=PosMin,p2=PosMax;
     p1.y=-size05; p2.y=size05;
-    sh->AddShapeBoxSize(p1,p2-p1,int(Id));
+    ss->AddBoxSize(p1,p2-p1,id);
   }
   else if(defx && defy && undefz){
     tdouble3 p1=PosMin,p2=PosMax;
     p1.z=-size05; p2.z=size05;
-    sh->AddShapeBoxSize(p1,p2-p1,int(Id));
+    ss->AddBoxSize(p1,p2-p1,id);
   }
   else if(undefx && defy && defz){
     tdouble3 p1=PosMin,p2=PosMax;
     p1.x=-size05; p2.x=size05;
-    sh->AddShapeBoxSize(p1,p2-p1,int(Id));
+    ss->AddBoxSize(p1,p2-p1,id);
   }
   else{
     tdouble3 pmin=PosMin,pmax=PosMax;
@@ -238,9 +238,9 @@ void JDsOutputPartsOp_Pos::SaveVtkConfig(double size,JVtkLib* sh)const{
       const tdouble3 p4=TDouble3(pmin.x,pmax.y,pmin.z);
       const tdouble3 pm1=TDouble3(pmin.x,pm.y,pm.z);
       const tdouble3 pm2=TDouble3(pmin.x+size05,pm.y,pm.z);
-      sh->AddShapeQuad(p1,p2,p3,p4,int(Id));
-      sh->AddShapeQuadWire(p1,p2,p3,p4,int(Id));
-      sh->AddShapeLine(pm1,pm2,int(Id));
+      ss->AddQuad(p1,p2,p3,p4,id);
+      ss->AddQuadWire(p1,p2,p3,p4,id);
+      ss->AddLine(pm1,pm2,id);
     }
     if(PosMin.y!=-DBL_MAX){
       const tdouble3 p1=pmin;
@@ -249,9 +249,9 @@ void JDsOutputPartsOp_Pos::SaveVtkConfig(double size,JVtkLib* sh)const{
       const tdouble3 p4=TDouble3(pmax.x,pmin.y,pmin.z);
       const tdouble3 pm1=TDouble3(pm.x,pmin.y,pm.z);
       const tdouble3 pm2=TDouble3(pm.x,pmin.y+size05,pm.z);
-      sh->AddShapeQuad(p1,p2,p3,p4,int(Id));
-      sh->AddShapeQuadWire(p1,p2,p3,p4,int(Id));
-      sh->AddShapeLine(pm1,pm2,int(Id));
+      ss->AddQuad(p1,p2,p3,p4,id);
+      ss->AddQuadWire(p1,p2,p3,p4,id);
+      ss->AddLine(pm1,pm2,id);
     }
     if(PosMin.z!=-DBL_MAX){
       const tdouble3 p1=pmin;
@@ -260,9 +260,9 @@ void JDsOutputPartsOp_Pos::SaveVtkConfig(double size,JVtkLib* sh)const{
       const tdouble3 p4=TDouble3(pmax.x,pmin.y,pmin.z);
       const tdouble3 pm1=TDouble3(pm.x,pm.y,pmin.z);
       const tdouble3 pm2=TDouble3(pm.x,pm.y,pmin.z+size05);
-      sh->AddShapeQuad(p1,p2,p3,p4,int(Id));
-      sh->AddShapeQuadWire(p1,p2,p3,p4,int(Id));
-      sh->AddShapeLine(pm1,pm2,int(Id));
+      ss->AddQuad(p1,p2,p3,p4,id);
+      ss->AddQuadWire(p1,p2,p3,p4,id);
+      ss->AddLine(pm1,pm2,id);
     }
     if(PosMax.x!=DBL_MAX){
       const tdouble3 p1=TDouble3(pmax.x,pmin.y,pmin.z);
@@ -271,9 +271,9 @@ void JDsOutputPartsOp_Pos::SaveVtkConfig(double size,JVtkLib* sh)const{
       const tdouble3 p4=TDouble3(pmax.x,pmax.y,pmin.z);
       const tdouble3 pm1=TDouble3(pmax.x,pm.y,pm.z);
       const tdouble3 pm2=TDouble3(pmax.x-size05,pm.y,pm.z);
-      sh->AddShapeQuad(p1,p2,p3,p4,int(Id));
-      sh->AddShapeQuadWire(p1,p2,p3,p4,int(Id));
-      sh->AddShapeLine(pm1,pm2,int(Id));
+      ss->AddQuad(p1,p2,p3,p4,id);
+      ss->AddQuadWire(p1,p2,p3,p4,id);
+      ss->AddLine(pm1,pm2,id);
     }
     if(PosMax.y!=DBL_MAX){
       const tdouble3 p1=TDouble3(pmin.x,pmax.y,pmin.z);
@@ -282,9 +282,9 @@ void JDsOutputPartsOp_Pos::SaveVtkConfig(double size,JVtkLib* sh)const{
       const tdouble3 p4=TDouble3(pmax.x,pmax.y,pmin.z);
       const tdouble3 pm1=TDouble3(pm.x,pmax.y,pm.z);
       const tdouble3 pm2=TDouble3(pm.x,pmax.y-size05,pm.z);
-      sh->AddShapeQuad(p1,p2,p3,p4,int(Id));
-      sh->AddShapeQuadWire(p1,p2,p3,p4,int(Id));
-      sh->AddShapeLine(pm1,pm2,int(Id));
+      ss->AddQuad(p1,p2,p3,p4,id);
+      ss->AddQuadWire(p1,p2,p3,p4,id);
+      ss->AddLine(pm1,pm2,id);
     }
     if(PosMax.z!=DBL_MAX){
       const tdouble3 p1=TDouble3(pmin.x,pmin.y,pmax.z);
@@ -293,9 +293,9 @@ void JDsOutputPartsOp_Pos::SaveVtkConfig(double size,JVtkLib* sh)const{
       const tdouble3 p4=TDouble3(pmax.x,pmin.y,pmax.z);
       const tdouble3 pm1=TDouble3(pm.x,pm.y,pmax.z);
       const tdouble3 pm2=TDouble3(pm.x,pm.y,pmax.z-size05);
-      sh->AddShapeQuad(p1,p2,p3,p4,int(Id));
-      sh->AddShapeQuadWire(p1,p2,p3,p4,int(Id));
-      sh->AddShapeLine(pm1,pm2,int(Id));
+      ss->AddQuad(p1,p2,p3,p4,id);
+      ss->AddQuadWire(p1,p2,p3,p4,id);
+      ss->AddLine(pm1,pm2,id);
     }
   }
 }
@@ -384,15 +384,16 @@ void JDsOutputPartsOp_Plane::GetConfig(std::vector<std::string>& lines)const{
 //==============================================================================
 /// Saves VTK file with scheme of configuration.
 //==============================================================================
-void JDsOutputPartsOp_Plane::SaveVtkConfig(double size,JVtkLib* sh)const{
+void JDsOutputPartsOp_Plane::SaveVtkConfig(double size,JSpVtkShape* ss)const{
+  const word id=word(Id);
   tdouble3 vec=fgeo::VecUnitary(Vector);
-  sh->AddShapeQuad(Point,vec,size,int(Id));
-  sh->AddShapeQuadWire(Point,vec,size,int(Id));
+  ss->AddQuadOrtho(Point,vec,size,id);
+  ss->AddQuadOrthoWire(Point,vec,size,id);
   const tdouble3 p2=Point+(vec*(Distance<DBL_MAX? Distance: size/2));
-  sh->AddShapeLine(Point,p2,int(Id));
+  ss->AddLine(Point,p2,id);
   if(Distance<DBL_MAX){
-    sh->AddShapeQuad(p2,vec*-1.,size,int(Id));
-    sh->AddShapeQuadWire(p2,vec*-1.,size,int(Id));
+    ss->AddQuadOrtho(p2,vec*-1.,size,id);
+    ss->AddQuadOrthoWire(p2,vec*-1.,size,id);
   }
 }
 //==============================================================================
@@ -479,8 +480,8 @@ void JDsOutputPartsOp_Sphere::GetConfig(std::vector<std::string>& lines)const{
 //==============================================================================
 /// Saves VTK file with scheme of configuration.
 //==============================================================================
-void JDsOutputPartsOp_Sphere::SaveVtkConfig(double size,JVtkLib* sh)const{
-  sh->AddShapeSphere(Centre,Radius,28,int(Id));
+void JDsOutputPartsOp_Sphere::SaveVtkConfig(double size,JSpVtkShape* ss)const{
+  ss->AddSphere(Centre,Radius,word(Id));
 }
 //==============================================================================
 /// Compute filter for particles.
@@ -575,8 +576,8 @@ void JDsOutputPartsOp_Cylinder::GetConfig(std::vector<std::string>& lines)const{
 //==============================================================================
 /// Saves VTK file with scheme of configuration.
 //==============================================================================
-void JDsOutputPartsOp_Cylinder::SaveVtkConfig(double size,JVtkLib* sh)const{
-  sh->AddShapeCylinder(Point1,Point2,Radius,28,int(Id));
+void JDsOutputPartsOp_Cylinder::SaveVtkConfig(double size,JSpVtkShape* ss)const{
+  ss->AddCylinder(Point1,Point2,Radius,word(Id));
 }
 //==============================================================================
 /// Compute filter for particles.
@@ -962,14 +963,14 @@ void JDsOutputParts::UpdateFtPos(unsigned ftcount,const StFloatingData* ftobjs)
 //==============================================================================
 void JDsOutputParts::SaveVtkConfig(double size)const{
   if(Count()){
-    JVtkLib sh;
-    for(unsigned c=0;c<Count();c++)List[c]->SaveVtkConfig(size,&sh);
+    JSpVtkShape ss;
+    for(unsigned c=0;c<Count();c++)List[c]->SaveVtkConfig(size,&ss);
     string filevtk=AppInfo.GetDirOut()+"CfgOutputParts_Scheme.vtk";
-    sh.SaveShapeVtk(filevtk,(Count()>1? "num": ""));
+    ss.SaveVtk(filevtk,(Count()>1? "num": ""));
     AppInfo.LogPtr()->AddFileInfo(filevtk,"Saves VTK file with OutputParts filters configurations.");
-    sh.SaveShapeVtk(AppInfo.GetDirOut()+"CfgOutputParts_Scheme_dg01.vtk",(Count()>1? "num": ""));
-    sh.SaveShapeVtk(AppInfo.GetDirOut()+"CfgOutputParts_Scheme_dg02.vtk",(Count()>1? "num": ""));
-    sh.SaveShapeVtk(AppInfo.GetDirOut()+"CfgOutputParts_Scheme_dg03.vtk",(Count()>1? "num": ""));
+    ss.SaveVtk(AppInfo.GetDirOut()+"CfgOutputParts_Scheme_dg01.vtk",(Count()>1? "num": ""));
+    ss.SaveVtk(AppInfo.GetDirOut()+"CfgOutputParts_Scheme_dg02.vtk",(Count()>1? "num": ""));
+    ss.SaveVtk(AppInfo.GetDirOut()+"CfgOutputParts_Scheme_dg03.vtk",(Count()>1? "num": ""));
   }
 }
 

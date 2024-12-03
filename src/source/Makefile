@@ -1,10 +1,9 @@
-#DualSPHysics GPU/CPU v5.4.350 26-11-2024
+#DualSPHysics GPU/CPU v5.4.351 02-12-2024
 
 #=============== Compilation Options (YES/NO) ===============
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
-COMPILE_VTKLIB=YES
 COMPILE_CHRONO=YES
 COMPILE_WAVEGEN=YES
 COMPILE_MOORDYNPLUS=YES
@@ -30,9 +29,6 @@ endif
 CC=g++
 CCLINKFLAGS=-fopenmp -lgomp
 
-ifeq ($(COMPILE_VTKLIB), NO)
-  CCFLAGS:=$(CCFLAGS) -DDISABLE_VTKLIB
-endif
 ifeq ($(COMPILE_CHRONO), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
 endif
@@ -106,8 +102,8 @@ endif
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
 OBJSPHMOTION=JMotion.o JMotionData.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JDsMotion.o
-OBCOMMON=Functions.o FunGeo3d.o FunSphKernelsCfg.o JAppInfo.o JBinaryData.o JCfgRunBase.o JDataArrays.o JException.o JLinearValue.o JLog2.o JObject.o JOutputCsv.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o JTrianglesMesh.o randomc.o
-OBCOMMONDSPH=JDsphConfig.o JDsPips.o JPartDataBi4.o JPartDataHead.o JDsPartFloatSave.o JDsPartMotionSave.o JPartFloatInfoBi4.o JPartMotRefBi4Save.o JPartOutBi4Save.o JCaseCtes.o JCaseEParms.o JCaseParts.o JCaseProperties.o JCaseVtkOut.o
+OBCOMMON=Functions.o FunGeo3d.o FunSphKernelsCfg.o JAppInfo.o JBinaryData.o JCfgRunBase.o JDataArrays.o JException.o JLinearValue.o JLog2.o JObject.o JOutputCsv.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JSpVtkData.o JSpVtkShape.o JTimeControl.o JTrianglesMesh.o randomc.o
+OBCOMMONDSPH=JDsphConfig.o JDsPips.o JPartDataBi4.o JPartDataHead.o JDsPartFloatSave.o JDsPartMotionSave.o JPartFloatInfoBi4.o JPartMotRefBi4Save.o JPartOutBi4Save.o JCaseCtes.o JCaseEParms.o JCaseParts.o JCaseProperties.o
 OBSPH=JArraysCpu.o JCellDivCpu.o JDebugSphCpu.o JSphCfgRun.o JComputeMotionRef.o JDsDcell.o JDsDamping.o JDsExtraData.o JDsGaugeItem.o JDsGaugeSystem.o JDsOutputParts.o JDsPartsOut.o JDsSaveDt.o JSphShifting.o JSph.o JDsAccInput.o JSphCpu.o JSphCpu_mdbc.o JDsInitialize.o JSphMk.o JDsPartsInit.o JDsFixedDt.o JDsViscoInput.o JDsOutputTime.o JDsTimers.o JWaveSpectrumGpu.o main.o
 OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
 OBCOMMONGPU=FunctionsCuda.o JObjectGpu.o 
@@ -117,7 +113,7 @@ OBCUDA=JCellDivGpu_ker.o JCellDivGpuSingle_ker.o JDsPips_ker.o JDsGauge_ker.o JR
 
 OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
 OBWAVERZCUDA=JRelaxZone_ker.o
-OBCHRONO=JChronoObjects.o
+OBCHRONO=JChronoGeoObj.o JChronoObjects.o
 OBMOORDYNPLUS=JDsMooredFloatings.o JDsFtForcePoints.o
 OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphInOut.o JSphInOutZone.o JSphInOutGridData.o JSphInOutPoints.o JSphInOutVel.o JSphInOutVelAwas.o JSphInOutZsurf.o JSimpleNeigs.o
 OBINOUTGPU=JSphGpuSingle_InOut.o
@@ -129,9 +125,6 @@ OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBMOORDYNPLUS) $(O
 
 #=============== DualSPHysics libs to be included ===============
 JLIBS=${LIBS_DIRECTORIES}
-ifeq ($(COMPILE_VTKLIB), YES)
-  JLIBS:=$(JLIBS) -ljvtklib_64
-endif
 ifeq ($(COMPILE_CHRONO), YES)
   JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine 
 endif

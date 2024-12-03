@@ -27,7 +27,6 @@
 #include "JRangeFilter.h"
 #include "JAppInfo.h"
 #include "JXml.h"
-#include "JVtkLib.h"
 
 #include <climits>
 #include <cfloat>
