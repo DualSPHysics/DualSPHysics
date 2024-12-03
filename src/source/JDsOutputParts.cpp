@@ -587,6 +587,7 @@ void JDsOutputPartsOp_Cylinder::ComputeFilterCpu(unsigned np,const unsigned* idp
 {
   const bool isvertical=(Point1.x==Point2.x && Point1.y==Point2.y);
   const byte resmask=(1<<BitResult);
+  const float radius2=float(Radius*Radius);
   const int n=int(np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTEMEDIUM)
@@ -602,7 +603,7 @@ void JDsOutputPartsOp_Cylinder::ComputeFilterCpu(unsigned np,const unsigned* idp
       if(ok && isvertical){
         const double dx=(ps.x-Point1.x);
         const double dy=(ps.y-Point1.y);
-        ok=(sqrt(dx*dx+dy*dy)<=Radius);
+        ok=(dx*dx+dy*dy <= radius2);
       }
       if(ok && !isvertical){
         //fgeo::LinePointDist(ps,Point1,Point2)

@@ -2665,7 +2665,7 @@ template<bool isvertical> __global__ void KerComputeOutputPartsCylinder(unsigned
       if(ok && isvertical){
         const float dx=float(rposxy.x-pcen1.x);
         const float dy=float(rposxy.y-pcen1.y);
-        ok=(sqrt(dx*dx+dy*dy)<=radius);
+        ok=(dx*dx+dy*dy <= radius*radius);
       }
       if(ok && !isvertical){
         //cugeo::LinePointDist(ps,Point1,Point2)
