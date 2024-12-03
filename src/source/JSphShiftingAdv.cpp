@@ -25,7 +25,6 @@
 #include "Functions.h"
 #include "FunGeo3d.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
 
 #include <cfloat>
 #include <algorithm>
