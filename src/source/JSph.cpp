@@ -913,8 +913,16 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
       case 4:  shiftmode=SHIFT_FS;       break;
       default: Run_Exceptioon("Shifting mode is not valid.");
     }
-    if(!Shifting)Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
-    Shifting->ConfigBasic(shiftmode);
+    if(shiftmode<=shiftmode){
+      delete ShiftingAdv; ShiftingAdv=NULL; //<vs_advshift>
+      if(!Shifting)Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
+      Shifting->ConfigBasic(shiftmode);
+    }
+    if(shiftmode==SHIFT_FS){ //<vs_advshift_ini>
+      delete Shifting; Shifting=NULL;
+      if(!ShiftingAdv)ShiftingAdv=new JSphShiftingAdv(Simulate2D,Dp,KernelH);
+      ShiftingAdv->ConfigBasic();
+    } //<vs_advshift_end>
   }
 
   if(cfg->CFLnumber>0)CFLnumber=cfg->CFLnumber;

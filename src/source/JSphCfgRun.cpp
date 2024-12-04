@@ -175,11 +175,12 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -ddtvalue:<float> Constant for DDT (0.1 by default)\n");
   printf("    -ddtramp:tramp:tmax:maxvalue  Total time of DDT ramp and time for maxvalue\n"); //<vs_ddramp>
   printf("\n");
-  printf("    -shifting:<mode> Specifies the use of Shifting correction\n");
+  printf("    -shifting:<mode> Set Shifting correction (with default paramters)\n");
   printf("        none       Shifting is disabled (by default)\n");
   printf("        nobound    Shifting is not applied near boundary\n");
   printf("        nofixed    Shifting is not applied near fixed boundary\n");
   printf("        full       Shifting is always applied\n");
+  printf("        fulladv    Advanced shifting for free-surface\n");
   printf("\n");
 
   printf("  Simulation options:\n");
@@ -405,7 +406,8 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         if(tx=="NONE")Shifting=0;
         else if(tx=="NOBOUND")Shifting=1;
         else if(tx=="NOFIXED")Shifting=2;
-        else if(tx=="FULL")Shifting=3;
+        else if(tx=="FULL"   )Shifting=3;
+        else if(tx=="FULLADV")Shifting=4;
         else ErrorParm(opt,c,lv,file);
       }
       else if(txword=="SVNORMALS")SvNormals=OptIsEnabled(txoptfull);
