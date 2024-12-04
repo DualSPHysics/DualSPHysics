@@ -435,13 +435,13 @@ void JSphCpu::InitRunCpu(){
   if(TVisco==VISCO_LaminarSPS)SpsTauRho2_c->Memset(0,Np);
   if(MotionVel_c)MotionVel_c->Memset(0,Np); //<vs_m2dbc>
   if(MotionAce_c)MotionAce_c->Memset(0,Np); //<vs_m2dbc>
-  if(ShiftVel_c)ShiftVel_c->Memset(0,Np);   //<ShiftingAdvanced>
-  if(FSType_c)FSType_c->Memset(0,Np);       //<ShiftingAdvanced>
+  if(ShiftVel_c)ShiftVel_c->Memset(0,Np);   //<vs_advshift>
+  if(FSType_c)FSType_c->Memset(3,Np);       //<vs_advshift>
 }
 
 //==============================================================================
-/// Prepares variables for interaction.
-/// Prepara variables para interaccion.
+/// Prepares variables for interaction (pre-loop and forces).
+/// Prepara variables para interaccion (pre-loop y fuerzas).
 //==============================================================================
 void JSphCpu::PreInteraction_Forces(TpInterStep interstep){
   Timersc->TmStart(TMC_CfPreForces);

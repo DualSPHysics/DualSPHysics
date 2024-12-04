@@ -306,11 +306,7 @@ protected:
   template<TpKernel tker,bool sim2d> void InteractionComputeFSNormals
     (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
     ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-    ,unsigned* fstype,tfloat3* fsnormal,unsigned* listp)const;
-  template<TpKernel tker,bool sim2d> void CallComputeFSNormalsT1
-    (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
-    ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-    ,unsigned* fstype,tfloat3* fsnormal,unsigned* listp)const;
+    ,const unsigned* listp,unsigned* fstype,tfloat3* fsnormal)const;
   void CallComputeFSNormals(const StDivDataCpu& divdata
     ,const unsigned* dcell,const tdouble3* pos,const typecode* code
     ,const tfloat4* velrho,unsigned* fstype,tfloat3* fsnormal,unsigned* listp)const;

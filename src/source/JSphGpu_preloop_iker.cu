@@ -130,114 +130,114 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
   }
 
 
-
-  template<bool symm>
-    __global__ void KerComputeNormals(unsigned n,unsigned pinit
-    ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
-    ,const float4 *poscell,const float4 *velrhop,const typecode *code
-    ,unsigned* fstype,float3* fsnormal,bool simulate2d,float4* shiftposfs,const float* ftomassp,const unsigned* listp)
-  {
-    const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
-    if(p<n){
-      const unsigned p1=listp[p];   
-      //-Obtains basic data of particle p1.
-      const float4 pscellp1=poscell[p1];
-      const float4 velrhop1=velrhop[p1];
-      const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
+//==============================================================================
+/// Perform interaction between particles: Fluid/Float-Fluid/Float or Fluid/Float-Bound
+/// Realiza interaccion entre particulas: Fluid/Float-Fluid/Float or Fluid/Float-Bound
+//==============================================================================
+template<bool symm> __global__ void KerComputeNormals(unsigned n,unsigned pinit
+  ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid
+  ,const unsigned *dcell,const float4 *poscell,const float4 *velrhop
+  ,const typecode *code,unsigned* fstype,float3* fsnormal,bool simulate2d
+  ,float4* shiftvel,const float* ftomassp,const unsigned* listp)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=listp[p];   
+    //-Obtains basic data of particle p1.
+    const float4 pscellp1=poscell[p1];
+    const float4 velrhop1=velrhop[p1];
+    const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
       
-      float fs_treshold=0.f;                            //-Divergence of the position.
-      float3 gradc=make_float3(0,0,0);                  //-Gradient of the concentration
-      float pou=0;                                      //-Partition of unity.
-      unsigned neigh=0;                                 //-Number of neighbours.
+    float fs_treshold=0.f;                            //-Divergence of the position.
+    float3 gradc=make_float3(0,0,0);                  //-Gradient of the concentration
+    float pou=0;                                      //-Partition of unity.
+    unsigned neigh=0;                                 //-Number of neighbours.
       
-      tmatrix3f lcorr; cumath::Tmatrix3fReset(lcorr);             //-Correction matrix.
-      tmatrix3f lcorr_inv; cumath::Tmatrix3fReset(lcorr_inv);     //-Inverse of the correction matrix.
+    tmatrix3f lcorr; cumath::Tmatrix3fReset(lcorr);             //-Correction matrix.
+    tmatrix3f lcorr_inv; cumath::Tmatrix3fReset(lcorr_inv);     //-Inverse of the correction matrix.
 
-      //-Calculate approx. number of neighbours when uniform distribution (in the future on the constant memory?)
-      float Nzero=0.f;
-      if(simulate2d){
-        Nzero=(3.141592)*CTE.kernelsize2/(CTE.dp*CTE.dp);
-      } else{
-        Nzero=(4.f/3.f)*(3.141592)*CTE.kernelsize2*CTE.kernelsize/(CTE.dp*CTE.dp*CTE.dp);
-      }
+    //-Calculate approx. number of neighbours when uniform distribution (in the future on the constant memory?)
+    float Nzero=0;
+    if(simulate2d)Nzero=(3.141592)*CTE.kernelsize2/(CTE.dp*CTE.dp);
+    else          Nzero=(4.f/3.f)*(3.141592)*CTE.kernelsize2*CTE.kernelsize/(CTE.dp*CTE.dp*CTE.dp);
 
-      //-Copy the value of shift to gradc. For single resolution is zero, but in Vres take in account virtual stencil.
-      gradc=make_float3(shiftposfs[p1].x,shiftposfs[p1].y,shiftposfs[p1].z); 
-      
-
+    //-Copy the value of shift to gradc. For single resolution is zero, but in Vres take in account virtual stencil.
+    gradc=make_float3(shiftvel[p1].x,shiftvel[p1].y,shiftvel[p1].z); 
     
-      //-Obtains neighborhood search limits.
-      int ini1,fin1,ini2,fin2,ini3,fin3;
-      cunsearch::InitCte(dcell[p1],scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
+    //-Obtains neighborhood search limits.
+    int ini1,fin1,ini2,fin2,ini3,fin3;
+    cunsearch::InitCte(dcell[p1],scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
 
-      //-Interaction with fluids.
-      ini3+=cellfluid; fin3+=cellfluid;
-      for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
-        unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
-        if(pfin){
-          KerComputeNormalsBox<false> (false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,fs_treshold,gradc,lcorr,neigh,pou,ftomassp);
-          if(symm && rsymp1)KerComputeNormalsBox<true > (false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,
-                                                          fs_treshold,gradc,lcorr,neigh,pou,ftomassp); //<vs_syymmetry>
-        }
+    //-Interaction with fluids.
+    ini3+=cellfluid; fin3+=cellfluid;
+    for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
+      unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
+      if(pfin){
+        KerComputeNormalsBox<false> (false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,fs_treshold,gradc,lcorr,neigh,pou,ftomassp);
+        if(symm && rsymp1)KerComputeNormalsBox<true > (false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,
+                                                        fs_treshold,gradc,lcorr,neigh,pou,ftomassp); //<vs_syymmetry>
       }
-
-      // -Interaction with boundaries.
-      ini3-=cellfluid; fin3-=cellfluid;
-      for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
-        unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
-        if(pfin){
-          KerComputeNormalsBox<false> (false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,fs_treshold,gradc,lcorr,neigh,pou,ftomassp);
-          if(symm && rsymp1)KerComputeNormalsBox<true > (false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,
-                                                          fs_treshold,gradc,lcorr,neigh,pou,ftomassp); //<vs_syymmetry>
-        }
-      }
-
-      unsigned fstypep1=0;
-      if(simulate2d){
-        if(fs_treshold<1.7) fstypep1=2;
-        if(fs_treshold<1.1 && Nzero/float(neigh)<0.4f) fstypep1=3;
-      } else {
-        if(fs_treshold<2.75) fstypep1=2;
-        if(fs_treshold<1.8 && Nzero/float(neigh)<0.4f) fstypep1=3;
-      }
-      fstype[p1]=fstypep1;
-
-      //-Add the contribution of the particle itself
-      pou+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.f)*CTE.massf/velrhop1.w;
-
-      //-Calculation of the inverse of the correction matrix (Don't think there is a better way, create function for Determinant2x2 for clarity?).
-      if(simulate2d){
-        tmatrix2f lcorr2d;
-        tmatrix2f lcorr2d_inv;
-        lcorr2d.a11=lcorr.a11; lcorr2d.a12=lcorr.a13;
-        lcorr2d.a21=lcorr.a31; lcorr2d.a22=lcorr.a33;
-        float lcorr_det=(lcorr2d.a11*lcorr2d.a22-lcorr2d.a12*lcorr2d.a21);
-        lcorr2d_inv.a11=lcorr2d.a22/lcorr_det; lcorr2d_inv.a12=-lcorr2d.a12/lcorr_det; lcorr2d_inv.a22=lcorr2d.a11/lcorr_det; lcorr2d_inv.a21=-lcorr2d.a21/lcorr_det;
-        lcorr_inv.a11=lcorr2d_inv.a11;  lcorr_inv.a13=lcorr2d_inv.a12;
-        lcorr_inv.a31=lcorr2d_inv.a21;  lcorr_inv.a33=lcorr2d_inv.a22;
-      } else {
-        const float determ = cumath::Determinant3x3(lcorr);
-        lcorr_inv = cumath::InverseMatrix3x3(lcorr, determ);
-      }
-
-      //-Correction of the gradient of concentration and definition of the normal.
-      float3 gradc1=make_float3(0,0,0);    
-      gradc1.x=gradc.x*lcorr_inv.a11+gradc.y*lcorr_inv.a12+gradc.z*lcorr_inv.a13;
-      gradc1.y=gradc.x*lcorr_inv.a21+gradc.y*lcorr_inv.a22+gradc.z*lcorr_inv.a23;
-      gradc1.z=gradc.x*lcorr_inv.a31+gradc.y*lcorr_inv.a32+gradc.z*lcorr_inv.a33;    
-      float gradc_norm=sqrt(gradc1.x*gradc1.x+gradc1.y*gradc1.y+gradc1.z*gradc1.z);
-      fsnormal[p1].x=-gradc1.x/gradc_norm;
-      fsnormal[p1].y=-gradc1.y/gradc_norm;
-      fsnormal[p1].z=-gradc1.z/gradc_norm;
     }
+
+    // -Interaction with boundaries.
+    ini3-=cellfluid; fin3-=cellfluid;
+    for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
+      unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
+      if(pfin){
+        KerComputeNormalsBox<false> (false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,fs_treshold,gradc,lcorr,neigh,pou,ftomassp);
+        if(symm && rsymp1)KerComputeNormalsBox<true > (false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,
+                                                        fs_treshold,gradc,lcorr,neigh,pou,ftomassp); //<vs_syymmetry>
+      }
+    }
+    //-Find particles that are probably on the free-surface.
+    unsigned fstypep1=0;
+    if(simulate2d){
+      if(fs_treshold<1.7)fstypep1=2;
+      if(fs_treshold<1.1 && Nzero/float(neigh)<0.4f) fstypep1=3;
+    } else {
+      if(fs_treshold<2.75)fstypep1=2;
+      if(fs_treshold<1.8 && Nzero/float(neigh)<0.4f) fstypep1=3;
+    }
+    fstype[p1]=fstypep1;
+
+    //-Add the contribution of the particle itself
+    pou+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.f)*CTE.massf/velrhop1.w;
+
+    //-Calculation of the inverse of the correction matrix (Don't think there is a better way, create function for Determinant2x2 for clarity?).
+    if(simulate2d){
+      tmatrix2f lcorr2d;
+      tmatrix2f lcorr2d_inv;
+      lcorr2d.a11=lcorr.a11; lcorr2d.a12=lcorr.a13;
+      lcorr2d.a21=lcorr.a31; lcorr2d.a22=lcorr.a33;
+      float lcorr_det=(lcorr2d.a11*lcorr2d.a22-lcorr2d.a12*lcorr2d.a21);
+      lcorr2d_inv.a11=lcorr2d.a22/lcorr_det; lcorr2d_inv.a12=-lcorr2d.a12/lcorr_det; lcorr2d_inv.a22=lcorr2d.a11/lcorr_det; lcorr2d_inv.a21=-lcorr2d.a21/lcorr_det;
+      lcorr_inv.a11=lcorr2d_inv.a11;  lcorr_inv.a13=lcorr2d_inv.a12;
+      lcorr_inv.a31=lcorr2d_inv.a21;  lcorr_inv.a33=lcorr2d_inv.a22;
+    }
+    else{
+      const float determ=cumath::Determinant3x3(lcorr);
+      lcorr_inv=cumath::InverseMatrix3x3(lcorr,determ);
+    }
+
+    //-Correction of the gradient of concentration.
+    float3 gradc1=make_float3(0,0,0);    
+    gradc1.x=gradc.x*lcorr_inv.a11+gradc.y*lcorr_inv.a12+gradc.z*lcorr_inv.a13;
+    gradc1.y=gradc.x*lcorr_inv.a21+gradc.y*lcorr_inv.a22+gradc.z*lcorr_inv.a23;
+    gradc1.z=gradc.x*lcorr_inv.a31+gradc.y*lcorr_inv.a32+gradc.z*lcorr_inv.a33;    
+    float gradc_norm=sqrt(gradc1.x*gradc1.x+gradc1.y*gradc1.y+gradc1.z*gradc1.z);
+    //-Set normal.
+    fsnormal[p1].x=-gradc1.x/gradc_norm;
+    fsnormal[p1].y=-gradc1.y/gradc_norm;
+    fsnormal[p1].z=-gradc1.z/gradc_norm;
   }
+}
 
  
 //------------------------------------------------------------------------------
 /// Obtain the list of particle that are probably on the free-surface.
 //------------------------------------------------------------------------------
 __global__ void KerCountFreeSurface(unsigned n,unsigned pini
-  ,unsigned* fs,unsigned* listp)
+  ,const unsigned* fstype,unsigned* listp)
 {
   extern __shared__ unsigned slist[];
   if(!threadIdx.x)slist[0]=0;
@@ -245,7 +245,7 @@ __global__ void KerCountFreeSurface(unsigned n,unsigned pini
   const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(pp<n){
     const unsigned p=pp+pini;
-    if(fs[p]>1) slist[atomicAdd(slist,1)+1]=p;
+    if(fstype[p]>1) slist[atomicAdd(slist,1)+1]=p;
   }
   __syncthreads();
   const unsigned ns=slist[0];
@@ -265,12 +265,11 @@ void ComputeFSNormals(TpKernel tkernel,bool simulate2d,bool symmetry
   ,unsigned bsfluid,unsigned fluidini,unsigned fluidnum,StDivDataGpu& dvd
   ,const unsigned* dcell,const double2* posxy,const double* posz
   ,const float4* poscell,const float4* velrho,const typecode* code
-  ,const float* ftomassp,float4* shiftposfs
+  ,const float* ftomassp,float4* shiftvel
   ,unsigned* fstype,float3* fsnormal,unsigned* listp,cudaStream_t stm)
 {
+  //-Creates list with free-surface particle (normal and periodic).
   unsigned count=0;
-
-  //-Obtain the list of particle that are probably on the free-surface
   if(fluidnum){
     cudaMemset(listp+fluidnum,0,sizeof(unsigned));
     dim3 sgridf=GetSimpleGridSize(fluidnum,bsfluid);
@@ -286,12 +285,12 @@ void ComputeFSNormals(TpKernel tkernel,bool simulate2d,bool symmetry
       KerComputeNormals<true> <<<sgridf,bsfluid,0,stm>>> 
         (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell
           ,dvd.cellfluid,dcell,poscell,velrho,code,fstype,fsnormal,simulate2d
-          ,shiftposfs,ftomassp,listp);
+          ,shiftvel,ftomassp,listp);
     else //<vs_syymmetry_end>
       KerComputeNormals<false> <<<sgridf,bsfluid,0,stm>>> 
         (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell
           ,dvd.cellfluid,dcell,poscell,velrho,code,fstype,fsnormal,simulate2d
-          ,shiftposfs,ftomassp,listp);
+          ,shiftvel,ftomassp,listp);
   }
   cudaDeviceSynchronize();
 }

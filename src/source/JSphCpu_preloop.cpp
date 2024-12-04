@@ -34,14 +34,14 @@ using namespace std;
 /// Creates list with free-surface particle (normal and periodic).
 //==============================================================================
 unsigned JSphCpu::CountFreeSurfaceParticles(unsigned npf,unsigned pini
-  ,const unsigned* fstype,unsigned* fspart)const
+  ,const unsigned* fstype,unsigned* listp)const
 {
   unsigned count=0;
   const unsigned pfin=pini+npf;
   for(unsigned p=pini;p<pfin;p++){
     const unsigned fstypep=fstype[p];
     if(fstypep){//-It includes normal and periodic particles.
-      fspart[count]=p; count++;
+      listp[count]=p; count++;
     }
   }
   return(count);
@@ -55,7 +55,7 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionComputeFSNormals
   (unsigned np,unsigned pinit
   ,StDivDataCpu divdata,const unsigned* dcell
   ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-  ,unsigned* fstype,tfloat3* fsnormal,unsigned* listp)const
+  ,const unsigned* listp,unsigned* fstype,tfloat3* fsnormal)const
 {
   //-Initialise execution with OpenMP. | Inicia ejecucion con OpenMP.
   const int n=int(np);
@@ -63,53 +63,47 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionComputeFSNormals
     #pragma omp parallel for schedule (guided)
   #endif
   for(int p=0;p<n;p++){
-    int p1=listp[p];
+    const unsigned p1=listp[p];
 
-    
-    float fs_treshold=0.f;                              //-Divergence of the position.
+    float fs_treshold=0;                                //-Divergence of the position.
     tfloat3 gradc=TFloat3(0);                           //-Gradient of the concentration
     unsigned neigh=0;                                   //-Number of neighbours.
       
     tmatrix3f lcorr;        lcorr=TMatrix3f(0);         //-Correction matrix.
     tmatrix3f lcorr_inv;    lcorr_inv=TMatrix3f(0);     //-Inverse of the correction matrix.
 
-    float Nzero=0.f;
+    float Nzero=0;
 
-    if(sim2d){
-      Nzero=float((3.141592)*KernelSize2/(Dp*Dp));
-    } else{
-      Nzero=float((4.f/3.f)*(3.141592)*KernelSize2*KernelSize2/(Dp*Dp*Dp));
-    }
+    if(sim2d)Nzero=float((3.141592)*KernelSize2/(Dp*Dp));
+    else     Nzero=float((4.f/3.f)*(3.141592)*KernelSize2*KernelSize2/(Dp*Dp*Dp));
     //-Obtain data of particle p1.
     const tdouble3 posp1=pos[p1];
-    
 
     bool boundp2=false;
 
-    for(int b2=0; b2<2;b2++){
-    if(b2==1) boundp2=true;
+    for(int b2=0;b2<2;b2++){
+      if(b2==1)boundp2=true;
 
-    //-Search for neighbours in adjacent cells.
-    const StNgSearch ngs=nsearch::Init(dcell[p1],boundp2,divdata);
-    for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
-      const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
+      //-Search for neighbours in adjacent cells.
+      const StNgSearch ngs=nsearch::Init(dcell[p1],boundp2,divdata);
+      for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+        const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
 
-      //-Interaction of Fluid with type Fluid or Bound. | Interaccion de Fluid con varias Fluid o Bound.
-      //------------------------------------------------------------------------------------------------
-      for(unsigned p2=pif.x;p2<pif.y;p2++){
-        const float drx=float(posp1.x-pos[p2].x);
-              float dry=float(posp1.y-pos[p2].y);
-        const float drz=float(posp1.z-pos[p2].z);
-        const float rr2=drx*drx+dry*dry+drz*drz;
-        if(rr2<=KernelSize2 && rr2>=ALMOSTZERO){
+        //-Interaction of Fluid with type Fluid or Bound.
+        //-----------------------------------------------
+        for(unsigned p2=pif.x;p2<pif.y;p2++){
+          const float drx=float(posp1.x-pos[p2].x);
+          const float dry=float(posp1.y-pos[p2].y);
+          const float drz=float(posp1.z-pos[p2].z);
+          const float rr2=drx*drx+dry*dry+drz*drz;
+          if(rr2<=KernelSize2 && rr2>=ALMOSTZERO){
           //-Computes kernel.
-          const float fac=fsph::GetKernel_Fac<tker>(CSP,rr2);
-          const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
+            const float fac=fsph::GetKernel_Fac<tker>(CSP,rr2);
+            const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
+            const float rhopp2= float(velrho[p2].w);
 
-          const float rhopp2= float(velrho[p2].w);
-
-          //===== Get mass of particle p2 ===== 
-          float massp2=(boundp2? MassBound: MassFluid); //-Contiene masa de particula segun sea bound o fluid.
+            //===== Get mass of particle p2 ===== 
+            float massp2=(boundp2? MassBound: MassFluid); //-Contiene masa de particula segun sea bound o fluid.
 
             // bool ftp2;
             // float ftmassp2;    //-Contains mass of floating body or massf if fluid. | Contiene masa de particula floating o massp2 si es bound o fluid.
@@ -132,73 +126,53 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionComputeFSNormals
 
             // const float wab=cufsph::GetKernel_Wab<KERNEL_Wendland>(rr2);
             // pou+=wab*vol2;  
-                                                     
+          }
         }
       }
     }
-    }
     //-Find particles that are probably on the free-surface.
-     unsigned fstypep1=0;
-      if(sim2d){
-        if(fs_treshold<1.7) fstypep1=2;
-        if(fs_treshold<1.1 && Nzero/float(neigh)<0.4f) fstypep1=3;
-      } else {
-        if(fs_treshold<2.75) fstypep1=2;
-        if(fs_treshold<1.8 && Nzero/float(neigh)<0.4f) fstypep1=3;
-      }
-      fstype[p1]=fstypep1;
+    unsigned fstypep1=0;
+    if(sim2d){
+      if(fs_treshold<1.7)fstypep1=2;
+      if(fs_treshold<1.1 && Nzero/float(neigh)<0.4f)fstypep1=3;
+    }
+    else{
+      if(fs_treshold<2.75)fstypep1=2;
+      if(fs_treshold<1.8 && Nzero/float(neigh)<0.4f)fstypep1=3;
+    }
+    fstype[p1]=fstypep1;
     
-    // if(fstypep1==2){
     //-Calculation of the inverse of the correction matrix (Don't think there is a better way, create function for Determinant2x2 for clarity?).
-      if(sim2d){
-        tmatrix2f lcorr2d;
-        tmatrix2f lcorr2d_inv;
-        lcorr2d.a11=lcorr.a11; lcorr2d.a12=lcorr.a13;
-        lcorr2d.a21=lcorr.a31; lcorr2d.a22=lcorr.a33;
-        float lcorr_det=(lcorr2d.a11*lcorr2d.a22-lcorr2d.a12*lcorr2d.a21);
-        lcorr2d_inv.a11=lcorr2d.a22/lcorr_det; lcorr2d_inv.a12=-lcorr2d.a12/lcorr_det; lcorr2d_inv.a22=lcorr2d.a11/lcorr_det; lcorr2d_inv.a21=-lcorr2d.a21/lcorr_det;
-        lcorr_inv.a11=lcorr2d_inv.a11;  lcorr_inv.a13=lcorr2d_inv.a12;
-        lcorr_inv.a31=lcorr2d_inv.a21;  lcorr_inv.a33=lcorr2d_inv.a22;
-      } else {
-        const float determ = fmath::Determinant3x3(lcorr);
-        lcorr_inv = fmath::InverseMatrix3x3(lcorr, determ);
-      }
+    if(sim2d){
+      tmatrix2f lcorr2d;
+      tmatrix2f lcorr2d_inv;
+      lcorr2d.a11=lcorr.a11; lcorr2d.a12=lcorr.a13;
+      lcorr2d.a21=lcorr.a31; lcorr2d.a22=lcorr.a33;
+      float lcorr_det=(lcorr2d.a11*lcorr2d.a22-lcorr2d.a12*lcorr2d.a21);
+      lcorr2d_inv.a11=lcorr2d.a22/lcorr_det; lcorr2d_inv.a12=-lcorr2d.a12/lcorr_det; lcorr2d_inv.a22=lcorr2d.a11/lcorr_det; lcorr2d_inv.a21=-lcorr2d.a21/lcorr_det;
+      lcorr_inv.a11=lcorr2d_inv.a11;  lcorr_inv.a13=lcorr2d_inv.a12;
+      lcorr_inv.a31=lcorr2d_inv.a21;  lcorr_inv.a33=lcorr2d_inv.a22;
+    }
+    else{
+      const float determ=fmath::Determinant3x3(lcorr);
+      lcorr_inv=fmath::InverseMatrix3x3(lcorr,determ);
+    }
 
-      //-Correction of the gradient of concentration and definition of the normal.
-      tfloat3 gradc1=TFloat3(0);    
-      gradc1.x=gradc.x*lcorr_inv.a11+gradc.y*lcorr_inv.a12+gradc.z*lcorr_inv.a13;
-      gradc1.y=gradc.x*lcorr_inv.a21+gradc.y*lcorr_inv.a22+gradc.z*lcorr_inv.a23;
-      gradc1.z=gradc.x*lcorr_inv.a31+gradc.y*lcorr_inv.a32+gradc.z*lcorr_inv.a33;    
-      float gradc_norm=sqrt(gradc1.x*gradc1.x+gradc1.y*gradc1.y+gradc1.z*gradc1.z);
-      fsnormal[p1].x=-gradc1.x/gradc_norm;
-      fsnormal[p1].y=-gradc1.y/gradc_norm;
-      fsnormal[p1].z=-gradc1.z/gradc_norm;
-    // }else{
-      // fsnormal[p1]=TFloat3(0);
-    // }
-    
+    //-Correction of the gradient of concentration.
+    tfloat3 gradc1=TFloat3(0);    
+    gradc1.x=gradc.x*lcorr_inv.a11+gradc.y*lcorr_inv.a12+gradc.z*lcorr_inv.a13;
+    gradc1.y=gradc.x*lcorr_inv.a21+gradc.y*lcorr_inv.a22+gradc.z*lcorr_inv.a23;
+    gradc1.z=gradc.x*lcorr_inv.a31+gradc.y*lcorr_inv.a32+gradc.z*lcorr_inv.a33;    
+    float gradc_norm=sqrt(gradc1.x*gradc1.x+gradc1.y*gradc1.y+gradc1.z*gradc1.z);
+    //-Set normal.
+    fsnormal[p1].x=-gradc1.x/gradc_norm;
+    fsnormal[p1].y=-gradc1.y/gradc_norm;
+    fsnormal[p1].z=-gradc1.z/gradc_norm;
   }
 }
 
 //==============================================================================
-/// Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
-/// Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
-//==============================================================================
-template<TpKernel tker,bool sim2d> void JSphCpu::CallComputeFSNormalsT1
-  (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
-  ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-  ,unsigned* fstype,tfloat3* fsnormal,unsigned* listp)const
-{
-  if(n){
-    unsigned count=CountFreeSurfaceParticles(n,pinit,fstype,listp);
-    //-Interaction Fluid-Fluid.
-    InteractionComputeFSNormals<tker,sim2d> 
-      (count,pinit,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);
-  }
-}
-
-//==============================================================================
-/// Compute free-surface particles and their normals.
+/// Computes free-surface particles and their normals.
 //==============================================================================
 void JSphCpu::CallComputeFSNormals(const StDivDataCpu& divdata
   ,const unsigned* dcell,const tdouble3* pos,const typecode* code
@@ -206,18 +180,23 @@ void JSphCpu::CallComputeFSNormals(const StDivDataCpu& divdata
 {
   const unsigned npf=Np-Npb;
   if(npf){
-    if(Simulate2D){ const bool sim2d=true;
-      switch(TKernel){
-        case KERNEL_Cubic:     CallComputeFSNormalsT1 <KERNEL_Cubic   ,sim2d>(npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
-        case KERNEL_Wendland:  CallComputeFSNormalsT1 <KERNEL_Wendland,sim2d>(npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
-        default: Run_Exceptioon("Kernel unknown.");
+    //-Creates list with free-surface particle (normal and periodic).
+    const unsigned count=CountFreeSurfaceParticles(npf,Npb,fstype,listp);
+    //-Computes normals on selected free-surface particles.
+    if(count){
+      if(Simulate2D){ const bool sim2d=true;
+        switch(TKernel){
+          case KERNEL_Cubic:     InteractionComputeFSNormals<KERNEL_Cubic   ,sim2d>(count,Npb,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal);  break;
+          case KERNEL_Wendland:  InteractionComputeFSNormals<KERNEL_Wendland,sim2d>(count,Npb,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal);  break;
+          default: Run_Exceptioon("Kernel unknown.");
+        }
       }
-    }
-    else{ const bool sim2d=false;
-      switch(TKernel){
-        case KERNEL_Cubic:     CallComputeFSNormalsT1 <KERNEL_Cubic   ,sim2d>(npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
-        case KERNEL_Wendland:  CallComputeFSNormalsT1 <KERNEL_Wendland,sim2d>(npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
-        default: Run_Exceptioon("Kernel unknown.");
+      else{ const bool sim2d=false;
+        switch(TKernel){
+          case KERNEL_Cubic:     InteractionComputeFSNormals<KERNEL_Cubic   ,sim2d>(count,Npb,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal);  break;
+          case KERNEL_Wendland:  InteractionComputeFSNormals<KERNEL_Wendland,sim2d>(count,Npb,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal);  break;
+          default: Run_Exceptioon("Kernel unknown.");
+        }
       }
     }
   }

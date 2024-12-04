@@ -664,7 +664,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,Symmetry  //<vs_syymmetry>
         ,TKernel,FtMode
         ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
-        ,false,false,false,false      //<ShiftingAdvanced>
+        ,false,false,false,false //<vs_advshift>
         ,0,0,0,0,100,0,0
         ,0,0,divdatag,NULL
         ,NULL,NULL,NULL
@@ -674,7 +674,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,NULL,NULL,NULL,NULL
         ,NULL
         ,NULL
-        ,NULL,NULL     //<ShiftingAdvanced>
+        ,NULL,NULL     //<vs_advshift>
         ,NULL,&kerinfo);
       cusph::Interaction_Forces(parms);
       if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat,divdatag,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,&kerinfo);
@@ -777,16 +777,14 @@ void JSphGpu::InitRunGpu(){
   if(TVisco==VISCO_LaminarSPS)SpsTauRho2_g->CuMemset(0,Np);
   if(MotionVel_g)MotionVel_g->CuMemset(0,Np); //<vs_m2dbc>
   if(MotionAce_g)MotionAce_g->CuMemset(0,Np); //<vs_m2dbc>
-  if(ShiftingAdv){
-    ShiftVel_g->CuMemset(0,Np);   //<ShiftingAdvanced>
-    FSType_g->CuMemset(3,Np);     //<ShiftingAdvanced>
-  }
+  if(ShiftVel_g)ShiftVel_g->CuMemset(0,Np);   //<vs_advshift>
+  if(ShiftVel_g)FSType_g->CuMemset(3,Np);     //<vs_advshift>
   Check_CudaErroor("Failed initializing variables for execution.");
 }
 
 //==============================================================================
-/// Prepares variables for interaction.
-/// Prepara variables para interaccion.
+/// Prepares variables for interaction (pre-loop and forces).
+/// Prepara variables para interaccion (pre-loop y fuerzas).
 //==============================================================================
 void JSphGpu::PreInteraction_Forces(TpInterStep interstep){
   Timersg->TmStart(TMG_CfPreForces,false);
@@ -1485,8 +1483,4 @@ void JSphGpu::DgSaveCsvParticles2(std::string filename,int numfile
   }
   else Run_ExceptioonFile("File could not be opened.",filename);
 }
-
-const unsigned JSphGpu::MaxNStmFloatings;
-
-
 
