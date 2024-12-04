@@ -32,9 +32,8 @@
 using std::string;
 
 
-
 //##############################################################################
-//# JSphShifting
+//# JSphShiftingAdv
 //##############################################################################
 //==============================================================================
 /// Constructor.
@@ -67,21 +66,19 @@ void JSphShiftingAdv::Reset(){
 void JSphShiftingAdv::VisuConfig(std::string txhead,std::string txfoot){
   if(!txhead.empty())Log->Print(txhead);
   Log->Print(fun::VarStr("Shifting Advanced","active"));
-  Log->Print(fun::VarStr("  ShiftCoef",ShiftCoef));
-  if(AleActive)Log->Print(fun::VarStr("  AleActive","true"));
-  if(NcPress)Log->Print(fun::VarStr("  NcPress","true"));
+  Log->Print(fun::VarStr("  ShiftAdvCoef",ShiftCoef));
+  Log->Print(fun::VarStr("  ShiftAdvALE",AleActive));
+  Log->Print(fun::VarStr("  ShiftAdvNCPress",NcPress));
 }
 
 //==============================================================================
 /// Returns configuration information in one string line.
 //==============================================================================
 std::string JSphShiftingAdv::GetConfigInfo()const{
-  string ret;
-    ret=string("Shifting Advanced(")+"true"
-      +fun::PrintStr(",%g,%s,%s)",ShiftCoef,AleActive?"true":"false",NcPress?"true":"false");
+  string ret=string("Shifting(Advanced")+fun::PrintStr(",%g,%s,%s)"
+    ,ShiftCoef,(AleActive? "1": "0"),(NcPress? "1": "0"));
   return(ret);
 }
-
 
 //==============================================================================
 /// Explicit configuration from execution parameters.
@@ -91,6 +88,4 @@ void JSphShiftingAdv::ConfigBasic(float shiftcoef,bool aleactive,bool ncpress){
   AleActive=aleactive;
   NcPress=ncpress;
 }
-
-
 
