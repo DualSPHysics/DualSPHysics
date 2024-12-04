@@ -40,7 +40,7 @@
 #include "JDsGaugeSystem.h"
 #include "JSphInOut.h"
 #include "JSphShifting.h"
-#include "JSphShiftingAdv.h"
+#include "JSphShiftingAdv.h" //<vs_advshift>
 
 #include <climits>
 
@@ -440,7 +440,7 @@ void JSphCpu::InitRunCpu(){
 }
 
 //==============================================================================
-/// Prepare variables for interaction functions.
+/// Prepares variables for interaction.
 /// Prepara variables para interaccion.
 //==============================================================================
 void JSphCpu::PreInteraction_Forces(TpInterStep interstep){
@@ -452,13 +452,14 @@ void JSphCpu::PreInteraction_Forces(TpInterStep interstep){
   if(DDTArray)Delta_c->Reserve();
   if(Shifting)ShiftPosfs_c->Reserve();
   if(TVisco==VISCO_LaminarSPS)Sps2Strain_c->Reserve();
-
-  if(ShiftingAdv!=NULL)FSMinDist_c->Reserve();
-  if(ShiftingAdv!=NULL)FSNormal_c->Reserve();
-  if(ShiftingAdv!=NULL)FSTresh_c->Reserve();
-  if(ShiftingAdv!=NULL)LCorr_c->Reserve();
-  if(ShiftingAdv!=NULL)PressSym_c->Reserve();
-  if(ShiftingAdv!=NULL)PressAsym_c->Reserve();
+  if(ShiftingAdv){ //<vs_advshift_ini>
+    FSMinDist_c->Reserve();
+    FSNormal_c->Reserve();
+    FSTresh_c->Reserve();
+    LCorr_c->Reserve();
+    PressSym_c->Reserve();
+    PressAsym_c->Reserve();
+  } //<vs_advshift_end>
 
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
@@ -471,13 +472,16 @@ void JSphCpu::PreInteraction_Forces(TpInterStep interstep){
   if(AC_CPTR(ShiftPosfs_c))Shifting->InitCpu(npf,Npb,Pos_c->cptr()
     ,ShiftPosfs_c->ptr());
 
-  if((AC_CPTR(ShiftVel_c))&& interstep==INTERSTEP_SymPredictor)ShiftVel_c->Memset(0,Np);  //<ShiftingAdvanced>
-  if(AC_CPTR(FSMinDist_c))FSMinDist_c->Memset(0,Np);                                      //<ShiftingAdvanced>
-  if(AC_CPTR(FSNormal_c))FSNormal_c->Memset(0,Np);                                        //<ShiftingAdvanced>
-  if(AC_CPTR(FSTresh_c))FSTresh_c->Memset(0,Np);                                          //<ShiftingAdvanced>
-  if(AC_CPTR(LCorr_c))LCorr_c->Memset(0,Np);                                              //<ShiftingAdvanced>
-  if(AC_CPTR(PressSym_c))PressSym_c->Memset(0,Np);                                          //<ShiftingAdvanced>
-  if(AC_CPTR(PressAsym_c))PressAsym_c->Memset(0,Np);                                              //<ShiftingAdvanced>
+  //<vs_advshift_ini>
+  if((AC_CPTR(ShiftVel_c))&& interstep==INTERSTEP_SymPredictor)
+    ShiftVel_c->Memset(0,Np);
+  if(AC_CPTR(FSMinDist_c))FSMinDist_c->Memset(0,Np);
+  if(AC_CPTR(FSNormal_c))FSNormal_c->Memset(0,Np);
+  if(AC_CPTR(FSTresh_c))FSTresh_c->Memset(0,Np);
+  if(AC_CPTR(LCorr_c))LCorr_c->Memset(0,Np);
+  if(AC_CPTR(PressSym_c))PressSym_c->Memset(0,Np);
+  if(AC_CPTR(PressAsym_c))PressAsym_c->Memset(0,Np);
+  //<vs_advshift_end>
 
   //-Adds variable acceleration from input configuration.
   if(AccInput)AccInput->RunCpu(TimeStep,Gravity,npf,Npb,Code_c->cptr()

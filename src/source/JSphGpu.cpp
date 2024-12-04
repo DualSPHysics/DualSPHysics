@@ -797,8 +797,10 @@ void JSphGpu::PreInteraction_Forces(TpInterStep interstep){
   if(DDTArray)Delta_g->Reserve();
   if(Shifting)ShiftPosfs_g->Reserve();
   if(TVisco==VISCO_LaminarSPS)Sps2Strain_g->Reserve();
-  if(ShiftingAdv!=NULL)FSMinDist_g->Reserve();
-  if(ShiftingAdv!=NULL)FSNormal_g->Reserve();
+  if(ShiftingAdv){ //<vs_advshift_ini>
+    FSMinDist_g->Reserve();
+    FSNormal_g->Reserve();
+  } //<vs_advshift_end>
 
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
@@ -810,11 +812,14 @@ void JSphGpu::PreInteraction_Forces(TpInterStep interstep){
   
   //-Select particles for shifting.
   if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
-                                                    ,Posz_g->cptr(),ShiftPosfs_g->ptr());
+    ,Posz_g->cptr(),ShiftPosfs_g->ptr());
 
-  if(AC_CPTR(ShiftVel_g) && interstep==INTERSTEP_SymPredictor)ShiftVel_g->CuMemset(0,Np);   //<ShiftingAdvanced>
-  if(AC_CPTR(FSMinDist_g))FSMinDist_g->CuMemset(0,Np);                                      //<ShiftingAdvanced>
-  if(AC_CPTR(FSNormal_g))FSNormal_g->CuMemset(0,Np);                                        //<ShiftingAdvanced>
+  //<vs_advshift_ini>
+  if(AC_CPTR(ShiftVel_g) && interstep==INTERSTEP_SymPredictor)
+    ShiftVel_g->CuMemset(0,Np);
+  if(AC_CPTR(FSMinDist_g))FSMinDist_g->CuMemset(0,Np);
+  if(AC_CPTR(FSNormal_g))FSNormal_g->CuMemset(0,Np);
+  //<vs_advshift_end>
 
   //-Adds variable acceleration from input configuration.
   if(AccInput)AccInput->RunGpu(TimeStep,Gravity,npf,Npb,Code_g->cptr()
@@ -828,7 +833,7 @@ void JSphGpu::PreInteraction_Forces(TpInterStep interstep){
     ,CellDiv->GetAuxMem(cusph::ReduMaxFloatSize(Np-pini)));
   VelMax=sqrt(velmax);
 
-  ViscDt_g->CuMemset(0,Np);           //ViscDtg[]=0
+  ViscDt_g->CuMemset(0,Np); //ViscDtg[]=0
   ViscDtMax=0;
   Timersg->TmStop(TMG_CfPreForces,true);
   Check_CudaErroor("Failed calculating VelMax.");

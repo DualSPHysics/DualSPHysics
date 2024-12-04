@@ -64,7 +64,7 @@ class JDsPartMotionSave;
 class JDsPartFloatSave;
 class JDsPartsOut;
 class JSphShifting;
-class JSphShiftingAdv;      //<ShiftAdv>
+class JSphShiftingAdv;     //<vs_advshift>
 class JDsDamping;
 class JXml;
 class JDsOutputTime;
@@ -320,7 +320,7 @@ protected:
   JSphShifting* Shifting;       ///<Object for shifting correction.
   TpShifting ShiftingMode;      ///<Mode of Shifting: None, NoBound, NoFixed, Full.
 
-  JSphShiftingAdv* ShiftingAdv; ///<Object for Advanced Shifting>
+  JSphShiftingAdv* ShiftingAdv; ///<Object for Advanced Shifting. //<vs_advshift>
 
   JDsDamping* Damping;          ///<Object for damping zones.
 

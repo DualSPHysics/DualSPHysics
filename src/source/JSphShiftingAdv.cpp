@@ -65,7 +65,7 @@ void JSphShiftingAdv::Reset(){
 //==============================================================================
 void JSphShiftingAdv::VisuConfig(std::string txhead,std::string txfoot){
   if(!txhead.empty())Log->Print(txhead);
-  Log->Print(fun::VarStr("Shifting Advanced","active"));
+  Log->Print(fun::VarStr("Shifting","Advanced"));
   Log->Print(fun::VarStr("  ShiftAdvCoef",ShiftCoef));
   Log->Print(fun::VarStr("  ShiftAdvALE",AleActive));
   Log->Print(fun::VarStr("  ShiftAdvNCPress",NcPress));

@@ -233,153 +233,157 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
   }
 
  
-
-  __global__ void KerCountFreeSurface(unsigned n,unsigned pini
-    ,unsigned* fs,unsigned* listp)
-  {
-    extern __shared__ unsigned slist[];
-    //float* splanes=(float*)(slist+(n+1));
-    if(!threadIdx.x)slist[0]=0;
-    __syncthreads();
-    const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
-    if(pp<n){
-      const unsigned p=pp+pini;
-      if(fs[p]>1) slist[atomicAdd(slist,1)+1]=p;
-    }
-    __syncthreads();
-    const unsigned ns=slist[0];
-    __syncthreads();
-    if(!threadIdx.x && ns)slist[0]=atomicAdd((listp+n),ns);
-    __syncthreads();
-    if(threadIdx.x<ns){
-      const unsigned cp=slist[0]+threadIdx.x;
-      listp[cp]=slist[threadIdx.x+1];
-    }
+//------------------------------------------------------------------------------
+/// Obtain the list of particle that are probably on the free-surface.
+//------------------------------------------------------------------------------
+__global__ void KerCountFreeSurface(unsigned n,unsigned pini
+  ,unsigned* fs,unsigned* listp)
+{
+  extern __shared__ unsigned slist[];
+  if(!threadIdx.x)slist[0]=0;
+  __syncthreads();
+  const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(pp<n){
+    const unsigned p=pp+pini;
+    if(fs[p]>1) slist[atomicAdd(slist,1)+1]=p;
   }
-
-  void ComputeFSNormals(TpKernel tkernel,bool simulate2d,bool symmetry,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
-    ,StDivDataGpu& dvd,const unsigned* dcell,const double2* posxy,const double* posz
-    ,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp,float4* shiftposfs
-    ,unsigned* fstype,float3* fsnormal,unsigned* listp,cudaStream_t stm)
-  {
-    unsigned count=0;
-
-    //-Obtain the list of particle that are probably on the free-surface
-    if(fluidnum){
-      cudaMemset(listp+fluidnum,0,sizeof(unsigned));
-      dim3 sgridf=GetSimpleGridSize(fluidnum,bsfluid);
-      const unsigned smem=(bsfluid+1)*sizeof(unsigned); 
-      KerCountFreeSurface <<<sgridf,bsfluid,smem,stm>>> (fluidnum,fluidini,fstype,listp);
-    }
-    cudaMemcpy(&count,listp+fluidnum,sizeof(unsigned),cudaMemcpyDeviceToHost);
-    cudaDeviceSynchronize();
-
-    if(count){
-      dim3 sgridf=GetSimpleGridSize(count,bsfluid);
-      if(symmetry) //<vs_syymmetry_ini>
-        KerComputeNormals<true> <<<sgridf,bsfluid,0,stm>>> 
-        (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
-            ,poscell,velrho,code,fstype,fsnormal,simulate2d,shiftposfs
-            ,ftomassp,listp);
-      else //<vs_syymmetry_end>
-        KerComputeNormals<false> <<<sgridf,bsfluid,0,stm>>> 
-        (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
-            ,poscell,velrho,code,fstype,fsnormal,simulate2d,shiftposfs
-            ,ftomassp,listp);
-    }
-    
-    cudaDeviceSynchronize();
-    
+  __syncthreads();
+  const unsigned ns=slist[0];
+  __syncthreads();
+  if(!threadIdx.x && ns)slist[0]=atomicAdd((listp+n),ns);
+  __syncthreads();
+  if(threadIdx.x<ns){
+    const unsigned cp=slist[0]+threadIdx.x;
+    listp[cp]=slist[threadIdx.x+1];
   }
+}
 
-  template<bool symm>  __device__ void KerScanUmbrellaRegionBox(bool boundp2,unsigned p1
-    ,const unsigned &pini,const unsigned &pfin,const float4 *poscell,const float4 &pscellp1
-    ,bool& fs_flag,const float3* fsnormal,bool simulate2d)
-  {
-    for(int p2=pini;p2<pfin;p2++){
-    const float4 pscellp2=poscell[p2];
-      float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
-      float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
-      float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-      if(symm)dry=pscellp1.y+pscellp2.y + CTE.poscellsize*PSCEL_GetfY(pscellp2.w); //<vs_syymmetry>
-      const double rr2=drx*drx+dry*dry+drz*drz;
-      if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
+//==============================================================================
+/// Compute free-surface particles and their normals.
+//==============================================================================
+void ComputeFSNormals(TpKernel tkernel,bool simulate2d,bool symmetry
+  ,unsigned bsfluid,unsigned fluidini,unsigned fluidnum,StDivDataGpu& dvd
+  ,const unsigned* dcell,const double2* posxy,const double* posz
+  ,const float4* poscell,const float4* velrho,const typecode* code
+  ,const float* ftomassp,float4* shiftposfs
+  ,unsigned* fstype,float3* fsnormal,unsigned* listp,cudaStream_t stm)
+{
+  unsigned count=0;
 
-        const float3 posq=make_float3(fsnormal[p1].x*CTE.kernelh,fsnormal[p1].y*CTE.kernelh,fsnormal[p1].z*CTE.kernelh);
+  //-Obtain the list of particle that are probably on the free-surface
+  if(fluidnum){
+    cudaMemset(listp+fluidnum,0,sizeof(unsigned));
+    dim3 sgridf=GetSimpleGridSize(fluidnum,bsfluid);
+    const unsigned smem=(bsfluid+1)*sizeof(unsigned); 
+    KerCountFreeSurface <<<sgridf,bsfluid,smem,stm>>> (fluidnum,fluidini,fstype,listp);
+  }
+  cudaMemcpy(&count,listp+fluidnum,sizeof(unsigned),cudaMemcpyDeviceToHost);
+  cudaDeviceSynchronize();
 
-        if (rr2>2.f*CTE.kernelh*CTE.kernelh){
-          const float drxq=-drx-posq.x;
-          const float dryq=-dry-posq.y;
-          const float drzq=-drz-posq.z;
-          const float rrq=sqrt(drxq*drxq+dryq*dryq+drzq*drzq);
-          if(rrq<CTE.kernelh) fs_flag=true;
-        } else {
-          if(simulate2d){
-          const float drxq=-drx-posq.x;
-          const float drzq=-drz-posq.z;
-          const float3 normalq=make_float3(drxq*fsnormal[p1].x,0,drzq*fsnormal[p1].z);
-          const float3 tangq=make_float3(-drxq*fsnormal[p1].z,0,drzq*fsnormal[p1].x);
-          const float normalqnorm=sqrt(normalq.x*normalq.x+normalq.z*normalq.z);
-          const float tangqnorm=sqrt(tangq.x*tangq.x+tangq.z*tangq.z);
-          if (normalqnorm+tangqnorm<CTE.kernelh) fs_flag=true;
-          } else{
-            float rrr=1.f/sqrt(rr2);
-          const float arccosin=acos((-drx*fsnormal[p1].x*rrr-dry*fsnormal[p1].y*rrr-drz*fsnormal[p1].z*rrr));
-          if (arccosin < 0.785398) fs_flag=true;
-          }
+  if(count){
+    dim3 sgridf=GetSimpleGridSize(count,bsfluid);
+    if(symmetry) //<vs_syymmetry_ini>
+      KerComputeNormals<true> <<<sgridf,bsfluid,0,stm>>> 
+        (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell
+          ,dvd.cellfluid,dcell,poscell,velrho,code,fstype,fsnormal,simulate2d
+          ,shiftposfs,ftomassp,listp);
+    else //<vs_syymmetry_end>
+      KerComputeNormals<false> <<<sgridf,bsfluid,0,stm>>> 
+        (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell
+          ,dvd.cellfluid,dcell,poscell,velrho,code,fstype,fsnormal,simulate2d
+          ,shiftposfs,ftomassp,listp);
+  }
+  cudaDeviceSynchronize();
+}
+
+template<bool symm>  __device__ void KerScanUmbrellaRegionBox(bool boundp2,unsigned p1
+  ,const unsigned &pini,const unsigned &pfin,const float4 *poscell,const float4 &pscellp1
+  ,bool& fs_flag,const float3* fsnormal,bool simulate2d)
+{
+  for(int p2=pini;p2<pfin;p2++){
+  const float4 pscellp2=poscell[p2];
+    float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+    float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+    float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+    if(symm)dry=pscellp1.y+pscellp2.y + CTE.poscellsize*PSCEL_GetfY(pscellp2.w); //<vs_syymmetry>
+    const double rr2=drx*drx+dry*dry+drz*drz;
+    if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
+
+      const float3 posq=make_float3(fsnormal[p1].x*CTE.kernelh,fsnormal[p1].y*CTE.kernelh,fsnormal[p1].z*CTE.kernelh);
+
+      if (rr2>2.f*CTE.kernelh*CTE.kernelh){
+        const float drxq=-drx-posq.x;
+        const float dryq=-dry-posq.y;
+        const float drzq=-drz-posq.z;
+        const float rrq=sqrt(drxq*drxq+dryq*dryq+drzq*drzq);
+        if(rrq<CTE.kernelh) fs_flag=true;
+      } else {
+        if(simulate2d){
+        const float drxq=-drx-posq.x;
+        const float drzq=-drz-posq.z;
+        const float3 normalq=make_float3(drxq*fsnormal[p1].x,0,drzq*fsnormal[p1].z);
+        const float3 tangq=make_float3(-drxq*fsnormal[p1].z,0,drzq*fsnormal[p1].x);
+        const float normalqnorm=sqrt(normalq.x*normalq.x+normalq.z*normalq.z);
+        const float tangqnorm=sqrt(tangq.x*tangq.x+tangq.z*tangq.z);
+        if (normalqnorm+tangqnorm<CTE.kernelh) fs_flag=true;
+        } else{
+          float rrr=1.f/sqrt(rr2);
+        const float arccosin=acos((-drx*fsnormal[p1].x*rrr-dry*fsnormal[p1].y*rrr-drz*fsnormal[p1].z*rrr));
+        if (arccosin < 0.785398) fs_flag=true;
         }
-
       }
-    }
-    if(fs_flag) return;
-  }
 
-  template<bool symm>
-  __global__ void KerScanUmbrellaRegion(unsigned n,unsigned pinit
-    ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
-    ,const float4 *poscell,const typecode* code,unsigned* fstype,float3* fsnormal,bool simulate2d,const unsigned* listp)
-  {
-    const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
-    if(p<n){
-      const unsigned p1=listp[p];   
-      //-Obtains basic data of particle p1.
-      const float4 pscellp1=poscell[p1];
+    }
+  }
+  if(fs_flag) return;
+}
+
+template<bool symm>
+__global__ void KerScanUmbrellaRegion(unsigned n,unsigned pinit
+  ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
+  ,const float4 *poscell,const typecode* code,unsigned* fstype,float3* fsnormal,bool simulate2d,const unsigned* listp)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=listp[p];   
+    //-Obtains basic data of particle p1.
+    const float4 pscellp1=poscell[p1];
       
-      const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
+    const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
 
-      bool fs_flag=false;
-      int ini1,fin1,ini2,fin2,ini3,fin3;
+    bool fs_flag=false;
+    int ini1,fin1,ini2,fin2,ini3,fin3;
 
-      cunsearch::InitCte(dcell[p1],scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
+    cunsearch::InitCte(dcell[p1],scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
 
-      //-Interaction with fluids.
-      ini3+=cellfluid; fin3+=cellfluid;
-      for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
-        unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
-        if(pfin){
-          KerScanUmbrellaRegionBox<false> (false,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d);
-          if(symm && rsymp1)KerScanUmbrellaRegionBox<true > (false,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d); //<vs_syymmetry>
-        }
+    //-Interaction with fluids.
+    ini3+=cellfluid; fin3+=cellfluid;
+    for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
+      unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
+      if(pfin){
+        KerScanUmbrellaRegionBox<false> (false,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d);
+        if(symm && rsymp1)KerScanUmbrellaRegionBox<true > (false,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d); //<vs_syymmetry>
       }
+    }
 
-      ini3-=cellfluid; fin3-=cellfluid;
-      for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
-        unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
-        if(pfin){
-          KerScanUmbrellaRegionBox<false> (true,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d);
-          if(symm && rsymp1)KerScanUmbrellaRegionBox<true > (true,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d); //<vs_syymmetry>
-        }
+    ini3-=cellfluid; fin3-=cellfluid;
+    for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
+      unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
+      if(pfin){
+        KerScanUmbrellaRegionBox<false> (true,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d);
+        if(symm && rsymp1)KerScanUmbrellaRegionBox<true > (true,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d); //<vs_syymmetry>
       }
+    }
 
       
-      //-If particle was present in umbrella region, change the code of the particle.
-      if(fs_flag && fstype[p1]==2) fstype[p1]=0;
-      //-Periodic particle are internal by default.
-      if(CODE_IsPeriodic(code[p1])) fstype[p1]=0;
+    //-If particle was present in umbrella region, change the code of the particle.
+    if(fs_flag && fstype[p1]==2) fstype[p1]=0;
+    //-Periodic particle are internal by default.
+    if(CODE_IsPeriodic(code[p1])) fstype[p1]=0;
 
     
-    }
   }
+}
 
 
 

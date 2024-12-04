@@ -34,20 +34,19 @@ using namespace std;
 /// Creates list with free-surface particle (normal and periodic).
 //==============================================================================
 unsigned JSphCpu::CountFreeSurfaceParticles(unsigned npf,unsigned pini
-  ,const unsigned* fstype,unsigned* fspart) const
+  ,const unsigned* fstype,unsigned* fspart)const
 {
   unsigned count=0;
   const unsigned pfin=pini+npf;
   for(unsigned p=pini;p<pfin;p++){
     const unsigned fstypep=fstype[p];
     if(fstypep){//-It includes normal and periodic particles.
-        fspart[count]=p; count++;
+      fspart[count]=p; count++;
     }
   }
-  
-  //Log->Printf("%u> -------->CreateListXXX>> InOutcount:%u",nstep,count);
   return(count);
 }
+
 //==============================================================================
 /// Perform interaction between particles: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 /// Realiza interaccion entre particulas: Fluid/Float-Fluid/Float or Fluid/Float-Bound
@@ -181,15 +180,12 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionComputeFSNormals
   }
 }
 
-
-
 //==============================================================================
 /// Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
 /// Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
 //==============================================================================
 template<TpKernel tker,bool sim2d> void JSphCpu::CallComputeFSNormalsT1
-  (unsigned n,unsigned pinit
-  ,StDivDataCpu divdata,const unsigned* dcell
+  (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
   ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
   ,unsigned* fstype,tfloat3* fsnormal,unsigned* listp)const
 {
@@ -201,6 +197,9 @@ template<TpKernel tker,bool sim2d> void JSphCpu::CallComputeFSNormalsT1
   }
 }
 
+//==============================================================================
+/// Compute free-surface particles and their normals.
+//==============================================================================
 void JSphCpu::CallComputeFSNormals(const StDivDataCpu& divdata
   ,const unsigned* dcell,const tdouble3* pos,const typecode* code
   ,const tfloat4* velrho,unsigned* fstype,tfloat3* fsnormal,unsigned* listp)const
@@ -209,15 +208,15 @@ void JSphCpu::CallComputeFSNormals(const StDivDataCpu& divdata
   if(npf){
     if(Simulate2D){ const bool sim2d=true;
       switch(TKernel){
-        case KERNEL_Cubic:       CallComputeFSNormalsT1 <KERNEL_Cubic     ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
-        case KERNEL_Wendland:    CallComputeFSNormalsT1 <KERNEL_Wendland  ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
+        case KERNEL_Cubic:     CallComputeFSNormalsT1 <KERNEL_Cubic   ,sim2d>(npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
+        case KERNEL_Wendland:  CallComputeFSNormalsT1 <KERNEL_Wendland,sim2d>(npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
         default: Run_Exceptioon("Kernel unknown.");
       }
     }
     else{ const bool sim2d=false;
       switch(TKernel){
-        case KERNEL_Cubic:       CallComputeFSNormalsT1 <KERNEL_Cubic     ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
-        case KERNEL_Wendland:    CallComputeFSNormalsT1 <KERNEL_Wendland  ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
+        case KERNEL_Cubic:     CallComputeFSNormalsT1 <KERNEL_Cubic   ,sim2d>(npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
+        case KERNEL_Wendland:  CallComputeFSNormalsT1 <KERNEL_Wendland,sim2d>(npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
         default: Run_Exceptioon("Kernel unknown.");
       }
     }

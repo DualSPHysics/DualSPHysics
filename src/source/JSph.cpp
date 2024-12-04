@@ -55,7 +55,7 @@
 #include "JDsExtraData.h"
 #include "JDsPartsOut.h"
 #include "JSphShifting.h"
-#include "JSphShiftingAdv.h"
+#include "JSphShiftingAdv.h" //<vs_advshift>
 #include "JDsDamping.h"
 #include "JDsInitialize.h"
 #include "JSphInOut.h"
@@ -107,7 +107,7 @@ JSph::JSph(int gpucount,bool withmpi):Cpu(gpucount==0)
   Moorings=NULL;
   ForcePoints=NULL;
   Shifting=NULL;
-  ShiftingAdv=NULL;   //<ShiftingAdvance>
+  ShiftingAdv=NULL;   //<vs_advshift>
   Damping=NULL;
   AccInput=NULL;
   PartsLoaded=NULL;
@@ -151,7 +151,7 @@ JSph::~JSph(){
   delete Moorings;      Moorings=NULL;
   delete ForcePoints;   ForcePoints=NULL;
   delete Shifting;      Shifting=NULL;
-  delete ShiftingAdv;   ShiftingAdv=NULL;    //<ShiftingAdvance>
+  delete ShiftingAdv;   ShiftingAdv=NULL; //<vs_advshift>
   delete Damping;       Damping=NULL;
   delete AccInput;      AccInput=NULL; 
   delete PartsLoaded;   PartsLoaded=NULL;
@@ -1579,10 +1579,11 @@ void JSph::VisuConfig(){
   if(Shifting){
     Shifting->VisuConfig();
     ConfigInfo=ConfigInfo+sep+Shifting->GetConfigInfo();
-  } else if(ShiftingAdv){
+  }
+  else if(ShiftingAdv){ //<vs_advshift_ini>
     ShiftingAdv->VisuConfig();
     ConfigInfo=ConfigInfo+sep+ShiftingAdv->GetConfigInfo();
-  }
+  } //<vs_advshift_end>
   else Log->Print(fun::VarStr("Shifting","None"));
   //-RigidAlgorithm.
   string rigidalgorithm=(!FtCount? "None": GetNameRigidMode(RigidMode));
