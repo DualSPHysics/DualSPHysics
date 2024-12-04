@@ -1072,8 +1072,9 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   }
 
   //-Configuration of Shifting with zones.
-  if(Shifting && xml.GetNodeSimple("case.execution.special.shifting",true))Run_ExceptioonFile("Shifting is defined several times (in <special><shifting> and <execution><parameters>).",FileXml);
   if(xml.GetNodeSimple("case.execution.special.shifting",true)){
+    if(ShiftingAdv)Run_ExceptioonFile("Advanced shifting is not compatible with standard shifting configuration in <special><shifting>.",FileXml); //<vs_advshift>
+    if(Shifting)Run_ExceptioonFile("Shifting is defined several times (in <special><shifting> and <execution><parameters>).",FileXml);
     Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
     Shifting->LoadXml(&xml,"case.execution.special.shifting");
   }
