@@ -213,11 +213,6 @@ void JDsInitializeOp_FluidVel::Run(unsigned np,unsigned npb,const tdouble3* pos
     velrho[p].x=dir.x*v1;
     velrho[p].y=dir.y*v1;
     velrho[p].z=dir.z*v1;
-    const double pi=3.141592653589793;
-    velrho[p].x=cos(2*pi*pos[p].x)*sin(2*pi*pos[p].z);
-    velrho[p].z=-sin(2*pi*pos[p].x)*cos(2*pi*pos[p].z);
-    double press=-(1.0/4.0)*(cos(2*2*pi*pos[p].x)+cos(2*2*pi*pos[p].z));
-    velrho[p].w= pow(press/100+1,1.0/1.0);
   }
 }
 
