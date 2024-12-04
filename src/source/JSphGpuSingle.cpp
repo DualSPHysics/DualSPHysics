@@ -537,7 +537,7 @@ void JSphGpuSingle::PreLoopProcedure(TpInterStep interstep){
  
 
   if(runshift)cusph::ComputeShiftingVel(bsfluid,Np-Npb,Npb,Simulate2D,ShiftVel_g->ptr(),FSType_g->cptr(),FSNormal_g->cptr()
-    ,FSMinDist_g->cptr(),SymplecticDtPre,ShiftingAdv->GetShiftCoef(),ShiftingAdv->GetAleActive(),NULL);
+    ,FSMinDist_g->cptr(),float(SymplecticDtPre),ShiftingAdv->GetShiftCoef(),ShiftingAdv->GetAleActive(),NULL);
 
   //-Updates preloop variables in periodic particles.
   if(PeriParent_g){

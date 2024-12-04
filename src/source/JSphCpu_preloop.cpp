@@ -53,13 +53,13 @@ unsigned JSphCpu::CountFreeSurfaceParticles(unsigned npf,unsigned pini
 /// Realiza interaccion entre particulas: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 //==============================================================================
 template<TpKernel tker,bool sim2d> void JSphCpu::InteractionComputeFSNormals
-  (unsigned n,unsigned pinit
+  (unsigned np,unsigned pinit
   ,StDivDataCpu divdata,const unsigned* dcell
   ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
   ,unsigned* fstype,tfloat3* fsnormal,unsigned* listp)const
 {
   //-Initialise execution with OpenMP. | Inicia ejecucion con OpenMP.
-  // const int pfin=int(pinit+n);
+  const int n=int(np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
@@ -77,9 +77,9 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionComputeFSNormals
     float Nzero=0.f;
 
     if(sim2d){
-      Nzero=(3.141592)*KernelSize2/(Dp*Dp);
+      Nzero=float((3.141592)*KernelSize2/(Dp*Dp));
     } else{
-      Nzero=(4.f/3.f)*(3.141592)*KernelSize2*KernelSize2/(Dp*Dp*Dp);
+      Nzero=float((4.f/3.f)*(3.141592)*KernelSize2*KernelSize2/(Dp*Dp*Dp));
     }
     //-Obtain data of particle p1.
     const tdouble3 posp1=pos[p1];
@@ -226,13 +226,13 @@ void JSphCpu::CallComputeFSNormals(const StDivDataCpu& divdata
 
 
 template<TpKernel tker,bool sim2d> void JSphCpu::InteractionCallScanUmbrellaRegion
-  (unsigned n,unsigned pinit
+  (unsigned np,unsigned pinit
   ,StDivDataCpu divdata,const unsigned* dcell
   ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
   ,unsigned* fstype,const tfloat3* fsnormal,unsigned* listp)const
 {
   //-Initialise execution with OpenMP. | Inicia ejecucion con OpenMP.
-  // const int pfin=int(pinit+n);
+  const int n=int(np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
@@ -404,7 +404,7 @@ template<TpKernel tker,bool sim2d,bool shiftadv> void JSphCpu::PreLoopInteractio
           float massp2=(boundp2? MassBound: MassFluid); //-Contiene masa de particula segun sea bound o fluid.
 
             bool ftp2;
-            float ftmassp2;    //-Contains mass of floating body or massf if fluid. | Contiene masa de particula floating o massp2 si es bound o fluid.
+            //float ftmassp2;    //-Contains mass of floating body or massf if fluid. | Contiene masa de particula floating o massp2 si es bound o fluid.
             const typecode cod=code[p2];
             ftp2=CODE_IsFloating(cod);
             // ftmassp2=(ftp2? ftomassp[CODE_GetTypeValue(cod)]: massp2);
@@ -573,17 +573,17 @@ void JSphCpu::ComputeShiftingVel(bool simulate2d,tfloat4* shiftvel
       if(simulate2d) shift_final.y=0.0;
 
       const float rhovar=abs(shiftp1.x*shift_final.x+shiftp1.y*shift_final.y+shiftp1.z*shift_final.z)*min(KernelH,fsmindistp1);
-      const float eps=1e-5;
-      const float umagn_1=shiftcoef*KernelH/dt;
-      const float umagn_2=abs(eps/(2.0*dt*rhovar));
-      const float umagn=min(umagn_1,umagn_2)*min(KernelH,fsmindistp1)*dt;
+      const float eps=1e-5f;
+      const float umagn_1=float(shiftcoef*KernelH/dt);
+      const float umagn_2=float(abs(eps/(2.0*dt*rhovar)));
+      const float umagn=float(min(umagn_1,umagn_2)*min(KernelH,fsmindistp1)*dt);
 
-      const float maxdist=0.1f*Dp;
+      const float maxdist=float(0.1f*Dp);
       shift_final.x=(fabs(umagn*shift_final.x)<maxdist? umagn*shift_final.x: (umagn*shift_final.x>=0? maxdist: -maxdist));
       shift_final.y=(fabs(umagn*shift_final.y)<maxdist? umagn*shift_final.y: (umagn*shift_final.y>=0? maxdist: -maxdist));
       shift_final.z=(fabs(umagn*shift_final.z)<maxdist? umagn*shift_final.z: (umagn*shift_final.z>=0? maxdist: -maxdist));
-      shiftvel[p].x=(shift_final.x)/dt;
-      shiftvel[p].y=(shift_final.y)/dt;
-      shiftvel[p].z=(shift_final.z)/dt;
+      shiftvel[p].x=float((shift_final.x)/dt);
+      shiftvel[p].y=float((shift_final.y)/dt);
+      shiftvel[p].z=float((shift_final.z)/dt);
   }
 }

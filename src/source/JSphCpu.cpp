@@ -936,17 +936,17 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
         tmatrix2d Lcorr2D_inv;
         Lcorr2D.a11=lcorr[p1].a11; Lcorr2D.a12=lcorr[p1].a13;
         Lcorr2D.a21=lcorr[p1].a31; Lcorr2D.a22=lcorr[p1].a33;
-        float lcorr_det=(Lcorr2D.a11*Lcorr2D.a22-Lcorr2D.a12*Lcorr2D.a21);
+        float lcorr_det=float(Lcorr2D.a11*Lcorr2D.a22-Lcorr2D.a12*Lcorr2D.a21);
         Lcorr2D_inv.a11=Lcorr2D.a22/lcorr_det; Lcorr2D_inv.a12=-Lcorr2D.a12/lcorr_det; Lcorr2D_inv.a22=Lcorr2D.a11/lcorr_det; Lcorr2D_inv.a21=-Lcorr2D.a21/lcorr_det;
         LCorr_inv.a11=Lcorr2D_inv.a11;  LCorr_inv.a13=Lcorr2D_inv.a12;
         LCorr_inv.a31=Lcorr2D_inv.a21;  LCorr_inv.a33=Lcorr2D_inv.a22;
       } else {
-        const float determ = fmath::Determinant3x3(lcorr[p1]);
+        const float determ=(float)fmath::Determinant3x3(lcorr[p1]);
         LCorr_inv = fmath::InverseMatrix3x3(lcorr[p1], determ);
       }
-        acep1.x+=pressasym[p1].x*LCorr_inv.a11 + pressasym[p1].y*LCorr_inv.a12 + pressasym[p1].z*LCorr_inv.a13;
-        acep1.y+=pressasym[p1].x*LCorr_inv.a21 + pressasym[p1].y*LCorr_inv.a22 + pressasym[p1].z*LCorr_inv.a23;
-        acep1.z+=pressasym[p1].x*LCorr_inv.a31 + pressasym[p1].y*LCorr_inv.a32 + pressasym[p1].z*LCorr_inv.a33;
+        acep1.x+=float(pressasym[p1].x*LCorr_inv.a11 + pressasym[p1].y*LCorr_inv.a12 + pressasym[p1].z*LCorr_inv.a13);
+        acep1.y+=float(pressasym[p1].x*LCorr_inv.a21 + pressasym[p1].y*LCorr_inv.a22 + pressasym[p1].z*LCorr_inv.a23);
+        acep1.z+=float(pressasym[p1].x*LCorr_inv.a31 + pressasym[p1].y*LCorr_inv.a32 + pressasym[p1].z*LCorr_inv.a33);
       } else{
       acep1.x+=presssym[p1].x; acep1.y+=presssym[p1].y; acep1.z+=presssym[p1].z;
       }

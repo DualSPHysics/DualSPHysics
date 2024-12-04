@@ -58,7 +58,7 @@ JSphShiftingAdv::~JSphShiftingAdv(){
 /// Initialisation of variables.
 //==============================================================================
 void JSphShiftingAdv::Reset(){
-  ConfigBasic(-0.01,false,false);
+  ConfigBasic(-0.01f,false,false);
 }
 
 //==============================================================================

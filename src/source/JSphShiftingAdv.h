@@ -69,7 +69,7 @@ public:
   ~JSphShiftingAdv();
   void Reset();
 
-  void ConfigBasic(float shiftcoef=-0.01f,bool aleactive=false, bool ncpress=false);
+  void ConfigBasic(float shiftcoef=-0.01f,bool aleactive=false,bool ncpress=false);
   void VisuConfig(std::string txhead="",std::string txfoot="");
   std::string GetConfigInfo()const;
 
