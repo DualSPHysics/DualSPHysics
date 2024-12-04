@@ -1230,8 +1230,8 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco>
   void JSphCpu::Interaction_Forces_ct4(const stinterparmsc& t,StInterResultc& res)const
 {
        if(TDensity==DDT_None)    Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_None    >(t,res);
-  // else if(TDensity==DDT_DDT)     Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT     >(t,res);
-  // else if(TDensity==DDT_DDT2)    Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT2    >(t,res);
+  else if(TDensity==DDT_DDT)     Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT     >(t,res);
+  else if(TDensity==DDT_DDT2)    Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT2    >(t,res);
   else if(TDensity==DDT_DDT2Full)Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT2Full>(t,res);
 }
 //==============================================================================
@@ -1253,7 +1253,7 @@ template<TpKernel tker>
 //==============================================================================
 void JSphCpu::Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)const{
        if(TKernel==KERNEL_Wendland)  Interaction_Forces_ct2<KERNEL_Wendland>(t,res);
-  // else if(TKernel==KERNEL_Cubic)     Interaction_Forces_ct2<KERNEL_Cubic   >(t,res);
+  else if(TKernel==KERNEL_Cubic)     Interaction_Forces_ct2<KERNEL_Cubic   >(t,res);
 }
 
 //==============================================================================

@@ -1023,8 +1023,8 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
   }
 }
 
+#define FAST_COMPILATION
 //==============================================================================
-//#define FAST_COMPILATION
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,bool mdbc2>
   void Interaction_Forces_gt4(const StInterParmsg& t)
 {
@@ -1042,7 +1042,6 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
 }
 
 //==============================================================================
-//#define FAST_COMPILATION
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift>
   void Interaction_Forces_gt3(const StInterParmsg& t)
 {
@@ -1050,24 +1049,29 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
   else       Interaction_Forces_gt4<tker,ftmode,tvisco,tdensity,shift,false> (t);
 }
 //==============================================================================
-//#define FAST_COMPILATION
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco>
   void Interaction_Forces_gt2(const StInterParmsg& t)
 {
 #ifdef FAST_COMPILATION
-  if(t.shiftmode || t.tdensity!=DDT_DDT2)throw "Shifting and DDT!=DDT_DDT2 are disabled for FastCompilation...";
-  Interaction_ForcesGpuT<tker,ftmode,tvisco,DDT_DDT2,false> (t);
+  if(t.shiftmode){              const bool shift=true;
+    if(t.tdensity==DDT_DDT2Full)Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT2Full,shift> (t);
+    else throw "Only DDT==DDT_DDT2Full is compiled for FastCompilation...";
+  }
+  else{                         const bool shift=false;
+    if(t.tdensity==DDT_DDT2Full)Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT2Full,shift> (t);
+    else throw "Only DDT==DDT_DDT2Full is compiled for FastCompilation...";
+  }
 #else
   if(t.shiftmode){              const bool shift=true;
-    // if(t.tdensity==DDT_None)    Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_None    ,shift> (t);
-    // if(t.tdensity==DDT_DDT)     Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT     ,shift> (t);
-    // if(t.tdensity==DDT_DDT2)    Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT2    ,shift> (t);
+    if(t.tdensity==DDT_None)    Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_None    ,shift> (t);
+    if(t.tdensity==DDT_DDT)     Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT     ,shift> (t);
+    if(t.tdensity==DDT_DDT2)    Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT2    ,shift> (t);
     if(t.tdensity==DDT_DDT2Full)Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT2Full,shift> (t);
   }
   else{                         const bool shift=false;
-    // if(t.tdensity==DDT_None)    Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_None    ,shift> (t);
-    // if(t.tdensity==DDT_DDT)     Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT     ,shift> (t);
-    // if(t.tdensity==DDT_DDT2)    Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT2    ,shift> (t);
+    if(t.tdensity==DDT_None)    Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_None    ,shift> (t);
+    if(t.tdensity==DDT_DDT)     Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT     ,shift> (t);
+    if(t.tdensity==DDT_DDT2)    Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT2    ,shift> (t);
     if(t.tdensity==DDT_DDT2Full)Interaction_Forces_gt3<tker,ftmode,tvisco,DDT_DDT2Full,shift> (t);
   }
 #endif
@@ -1076,35 +1080,35 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco>
 template<TpKernel tker,TpFtMode ftmode> 
   void Interaction_Forces_gt1(const StInterParmsg& t)
 {
-#ifdef FAST_COMPILATION
-  if(t.tvisco!=VISCO_Artificial)throw "Extra viscosity options are disabled for FastCompilation...";
-  Interaction_Forces_gt2<tker,ftmode,VISCO_Artificial> (t);
-#else
+//#ifdef FAST_COMPILATION
+//  if(t.tvisco!=VISCO_Artificial)throw "Extra viscosity options are disabled for FastCompilation...";
+//  Interaction_Forces_gt2<tker,ftmode,VISCO_Artificial> (t);
+//#else
   if(t.tvisco==VISCO_Artificial)     Interaction_Forces_gt2<tker,ftmode,VISCO_Artificial>(t);
   else if(t.tvisco==VISCO_Laminar)   Interaction_Forces_gt2<tker,ftmode,VISCO_Laminar>   (t);
   else if(t.tvisco==VISCO_LaminarSPS)Interaction_Forces_gt2<tker,ftmode,VISCO_LaminarSPS>(t);
-#endif
+//#endif
 }
 //==============================================================================
 template<TpKernel tker> void Interaction_Forces_gt0(const StInterParmsg& t){
-#ifdef FAST_COMPILATION
-  if(t.ftmode!=FTMODE_None)throw "Extra FtMode options are disabled for FastCompilation...";
-  Interaction_Forces_gt1<tker,FTMODE_None> (t);
-#else
+//#ifdef FAST_COMPILATION
+//  if(t.ftmode!=FTMODE_None)throw "Extra FtMode options are disabled for FastCompilation...";
+//  Interaction_Forces_gt1<tker,FTMODE_None> (t);
+//#else
   if(t.ftmode==FTMODE_None)    Interaction_Forces_gt1<tker,FTMODE_None> (t);
   else if(t.ftmode==FTMODE_Sph)Interaction_Forces_gt1<tker,FTMODE_Sph>  (t);
   else if(t.ftmode==FTMODE_Ext)Interaction_Forces_gt1<tker,FTMODE_Ext>  (t);
-#endif
+//#endif
 }
 //==============================================================================
 void Interaction_Forces(const StInterParmsg& t){
 #ifdef FAST_COMPILATION
-  if(t.tkernel!=KERNEL_Wendland)throw "Extra kernels are disabled for FastCompilation...";
-  Interaction_Forces_gt0<KERNEL_Wendland> (t);
+  if(t.tkernel==KERNEL_Wendland)       Interaction_Forces_gt0<KERNEL_Wendland> (t);
+  else throw "Only KERNEL_Wendland is compiled for FastCompilation...";
 #else
   if(t.tkernel==KERNEL_Wendland)       Interaction_Forces_gt0<KERNEL_Wendland> (t);
  #ifndef DISABLE_KERNELS_EXTRA
-  // else if(t.tkernel==KERNEL_Cubic)     Interaction_Forces_gt0<KERNEL_Cubic   > (t);
+  else if(t.tkernel==KERNEL_Cubic)     Interaction_Forces_gt0<KERNEL_Cubic   > (t);
  #endif
 #endif
 }
