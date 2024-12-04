@@ -726,31 +726,28 @@ void JSph::LoadConfigParameters(const JXml* cxml){
   //-Old shifting configuration.
   if(eparms.Exists("Shifting")){
     TpShifting shiftmode=SHIFT_None;
-    float shiftcoef=0,shifttfs=0;
     switch(eparms.GetValueInt("Shifting",true,0)){
       case 0:  shiftmode=SHIFT_None;     break;
       case 1:  shiftmode=SHIFT_NoBound;  break;
       case 2:  shiftmode=SHIFT_NoFixed;  break;
       case 3:  shiftmode=SHIFT_Full;     break;
-      case 4:  shiftmode=SHIFT_FS;      break;
+      case 4:  shiftmode=SHIFT_FS;       break; //<vs_advshift>
       default: Run_ExceptioonFile("Shifting mode in <execution><parameters> is not valid.",FileXml);
     }
-    if(shiftmode!=SHIFT_None){
-      shiftcoef=eparms.GetValueFloat("ShiftCoef",true,-2);
-      if(shiftcoef==0)shiftmode=SHIFT_None;
-      else shifttfs=eparms.GetValueFloat("ShiftTFS",true,0);
-    }
-    if(shiftmode==SHIFT_FS){
-      bool aleform= (eparms.GetValueInt("ALEFormulation",true,0)!=0);
-      bool ncpress= (eparms.GetValueInt("NCPress",true,0)!=0);
-      ShiftingAdv= new JSphShiftingAdv(Simulate2D,Dp,KernelH);
-      ShiftingAdv->ConfigBasic(shiftcoef,aleform,ncpress);
-    } else {
+    if(shiftmode<=SHIFT_Full){
+      const float shiftcoef=eparms.GetValueFloat("ShiftCoef",true,-2);
+      const float shifttfs=eparms.GetValueFloat("ShiftTFS",true,0);
       Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
       Shifting->ConfigBasic(shiftmode,shiftcoef,shifttfs);
     }
+    if(shiftmode==SHIFT_FS){ //<vs_advshift_ini>
+      const float shiftcoef=eparms.GetValueFloat("ShiftAdvCoef",true,-0.01f);
+      const bool  aleform=eparms.GetValueBool("ShiftAdvALE",true,false);
+      const bool  ncpress=eparms.GetValueBool("ShiftAdvNCPress",true,false);
+      ShiftingAdv=new JSphShiftingAdv(Simulate2D,Dp,KernelH);
+      ShiftingAdv->ConfigBasic(shiftcoef,aleform,ncpress);
+    } //<vs_advshift_end>
   }
-
 
   WrnPartsOut=(eparms.GetValueInt("WrnPartsOut",true,1)!=0);
   FtPause=eparms.GetValueFloat("FtPause",true,0);

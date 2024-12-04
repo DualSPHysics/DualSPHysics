@@ -437,21 +437,12 @@ typedef enum{
 
 ///Types of Shifting applied to fluid particles. 
 typedef enum{
-  SHIFT_FS=4,               ///<Better detection of free-surface particles.
-  SHIFT_Full=3,             ///<Shifting is applied to all fluid particles.
-  SHIFT_NoFixed=2,          ///<Shifting is applied to fluid particles except those that interact with fixed boundaries.
-  SHIFT_NoBound=1,          ///<Shifting is applied to fluid particles except those that interact with all boundaries.
-  SHIFT_None=0              ///<Shifting is not applied.
+  SHIFT_None=0     ///<Shifting is not applied.
+ ,SHIFT_NoBound=1  ///<Shifting is applied to fluid particles except those that interact with all boundaries.
+ ,SHIFT_NoFixed=2  ///<Shifting is applied to fluid particles except those that interact with fixed boundaries.
+ ,SHIFT_Full=3     ///<Shifting is applied to all fluid particles.
+ ,SHIFT_FS=4       ///<Advanced shifting for free-surface detection. //<vs_advshift>
 }TpShifting; 
-
-
-typedef enum{
-  SHIFT_Adv=2,
-  SHIFT_Std=1,
-  SHIFT_Null=0
-} TpShiftModel;
-
-
 
 ///Structure with main SPH constants and configurations.
 typedef struct{
