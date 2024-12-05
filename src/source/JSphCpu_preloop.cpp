@@ -203,123 +203,105 @@ void JSphCpu::CallComputeFSNormals(const StDivDataCpu& divdata
 }
 
 
+//==============================================================================
+/// Interaction of Fluid-Fluid/Bound & Bound-Fluid.
+/// Interaccion Fluid-Fluid/Bound & Bound-Fluid.
+//==============================================================================
 template<TpKernel tker,bool sim2d> void JSphCpu::InteractionCallScanUmbrellaRegion
-  (unsigned np,unsigned pinit
-  ,StDivDataCpu divdata,const unsigned* dcell
-  ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-  ,unsigned* fstype,const tfloat3* fsnormal,unsigned* listp)const
+  (unsigned np,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
+  ,const tdouble3* pos,const typecode* code,const tfloat3* fsnormal
+  ,const unsigned* listp,unsigned* fstype)const
 {
   //-Initialise execution with OpenMP. | Inicia ejecucion con OpenMP.
   const int n=int(np);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
-  
   for(int p=0;p<n;p++){
-    int p1=listp[p];
-  
-    
+    const unsigned p1=listp[p];
     bool fs_flag=false;
-
     bool boundp2=false;
 
     //-Obtain data of particle p1.
     const tdouble3 posp1=pos[p1];
 
     for(int b2=0; b2<2;b2++){
-    if(b2==1) boundp2=true;
+      if(b2==1) boundp2=true;
+      //-Search for neighbours in adjacent cells.
+      const StNgSearch ngs=nsearch::Init(dcell[p1],boundp2,divdata);
+      for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+        const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
 
-    //-Search for neighbours in adjacent cells.
-    const StNgSearch ngs=nsearch::Init(dcell[p1],boundp2,divdata);
-    for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
-      const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
-
-      //-Interaction of Fluid with type Fluid or Bound. | Interaccion de Fluid con varias Fluid o Bound.
-      //------------------------------------------------------------------------------------------------
-      for(unsigned p2=pif.x;p2<pif.y;p2++){
-        const float drx=float(posp1.x-pos[p2].x);
-              float dry=float(posp1.y-pos[p2].y);
-        const float drz=float(posp1.z-pos[p2].z);
-        const float rr2=drx*drx+dry*dry+drz*drz;
-        if(rr2<=KernelSize2 && rr2>=ALMOSTZERO){
-          //-Computes kernel.
-        const tfloat3 posq=fsnormal[p1]*KernelH;
-
-          if (rr2>2.f*KernelH*KernelH){
-            const float drxq=-drx-posq.x;
-            const float dryq=-dry-posq.y;
-            const float drzq=-drz-posq.z;
-            const float rrq=sqrt(drxq*drxq+dryq*dryq+drzq*drzq);
-            if(rrq<KernelH) fs_flag=true;
-          } else {
-            if(sim2d){
-            const float drxq=-drx-posq.x;
-            const float drzq=-drz-posq.z;
-            const tfloat3 normalq=TFloat3(drxq*fsnormal[p1].x,0,drzq*fsnormal[p1].z);
-            const tfloat3 tangq=TFloat3(-drxq*fsnormal[p1].z,0,drzq*fsnormal[p1].x);
-            const float normalqnorm=sqrt(normalq.x*normalq.x+normalq.z*normalq.z);
-            const float tangqnorm=sqrt(tangq.x*tangq.x+tangq.z*tangq.z);
-            if (normalqnorm+tangqnorm<KernelH) fs_flag=true;
-            } else{
-              float rrr=1.f/sqrt(rr2);
-            const float arccosin=acos((-drx*fsnormal[p1].x*rrr-dry*fsnormal[p1].y*rrr-drz*fsnormal[p1].z*rrr));
-            if (arccosin < 0.785398) fs_flag=true;
+        //-Interaction of Fluid with type Fluid or Bound. | Interaccion de Fluid con varias Fluid o Bound.
+        //------------------------------------------------------------------------------------------------
+        for(unsigned p2=pif.x;p2<pif.y;p2++){
+          const float drx=float(posp1.x-pos[p2].x);
+          const float dry=float(posp1.y-pos[p2].y);
+          const float drz=float(posp1.z-pos[p2].z);
+          const float rr2=drx*drx+dry*dry+drz*drz;
+          if(rr2<=KernelSize2 && rr2>=ALMOSTZERO){
+            //-Computes kernel.
+            const tfloat3 posq=fsnormal[p1]*KernelH;
+            if(rr2>2.f*KernelH*KernelH){
+              const float drxq=-drx-posq.x;
+              const float dryq=-dry-posq.y;
+              const float drzq=-drz-posq.z;
+              const float rrq=sqrt(drxq*drxq+dryq*dryq+drzq*drzq);
+              if(rrq<KernelH)fs_flag=true;
+            }
+            else{
+              if(sim2d){
+                const float drxq=-drx-posq.x;
+                const float drzq=-drz-posq.z;
+                const tfloat3 normalq=TFloat3(drxq*fsnormal[p1].x,0,drzq*fsnormal[p1].z);
+                const tfloat3 tangq=TFloat3(-drxq*fsnormal[p1].z,0,drzq*fsnormal[p1].x);
+                const float normalqnorm=sqrt(normalq.x*normalq.x+normalq.z*normalq.z);
+                const float tangqnorm=sqrt(tangq.x*tangq.x+tangq.z*tangq.z);
+                if(normalqnorm+tangqnorm<KernelH)fs_flag=true;
+              }
+              else{
+                float rrr=1.f/sqrt(rr2);
+                const float arccosin=acos((-drx*fsnormal[p1].x*rrr-dry*fsnormal[p1].y*rrr-drz*fsnormal[p1].z*rrr));
+                if(arccosin<0.785398f)fs_flag=true;
+              }
             }
           }
-                                                     
         }
       }
     }
-    }
-
     //-If particle was present in umbrella region, change the code of the particle.
-      if(fs_flag && fstype[p1]==2) fstype[p1]=0;
-      //-Periodic particle are internal by default.
-      if(CODE_IsPeriodic(code[p1])) fstype[p1]=0;
-    
-    
-  
+    if(fs_flag && fstype[p1]==2)fstype[p1]=0;
+    //-Periodic particle are internal by default.
+    if(CODE_IsPeriodic(code[p1]))fstype[p1]=0;
   }
 }
 
-
-
 //==============================================================================
-/// Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
-/// Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
+/// Scan Umbrella region to identify free-surface particle.
 //==============================================================================
-template<TpKernel tker,bool sim2d> void JSphCpu::CallScanUmbrellaRegionT1
-  (unsigned n,unsigned pinit
-  ,StDivDataCpu divdata,const unsigned* dcell
-  ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-  ,unsigned* fstype,const tfloat3* fsnormal,unsigned* listp)const
-{
-  if(n){
-    unsigned count=CountFreeSurfaceParticles(n,pinit,fstype,listp);
-    //-Interaction Fluid-Fluid.
-    InteractionCallScanUmbrellaRegion<tker,sim2d> 
-      (count,pinit,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);
-  }
-}
-
 void JSphCpu::CallScanUmbrellaRegion(const StDivDataCpu& divdata
   ,const unsigned* dcell,const tdouble3* pos,const typecode* code
-  ,const tfloat4* velrho,unsigned* fstype,const tfloat3* fsnormal,unsigned* listp)const
+  ,const tfloat3* fsnormal,unsigned* listp,unsigned* fstype)const
 {
   const unsigned npf=Np-Npb;
   if(npf){
-    if(Simulate2D){ const bool sim2d=true;
-      switch(TKernel){
-        case KERNEL_Cubic:       CallScanUmbrellaRegionT1 <KERNEL_Cubic     ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
-        case KERNEL_Wendland:    CallScanUmbrellaRegionT1 <KERNEL_Wendland  ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
-        default: Run_Exceptioon("Kernel unknown.");
+    //-Obtain the list of particle that are probably on the free-surface (in ComputeUmbrellaRegion maybe is unnecessary).
+    const unsigned count=CountFreeSurfaceParticles(npf,Npb,fstype,listp);
+    //-Scan Umbrella region on selected free-surface particles.
+    if(count){
+      if(Simulate2D){ const bool sim2d=true;
+        switch(TKernel){
+          case KERNEL_Cubic:    InteractionCallScanUmbrellaRegion <KERNEL_Cubic   ,sim2d> (count,Npb,divdata,dcell,pos,code,fsnormal,listp,fstype);  break;
+          case KERNEL_Wendland: InteractionCallScanUmbrellaRegion <KERNEL_Wendland,sim2d> (count,Npb,divdata,dcell,pos,code,fsnormal,listp,fstype);  break;
+          default: Run_Exceptioon("Kernel unknown.");
+        }
       }
-    }
-    else{ const bool sim2d=false;
-      switch(TKernel){
-        case KERNEL_Cubic:       CallScanUmbrellaRegionT1 <KERNEL_Cubic     ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
-        case KERNEL_Wendland:    CallScanUmbrellaRegionT1 <KERNEL_Wendland  ,sim2d> (npf,Npb,divdata,dcell,pos,code,velrho,fstype,fsnormal,listp);  break;
-        default: Run_Exceptioon("Kernel unknown.");
+      else{ const bool sim2d=false;
+        switch(TKernel){
+          case KERNEL_Cubic:    InteractionCallScanUmbrellaRegion <KERNEL_Cubic   ,sim2d> (count,Npb,divdata,dcell,pos,code,fsnormal,listp,fstype);  break;
+          case KERNEL_Wendland: InteractionCallScanUmbrellaRegion <KERNEL_Wendland,sim2d> (count,Npb,divdata,dcell,pos,code,fsnormal,listp,fstype);  break;
+          default: Run_Exceptioon("Kernel unknown.");
+        }
       }
     }
   }

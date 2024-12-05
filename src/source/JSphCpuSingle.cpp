@@ -664,7 +664,7 @@ void JSphCpuSingle::ComputeFSParticles(){
 void JSphCpuSingle::ComputeUmbrellaRegion(){
   acuint fspart("-",Arrays_Cpu,true);
   CallScanUmbrellaRegion(DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
-    ,Velrho_c->cptr(),FSType_c->ptr(),FSNormal_c->cptr(),fspart.ptr());
+    ,FSNormal_c->cptr(),fspart.ptr(),FSType_c->ptr());
 }
 //<vs_advshift_end>
 

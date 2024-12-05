@@ -313,15 +313,11 @@ protected:
 
   template<TpKernel tker,bool sim2d> void InteractionCallScanUmbrellaRegion
     (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
-    ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-    ,unsigned* fstype,const tfloat3* fsnormal,unsigned* listp)const;
-  template<TpKernel tker,bool sim2d> void CallScanUmbrellaRegionT1
-    (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
-    ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-    ,unsigned* fstype,const tfloat3* fsnormal,unsigned* listp)const;
+    ,const tdouble3* pos,const typecode* code,const tfloat3* fsnormal
+    ,const unsigned* listp,unsigned* fstype)const;
   void CallScanUmbrellaRegion(const StDivDataCpu& divdata
     ,const unsigned* dcell,const tdouble3* pos,const typecode* code
-    ,const tfloat4* velrho,unsigned* fstype,const tfloat3* fsnormal,unsigned* listp)const;
+    ,const tfloat3* fsnormal,unsigned* listp,unsigned* fstype)const;
 
   template<TpKernel tker,bool sim2d,bool shiftadv> void PreLoopInteraction
     (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
