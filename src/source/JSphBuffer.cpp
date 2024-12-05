@@ -343,15 +343,6 @@ void JSphBuffer::Config()
   cudaMemcpy(Matmovg,matc,sizeof(tmatrix4f)*ListSize,cudaMemcpyHostToDevice);
   delete[] matc;  matc=NULL;
   }
-
-
-  tdouble3* test= new tdouble3[ListSize];
-  tdouble3* test1= new tdouble3[ListSize];
-
-  cudaMemcpy(test ,BoxLimitMing  ,sizeof(double3)  *ListSize,cudaMemcpyDeviceToHost);
-  cudaMemcpy(test1 ,BoxLimitMaxg  ,sizeof(double3)  *ListSize,cudaMemcpyDeviceToHost);
-  delete[] test;  test=nullptr;
-  delete[] test1; test1=nullptr;
 #endif
 
   GeomInfo=new StrGeomVresGpu(BoxLimitMing,BoxLimitMaxg,BoxDomMing,BoxDomMaxg,Trackingg,Innerg,Matmovg);
@@ -386,8 +377,7 @@ void JSphBuffer::Config()
     cudaMemcpy(PtMassg      ,PtMass       ,sizeof(float)    *PtCount ,cudaMemcpyHostToDevice);
     delete[] pxy; pxy=NULL;
     delete[] pz;  pz=NULL;
-  }
-  
+  } 
 #endif  
 
   
@@ -433,19 +423,26 @@ StrDataVresCpu JSphBuffer::GetZoneFluxInfoCpu(unsigned nzone){
 
 void JSphBuffer::UpdateMatMov(std::vector<JMatrix4d> mat){
 
-  tmatrix4f* matc=  new tmatrix4f[ListSize];
   for(unsigned ci=0; ci<ListSize; ci++){
     JMatrix4d mat_new=mat[ci];    
     mat_new.Mul(Matmov[ci]);
     Matmov[ci]=mat_new;
-    tmatrix4f mat_1=mat_new.GetMatrix4f();
-    matc[ci]=mat_1;
-    matc[ci].a14=-(mat_1.a14*mat_1.a11+mat_1.a24*mat_1.a21+mat_1.a34*mat_1.a31);
-    matc[ci].a24=-(mat_1.a14*mat_1.a12+mat_1.a24*mat_1.a22+mat_1.a34*mat_1.a32);
-    matc[ci].a34=-(mat_1.a14*mat_1.a13+mat_1.a24*mat_1.a23+mat_1.a34*mat_1.a33);
   }
-  cudaMemcpy(Matmovg,matc,sizeof(tmatrix4f)*ListSize,cudaMemcpyHostToDevice);
-  delete[] matc;  matc=NULL;
+#ifdef _WITHGPU
+  if(!Cpu){
+    tmatrix4f* matc=  new tmatrix4f[ListSize];
+
+    for(unsigned ci=0; ci<ListSize; ci++){
+      tmatrix4f mat_1=Matmov[ci].GetMatrix4f();
+      matc[ci]=mat_1;
+      matc[ci].a14=-(mat_1.a14*mat_1.a11+mat_1.a24*mat_1.a21+mat_1.a34*mat_1.a31);
+      matc[ci].a24=-(mat_1.a14*mat_1.a12+mat_1.a24*mat_1.a22+mat_1.a34*mat_1.a32);
+      matc[ci].a34=-(mat_1.a14*mat_1.a13+mat_1.a24*mat_1.a23+mat_1.a34*mat_1.a33);
+    }
+    cudaMemcpy(Matmovg,matc,sizeof(tmatrix4f)*ListSize,cudaMemcpyHostToDevice);
+    delete[] matc;  matc=NULL;
+  }
+#endif
 }
 
 void JSphBuffer::SaveVResData(int part,double timestep,int nstep){
@@ -483,11 +480,11 @@ void JSphBuffer::LoadVResData(){
   
 
   unsigned msize=16*ListSize;
-  double* matarray = new double[msize];
-  tdouble3* pos    = new tdouble3[PtCount];
+  double* matarray  = new double[msize];
+  tdouble3* pos     = new tdouble3[PtCount];
   tfloat3*  normals = new tfloat3[PtCount];
-  tfloat3*  velmot = new tfloat3[PtCount];
-  float*    mass   = new float  [PtCount];
+  tfloat3*  velmot  = new tfloat3[PtCount];
+  float*    mass    = new float  [PtCount];
 
   edat.LoadArray(PtCount,msize,velmot,mass,matarray);
 
@@ -717,7 +714,7 @@ void JSphBuffer::SaveNormals(std::string filename,int numfile){
 
   cudaMemcpy(normals, PtNormalsg, sizeof(float3) * PtCount, cudaMemcpyDeviceToHost);
   cudaMemcpy(velflux, PtVelMotg,  sizeof(float3) * PtCount, cudaMemcpyDeviceToHost);
-  cudaMemcpy(mass, PtMassg, sizeof(float) * PtCount, cudaMemcpyDeviceToHost);
+  cudaMemcpy(mass,    PtMassg,    sizeof(float)  * PtCount, cudaMemcpyDeviceToHost);
     // TransMat.MulArray(ntot,posh);
 
   SaveVtkNormals(filename,numfile,PtCount,posh,normals,velflux,mass);

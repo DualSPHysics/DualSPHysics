@@ -13,8 +13,6 @@
 #include "DualSphDef.h"
 #include "JSphGpu_ker.h"
 #include "JSphBuffer.h"
-// #define T(id) (threadIdx.x +blockDim.x*(id))
-#define T(id) (id)
 namespace cusphbuffer{
 
 #include "FunctionsBasic_iker.h"
@@ -311,339 +309,296 @@ void BufferComputeStep(unsigned n,int *inoutpart,const double2 *posxy,const doub
 }
 
 
-template<const int n, const int n1>
-__device__ void LUdecomp_Single(float *a, int *p, float *b, float *sol, float &treshold){
-    // // Norm matrix a
-    float maxs = 0;
-    #pragma unroll
-    for (int i = 0; i < n; i++) {
-        float sum = 0;
-        #pragma unroll
-        for (int j = 0; j < n; j++) 
-            sum += fabs(a[T(i * n + j)]);
-        maxs = max(maxs, sum);
-    }
+template<typename T = float,const int m_dim, const int m_dim2>
+__device__ void LUdecomp_Single(T (&A)[m_dim*m_dim], int (&p)[m_dim], T (&b)[m_dim*m_dim2], T (&sol)[m_dim2], T &treshold){
+  //-Compute the norm of matrix A
+  T maxs = 0;
+  for(int i=0;i<m_dim;i++){
+    T sum = 0;
+    for(int j=0;j<m_dim;j++) sum+=fabs(A[i*m_dim+j]);
+    maxs =max(maxs, sum);
+  }
 
-    #pragma unroll
-    for (int i = 0; i < n; i++) {
-        p[i] = i;
-    }
+  //- Initialize permutation array
+  for(int i=0;i<m_dim;i++) p[i]=i;
+  
 
-    float maxv = 0;
-    #pragma unroll
-    for (int i = 0; i < n; i++) {
-        // Pivoting
-        int imax = i;
-        #pragma unroll
-        for (int k = i; k < n; k++) {
-            if (fabs(a[T(i + k * n)]) > maxv) {
-                maxv = fabs(a[T(i + k * n)]);
-                imax = k;
-            }
+  T maxv = 0;
+  for(int i=0;i<m_dim;i++){
+    int imax=i;
+      for(int k=i;k<m_dim;k++){
+        if(fabs(A[i+k*m_dim])>maxv){
+          maxv=fabs(A[i+k*m_dim]);
+          imax=k;
         }
+      }
 
-        if (imax != i) {
-            int tmp = p[i];
-            p[i] = p[imax];
-            p[imax] = tmp;
+      if(imax!=i){
+        int tmp =p[i];
+        p[i]    =p[imax];
+        p[imax] =tmp;
 
-            #pragma unroll
-            for (int j = 0; j < n; j++) {
-                double temp = a[T(i * n + j)];
-                a[T(i * n + j)] = a[T(imax * n + j)];
-                a[T(imax * n + j)] = temp;
-            }
+        for(int j=0;j<m_dim;j++) {
+          T temp          =A[i*m_dim+j];
+          A[i*m_dim+j]    =A[imax*m_dim+j];
+          A[imax*m_dim+j] =temp;
         }
+      }
 
         // LU decomposition
-        #pragma unroll
-        for (int j = i + 1; j < n; j++) {
-            a[T(j * n + i)] /= a[T(i * n + i)];
-            #pragma unroll
-            for (int k = i + 1; k < n; k++)
-                a[T(j * n + k)] -= a[T(j * n + i)] * a[T(i * n + k)];
-        }
+      for (int j=i+1;j<m_dim;j++){
+        A[j*m_dim+i] /= A[i*m_dim+i];
+        for (int k=i+1;k<m_dim;k++) A[j*m_dim+k]-=A[j*m_dim+i]*A[i*m_dim+k];
+      }
+  }
+
+  T ia[m_dim*m_dim] = {0};
+
+  //-Compute inverse matrix
+  for (int j=0;j<m_dim;j++) {
+    for (int i=0;i<m_dim;i++) {
+      ia[i*m_dim+j]= p[i]==j ? 1.0 : 0.0;
+      for (int k = 0;k<i;k++)ia[i*m_dim+j]-=A[i*m_dim+k]*ia[k*m_dim+j];
+  }
+    for (int i=m_dim-1;i>=0;i--){
+      for (int k=i+1;k<m_dim;k++)
+        ia[i*m_dim+j] -= A[i*m_dim+k]*ia[k*m_dim+j];
+        ia[i*m_dim+j] /= A[i*m_dim+i];
     }
+  }
 
-    float ia[n * n] = {0};
+  //-Compute norm of inverse matrix
+  T maxs1 = 0;
+  for (int i=0;i<m_dim;i++) {
+    T sum=0;
+    for (int j=0;j<m_dim;j++) sum += fabs(ia[i*m_dim+j]);
+    maxs1 =max(maxs1,sum);
+  }
 
-    // Matrix inversion
-    #pragma unroll
-    for (int j = 0; j < n; j++) {
-        #pragma unroll
-        for (int i = 0; i < n; i++) {
-            ia[i * n + j] = (p[i] == j) ? 1.0 : 0.0;
-            #pragma unroll
-            for (int k = 0; k < i; k++)
-                ia[i * n + j] -= a[T(i * n + k)] * ia[k * n + j];
-        }
-        #pragma unroll
-        for (int i = n - 1; i >= 0; i--) {
-            #pragma unroll
-            for (int k = i + 1; k < n; k++)
-                ia[i * n + j] -= a[T(i * n + k)] * ia[k * n + j];
-            ia[i * n + j] /= a[T(i * n + i)];
-        }
-    }
+  treshold =1.0f/(maxs*maxs1);
 
-    // Norm of inv matrix
-    float maxs1 = 0;
-    #pragma unroll
-    for (int i = 0; i < n; i++) {
-        double sum = 0;
-        #pragma unroll
-        for (int j = 0; j < n; j++) 
-            sum += fabs(ia[i * n + j]);
-        maxs1 = max(maxs1, sum);
-    }
-
-    treshold = 1.0f / (maxs * maxs1);
-
-    // Solution
-    #pragma unroll
-    for (int k = 0; k < n1; k++)
-        #pragma unroll
-        for (int i = 0; i < n; i++) {
-            sol[k] += ia[i] * b[i + k * n];
-        }
+  //-Compute Solution array
+  for (int k=0;k<m_dim2;k++)
+    for (int i=0;i<m_dim;i++) sol[k]+=ia[i]*b[i+k*m_dim];
+        
 }
 //------------------------------------------------------------------------------
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //------------------------------------------------------------------------------
-template<bool sim2d,TpKernel tker,unsigned order> __global__ void KerInteractionBufferExtrap_Single
-  (unsigned bufferpartcount,const int *bufferpart,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid,const float4* poscell, double3 mapposmin
-  ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,const float4 *velrhop,const double2 *posxyb,const double *poszb,float4 *velrhopg,double *rcond,typecode *code1,float mrthreshold)
+template <TpKernel tker,bool sim2d,TpVresOrder vrorder, typename T = float>
+__global__ void KerInteractionBufferExtrap_Single(
+    unsigned bufferpartcount, const int *bufferpart, int scelldiv, int4 nc, int3 cellzero, const int2 *beginendcellfluid, const float4 *poscell, double3 mapposmin,
+    const double2 *posxy, const double *posz, const typecode *code, const unsigned *idp,
+    const float4 *velrhop, const double2 *posxyb, const double *poszb, float4 *velrhopg, typecode *code1, float mrthreshold)
 {
-  // extern __shared__ float A[];
-  float scaleh=CTE.kernelh*CTE.kernelh*CTE.kernelh*CTE.kernelh;
-  // if(!threadIdx.x)slist[0]=0;
-  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x+threadIdx.x; // Number of particle.
   if(cp<bufferpartcount){
     const unsigned p1=bufferpart[cp];
 
-      //-Calculates ghost node position.
-      double3 posp1=make_double3(posxyb[p1].x,posxyb[p1].y,poszb[p1]);
-      const float4 gpscellp1=cusph::KerComputePosCell(posp1,mapposmin,CTE.poscellsize);
+    // Calculates ghost node position.
+    double3 posp1 = make_double3(posxyb[p1].x, posxyb[p1].y, poszb[p1]);
+    const float4 gpscellp1 = cusph::KerComputePosCell(posp1, mapposmin, CTE.poscellsize);
 
-   //   if(CODE_IsPeriodic(code[p1]))pos_p1=KerInteraction_PosNoPeriodic(pos_p1);
+    // Compute size of the reconstruction matrix and right hand sime.
+    constexpr unsigned m_dim  = vrorder==VrOrder_2nd ? (sim2d ? 6 : 10) : (sim2d ? 3 : 4);
+    constexpr unsigned m_dim2 = sim2d ? 3: 4;
 
-      //-Initializes variables for calculation.
-      constexpr unsigned nmatrix = (order == 0) ? (sim2d ? 6 : 10) : (sim2d ? 3 : 4);
-      constexpr unsigned nrhs = sim2d ? 3 : 4;
+    T C[m_dim]{0};
+    T C1[m_dim]{0};
+    T D[m_dim2]{0};
 
-      float C[nmatrix]{0};
-      float C1[nmatrix]{0};
-      float D[nrhs]{0};
+    T A[m_dim*m_dim]{0};
+    T B[m_dim*m_dim2]{0};
 
+    // Obtains neighborhood search limits.
+    int ini1,fin1,ini2,fin2,ini3,fin3;
+    cunsearch::InitCte(posp1.x,posp1.y,posp1.z,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
 
-      float A[nmatrix*nmatrix]{0};
-      float B[nmatrix*nrhs]{0};
-      //-Obtains neighborhood search limits.
-      int ini1,fin1,ini2,fin2,ini3,fin3;
-      cunsearch::InitCte(posp1.x,posp1.y,posp1.z,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
+    //-Interaction with fluids.
+    for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
+      unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
+      if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
+        T drx,dry,drz;
+        if (sizeof(T)==sizeof(float)){
+          const float4 pscellp2 = poscell[p2];
+          drx=gpscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(gpscellp1.w)-PSCEL_GetfX(pscellp2.w));
+          dry=gpscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(gpscellp1.w)-PSCEL_GetfY(pscellp2.w));
+          drz=gpscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(gpscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+        }else{
+          const double2 p2xy=posxy[p2];
+          drx=T(posp1.x-p2xy.x);
+          dry=T(posp1.y-p2xy.y);
+          drz=T(posp1.z-posz[p2]);
+        }
+        const T rr2=drx*drx+dry*dry+drz*drz;
+        if (rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2]) && !CODE_IsFluidBuffer(code[p2]) && !CODE_IsFluidFixed(code[p2])){
+        // Computes kernel.
+          float fac;
+          float facc;
+          const T wab=cufsph::GetKernel_WabFacFacc<tker>(rr2,fac,facc);
+          const T frx=drx*fac,fry=dry*fac,frz=drz*fac; //-Gradients.
+          T frxx=facc*(drx*drx)/sqrt(rr2)+fac*(dry*dry+drz*drz)/rr2;
+          T frzz=facc*(drz*drz)/sqrt(rr2)+fac*(dry*dry+drx*drx)/rr2;
+          T fryy=facc*(dry*dry)/sqrt(rr2)+fac*(drz*drz+drx*drx)/rr2;
+          T frxz=facc*(drx*drz)/sqrt(rr2)-fac*(drx*drz)/rr2;
+          T frxy=facc*(drx*dry)/sqrt(rr2)-fac*(drx*dry)/rr2;
+          T fryz=facc*(dry*drz)/sqrt(rr2)-fac*(dry*drz)/rr2;
 
-      //-Interaction with fluids.
-      for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
-        unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
-        if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
-          const float4 pscellp2=poscell[p2];
-          float drx=gpscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(gpscellp1.w)-PSCEL_GetfX(pscellp2.w));
-          float dry=gpscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(gpscellp1.w)-PSCEL_GetfY(pscellp2.w));
-          float drz=gpscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(gpscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-          const float rr2=drx*drx+dry*dry+drz*drz;
-          if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2]) && !CODE_IsFluidBuffer(code[p2]) &&!CODE_IsFluidFixed(code[p2])){//-Only with fluid particles but not inout particles.
-            //-Only Wendland or Cubic Spline kernel.
-            //-Computes kernel.
-        	  float fac;
-        	  float facc;
-        	  const float wab=cufsph::GetKernel_WabFacFacc<tker>(rr2,fac,facc);
-        	  const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
-        	  float frxx=facc*(drx*drx)/sqrt(rr2)+fac*(dry*dry+drz*drz)/rr2;
-        	  float frzz=facc*(drz*drz)/sqrt(rr2)+fac*(dry*dry+drx*drx)/rr2;
-        	  float fryy=facc*(dry*dry)/sqrt(rr2)+fac*(drz*drz+drx*drx)/rr2;
-        	  float frxz=facc*(drx*drz)/sqrt(rr2)-fac*(drx*drz)/rr2;
-        	  float frxy=facc*(drx*dry)/sqrt(rr2)-fac*(drx*dry)/rr2;
-        	  float fryz=facc*(dry*drz)/sqrt(rr2)-fac*(dry*drz)/rr2;
+          float4 velrhopp2 = velrhop[p2];
+          // Get mass and volume of particle p2
+          T massp2=T(CTE.massf);
+          T volp2=massp2/T(velrhopp2.w);
 
+          // Set up C and C1 based on order and sim2d
+          if (vrorder==VrOrder_2nd){
+            if (sim2d){
+              T tempC[] ={T(1.0),drx,drz,drx*drx*T(0.5),drx*drz,drz*drz*T(0.5)};
+              T tempC1[]={volp2*wab,volp2*frx,volp2*frz,volp2*frxx,volp2*frxz,volp2*frzz};
 
-//        	double A[3]{wab,frx,frz};
-//        	double A2[3]{velrhop[p2].w,velrhop[p2].x,velrhop[p2].z};
+              for (int i=0;i<m_dim;++i){
+                C[i]  = tempC[i];
+                C1[i] = tempC1[i];
+              }
+            }else{
+              T tempC[]   ={T(1.0),drx,dry,drz,drx*drx*T(0.5),drx*dry,dry*dry*T(0.5),drx*drz,drz*drz*T(0.5),dry*drz};
+              T tempC1[]  ={volp2*wab,volp2*frx,volp2*fry,volp2*frz,volp2*frxx,volp2*frxy,volp2*fryy,volp2*frxz,volp2*frzz,volp2*fryz};
 
-            // float C[6]{1.0f,drx,drz,drx*drx*0.5,drx*drz,drz*drz*0.5};
-            // float C1[6]{volp2*wab,volp2*frx,volp2*frz,volp2*frxx,volp2*frxz,volp2*frzz};
-
-//        	  double	 A3D[4]{wab,frx,fry,frz};
-//        	double   A23D[4]{velrhop[p2].w,velrhop[p2].x,velrhop[p2].y,velrhop[p2].z};
-
-             float4 velrhopp2=velrhop[p2];
-            //===== Get mass and volume of particle p2 =====
-            float massp2=CTE.massf;
-            float volp2=massp2/velrhopp2.w;
-            if constexpr (order == 0) {
-        if constexpr (sim2d) {
-            float tempC[] = {1.0f, drx, drz, drx * drx * 0.5f, drx * drz, drz * drz * 0.5f};
-            float tempC1[] = {volp2 * wab, volp2 * frx, volp2 * frz, volp2 * frxx, volp2 * frxz, volp2 * frzz};
-
-            #pragma unroll
-            for (int i = 0; i < nmatrix; ++i) {
+              for (int i=0;i<m_dim;++i){
                 C[i] = tempC[i];
                 C1[i] = tempC1[i];
+              }
             }
-        } else {
-            float tempC[] = {1.0f, drx, dry, drz, drx * drx * 0.5f, drx * dry, dry * dry * 0.5f, drx * drz, drz * drz * 0.5f, dry * drz};
-            float tempC1[] = {volp2 * wab, volp2 * frx, volp2 * fry, volp2 * frz, volp2 * frxx, volp2 * frxy, volp2 * fryy, volp2 * frxz, volp2 * frzz, volp2 * fryz};
+          }else{
+            if (sim2d){
+              T tempC[]   = {T(1.0),drx,drz};
+              T tempC1[]  = {volp2*wab,volp2*frx,volp2*frz};
 
-            #pragma unroll
-            for (int i = 0; i < nmatrix; ++i) {
+              for (int i=0;i<m_dim;++i){
+                    C[i] = tempC[i];
+                    C1[i] = tempC1[i];
+              }
+            }else{
+              T tempC[] = {T(1.0),drx,dry,drz};
+              T tempC1[] = {volp2*wab,volp2*frx,volp2*fry,volp2*frz};
+
+              for (int i =0;i<m_dim;++i){
                 C[i] = tempC[i];
                 C1[i] = tempC1[i];
+              }
             }
-        }
-    } else {
-        if constexpr (sim2d) {
-            float tempC[] = {1.0f, drx, drz};
-            float tempC1[] = {volp2 * wab, volp2 * frx, volp2 * frz};
+          }
 
-            #pragma unroll
-            for (int i = 0; i < nmatrix; ++i) {
-                C[i] = tempC[i];
-                C1[i] = tempC1[i];
+              // Set up D
+          if (sim2d){
+            T tempD[] = {T(velrhop[p2].w),T(velrhop[p2].x),T(velrhop[p2].z)};
+            for (int i =0;i<m_dim2;++i)D[i]=tempD[i];
+          }else{
+            T tempD[] = {T(velrhop[p2].w), T(velrhop[p2].x), T(velrhop[p2].y), T(velrhop[p2].z)};
+            for (int i =0;i<m_dim2;++i)D[i]=tempD[i];
+          }
+          // Accumulate A and B matrices
+          for (int i=0;i<m_dim;i++)
+            for (int j=0;j<m_dim;j++){
+              A[i*m_dim+j]+=C1[i]*C[j];
             }
-        } else {
-            float tempC[] = {1.0f, drx, dry, drz};
-            float tempC1[] = {volp2 * wab, volp2 * frx, volp2 * fry, volp2 * frz};
-
-            #pragma unroll
-            for (int i = 0; i < nmatrix; ++i) {
-                C[i] = tempC[i];
-                C1[i] = tempC1[i];
-            }
-        }
-    }
-
-    if constexpr (sim2d) {
-        float tempD[] = {velrhop[p2].w, velrhop[p2].x, velrhop[p2].z};
-        #pragma unroll
-        for (int i = 0; i < nrhs; ++i) D[i] = tempD[i];
-    } else {
-        float tempD[] = {velrhop[p2].w, velrhop[p2].x, velrhop[p2].y, velrhop[p2].z};
-        #pragma unroll
-        for (int i = 0; i < nrhs; ++i) D[i] = tempD[i];
-    }
-
-    // Your computation logic
-    #pragma unroll
-    for (int i = 0; i < nmatrix; i++) {
-        #pragma unroll
-        for (int j = 0; j < nmatrix; j++) {
-            A[T(i * nmatrix + j)] += C1[i] * C[j];
-        }
-    }
-    // #pragma unroll
-    // for (int i = 0; i < nmatrix; i++) {
-    //     #pragma unroll
-    //     for (int j = 0; j < nmatrix; j++) {
-    //         A1[threadIdx.x +32*(i * nmatrix + j)] += C[i] * C1[j];
-    //     }
-    // }
-    #pragma unroll
-    for (int i = 0; i < nrhs; i++) {
-        #pragma unroll
-        for (int j = 0; j < nmatrix; j++) {
-            B[i * nmatrix + j] += D[i] * C1[j];
-        }
-    }
-                     
+              
+          for (int i=0; i<m_dim2;i++)
+            for (int j=0;j<m_dim;j++){
+              B[i*m_dim+j]+=D[i]*C1[j];
           }
         }
+      }        
+    }
+
+    T shep = A[0];                                  ///<Shepard summation.
+    T sol[m_dim2]{0};                               ///<Solution array;
+    T treshold = T(0);                              ///<condition number;
+    T cond = T(0);                                  ///<Scaled reciprocal condition number;
+    T kernelh2=CTE.kernelh*CTE.kernelh;             ///<Scaling factor;
+
+    if(shep>T(0.05)){
+      if (vrorder==VrOrder_2nd){
+        T scaleh = kernelh2*kernelh2;
+
+        int P[m_dim]{0};
+
+        LUdecomp_Single<T,m_dim,m_dim2>(A,P,B,sol,treshold);
+
+        cond=(T(1.0)/treshold)*scaleh;
+      }else if (vrorder==VrOrder_1st){
+
+        int P[m_dim]{0};
+
+        LUdecomp_Single<T,m_dim,m_dim2>(A,P,B,sol,treshold);
+        cond=(T(1.0)/treshold)*kernelh2;
       }
-
-
-      float shep = A[0];
-      float sol[nrhs]{0};
-      float treshold=0;
-      float cond=0;
-      
-      if (shep > 0.05){
-        if (order==0){
-
-          int P[nmatrix]{0};
-          
-          LUdecomp_Single<nmatrix, nrhs>(A, P, B, sol, treshold);
-    
-    
-          cond=(1.0f/treshold)*scaleh;
-
-        } else if (order==1){
-
-          int P[nmatrix]{0};
-
-        LUdecomp_Single<nmatrix, nrhs>(A, P, B, sol, treshold);
-        cond=(1.0f/treshold)*CTE.kernelh*CTE.kernelh;
-
-
-      }
-      if (cond>mrthreshold || order==2){
-         for (unsigned i = 0; i < nrhs; i++)
-           sol[i] = B[i * nmatrix] / shep;
-        //  rcond[p1] = 1.0;
-         }
- 
-
-      if (sim2d)
+      if (cond>mrthreshold || vrorder==VrOrder_0th)
       {
-         
-        velrhopg[p1].w = sol[0];
-        velrhopg[p1].x = sol[1];
-        velrhopg[p1].z = sol[2];
-      } else {
-        velrhopg[p1].w = sol[0];
-        velrhopg[p1].x = sol[1];
-        velrhopg[p1].y = sol[2];
-        velrhopg[p1].z = sol[3];
-      }
-         
-      } else{
-        code1[p1] = CODE_SetOutIgnore(code1[p1]);
-
+        for (unsigned i=0;i<m_dim2;i++)
+          sol[i]=B[i*m_dim]/shep;
       }
 
+      if (sim2d){
+        velrhopg[p1].w = float(sol[0]);
+        velrhopg[p1].x = float(sol[1]);
+        velrhopg[p1].z = float(sol[2]);
+      }else{
+        velrhopg[p1].w = float(sol[0]);
+        velrhopg[p1].x = float(sol[1]);
+        velrhopg[p1].y = float(sol[2]);
+        velrhopg[p1].z = float(sol[3]);
+      }
+    }
+    else{
+      code1[p1] = CODE_SetOutIgnore(code1[p1]);
+    }
   }
 }
-
 
 //==============================================================================
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-template<TpKernel tker> void Interaction_BufferExtrapT(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float4 *velrhop,double *rcond,typecode *code1,bool fastsingle, const unsigned order,float mrthreshold)
+template<TpKernel tker,bool sim2d,TpVresOrder vrorder>
+ void Interaction_BufferExtrapT(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t,
+		const double2 *posxyb,const double *poszb,float4 *velrhop,typecode *code1,bool fastsingle,float mrthreshold)
 {
-const StDivDataGpu &dvd=t.divdatag;
+  const StDivDataGpu &dvd=t.divdatag;
   const int2* beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
   //-Interaction GhostBoundaryNodes-Fluid.
   if(bufferpartcount){
     const unsigned bsize=128;
     dim3 sgrid=GetSimpleGridSize(bufferpartcount,bsize);
-    if(t.simulate2d){ const bool sim2d=true;
-
-      if(fastsingle){         
-        if (order==0) KerInteractionBufferExtrap_Single    <sim2d,tker,0> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,rcond,code1,mrthreshold);
-        if (order==1) KerInteractionBufferExtrap_Single    <sim2d,tker,1> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,rcond,code1,mrthreshold);
-        if (order==2) KerInteractionBufferExtrap_Single    <sim2d,tker,2> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,rcond,code1,mrthreshold);
-}
-   
-
-    }    else{           const bool sim2d=false;
-      if(fastsingle){   
-        if (order==0) KerInteractionBufferExtrap_Single    <sim2d,tker,0> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,rcond,code1,mrthreshold);
-        if (order==1) KerInteractionBufferExtrap_Single    <sim2d,tker,1> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,rcond,code1,mrthreshold);
-        if (order==2) KerInteractionBufferExtrap_Single    <sim2d,tker,2> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,rcond,code1,mrthreshold);
-         }
+    if(fastsingle)  KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,float> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
+      ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);
+    // else            KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,double> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
+    //   ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);     
   }
 }
+
+
+//==============================================================================
+/// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
+/// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
+//==============================================================================
+template<TpKernel tker>
+void Interaction_BufferExtrap_gt0(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t,
+		const double2 *posxyb,const double *poszb,float4* velrhop,typecode *code1,bool fastsingle,const TpVresOrder vrorder,float mrthreshold)
+{
+  if(t.simulate2d){
+    switch(vrorder){
+      // case VrOrder_0th: Interaction_BufferExtrapT<tker,true,VrOrder_0th>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
+      // case VrOrder_1st: Interaction_BufferExtrapT<tker,true,VrOrder_1st>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
+      case VrOrder_2nd: Interaction_BufferExtrapT<tker,true,VrOrder_2nd>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
+    }
+  }else{
+      switch(vrorder){
+      // case VrOrder_0th: Interaction_BufferExtrapT<tker,false,VrOrder_0th>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
+      // case VrOrder_1st: Interaction_BufferExtrapT<tker,false,VrOrder_1st>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
+      // case VrOrder_2nd: Interaction_BufferExtrapT<tker,false,VrOrder_2nd>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
+    }
+  } 
 }
 
 //==============================================================================
@@ -651,15 +606,15 @@ const StDivDataGpu &dvd=t.divdatag;
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
 void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float4 *velrhop,double *rcond,typecode *code1,bool fastsingle, const unsigned order,float mrthreshold)
+		const double2 *posxyb,const double *poszb,float4* velrhop,typecode *code1,bool fastsingle,const TpVresOrder order,float mrthreshold)
 {
   switch(t.tkernel){
     case KERNEL_Wendland:
-      Interaction_BufferExtrapT<KERNEL_Wendland>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,rcond,code1,fastsingle,order,mrthreshold);
+      Interaction_BufferExtrap_gt0<KERNEL_Wendland>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,order,mrthreshold);
     break;
 #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:
-    	Interaction_BufferExtrapT<KERNEL_Wendland>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,rcond,code1,fastsingle,order,mrthreshold);
+    	// Interaction_BufferExtrap_gt0<KERNEL_Wendland>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,order,mrthreshold);
     break;
 #endif
     default: throw "Kernel unknown at Interaction_InOutExtrap().";
@@ -670,223 +625,218 @@ void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart,con
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //------------------------------------------------------------------------------
-template<bool sim2d,TpKernel tker,unsigned order> __global__ void KerInteractionBufferExtrap_SingleFlux
+template <TpKernel tker,bool sim2d,TpVresOrder vrorder, typename T = float>
+__global__ void KerInteractionBufferExtrap_SingleFlux
   (unsigned bufferpartcount,unsigned pini,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid,const float4* poscell, double3 mapposmin
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
   ,const float4 *velrhop,const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes,
   double dp,double dt,float3* velflux,float mrthreshold,const unsigned cellfluid)
 {
-    float scaleh=CTE.kernelh*CTE.kernelh*CTE.kernelh*CTE.kernelh;
-
-  const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  const unsigned cp=blockIdx.x*blockDim.x+threadIdx.x; //-Number of particle.
   if(cp<bufferpartcount){
     const unsigned p1=cp+pini;
 
       //-Calculates ghost node position.
-      double3 posp1=make_double3(posxyb[p1].x,posxyb[p1].y,poszb[p1]);
-            const float4 gpscellp1=cusph::KerComputePosCell(posp1,mapposmin,CTE.poscellsize);
+    double3 posp1 = make_double3(posxyb[p1].x, posxyb[p1].y, poszb[p1]);
+    const float4 gpscellp1 = cusph::KerComputePosCell(posp1,mapposmin,CTE.poscellsize);
 
-  //-Initializes variables for calculation.
-      constexpr unsigned nmatrix = (order == 0) ? (sim2d ? 6 : 10) : (sim2d ? 3 : 4);
-      constexpr unsigned nrhs = sim2d ? 3 : 4;
+    // Compute size of the reconstruction matrix and right hand sime.
+    constexpr unsigned m_dim  = vrorder==VrOrder_2nd ? (sim2d ? 6 : 10) : (sim2d ? 3 : 4);
+    constexpr unsigned m_dim2 = sim2d ? 3: 4;
 
-      float C[nmatrix];
-      float C1[nmatrix];
-      float D[nrhs];
+    T C[m_dim]{0};
+    T C1[m_dim]{0};
+    T D[m_dim2]{0};
 
-
-
-      float A[nmatrix*nmatrix]{0};
-      float B[nmatrix*nrhs]{0};
-         float ShiftTFS=0;
-         float mindist=1000000.0;
-         float mindp=min(dp,CTE.dp);
-      //-Obtains neighborhood search limits.
-      int ini1,fin1,ini2,fin2,ini3,fin3;
-      cunsearch::InitCte(posp1.x,posp1.y,posp1.z,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
+    T A[m_dim*m_dim]{0};
+    T B[m_dim*m_dim2]{0};
 
 
-      // ini3-=cellfluid; fin3-=cellfluid;
-      //-Interaction with fluids.
-      for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
-        unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
-        if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
-          const float4 pscellp2=poscell[p2];
-          float drx=gpscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(gpscellp1.w)-PSCEL_GetfX(pscellp2.w));
-          float dry=gpscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(gpscellp1.w)-PSCEL_GetfY(pscellp2.w));
-          float drz=gpscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(gpscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-          const float rr2=drx*drx+dry*dry+drz*drz;
-          if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){//-Only with fluid particles but not inout particles.
-            //-Only Wendland or Cubic Spline kernel.
-            //-Computes kernel.
-        	  float fac;
-        	  float facc;
-        	  const float wab=cufsph::GetKernel_WabFacFacc<tker>(rr2,fac,facc);
-        	  const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
-             float4 velrhopp2=velrhop[p2];
-            //===== Get mass and volume of particle p2 =====
-            float massp2=CTE.massf;
-            float volp2=massp2/velrhopp2.w;
-            ShiftTFS-=volp2*(drx*frx+dry*fry+drz*frz);
+
+    
+    T ShiftTFS=0;
+    T mindist=1000000.0;
+    T mindp=min(dp,CTE.dp);
+    //-Obtains neighborhood search limits.
+    int ini1,fin1,ini2,fin2,ini3,fin3;
+    // cunsearch::InitCte(posp1.x,posp1.y,posp1.z,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
+
+    // //-Interaction with fluids.
+    // for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
+    //   unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
+    //   if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
+    //     T drx,dry,drz;
+    //     if (sizeof(T)==sizeof(float)){
+    //       const float4 pscellp2 = poscell[p2];
+    //       drx=gpscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(gpscellp1.w)-PSCEL_GetfX(pscellp2.w));
+    //       dry=gpscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(gpscellp1.w)-PSCEL_GetfY(pscellp2.w));
+    //       drz=gpscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(gpscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+    //     }else{
+    //       const double2 p2xy=posxy[p2];
+    //       drx=T(posp1.x-p2xy.x);
+    //       dry=T(posp1.y-p2xy.y);
+    //       drz=T(posp1.z-posz[p2]);
+    //     }
+    //     const T rr2=drx*drx+dry*dry+drz*drz;
+    //     if (rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
+    //     // Computes kernel.
+    //       float fac;
+    //       float facc;
+    //       const T wab=cufsph::GetKernel_WabFacFacc<tker>(rr2,fac,facc);
+    //       const T frx=drx*fac,fry=dry*fac,frz=drz*fac; //-Gradients.
+
+    //       float4 velrhopp2 = velrhop[p2];
+    //       // Get mass and volume of particle p2
+    //       T massp2=T(CTE.massf);
+    //       T volp2=massp2/T(velrhopp2.w);
+    //       ShiftTFS-=volp2*(drx*frx+dry*fry+drz*frz);
+
+    //     }
+    //   }
+    // }
+
+    cunsearch::InitCte(posp1.x,posp1.y,posp1.z,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
+    ini3+=cellfluid; fin3+=cellfluid;
+
+    //-Interaction with fluids.
+    for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
+      unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
+      if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
+        T drx,dry,drz;
+        if (sizeof(T)==sizeof(float)){
+          const float4 pscellp2 = poscell[p2];
+          drx=gpscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(gpscellp1.w)-PSCEL_GetfX(pscellp2.w));
+          dry=gpscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(gpscellp1.w)-PSCEL_GetfY(pscellp2.w));
+          drz=gpscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(gpscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+        }else{
+          const double2 p2xy=posxy[p2];
+          drx=T(posp1.x-p2xy.x);
+          dry=T(posp1.y-p2xy.y);
+          drz=T(posp1.z-posz[p2]);
+        }
+        const T rr2=drx*drx+dry*dry+drz*drz;
+        if (rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2]) && !CODE_IsFluidBuffer(code[p2]) && !CODE_IsFluidFixed(code[p2])){
+        // Computes kernel.
+          float fac;
+          float facc;
+          const T wab=cufsph::GetKernel_WabFacFacc<tker>(rr2,fac,facc);
+          const T frx=drx*fac,fry=dry*fac,frz=drz*fac; //-Gradients.
+          T frxx=facc*(drx*drx)/sqrt(rr2)+fac*(dry*dry+drz*drz)/rr2;
+          T frzz=facc*(drz*drz)/sqrt(rr2)+fac*(dry*dry+drx*drx)/rr2;
+          T fryy=facc*(dry*dry)/sqrt(rr2)+fac*(drz*drz+drx*drx)/rr2;
+          T frxz=facc*(drx*drz)/sqrt(rr2)-fac*(drx*drz)/rr2;
+          T frxy=facc*(drx*dry)/sqrt(rr2)-fac*(drx*dry)/rr2;
+          T fryz=facc*(dry*drz)/sqrt(rr2)-fac*(dry*drz)/rr2;
+
+          float4 velrhopp2 = velrhop[p2];
+          // Get mass and volume of particle p2
+          T massp2=T(CTE.massf);
+          T volp2=massp2/T(velrhopp2.w);
+          ShiftTFS-=volp2*(drx*frx+dry*fry+drz*frz);
+          mindist=min(mindist,rr2);
+
+
+          // Set up C and C1 based on order and sim2d
+          if (vrorder==VrOrder_2nd){
+            if (sim2d){
+              T tempC[] ={T(1.0),drx,drz,drx*drx*T(0.5),drx*drz,drz*drz*T(0.5)};
+              T tempC1[]={volp2*wab,volp2*frx,volp2*frz,volp2*frxx,volp2*frxz,volp2*frzz};
+
+              for (int i=0;i<m_dim;++i){
+                C[i]  = tempC[i];
+                C1[i] = tempC1[i];
+              }
+            }else{
+              T tempC[]   ={T(1.0),drx,dry,drz,drx*drx*T(0.5),drx*dry,dry*dry*T(0.5),drx*drz,drz*drz*T(0.5),dry*drz};
+              T tempC1[]  ={volp2*wab,volp2*frx,volp2*fry,volp2*frz,volp2*frxx,volp2*frxy,volp2*fryy,volp2*frxz,volp2*frzz,volp2*fryz};
+
+              for (int i=0;i<m_dim;++i){
+                C[i] = tempC[i];
+                C1[i] = tempC1[i];
+              }
+            }
+          }else{
+            if (sim2d){
+              T tempC[]   = {T(1.0),-drx,-drz};
+              T tempC1[]  = {volp2*wab,volp2*frx,volp2*frz};
+
+              for (int i=0;i<m_dim;++i){
+                    C[i] = tempC[i];
+                    C1[i] = tempC1[i];
+              }
+            }else{
+              T tempC[] = {T(1.0),drx,dry,drz};
+              T tempC1[] = {volp2*wab,volp2*frx,volp2*fry,volp2*frz};
+
+              for (int i =0;i<m_dim;++i){
+                C[i] = tempC[i];
+                C1[i] = tempC1[i];
+              }
+            }
+          }
+
+              // Set up D
+          if (sim2d){
+            T tempD[] = {T(velrhop[p2].w),T(velrhop[p2].x),T(velrhop[p2].z)};
+            for (int i =0;i<m_dim2;++i)D[i]=tempD[i];
+          }else{
+            T tempD[] = {T(velrhop[p2].w), T(velrhop[p2].x), T(velrhop[p2].y), T(velrhop[p2].z)};
+            for (int i =0;i<m_dim2;++i)D[i]=tempD[i];
+          }
+          // Accumulate A and B matrices
+          for (int i=0;i<m_dim;i++)
+            for (int j=0;j<m_dim;j++){
+              A[i*m_dim+j]+=C1[i]*C[j];
+            }
+              
+          for (int i=0; i<m_dim2;i++)
+            for (int j=0;j<m_dim;j++){
+              B[i*m_dim+j]+=D[i]*C1[j];
           }
         }
+      }        
+    }
+
+    T shep = A[0];                                  ///<Shepard summation.
+    T sol[m_dim2]{0};                               ///<Solution array;
+    T treshold = T(0);                              ///<condition number;
+    T cond = T(0);                                  ///<Scaled reciprocal condition number;
+    T kernelh2=CTE.kernelh*CTE.kernelh;             ///<Scaling factor;
+
+    if(shep>T(0.05)){
+      if (vrorder==VrOrder_2nd){
+        T scaleh = kernelh2*kernelh2;
+
+        int P[m_dim]{0};
+
+        LUdecomp_Single<T,m_dim,m_dim2>(A,P,B,sol,treshold);
+
+        cond=(T(1.0)/treshold)*scaleh;
+      }else if (vrorder==VrOrder_1st){
+
+        int P[m_dim]{0};
+
+        LUdecomp_Single<T,m_dim,m_dim2>(A,P,B,sol,treshold);
+        cond=(T(1.0)/treshold)*kernelh2;
       }
-      cunsearch::InitCte(posp1.x,posp1.y,posp1.z,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
-      ini3+=cellfluid; fin3+=cellfluid;
-
-      //-Interaction with fluids.
-      for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
-        unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
-        if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
-          const float4 pscellp2=poscell[p2];
-          float drx=gpscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(gpscellp1.w)-PSCEL_GetfX(pscellp2.w));
-          float dry=gpscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(gpscellp1.w)-PSCEL_GetfY(pscellp2.w));
-          float drz=gpscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(gpscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-          const float rr2=drx*drx+dry*dry+drz*drz;
-          if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2]) && !CODE_IsFluidBuffer(code[p2]) && !CODE_IsFluidFixed(code[p2])){//-Only with fluid particles but not inout particles.
-            //-Only Wendland or Cubic Spline kernel.
-            //-Computes kernel.
-        	  float fac;
-        	  float facc;
-        	  const float wab=cufsph::GetKernel_WabFacFacc<tker>(rr2,fac,facc);
-        	  const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
-        	  float frxx=facc*(drx*drx)/sqrt(rr2)+fac*(dry*dry+drz*drz)/rr2;
-        	  float frzz=facc*(drz*drz)/sqrt(rr2)+fac*(dry*dry+drx*drx)/rr2;
-        	  float fryy=facc*(dry*dry)/sqrt(rr2)+fac*(drz*drz+drx*drx)/rr2;
-        	  float frxz=facc*(drx*drz)/sqrt(rr2)-fac*(drx*drz)/rr2;
-        	  float frxy=facc*(drx*dry)/sqrt(rr2)-fac*(drx*dry)/rr2;
-        	  float fryz=facc*(dry*drz)/sqrt(rr2)-fac*(dry*drz)/rr2;
-
-
-
-
-
-
-        	
-
-             float4 velrhopp2=velrhop[p2];
-            //===== Get mass and volume of particle p2 =====
-            float massp2=CTE.massf;
-            float volp2=massp2/velrhopp2.w;
-            ShiftTFS-=volp2*(drx*frx+dry*fry+drz*frz);
-            mindist=min(mindist,rr2);
-
-
-            if constexpr (order == 0) {
-        if constexpr (sim2d) {
-            float tempC[] = {1.0f, drx, drz, drx * drx * 0.5f, drx * drz, drz * drz * 0.5f};
-            float tempC1[] = {volp2 * wab, volp2 * frx, volp2 * frz, volp2 * frxx, volp2 * frxz, volp2 * frzz};
-
-            #pragma unroll
-            for (int i = 0; i < nmatrix; ++i) {
-                C[i] = tempC[i];
-                C1[i] = tempC1[i];
-            }
-        } else {
-            float tempC[] = {1.0f, drx, dry, drz, drx * drx * 0.5f, drx * dry, dry * dry * 0.5f, drx * drz, drz * drz * 0.5f, dry * drz};
-            float tempC1[] = {volp2 * wab, volp2 * frx, volp2 * fry, volp2 * frz, volp2 * frxx, volp2 * frxy, volp2 * fryy, volp2 * frxz, volp2 * frzz, volp2 * fryz};
-
-            #pragma unroll
-            for (int i = 0; i < nmatrix; ++i) {
-                C[i] = tempC[i];
-                C1[i] = tempC1[i];
-            }
-        }
-    } else {
-        if constexpr (sim2d) {
-            float tempC[] = {1.0f, drx, drz};
-            float tempC1[] = {volp2 * wab, volp2 * frx, volp2 * frz};
-
-            #pragma unroll
-            for (int i = 0; i < nmatrix; ++i) {
-                C[i] = tempC[i];
-                C1[i] = tempC1[i];
-            }
-        } else {
-            float tempC[] = {1.0f, drx, dry, drz};
-            float tempC1[] = {volp2 * wab, volp2 * frx, volp2 * fry, volp2 * frz};
-
-            #pragma unroll
-            for (int i = 0; i < nmatrix; ++i) {
-                C[i] = tempC[i];
-                C1[i] = tempC1[i];
-            }
-        }
-    }
-
-    if constexpr (sim2d) {
-        float tempD[] = {velrhop[p2].w, velrhop[p2].x, velrhop[p2].z};
-        #pragma unroll
-        for (int i = 0; i < nrhs; ++i) D[i] = tempD[i];
-    } else {
-        float tempD[] = {velrhop[p2].w, velrhop[p2].x, velrhop[p2].y, velrhop[p2].z};
-        #pragma unroll
-        for (int i = 0; i < nrhs; ++i) D[i] = tempD[i];
-    }
-
-    #pragma unroll
-    for (int i = 0; i < nmatrix; i++) {
-        #pragma unroll
-        for (int j = 0; j < nmatrix; j++) {
-            A[T(i * nmatrix + j)] += C1[i] * C[j];
-        }
-    }
-
-    #pragma unroll
-    for (int i = 0; i < nrhs; i++) {
-        #pragma unroll
-        for (int j = 0; j < nmatrix; j++) {
-            B[i * nmatrix + j] += D[i] * C1[j];
-        }
-    }
-          }
-        }
-      }
-
-    float shep = A[0];
-      float sol[nrhs]{0};
-      float treshold=0;
-      float cond=0;
-      if (shep > 0.05){
-        if (order==0){
-
-          int P[nmatrix]{0};
-          
-          LUdecomp_Single<nmatrix, nrhs>(A, P, B, sol, treshold);
-    
-    
-          cond=(1.0f/treshold)*scaleh;
-
-        } else if (order==1){
-
-        //   float A[9]{0};
-          int P[nmatrix]{0};
-
-
-        LUdecomp_Single<nmatrix, nrhs>(A, P, B, sol, treshold);
-        cond=(1.0f/treshold)*CTE.kernelh*CTE.kernelh;
-
-
-      }
-       if (cond>mrthreshold|| order==2){
-         for (unsigned i = 0; i < nrhs; i++)
-           sol[i] = B[i * nmatrix] / shep;
-        //  rcond[p1] = 1.0;
-         }
-      if (sim2d)
+      if (cond>mrthreshold || vrorder==VrOrder_0th)
       {
-        if ((ShiftTFS > 1.5 || sqrt(mindist) < mindp) && fluxes[p1] < 0.0 )
-        fluxes[p1] += max(0.0, -sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt);
-        else if ((ShiftTFS > 1.5 || sqrt(mindist) < mindp) )
-        fluxes[p1] += -sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt;
-      } else {
-        if((ShiftTFS>2.75 || sqrt(mindist)<mindp)  && fluxes[p1]<0.0 ) fluxes[p1]+=max(0.0,-sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt);
-          else if((ShiftTFS>2.75 || sqrt(mindist)<mindp) )               fluxes[p1]+= -sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt;
+        for (unsigned i=0;i<m_dim2;i++)
+          sol[i]=B[i*m_dim]/shep;
+      }
+          // printf("%f %f %f %f\n",sol[0],sol[1],sol[2],dp);
+
+      if (sim2d){
+        if((ShiftTFS>1.5 || sqrt(mindist)<mindp) && fluxes[p1]<0.0)
+        fluxes[p1]+=max(0.0,-sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt);
+        else if((ShiftTFS>1.5 || sqrt(mindist)<mindp))
+        fluxes[p1]+=-sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt;
+      }else{
+        if      ((ShiftTFS>2.75 || sqrt(mindist)<mindp)  &&fluxes[p1]<0.0)  fluxes[p1]+=max(0.0,-sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt);
+        else if ((ShiftTFS>2.75 || sqrt(mindist)<mindp))                    fluxes[p1]+= -sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt;
           
       }
-         
-      } 
-
+    }
   }
 }
 
@@ -895,30 +845,44 @@ template<bool sim2d,TpKernel tker,unsigned order> __global__ void KerInteraction
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-template<TpKernel tker> void Interaction_BufferExtrapFluxT(unsigned bufferpartcount,unsigned pini,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes,double dp,double dt,float3* velflux,bool fastsingle,const unsigned order,float mrthreshold)
+template<TpKernel tker,bool sim2d,TpVresOrder vrorder>
+void Interaction_BufferExtrapFluxT(unsigned bufferpartcount,unsigned pini,const StInterParmsbg &t,
+		const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes,double dp,double dt,float3* velflux,bool fastsingle,float mrthreshold)
 {
-const StDivDataGpu &dvd=t.divdatag;
+  const StDivDataGpu &dvd=t.divdatag;
   const int2* beginendcellfluid=dvd.beginendcell/* +dvd.cellfluid */;
   //-Interaction GhostBoundaryNodes-Fluid.
   if(bufferpartcount){
     const unsigned bsize=128;
     dim3 sgrid=GetSimpleGridSize(bufferpartcount,bsize);
-    if(t.simulate2d){ const bool sim2d=true;
-      if (fastsingle) {
-        if (order==0) KerInteractionBufferExtrap_SingleFlux   <sim2d,tker,0> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);
-        if (order==1) KerInteractionBufferExtrap_SingleFlux   <sim2d,tker,1> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);
-        if (order==2) KerInteractionBufferExtrap_SingleFlux   <sim2d,tker,2> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);
-       }
-    }
-    else{           const bool sim2d=false;
-      if (fastsingle) {
-        if (order==0) KerInteractionBufferExtrap_SingleFlux   <sim2d,tker,0> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);
-        if (order==1) KerInteractionBufferExtrap_SingleFlux   <sim2d,tker,1> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);
-        if (order==2) KerInteractionBufferExtrap_SingleFlux   <sim2d,tker,2> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);
-     }
-    }
+    if(fastsingle)  KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,float> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero
+      ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);
+    // else KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,double> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero
+    //   ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);    
   }
+}
+
+//==============================================================================
+/// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
+/// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
+//==============================================================================
+template<TpKernel tker>
+void Interaction_BufferExtrapFlux_gt0(unsigned bufferpartcount,unsigned pini,const StInterParmsbg &t,
+		const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes,double dp,double dt,float3* velflux,bool fastsingle,const TpVresOrder vrorder,float mrthreshold)
+{
+  if(t.simulate2d){
+    switch(vrorder){
+      case VrOrder_0th: Interaction_BufferExtrapFluxT<tker,true,VrOrder_0th>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,mrthreshold); break;
+      case VrOrder_1st: Interaction_BufferExtrapFluxT<tker,true,VrOrder_1st>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,mrthreshold); break;
+      case VrOrder_2nd: Interaction_BufferExtrapFluxT<tker,true,VrOrder_2nd>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,mrthreshold); break;
+    }
+  }else{
+      switch(vrorder){
+      // case VrOrder_0th: Interaction_BufferExtrapFluxT<tker,false,VrOrder_0th>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,mrthreshold); break;
+      // case VrOrder_1st: Interaction_BufferExtrapFluxT<tker,false,VrOrder_1st>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,mrthreshold); break;
+      // case VrOrder_2nd: Interaction_BufferExtrapFluxT<tker,false,VrOrder_2nd>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,mrthreshold); break;
+    }
+  } 
 }
 
 //==============================================================================
@@ -926,19 +890,20 @@ const StDivDataGpu &dvd=t.divdatag;
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
 void Interaction_BufferExtrapFlux(unsigned bufferpartcount,unsigned pini,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes,double dp,double dt,float3* velflux,bool fastsingle,const unsigned order,float mrthreshold)
+		const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes,double dp,double dt,float3* velflux,bool fastsingle,const TpVresOrder vrorder,float mrthreshold)
 {
   switch(t.tkernel){
     case KERNEL_Wendland:
-      Interaction_BufferExtrapFluxT<KERNEL_Wendland>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,order,mrthreshold);
+      Interaction_BufferExtrapFlux_gt0<KERNEL_Wendland>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,vrorder,mrthreshold);
     break;
 #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:
-    	Interaction_BufferExtrapFluxT<KERNEL_Wendland>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,order,mrthreshold);
+    	// Interaction_BufferExtrapFlux_gt0<KERNEL_Wendland>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,vrorder,mrthreshold);
     break;
 #endif
     default: throw "Kernel unknown at Interaction_InOutExtrap().";
   }
+  cudaDeviceSynchronize();
 }
 
 //------------------------------------------------------------------------------
@@ -1691,7 +1656,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
     ,const unsigned &pini,const unsigned &pfin,const float4 *poscell,const float4 *velrhop
     ,const typecode *code,float massp2,const float4 &pscellp1,const float4 &velrhop1,const float* ftomassp
     ,float4 &shiftposf1,unsigned* fs,float3* fsnormal,bool& nearfs,float &mindist,float& maxarccos
-    ,bool& bound_inter,float3& fsnormalp1)
+    ,bool& bound_inter,float3& fsnormalp1,float& pou)
   {
     for(int p2=pini;p2<pfin;p2++){
       const float4 pscellp2=poscell[p2];
@@ -1722,6 +1687,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
           const float wab=cufsph::GetKernel_Wab<KERNEL_Wendland>(rr2);
           shiftposf1.w+=wab*massrho;
 
+
           //-Check if the particle is too close to solid or floating object
           if((boundp2 || ftp2)) bound_inter=true;
 
@@ -1729,6 +1695,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
           if(fs[p2]>1 && fs[p2]<3 && !boundp2 ) {
             nearfs=true;
             mindist=min(sqrt(rr2),mindist);
+            pou+=wab*massrho;
 
             fsnormalp1.x+=fsnormal[p2].x*wab*massrho;
             fsnormalp1.y+=fsnormal[p2].y*wab*massrho;
@@ -1772,6 +1739,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       bool bound_inter=false;                   //-Variable for identify free-surface that interact with boundary <shiftImproved>
       float3 fsnormalp1=make_float3(0,0,0);     //-Normals for near free-surface particles <shiftImproved>
       unsigned fsp1=fstype[p1];                 //-Free-surface identification code: 0-internal, 1-close to free-surface, 2 free-surface, 3-isolated.
+      float   pou=false;                        //-Partition of unity for normal correction.                      <ShiftingAdvanced>
     
       //-Obtains neighborhood search limits.
       int ini1,fin1,ini2,fin2,ini3,fin3;
@@ -1784,10 +1752,10 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
         if(pfin){
           KerPreLoopInteractionBox<tker,simulate2d,shiftadv,false> (false,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1);
+            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou);
           if(symm && rsymp1)KerPreLoopInteractionBox<tker,simulate2d,shiftadv,true> (false,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1); //<vs_syymmetry>
+            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou); //<vs_syymmetry>
         } 
       }
 
@@ -1799,10 +1767,10 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
         if(pfin){
         KerPreLoopInteractionBox<tker,simulate2d,shiftadv,false> (true,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1);
+            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou);
         if(symm && rsymp1)KerPreLoopInteractionBox<tker,simulate2d,shiftadv,true> (true,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1); //<vs_syymmetry>
+            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou); //<vs_syymmetry>
       }
       }
 
@@ -1827,23 +1795,24 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
         shiftposp1.w+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.0)*CTE.massf/velrhop1.w;
 
 
-        fsmindist[p1]=mindist;
-        //-Assign correct code to near free-surface particle and correct their normals by Shepard's Correction.
-        if(fsp1==0 && nearfs && shiftposp1.w>0.01){
-
-        fsnormalp1=make_float3(fsnormalp1.x/shiftposp1.w,fsnormalp1.y/shiftposp1.w,fsnormalp1.z/shiftposp1.w);
+      fsmindist[p1]=mindist;
+      //-Assign correct code to near free-surface particle and correct their normals by Shepard's Correction.
+      if(fsp1==0 && nearfs){
+      if(pou>1e-6){
+        fsnormalp1=make_float3(fsnormalp1.x,fsnormalp1.y,fsnormalp1.z);
         float norm=sqrt(fsnormalp1.x*fsnormalp1.x+fsnormalp1.y*fsnormalp1.y+fsnormalp1.z*fsnormalp1.z);
         fsnormal[p1]=make_float3(fsnormalp1.x/norm,fsnormalp1.y/norm,fsnormalp1.z/norm);
-        fstype[p1]=1;
-        if(bound_inter) fstype[p1]=3;
-        }
-        
-        //-Check if free-surface particle interact with bound or has high-curvature.
-        if(fsp1==2 && (bound_inter||maxarccos>0.52)) fstype[p1]=3;
+      }      
+      fstype[p1]=1;
+      if(bound_inter) fstype[p1]=3;
+      }
+      
+      //-Check if free-surface particle interact with bound or has high-curvature.
+      if(fsp1==2 && (bound_inter||maxarccos>0.52)) fstype[p1]=3;
 
 
-        //-Compute shifting when <shiftImproved> true
-        shiftvel[p1]=shiftposp1;
+      //-Compute shifting when <shiftImproved> true
+      shiftvel[p1]=shiftposp1;
       }
       
     }

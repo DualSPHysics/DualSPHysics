@@ -546,7 +546,7 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
 
       if(shiftadv){
 
-        shiftposp1.w+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.0)*CTE.massf/velrhop1.w;
+      shiftposp1.w+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.0)*CTE.massf/velrhop1.w;
 
 
       fsmindist[p1]=mindist;

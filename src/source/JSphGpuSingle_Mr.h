@@ -9,6 +9,7 @@
 #include "JSphGpu_cte.h"
 #include "JSphBuffer.h"
 #include "JCaseVRes.h"
+#include "JSphVResDef.h"
 
 
 
@@ -32,7 +33,11 @@ protected:
   unsigned MROrder=1;
   float MRThreshold;
 
+private:
+  TpVresOrder VResOrder;
+  TpVresMethod VResMethod;
 
+  void LoadVResConfigParameters(const JSphCfgRun* cfg);
 
 
 public:

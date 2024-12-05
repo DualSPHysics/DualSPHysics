@@ -1,7 +1,7 @@
 #DualSPHysics GPU/CPU v5.4.344 12-10-2024
 
 #=============== Compilation Options (YES/NO) ===============
-USE_DEBUG=NO
+USE_DEBUG=YES
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_VTKLIB=YES

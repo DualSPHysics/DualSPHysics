@@ -12,6 +12,7 @@
 #include "JSphGpu_ker.h"
 #include <cuda_runtime_api.h>
 #include "JSphBuffer.h"
+#include "JSphVResDef.h"
 
 typedef struct StrInterParmsbg{
   //-Configuration options.
@@ -75,11 +76,11 @@ unsigned BufferCreateListInit(bool stable,unsigned n,unsigned pini,const tdouble
   ,const bool inner,const double2 *posxy,const double *posz,typecode *code,unsigned *listp,tmatrix4f mat,bool tracking,unsigned nzone);
 
 void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float4* velrhop,double *rcond,typecode *code1,bool fastsingle,const unsigned order,float mrthreshold);
+		const double2 *posxyb,const double *poszb,float4* velrhop,typecode *code1,bool fastsingle,const TpVresOrder order,float mrthreshold);
 
 
 void Interaction_BufferExtrapFlux(unsigned bufferpartcount,unsigned pini,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes,double dp,double dt,float3* velmot,bool fastsingle,const unsigned order,float mrthreshold);
+		const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes,double dp,double dt,float3* velmot,bool fastsingle,const TpVresOrder vrorder,float mrthreshold);
 
 void BufferComputeStep(unsigned n,int *inoutpart,const double2 *posxy,const double *posz,typecode *code
     ,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner,const tdouble3 boxlimitminouter

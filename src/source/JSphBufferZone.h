@@ -49,40 +49,21 @@ private:
 	int Ntot;
 	tdouble3 *Points = nullptr;
 	tdouble3 *Normals = nullptr;
-	tdouble4 *Velrhop = nullptr;
-	double *Fluxes = nullptr;
 
 	bool TrackingisActive=false;
 	unsigned TrackingMk=0;
 
 	std::vector<tdouble3> PointsIn;
 	std::vector<tdouble3> NormalIn;
-	std::vector<bufferplane> Planes;
 
-	void ReadXml(const JXml *sxml, TiXmlElement *ele, const std::string &dirdatafile);
 	
 	void CalculateNpoints();
 	void AllocateMemory();
 	void CalculatePointsNormals();
 	void Reset();
 	void ComputeInterface();
-	bool CheckPointInterface(tdouble3 point);
 
-	//  tdouble3 BoxLimitMin;
-	//  tdouble3 BoxLimitMax;
-	//  tfloat3 Normal;
-	//  double Width;
-	//  double Lz;
-	//  double Lx;
-	//  bool Inner;
-	//  unsigned Nx=0;
-	//  unsigned Nz=0;
-	//  unsigned Ntot=0;
-	//  tdouble3 *points=nullptr;
-	//  tdouble3 *normals=nullptr;
-	//  tdouble4 *velrhop=nullptr;
-	//  double Dp;
-	//
+
 public:
 	JSphBufferZone(bool cpu, const StCteSph &csp, bool inner, unsigned zone, tdouble3 boxlimitmininner, tdouble3 boxlimitmaxinner,
                 tdouble3 boxlimitminouter, tdouble3 boxlimitmaxouter, tdouble3 boxlimitminmid, tdouble3 boxlimitmaxmid
@@ -98,8 +79,6 @@ public:
 	unsigned getZone() const { return Zone; };
 	tdouble3 *getPoints() { return Points; } ;
 	tdouble3 *getNormals() { return Normals; };
-	double *getFluxes() { return Fluxes; };
-	tdouble4 *getVelrhop() { return Velrhop; }
 	unsigned Partout = 0;
 	unsigned PartNew = 0;
 	unsigned PartFluidToBuffer = 0;
@@ -130,22 +109,6 @@ public:
   unsigned  GetTrackingMk()const{ return(TrackingMk); }
 	JMatrix4d GetMat(){return Mat;};
 
-	//  bool InZoneBox(const tfloat3 &ps)const;
-	////  void setNormal(const tfloat3 ps1);
-	////  float DistPlane(const tfloat3 ps1);
-	//  double getWidth(){return Width;};
-	//  bool getInner(){return Inner;};
-	//  tdouble3 getNormal(const tdouble3 &ps,const tdouble3 &prepos)const;
-	//  bool is_Angle(const tdouble3 &ps) const;
-	//  bool is_Out(const tdouble3 &ps) const;
-	//  bool is_Normal(const tdouble3 &ps) const;
-	//  unsigned getNPoints(){return Ntot;};
-	//  tdouble3* getPoints(){return points;};
-	//  tdouble3* getNormals(){return normals;};
-	//  tdouble4* getVelrhop(){return velrhop;};
-	//  void Config();
-	// private:
-	//  void Reset() ;
 };
 
 #endif /* JSPHBUFFERZONE_H_ */

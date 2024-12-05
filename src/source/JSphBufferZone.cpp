@@ -13,25 +13,25 @@
 #include "JLog2.h"
 #include "JXml.h"
 
-JSphBufferZone::JSphBufferZone(bool cpu, const StCteSph &csp, bool inner, unsigned zone, tdouble3 boxlimitmininner, tdouble3 boxlimitmaxinner,
-                               tdouble3 boxlimitminouter, tdouble3 boxlimitmaxouter, tdouble3 boxlimitminmid
-                               , tdouble3 boxlimitmaxmid,bool trackingisactive,unsigned trackingmk,JMatrix4d mat,bool issimple)
-    : Log(AppInfo.LogPtr()), Cpu(cpu), CSP(csp), Inner(inner), Zone(zone+1), BoxLimitMinInner(boxlimitmininner), BoxLimitMaxInner(boxlimitmaxinner)
-    , BoxLimitMinOuter(boxlimitminouter),BoxLimitMaxOuter(boxlimitmaxouter), BoxLimitMinMid(boxlimitminmid), BoxLimitMaxMid(boxlimitmaxmid)
-    , TrackingisActive(trackingisactive),Mat(mat),IsSimple(issimple){
-    ClassName = "BufferZone";
+JSphBufferZone::JSphBufferZone(bool cpu,const StCteSph &csp,bool inner,unsigned zone,tdouble3 boxlimitmininner,tdouble3 boxlimitmaxinner
+  ,tdouble3 boxlimitminouter,tdouble3 boxlimitmaxouter,tdouble3 boxlimitminmid
+  ,tdouble3 boxlimitmaxmid,bool trackingisactive,unsigned trackingmk,JMatrix4d mat,bool issimple)
+  : Log(AppInfo.LogPtr()),Cpu(cpu),CSP(csp),Inner(inner),Zone(zone+1),BoxLimitMinInner(boxlimitmininner),BoxLimitMaxInner(boxlimitmaxinner)
+  ,BoxLimitMinOuter(boxlimitminouter),BoxLimitMaxOuter(boxlimitmaxouter),BoxLimitMinMid(boxlimitminmid),BoxLimitMaxMid(boxlimitmaxmid)
+  ,TrackingisActive(trackingisactive),Mat(mat),IsSimple(issimple)
+  {
+  ClassName = "BufferZone";
 
-    if(!IsSimple){
-        tmatrix4d mat=Mat.GetMatrix4d();
-        tmatrix4d mat_inv= TMatrix4d(mat.a11,mat.a21,mat.a31,0,mat.a12,mat.a22,mat.a32,0,mat.a13,mat.a23,mat.a33,0,0,0,0,1);
-        mat_inv.a14=-(mat.a14*mat.a11+mat.a24*mat.a21+mat.a34*mat.a31);
-        mat_inv.a24=-(mat.a14*mat.a12+mat.a24*mat.a22+mat.a34*mat.a32);
-        mat_inv.a34=-(mat.a14*mat.a13+mat.a24*mat.a23+mat.a34*mat.a33);
-        BoxLimitMinInner= MatrixMulPoint(mat_inv,BoxLimitMinInner);       
-        BoxLimitMaxInner= MatrixMulPoint(mat_inv,BoxLimitMaxInner);
-        BoxLimitMinOuter= MatrixMulPoint(mat_inv,BoxLimitMinOuter);       
-        BoxLimitMaxOuter= MatrixMulPoint(mat_inv,BoxLimitMaxOuter);
-        
+  if(!IsSimple){
+    tmatrix4d mat=Mat.GetMatrix4d();
+    tmatrix4d mat_inv= TMatrix4d(mat.a11,mat.a21,mat.a31,0,mat.a12,mat.a22,mat.a32,0,mat.a13,mat.a23,mat.a33,0,0,0,0,1);
+    mat_inv.a14=-(mat.a14*mat.a11+mat.a24*mat.a21+mat.a34*mat.a31);
+    mat_inv.a24=-(mat.a14*mat.a12+mat.a24*mat.a22+mat.a34*mat.a32);
+    mat_inv.a34=-(mat.a14*mat.a13+mat.a24*mat.a23+mat.a34*mat.a33);
+    BoxLimitMinInner= MatrixMulPoint(mat_inv,BoxLimitMinInner);       
+    BoxLimitMaxInner= MatrixMulPoint(mat_inv,BoxLimitMaxInner);
+    BoxLimitMinOuter= MatrixMulPoint(mat_inv,BoxLimitMinOuter);       
+    BoxLimitMaxOuter= MatrixMulPoint(mat_inv,BoxLimitMaxOuter);      
     }
 
     BoxLimitMin=(Inner? BoxLimitMinInner : BoxLimitMinOuter);
@@ -43,41 +43,9 @@ JSphBufferZone::JSphBufferZone(bool cpu, const StCteSph &csp, bool inner, unsign
 
     Config();
     
-
-    //		  Reset();
-    // ReadXml(sxml, ele, dirdatafile);
 }
 
-void JSphBufferZone::ReadXml(const JXml *sxml, TiXmlElement *ele, const std::string &dirdatafile) {
-    bool bho = sxml->ExistsElement(ele, "plane");
-    TiXmlElement *pl = ele->FirstChildElement("plane");
-    while (pl) {
-        if (sxml->CheckElementActive(pl)) {
-            tdouble3 pointmin = sxml->ReadElementDouble3(pl, "point");
-            tdouble3 planesize = sxml->ReadElementDouble3(pl, "size");
-            tdouble3 normal = sxml->ReadElementDouble3(pl, "normal");
-            Planes.push_back(Bufferplane(pointmin, planesize, normal));
-        }
-        pl = pl->NextSiblingElement("plane");
-    }
-    BoxLimitMin = sxml->ReadElementDouble3(ele, "point");
-    BoxSize = sxml->ReadElementDouble3(ele, "size");
-    Zone = sxml->ReadElementUnsigned(ele, "zone", "id");
-    Inner = sxml->ReadElementBool(ele, "zone", "inner");
-}
-
-void JSphBufferZone::Config() {
-    
-
-    // if (CSP.simulate2d) {
-    //     BoxLimitMinInner.y = 0.0;
-    //     BoxLimitMaxInner.y = 0.0;
-    //     BoxLimitMinOuter.y = 0.0;
-    //     BoxLimitMaxOuter.y = 0.0;
-    //     BoxLimitMinMid.y = 0.0;
-    //     BoxLimitMaxMid.y = 0.0;
-    // }
-
+void JSphBufferZone::Config(){    
     ComputeInterface();
     Ntot = PointsIn.size();
     // CalculateNpoints();
@@ -88,10 +56,8 @@ void JSphBufferZone::Config() {
         tmatrix4d mat_inv= TMatrix4d(mat.a11,mat.a21,mat.a31,0,mat.a12,mat.a22,mat.a32,0,mat.a13,mat.a23,mat.a33,0,0,0,0,1);
         JMatrix4d matrot= JMatrix4d(mat_inv);
         Mat.MulArray(Ntot,Points);
-        Mat.MulArray(Ntot,Normals);
-        
-    }
-    
+        Mat.MulArray(Ntot,Normals);        
+    }    
 }
 
 bool JSphBufferZone::InZoneBoxOuter(const tdouble3 &ps) const {
@@ -116,36 +82,13 @@ void JSphBufferZone::CalculateNpoints() {
 void JSphBufferZone::AllocateMemory() {
     Points = new tdouble3[Ntot];
     Normals = new tdouble3[Ntot];
-    Velrhop = new tdouble4[Ntot];
-    Fluxes = new double[Ntot];
-    memset(Fluxes, 0.0, sizeof(double) * Ntot);
 }
 
 void JSphBufferZone::CalculatePointsNormals() {
-    // tdouble3 length = (Inner ? (BoxLimitMaxOuter - BoxLimitMinOuter) : (BoxLimitMaxInner - BoxLimitMinInner));
-    // tdouble3 shift = TDouble3(length.x - CSP.dp * (NPoints.x - 1), length.z - CSP.dp * NPoints.z, length.z - CSP.dp * (NPoints.z - 1)) / 2.0;
-
-    // tdouble3 pointmin = (Inner ? BoxLimitMinOuter : BoxLimitMinInner);
-    // tdouble3 pointmax = (Inner ? BoxLimitMaxOuter : BoxLimitMaxInner);
-    // for (unsigned i = 0; i < NPoints.x; i++)
-    // {
-    // 	Points[i] = TDouble3(pointmin.x + i * CSP.dp + shift.x, 0.0, pointmin.z);
-    // 	Points[NPoints.x + i] = TDouble3(pointmin.x + i * CSP.dp + shift.x, 0.0, pointmax.z);
-    // 	Normals[i] = (Inner ? TDouble3(0.0, 0.0, -1.0) : TDouble3(0.0, 0.0, 1.0));
-    // 	Normals[NPoints.x + i] = (Inner ? TDouble3(0.0, 0.0, 1.0) : TDouble3(0.0, 0.0, -1.0));
-    // }
-    // for (unsigned i = 0; i < NPoints.z; i++)
-    // {
-    // 	Points[2 * NPoints.x + i] = TDouble3(pointmin.x, 0.0, pointmin.z + i * CSP.dp + shift.z);
-    // 	Points[2 * NPoints.x + NPoints.z + i] = TDouble3(pointmax.x, 0.0, pointmin.z + i * CSP.dp + shift.z);
-    // 	Normals[2 * NPoints.x + i] = (Inner ? TDouble3(-1.0, 0.0, 0.0) : TDouble3(1.0, 0.0, 0.0));
-    // 	Normals[2 * NPoints.x + NPoints.z + i] = (Inner ? TDouble3(1.0, 0.0, 0.0) : TDouble3(-1.0, 0.0, 0.0));
-    // }
-
-    for (unsigned i = 0; i < Ntot; i++) {
-        Points[i] = PointsIn[i];
-        Normals[i] = NormalIn[i];
-    }
+  for (unsigned i = 0; i < Ntot; i++){
+    Points[i] = PointsIn[i];
+    Normals[i] = NormalIn[i];
+  }
 }
 
 tdouble3 JSphBufferZone::getNormal(const tdouble3 &ps) {
@@ -164,12 +107,8 @@ tdouble3 JSphBufferZone::getNormal(const tdouble3 &ps) {
 void JSphBufferZone::Reset() {
     delete[] Points;
     delete[] Normals;
-    delete[] Velrhop;
-    delete[] Fluxes;
     Normals = nullptr;
     Points = nullptr;
-    Velrhop = nullptr;
-    Fluxes = nullptr;
 }
 
 bool JSphBufferZone::is_Out(const tdouble3 &ps) const {
@@ -189,8 +128,6 @@ void JSphBufferZone::ComputeInterface() {
         NPoints.y=0;
         shift.y=0;
     }
-    tdouble3 pointmin = (Inner ? BoxLimitMinOuter : BoxLimitMinInner);
-    tdouble3 pointmax = (Inner ? BoxLimitMaxOuter : BoxLimitMaxInner);
 
     // outer loop
     for (unsigned m = 0; m < 6; m++) {
@@ -199,7 +136,6 @@ void JSphBufferZone::ComputeInterface() {
         int colinv[3] = {(m % 3) == 0, (m % 3) == 1, (m % 3) == 2};
         double shiftS[3] = {shift.x * col[0], shift.y * col[1], shift.z * col[2]};
         tdouble3 pointmin = (Inner ? BoxLimitMinOuter : BoxLimitMinInner);
-        tdouble3 pointmax = (Inner ? BoxLimitMaxOuter : BoxLimitMaxInner);
         tdouble3 startpoint = pointmin;
         if (m > 2) startpoint = pointmin + TDouble3(double(colinv[0]) * length.x, double(colinv[1]) * length.y, double(colinv[2]) * length.z);
 
@@ -215,7 +151,7 @@ void JSphBufferZone::ComputeInterface() {
                 for (int k = 0; k < np[2]; k++) {
                     tdouble3 point = TDouble3(startpoint.x + i * CSP.dp + shiftS[0], startpoint.y + j * CSP.dp + shiftS[1], startpoint.z + k * CSP.dp + shiftS[2]);
                     tdouble3 normal = TDouble3(colinv[0], colinv[1], colinv[2]);
-                    if (CSP.simulate2d) point.y = 0.0;
+                    // if (CSP.simulate2d) point.y = 0.0;
 
                     normal = normal + (Inner == (m < 3) ? normal * (-2.0) : TDouble3(0.0));
                     // if (CheckPointInterface(point))
@@ -227,19 +163,5 @@ void JSphBufferZone::ComputeInterface() {
     }
 }
 
-bool JSphBufferZone::CheckPointInterface(tdouble3 point) {
-    for (unsigned i = 0; i < Planes.size(); i++) {
-        tdouble3 pmin = Planes[i].pointmin;
-        tdouble3 pmax = pmin + Planes[i].planesize;
-        if (pmin.x <= point.x && point.x <= pmax.x && pmin.y <= point.y && point.y <= pmax.y && pmin.z <= point.z && point.z <= pmax.z) {
-            tdouble3 distance = (point - pmin) * Planes[i].normal;
-            double d = distance.x + distance.y + distance.z;
-            return (d > 0.0);
-        } else {
-            return false;
-        }
-    }
-    return true;
-}
 
 

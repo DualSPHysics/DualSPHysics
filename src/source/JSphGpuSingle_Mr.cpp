@@ -16,27 +16,47 @@
 #include "JSphGpu_preloop_iker.h"
 
 
-
+//==============================================================================
+/// Constructor.
+//==============================================================================
 using namespace std;
 JSphGpuSingle_Mr::JSphGpuSingle_Mr():JSphGpuSingle(){
   ClassName="JSphGpuSingle";
-  MRfastsingle=true;
+  MRfastsingle=false;
   MROrder=0;
   MRThreshold=100;
   Multires=NULL;
+  VResOrder=VrOrder_1st;
 
 
 }
 
 
-
+//==============================================================================
+/// Destructor.
+//==============================================================================
 JSphGpuSingle_Mr::~JSphGpuSingle_Mr(){
   DestructorActive=true;
   delete Multires; Multires=NULL;
 }
 
+
 //==============================================================================
-/// ???
+/// Load VRes configuration.
+//==============================================================================
+void JSphGpuSingle_Mr::LoadVResConfigParameters(const JSphCfgRun* cfg){
+  if(cfg->MROrder>=0){
+    switch(cfg->MROrder){
+      case 0:   VResOrder=VrOrder_0th;
+      case 1:   VResOrder=VrOrder_1st;
+      case 2:   VResOrder=VrOrder_2nd;
+      default:  Run_Exceptioon("Variable resolution reconstruction method is not valid.");
+    }
+  }
+}
+
+//==============================================================================
+/// Initialises VRes simulation.
 //==============================================================================
 void JSphGpuSingle_Mr::Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
   ,unsigned vrescount,unsigned vresid)
@@ -48,11 +68,13 @@ void JSphGpuSingle_Mr::Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
 
   //-Selection of GPU.
   const int gpuid=SelecDevice(cfg->GpuId);
+  LoadVResConfigParameters(cfg);
 
 
   if(cfg->MRFastSingle>=0)MRfastsingle=(cfg->MRFastSingle>0);
   if(cfg->MROrder>=0)MROrder=cfg->MROrder;
   if(cfg->MRThreshold >=0)MRThreshold=cfg->MRThreshold;
+
 
   //-Creates array system for particles.
   Arrays_Cpu=new JArraysCpu(Log);
@@ -87,6 +109,9 @@ void JSphGpuSingle_Mr::Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
   PartNstep=-1; Part++;
 }
 
+//==============================================================================
+/// Last step of initialization of VRes simulation.
+//==============================================================================
 double JSphGpuSingle_Mr::Init2(){
     cusph::CteInteractionUp(&CTE);
 
@@ -246,7 +271,7 @@ void JSphGpuSingle_Mr::BufferExtrapolateData(StInterParmsbg *parms){
 
 
 		cusph::CteInteractionUp(&parms[id].cte);
-		cusphbuffer::Interaction_BufferExtrap(buffercountpre,bufferpartg.ptr(),parms[id],Posxy_g->cptr(),Posz_g->cptr(),Velrho_g->ptr(),NULL,Code_g->ptr(),true,1,100);
+		cusphbuffer::Interaction_BufferExtrap(buffercountpre,bufferpartg.ptr(),parms[id],Posxy_g->cptr(),Posz_g->cptr(),Velrho_g->ptr(),Code_g->ptr(),true,VrOrder_2nd,100);
 		// if(Nstep==0)  DgSaveVtkParticlesGpuMultiRes("Compute_Init_",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg,rcond);
 
 		double t1=TimeStep+LastDt;
@@ -290,7 +315,7 @@ void JSphGpuSingle_Mr::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,St
 
 		cusph::CteInteractionUp(&parms[id].cte);
 		
-    cusphbuffer::Interaction_BufferExtrapFlux(vresdata.ntot,vresdata.nini,parms[id],vresdata.ptposxy,vresdata.ptposz,vresdata.normals,vresdata.mass,CTE.dp,dt,vresdata.velmot,true,1,100);
+    cusphbuffer::Interaction_BufferExtrapFlux(vresdata.ntot,vresdata.nini,parms[id],vresdata.ptposxy,vresdata.ptposz,vresdata.normals,vresdata.mass,CTE.dp,dt,vresdata.velmot,true,VrOrder_1st,100);
 
 		Multires->ComputeStepGpu(buffercountpre,bufferpartg.ptr(),IdMax+1,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr()
         ,Code_g->ptr(),Idp_g->ptr(),Velrho_g->ptr(),NULL,this,i);
@@ -329,6 +354,7 @@ void JSphGpuSingle_Mr::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,St
           newpart=NULL;
 
 	}
+  // abort();
   // if(VRES_DG_SAVEVTK)DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),Velrho_g->cptr());
 }
 

@@ -96,6 +96,9 @@ void JSphCfgRun::Reset(){
   CreateDirs=true;
   CsvSepComa=false;
   VRes=false;
+  MROrder=-1;
+  MRFastSingle=true;
+  
 }
 
 //==============================================================================
@@ -494,7 +497,7 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
 #ifdef _WITHMR //<vs_vrres_ini>
       else if(txword=="VRES")VRes=true;
       else if(txword=="MR_FAST")MRFastSingle=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
-      else if(txword=="MR_ORDER")MROrder=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
+      else if(txword=="MR_ORDER")MROrder=(txoptfull!=""? atoi(txoptfull.c_str()): -1);
       else if(txword=="MRTHRESHOLD"){ 
         MRThreshold=float(atof(txoptfull.c_str())); 
       }
