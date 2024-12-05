@@ -566,8 +566,8 @@ void JSphGpuSingle::ComputeUmbrellaRegion(){
   const unsigned bsbound=BlockSizes.forcesbound;
   aguint fspartg("-",Arrays_Gpu,true);
   cusph::ComputeUmbrellaRegion(TKernel,Simulate2D,Symmetry,bsfluid,Npb,Np-Npb,DivData
-    ,Dcell_g->cptr(),PosCell_g->cptr(),Code_g->cptr(),FSType_g->ptr(),FSNormal_g->ptr()
-    ,fspartg.ptr(),NULL);
+    ,Dcell_g->cptr(),PosCell_g->cptr(),Code_g->cptr(),FSNormal_g->cptr(),fspartg.ptr()
+    ,FSType_g->ptr(),NULL);
 }
 //<vs_advshift_end>
 

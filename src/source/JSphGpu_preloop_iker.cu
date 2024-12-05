@@ -211,7 +211,8 @@ template<bool symm> __global__ void KerComputeNormals(unsigned n,unsigned pinit
       lcorr2d.a11=lcorr.a11; lcorr2d.a12=lcorr.a13;
       lcorr2d.a21=lcorr.a31; lcorr2d.a22=lcorr.a33;
       float lcorr_det=(lcorr2d.a11*lcorr2d.a22-lcorr2d.a12*lcorr2d.a21);
-      lcorr2d_inv.a11=lcorr2d.a22/lcorr_det; lcorr2d_inv.a12=-lcorr2d.a12/lcorr_det; lcorr2d_inv.a22=lcorr2d.a11/lcorr_det; lcorr2d_inv.a21=-lcorr2d.a21/lcorr_det;
+      lcorr2d_inv.a11=lcorr2d.a22/lcorr_det; lcorr2d_inv.a12=-lcorr2d.a12/lcorr_det;
+      lcorr2d_inv.a22=lcorr2d.a11/lcorr_det; lcorr2d_inv.a21=-lcorr2d.a21/lcorr_det;
       lcorr_inv.a11=lcorr2d_inv.a11;  lcorr_inv.a13=lcorr2d_inv.a12;
       lcorr_inv.a31=lcorr2d_inv.a21;  lcorr_inv.a33=lcorr2d_inv.a22;
     }
@@ -366,7 +367,7 @@ template<bool symm> __global__ void KerScanUmbrellaRegion(unsigned n,unsigned pi
     for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
       unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
       if(pfin){
-        KerScanUmbrellaRegionBox<false> (false,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d);
+                          KerScanUmbrellaRegionBox<false> (false,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d);
         if(symm && rsymp1)KerScanUmbrellaRegionBox<true > (false,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d); //<vs_syymmetry>
       }
     }
@@ -376,7 +377,7 @@ template<bool symm> __global__ void KerScanUmbrellaRegion(unsigned n,unsigned pi
     for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
       unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
       if(pfin){
-        KerScanUmbrellaRegionBox<false> (true,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d);
+                          KerScanUmbrellaRegionBox<false> (true,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d);
         if(symm && rsymp1)KerScanUmbrellaRegionBox<true > (true,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d); //<vs_syymmetry>
       }
     }
@@ -393,7 +394,7 @@ template<bool symm> __global__ void KerScanUmbrellaRegion(unsigned n,unsigned pi
 void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d,bool symmetry
   ,unsigned bsfluid,unsigned fluidini,unsigned fluidnum,StDivDataGpu& dvd
   ,const unsigned* dcell,const float4* poscell,const typecode* code
-  ,unsigned* fstype,float3* fsnormal,unsigned* listp,cudaStream_t stm)
+  ,const float3* fsnormal,unsigned* listp,unsigned* fstype,cudaStream_t stm)
 {
   //-Obtain the list of particle that are probably on the free-surface (in ComputeUmbrellaRegion maybe is unnecessary).
   unsigned count=0;

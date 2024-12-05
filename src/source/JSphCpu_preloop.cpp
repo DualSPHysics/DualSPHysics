@@ -207,10 +207,10 @@ void JSphCpu::CallComputeFSNormals(const StDivDataCpu& divdata
 /// Interaction of Fluid-Fluid/Bound & Bound-Fluid.
 /// Interaccion Fluid-Fluid/Bound & Bound-Fluid.
 //==============================================================================
-template<TpKernel tker,bool sim2d> void JSphCpu::InteractionCallScanUmbrellaRegion
-  (unsigned np,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
-  ,const tdouble3* pos,const typecode* code,const tfloat3* fsnormal
-  ,const unsigned* listp,unsigned* fstype)const
+void JSphCpu::InteractionCallScanUmbrellaRegion(unsigned np,unsigned pinit
+  ,StDivDataCpu divdata,const unsigned* dcell,const tdouble3* pos
+  ,const typecode* code,const tfloat3* fsnormal,const unsigned* listp
+  ,unsigned* fstype)const
 {
   //-Initialise execution with OpenMP. | Inicia ejecucion con OpenMP.
   const int n=int(np);
@@ -250,7 +250,7 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionCallScanUmbrellaRegi
               if(rrq<KernelH)fs_flag=true;
             }
             else{
-              if(sim2d){
+              if(Simulate2D){
                 const float drxq=-drx-posq.x;
                 const float drzq=-drz-posq.z;
                 const tfloat3 normalq=TFloat3(drxq*fsnormal[p1].x,0,drzq*fsnormal[p1].z);
@@ -288,24 +288,10 @@ void JSphCpu::CallScanUmbrellaRegion(const StDivDataCpu& divdata
     //-Obtain the list of particle that are probably on the free-surface (in ComputeUmbrellaRegion maybe is unnecessary).
     const unsigned count=CountFreeSurfaceParticles(npf,Npb,fstype,listp);
     //-Scan Umbrella region on selected free-surface particles.
-    if(count){
-      if(Simulate2D){ const bool sim2d=true;
-        switch(TKernel){
-          case KERNEL_Cubic:    InteractionCallScanUmbrellaRegion <KERNEL_Cubic   ,sim2d> (count,Npb,divdata,dcell,pos,code,fsnormal,listp,fstype);  break;
-          case KERNEL_Wendland: InteractionCallScanUmbrellaRegion <KERNEL_Wendland,sim2d> (count,Npb,divdata,dcell,pos,code,fsnormal,listp,fstype);  break;
-          default: Run_Exceptioon("Kernel unknown.");
-        }
-      }
-      else{ const bool sim2d=false;
-        switch(TKernel){
-          case KERNEL_Cubic:    InteractionCallScanUmbrellaRegion <KERNEL_Cubic   ,sim2d> (count,Npb,divdata,dcell,pos,code,fsnormal,listp,fstype);  break;
-          case KERNEL_Wendland: InteractionCallScanUmbrellaRegion <KERNEL_Wendland,sim2d> (count,Npb,divdata,dcell,pos,code,fsnormal,listp,fstype);  break;
-          default: Run_Exceptioon("Kernel unknown.");
-        }
-      }
-    }
+    if(count)InteractionCallScanUmbrellaRegion(count,Npb,divdata,dcell,pos,code,fsnormal,listp,fstype);
   }
 }
+
 
 template<TpKernel tker,bool sim2d,bool shiftadv> void JSphCpu::PreLoopInteraction
   (unsigned n,unsigned pinit

@@ -38,7 +38,7 @@ void ComputeFSNormals(TpKernel tkernel,bool simulate2d,bool symmetry,unsigned bs
 void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d,bool symmetry
   ,unsigned bsfluid,unsigned fluidini,unsigned fluidnum,StDivDataGpu& dvd
   ,const unsigned* dcell,const float4* poscell,const typecode* code
-  ,unsigned* fstype,float3* fsnormal,unsigned* listp,cudaStream_t stm);
+  ,const float3* fsnormal,unsigned* listp,unsigned* fstype,cudaStream_t stm);
 
 
 void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv,bool symmetry
