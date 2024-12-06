@@ -522,8 +522,7 @@ void JSphGpuSingle::PreLoopProcedure(TpInterStep interstep){
     ComputeFSParticles();
     ComputeUmbrellaRegion();
     const unsigned bsfluid=BlockSizes.forcesfluid;
-    const unsigned bsbound=BlockSizes.forcesbound;
-    cusph::PreLoopInteraction(TKernel,Simulate2D,runshift,false,bsfluid,Np-Npb
+    cusph::PreLoopInteraction(TKernel,Simulate2D,runshift,bsfluid,Np-Npb
       ,Npb,DivData,Dcell_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
       ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr()
       ,FSNormal_g->ptr(),FSMinDist_g->ptr(),NULL);
@@ -550,9 +549,8 @@ void JSphGpuSingle::PreLoopProcedure(TpInterStep interstep){
 //==============================================================================
 void JSphGpuSingle::ComputeFSParticles(){
   const unsigned bsfluid=BlockSizes.forcesfluid;
-  const unsigned bsbound=BlockSizes.forcesbound;
   aguint fspartg("-",Arrays_Gpu,true);
-  cusph::ComputeFSNormals(TKernel,Simulate2D,Symmetry,bsfluid,Npb,Np-Npb,DivData
+  cusph::ComputeFSNormals(TKernel,Simulate2D,bsfluid,Npb,Np-Npb,DivData
     ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
     ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
     ,fspartg.ptr(),NULL);
@@ -563,11 +561,10 @@ void JSphGpuSingle::ComputeFSParticles(){
 //==============================================================================
 void JSphGpuSingle::ComputeUmbrellaRegion(){
   const unsigned bsfluid=BlockSizes.forcesfluid;
-  const unsigned bsbound=BlockSizes.forcesbound;
   aguint fspartg("-",Arrays_Gpu,true);
-  cusph::ComputeUmbrellaRegion(TKernel,Simulate2D,Symmetry,bsfluid,Npb,Np-Npb,DivData
-    ,Dcell_g->cptr(),PosCell_g->cptr(),Code_g->cptr(),FSNormal_g->cptr(),fspartg.ptr()
-    ,FSType_g->ptr(),NULL);
+  cusph::ComputeUmbrellaRegion(TKernel,Simulate2D,bsfluid,Npb,Np-Npb,DivData
+    ,Dcell_g->cptr(),PosCell_g->cptr(),Code_g->cptr(),FSNormal_g->cptr()
+    ,fspartg.ptr(),FSType_g->ptr(),NULL);
 }
 //<vs_advshift_end>
 
