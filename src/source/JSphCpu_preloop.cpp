@@ -184,22 +184,21 @@ void JSphCpu::CallComputeFSNormals(const StDivDataCpu& divdata
     if(count){
       if(Simulate2D){ const bool sim2d=true;
         switch(TKernel){
-          case KERNEL_Cubic:     InteractionComputeFSNormals<KERNEL_Cubic   ,sim2d>(count,Npb,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal);  break;
           case KERNEL_Wendland:  InteractionComputeFSNormals<KERNEL_Wendland,sim2d>(count,Npb,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal);  break;
+          case KERNEL_Cubic:     InteractionComputeFSNormals<KERNEL_Cubic   ,sim2d>(count,Npb,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal);  break;
           default: Run_Exceptioon("Kernel unknown.");
         }
       }
       else{ const bool sim2d=false;
         switch(TKernel){
-          case KERNEL_Cubic:     InteractionComputeFSNormals<KERNEL_Cubic   ,sim2d>(count,Npb,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal);  break;
           case KERNEL_Wendland:  InteractionComputeFSNormals<KERNEL_Wendland,sim2d>(count,Npb,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal);  break;
+          case KERNEL_Cubic:     InteractionComputeFSNormals<KERNEL_Cubic   ,sim2d>(count,Npb,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal);  break;
           default: Run_Exceptioon("Kernel unknown.");
         }
       }
     }
   }
 }
-
 
 //==============================================================================
 /// Interaction of Fluid-Fluid/Bound & Bound-Fluid.

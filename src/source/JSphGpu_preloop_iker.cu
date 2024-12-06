@@ -20,8 +20,6 @@
 
 #include "JSphGpu_preloop_iker.h"
 
-
-
 namespace cusph{
 
 //------------------------------------------------------------------------------
@@ -38,7 +36,6 @@ __global__ void KerPeriodicSaveParent(unsigned n,unsigned pini
     periparent[pnew]=pcopy;
   }
 }
-
 //==============================================================================
 /// Saves particle index to access to the parent of periodic particles.
 //==============================================================================
@@ -83,13 +80,13 @@ void PeriPreLoopCorr(unsigned n,unsigned pinit
 /// Interaction of a particle with a set of particles. (Fluid/Float-Fluid/Float/Bound)
 /// Realiza la interaccion de una particula con un conjunto de ellas. (Fluid/Float-Fluid/Float/Bound)
 //------------------------------------------------------------------------------
-__device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
-  ,const unsigned& pini,const unsigned& pfin,const float4* poscell
+template<TpKernel tker> __device__ void KerComputeNormalsBox(bool boundp2
+  ,unsigned p1,const unsigned& pini,const unsigned& pfin,const float4* poscell
   ,const float4* velrhop,const typecode* code,float massp2,const float4& pscellp1
   ,float& fs_treshold,float3& gradc,tmatrix3f& lcorr,unsigned& neigh,float& pou
   ,const float* ftomassp)
 {
-  const float w0=cufsph::GetKernel_Wab<KERNEL_Wendland>(CTE.dp*CTE.dp);
+  const float w0=cufsph::GetKernel_Wab<tker>(CTE.dp*CTE.dp);
   for(int p2=pini;p2<pfin;p2++){
   const float4 pscellp2=poscell[p2];
     const float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
@@ -98,7 +95,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
     const double rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
       //-Computes kernel.
-      const float fac=cufsph::GetKernel_Fac<KERNEL_Wendland>(rr2);
+      const float fac=cufsph::GetKernel_Fac<tker>(rr2);
       const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
       // float4 velrhop2=velrhop[p2];
       const float rhopp2= float(velrhop[p2].w);
@@ -106,9 +103,9 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
 
       bool ftp2;
       float ftmassp2;    //-Contains mass of floating body or massf if fluid. | Contiene masa de particula floating o massp2 si es bound o fluid.
-        const typecode cod=code[p2];
-        ftp2=CODE_IsFloating(cod);
-        ftmassp2=(ftp2? ftomassp[CODE_GetTypeValue(cod)]: massp2);
+      const typecode cod=code[p2];
+      ftp2=CODE_IsFloating(cod);
+      ftmassp2=(ftp2? ftomassp[CODE_GetTypeValue(cod)]: massp2);
 
       const float vol2=(ftp2 ? float(ftmassp2/rhopp2) : float(massp2/rhopp2));
       neigh++;
@@ -123,7 +120,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
       lcorr.a21+=-dry*frx*vol2; lcorr.a22+=-dry*fry*vol2; lcorr.a23+=-dry*frz*vol2;
       lcorr.a31+=-drz*frx*vol2; lcorr.a32+=-drz*fry*vol2; lcorr.a33+=-drz*frz*vol2;
 
-      const float wab=cufsph::GetKernel_Wab<KERNEL_Wendland>(rr2);
+      const float wab=cufsph::GetKernel_Wab<tker>(rr2);
       pou+=wab*vol2;       
     }
   }
@@ -133,7 +130,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
 /// Perform interaction between particles: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 /// Realiza interaccion entre particulas: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 //==============================================================================
-__global__ void KerComputeNormals(unsigned n,unsigned pinit
+template<TpKernel tker> __global__ void KerComputeNormals(unsigned n,unsigned pinit
   ,int scelldiv,int4 nc,int3 cellzero,const int2* begincell,unsigned cellfluid
   ,const unsigned* dcell,const float4* poscell,const float4* velrhop
   ,const typecode* code,unsigned* fstype,float3* fsnormal,bool simulate2d
@@ -171,7 +168,7 @@ __global__ void KerComputeNormals(unsigned n,unsigned pinit
     for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
       unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
       if(pfin){
-        KerComputeNormalsBox(false,p1,pini,pfin,poscell,velrhop,code,CTE.massf
+        KerComputeNormalsBox<tker>(false,p1,pini,pfin,poscell,velrhop,code,CTE.massf
           ,pscellp1,fs_treshold,gradc,lcorr,neigh,pou,ftomassp);
       }
     }
@@ -181,7 +178,7 @@ __global__ void KerComputeNormals(unsigned n,unsigned pinit
     for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
       unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
       if(pfin){
-        KerComputeNormalsBox(false,p1,pini,pfin,poscell,velrhop,code,CTE.massb
+        KerComputeNormalsBox<tker>(false,p1,pini,pfin,poscell,velrhop,code,CTE.massb
           ,pscellp1,fs_treshold,gradc,lcorr,neigh,pou,ftomassp);
       }
     }
@@ -198,7 +195,7 @@ __global__ void KerComputeNormals(unsigned n,unsigned pinit
     fstype[p1]=fstypep1;
 
     //-Add the contribution of the particle itself
-    pou+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.f)*CTE.massf/velrhop1.w;
+    pou+=cufsph::GetKernel_Wab<tker>(0.f)*CTE.massf/velrhop1.w;
 
     //-Calculation of the inverse of the correction matrix (Don't think there is a better way, create function for Determinant2x2 for clarity?).
     if(simulate2d){
@@ -279,9 +276,19 @@ void ComputeFSNormals(TpKernel tkernel,bool simulate2d,unsigned bsfluid
 
   if(count){
     dim3 sgridf=GetSimpleGridSize(count,bsfluid);
-    KerComputeNormals <<<sgridf,bsfluid,0,stm>>> (count,fluidini
-      ,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
-      ,poscell,velrho,code,fstype,fsnormal,simulate2d,shiftvel,ftomassp,listp);
+    switch(tkernel){
+      case KERNEL_Wendland:{ const TpKernel tker=KERNEL_Wendland;
+        KerComputeNormals <tker> <<<sgridf,bsfluid,0,stm>>> (count,fluidini
+          ,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
+          ,poscell,velrho,code,fstype,fsnormal,simulate2d,shiftvel,ftomassp,listp);
+      }break;
+      case KERNEL_Cubic:{ const TpKernel tker=KERNEL_Cubic;
+        KerComputeNormals <tker> <<<sgridf,bsfluid,0,stm>>> (count,fluidini
+          ,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
+          ,poscell,velrho,code,fstype,fsnormal,simulate2d,shiftvel,ftomassp,listp);
+      }break;
+      default: throw "Kernel unknown at ComputeFSNormals().";
+    }
   }
   cudaDeviceSynchronize();
 }
@@ -417,7 +424,7 @@ __device__ void KerPreLoopInteractionBox(bool boundp2,unsigned p1
     const float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
     const double rr2=drx*drx+dry*dry+drz*drz;
     if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
-      const float fac=cufsph::GetKernel_Fac<KERNEL_Wendland>(rr2);
+      const float fac=cufsph::GetKernel_Fac<tker>(rr2);
       const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
       float4 velrhop2=velrhop[p2];
 
@@ -434,7 +441,7 @@ __device__ void KerPreLoopInteractionBox(bool boundp2,unsigned p1
         shiftposf1.x+=massrho*frx;    
         shiftposf1.y+=massrho*fry;
         shiftposf1.z+=massrho*frz;          
-        const float wab=cufsph::GetKernel_Wab<KERNEL_Wendland>(rr2);
+        const float wab=cufsph::GetKernel_Wab<tker>(rr2);
         shiftposf1.w+=wab*massrho;
 
         //-Check if the particle is too close to solid or floating object
@@ -514,7 +521,7 @@ __global__ void KerPreLoopInteraction(unsigned n,unsigned pinit,int scelldiv
     }
 
     if(shiftadv){
-      shiftposp1.w+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.0)*CTE.massf/velrhop1.w;
+      shiftposp1.w+=cufsph::GetKernel_Wab<tker>(0.0)*CTE.massf/velrhop1.w;
       fsmindist[p1]=mindist;
       //-Assign correct code to near free-surface particle and correct their normals by Shepard's Correction.
       if(fsp1==0 && nearfs){
