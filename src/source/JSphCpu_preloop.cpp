@@ -292,10 +292,11 @@ void JSphCpu::CallScanUmbrellaRegion(const StDivDataCpu& divdata
   }
 }
 
-
+//==============================================================================
+/// FR-CHECK comment missing...
+//==============================================================================
 template<TpKernel tker,bool sim2d,bool shiftadv> void JSphCpu::PreLoopInteraction
-  (unsigned n,unsigned pinit
-  ,StDivDataCpu divdata,const unsigned* dcell
+  (unsigned n,unsigned pinit ,StDivDataCpu divdata,const unsigned* dcell
   ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
   ,unsigned* fstype,tfloat4* shiftvel,tfloat3* fsnormal,float* fsmindist)const
 {
@@ -305,7 +306,6 @@ template<TpKernel tker,bool sim2d,bool shiftadv> void JSphCpu::PreLoopInteractio
     #pragma omp parallel for schedule (guided)
   #endif
   for(int p1=int(pinit);p1<pfin;p1++){
-    
     float fs_treshold=0.f;                    //-Divergence of the position.
     tfloat3 gradc=TFloat3(0);                 //-Gradient of the concentration
     unsigned neigh=0;                         //-Number of neighbours.
@@ -320,83 +320,76 @@ template<TpKernel tker,bool sim2d,bool shiftadv> void JSphCpu::PreLoopInteractio
     unsigned fsp1=fstype[p1];         
     //-Obtain data of particle p1.
     const tdouble3 posp1=pos[p1];
-    
 
     bool boundp2=false;
 
-    for(int b2=0; b2<2;b2++){
-    if(b2==1) boundp2=true;
+    for(int b2=0;b2<2;b2++){
+      if(b2==1)boundp2=true;
 
-    //-Search for neighbours in adjacent cells.
-    const StNgSearch ngs=nsearch::Init(dcell[p1],boundp2,divdata);
-    for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
-      const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
+      //-Search for neighbours in adjacent cells.
+      const StNgSearch ngs=nsearch::Init(dcell[p1],boundp2,divdata);
+      for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+        const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
 
-      //-Interaction of Fluid with type Fluid or Bound. | Interaccion de Fluid con varias Fluid o Bound.
-      //------------------------------------------------------------------------------------------------
-      for(unsigned p2=pif.x;p2<pif.y;p2++){
-        const float drx=float(posp1.x-pos[p2].x);
-              float dry=float(posp1.y-pos[p2].y);
-        const float drz=float(posp1.z-pos[p2].z);
-        const float rr2=drx*drx+dry*dry+drz*drz;
-        if(rr2<=KernelSize2 && rr2>=ALMOSTZERO){
-          //-Computes kernel.
-          const float fac=fsph::GetKernel_Fac<tker>(CSP,rr2);
-          const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
+        //-Interaction of Fluid with type Fluid or Bound. | Interaccion de Fluid con varias Fluid o Bound.
+        //------------------------------------------------------------------------------------------------
+        for(unsigned p2=pif.x;p2<pif.y;p2++){
+          const float drx=float(posp1.x-pos[p2].x);
+          const float dry=float(posp1.y-pos[p2].y);
+          const float drz=float(posp1.z-pos[p2].z);
+          const float rr2=drx*drx+dry*dry+drz*drz;
+          if(rr2<=KernelSize2 && rr2>=ALMOSTZERO){
+            //-Computes kernel.
+            const float fac=fsph::GetKernel_Fac<tker>(CSP,rr2);
+            const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
 
-          const float rhopp2= float(velrho[p2].w);
+            const float rhopp2= float(velrho[p2].w);
 
-          //===== Get mass of particle p2 ===== 
-          float massp2=(boundp2? MassBound: MassFluid); //-Contiene masa de particula segun sea bound o fluid.
-
+            //===== Get mass of particle p2 ===== 
+            float massp2=(boundp2? MassBound: MassFluid); //-Contiene masa de particula segun sea bound o fluid.
             bool ftp2;
             //float ftmassp2;    //-Contains mass of floating body or massf if fluid. | Contiene masa de particula floating o massp2 si es bound o fluid.
             const typecode cod=code[p2];
             ftp2=CODE_IsFloating(cod);
             // ftmassp2=(ftp2? ftomassp[CODE_GetTypeValue(cod)]: massp2);
 
-          if(shiftadv){
-            const float massrho=massp2/rhopp2;
+            if(shiftadv){
+              const float massrho=massp2/rhopp2;
 
-            //-Compute gradient of concentration and partition of unity.        
-            shiftvelp1.x+=massrho*frx;    
-            shiftvelp1.y+=massrho*fry;
-            shiftvelp1.z+=massrho*frz;          
-            const float wab=fsph::GetKernel_Wab<tker>(CSP,rr2);
-             shiftvelp1.w+=wab*massrho;
+              //-Compute gradient of concentration and partition of unity.        
+              shiftvelp1.x+=massrho*frx;    
+              shiftvelp1.y+=massrho*fry;
+              shiftvelp1.z+=massrho*frz;          
+              const float wab=fsph::GetKernel_Wab<tker>(CSP,rr2);
+              shiftvelp1.w+=wab*massrho;
 
-            //-Check if the particle is too close to solid or floating object
-            if(boundp2 || ftp2) bound_inter=true;
+              //-Check if the particle is too close to solid or floating object
+              if(boundp2 || ftp2)bound_inter=true;
 
-            //-Check if it close to the free-surface, calculate distance from free-surface and smoothing of free-surface normals.
-            if(fstype[p2]==2  && !boundp2 ) {
-              nearfs=true;
-              mindist=min(sqrt(rr2),mindist);
-              pou+=wab*massrho;
-              fsnormalp1.x+=fsnormal[p2].x*wab*massrho;
-              fsnormalp1.y+=fsnormal[p2].y*wab*massrho;
-              fsnormalp1.z+=fsnormal[p2].z*wab*massrho;
-                          
+              //-Check if it close to the free-surface, calculate distance from free-surface and smoothing of free-surface normals.
+              if(fstype[p2]==2 && !boundp2){
+                nearfs=true;
+                mindist=min(sqrt(rr2),mindist);
+                pou+=wab*massrho;
+                fsnormalp1.x+=fsnormal[p2].x*wab*massrho;
+                fsnormalp1.y+=fsnormal[p2].y*wab*massrho;
+                fsnormalp1.z+=fsnormal[p2].z*wab*massrho;
+              }
+
+              //-Check maximum curvature.
+              if(fstype[p1]>1 && fstype[p2]>1){
+                const float norm1=sqrt(fsnormal[p1].x*fsnormal[p1].x+fsnormal[p1].y*fsnormal[p1].y+fsnormal[p1].z*fsnormal[p1].z);
+                const float norm2=sqrt(fsnormal[p2].x*fsnormal[p2].x+fsnormal[p2].y*fsnormal[p2].y+fsnormal[p2].z*fsnormal[p2].z);
+                maxarccos=max(maxarccos,(acos((fsnormal[p1].x*fsnormal[p2].x+fsnormal[p2].y*fsnormal[p1].y+fsnormal[p2].z*fsnormal[p1].z))));
+              }
             }
-
-            //-Check maximum curvature.
-            if(fstype[p1]>1 && fstype[p2]>1){
-            const float norm1=sqrt(fsnormal[p1].x*fsnormal[p1].x+fsnormal[p1].y*fsnormal[p1].y+fsnormal[p1].z*fsnormal[p1].z);
-            const float norm2=sqrt(fsnormal[p2].x*fsnormal[p2].x+fsnormal[p2].y*fsnormal[p2].y+fsnormal[p2].z*fsnormal[p2].z);
-            maxarccos=max(maxarccos,(acos((fsnormal[p1].x*fsnormal[p2].x+fsnormal[p2].y*fsnormal[p1].y+fsnormal[p2].z*fsnormal[p1].z))));
           }
-          }
-                                                     
         }
       }
     }
-    }
 
     if(shiftadv){
-
       shiftvelp1.w+=fsph::GetKernel_Wab<tker>(CSP,0)*MassFluid/velrho[p1].w;
-
-
       fsmindist[p1]=mindist;
       //-Assign correct code to near free-surface particle and correct their normals by Shepard's Correction.
       if(fsp1==0 && nearfs){
@@ -405,56 +398,32 @@ template<TpKernel tker,bool sim2d,bool shiftadv> void JSphCpu::PreLoopInteractio
           float norm=sqrt(fsnormalp1.x*fsnormalp1.x+fsnormalp1.y*fsnormalp1.y+fsnormalp1.z*fsnormalp1.z);
           fsnormal[p1]=TFloat3(fsnormalp1.x/norm,fsnormalp1.y/norm,fsnormalp1.z/norm);
         }
-      fstype[p1]=1;
-      if(bound_inter) fstype[p1]=3;
+        fstype[p1]=1;
+        if(bound_inter)fstype[p1]=3;
       }
-      
       //-Check if free-surface particle interact with bound or has high-curvature.
-      if(fsp1==2 && (bound_inter||maxarccos>0.52)) fstype[p1]=3;
-
-
+      if(fsp1==2 && (bound_inter||maxarccos>0.52f))fstype[p1]=3;
       //-Compute shifting when <shiftImproved> true
       shiftvel[p1]=shiftvelp1;
-      }
-    
-    
+    }
   }
 }
-
-
 //==============================================================================
-/// Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
-/// Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
-//==============================================================================
-template<TpKernel tker,bool sim2d,bool shiftadv> void JSphCpu::PreLoopInteraction_ct2
+template<TpKernel tker,bool sim2d> void JSphCpu::PreLoopInteraction_ct1
   (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
   ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
   ,unsigned* fstype,tfloat4* shiftvel,tfloat3* fsnormal,float* fsmindist)const
 {
-  if(n){
-    //-Interaction Fluid-Fluid.
-    PreLoopInteraction<tker,sim2d,shiftadv> 
-      (n,pinit,divdata,dcell,pos,code,velrho,fstype,shiftvel,fsnormal,fsmindist);
-  }
+  if(ShiftingAdv)PreLoopInteraction <tker,sim2d,true >
+    (n,pinit,divdata,dcell,pos,code,velrho,fstype,shiftvel,fsnormal,fsmindist);  
+  else           PreLoopInteraction <tker,sim2d,false>
+    (n,pinit,divdata,dcell,pos,code,velrho,fstype,shiftvel,fsnormal,fsmindist);  
 }
-
 //==============================================================================
-/// Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
-/// Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
-//==============================================================================
-template<TpKernel tker,bool sim2d> void JSphCpu::PreLoopInteraction_ct1
-  (unsigned n,unsigned pinit
-  ,StDivDataCpu divdata,const unsigned* dcell
-  ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-  ,unsigned* fstype,tfloat4* shiftvel,tfloat3* fsnormal,float* fsmindist)const
-{
-  if(ShiftingAdv) PreLoopInteraction_ct2 <tker,sim2d,true> (n,pinit,divdata,dcell,pos,code,velrho,fstype,shiftvel,fsnormal,fsmindist);  
-  else            PreLoopInteraction_ct2 <tker,sim2d,false> (n,pinit,divdata,dcell,pos,code,velrho,fstype,shiftvel,fsnormal,fsmindist);  
-}
-
 void JSphCpu::PreLoopInteraction_ct(const StDivDataCpu& divdata
   ,const unsigned* dcell,const tdouble3* pos,const typecode* code
-  ,const tfloat4* velrho,unsigned* fstype,tfloat4* shiftvel,tfloat3* fsnormal,float* fsmindist)const
+  ,const tfloat4* velrho,unsigned* fstype,tfloat4* shiftvel,tfloat3* fsnormal
+  ,float* fsmindist)const
 {
   const unsigned npf=Np-Npb;
   if(npf){
@@ -477,6 +446,7 @@ void JSphCpu::PreLoopInteraction_ct(const StDivDataCpu& divdata
 
 
 //==============================================================================
+/// FR-CHECK comment is wrong...
 /// Computes sub-particle stress tensor divided by rho^2 (tau/rho^2) for SPS 
 /// turbulence model.   
 //==============================================================================

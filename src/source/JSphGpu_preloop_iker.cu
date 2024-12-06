@@ -486,122 +486,114 @@ void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d,bool symmetry
     }
   }
 
-  template<TpKernel tker,bool simulate2d,bool shiftadv,bool symm>
-  __global__ void KerPreLoopInteraction(unsigned n
-    ,unsigned pinit,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid
-    ,const unsigned *dcell,const float4 *poscell,const float4 *velrhop,const typecode *code
-    ,const float* ftomassp,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist)
-  {
-    const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
-    if(p<n){
-      const unsigned p1=p+pinit;      //-Number of particle.
-      //-Obtains basic data of particle p1.
-      const float4 pscellp1=poscell[p1];
-      const float4 velrhop1=velrhop[p1];
-      const float pressp1=cufsph::ComputePressCte(velrhop1.w);
-      const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
-      bool    nearfs=false;                     //-Bool for detecting near free-surface particles. <shiftImproved>
-      float4  shiftposp1=make_float4(0,0,0,0);
-
+//==============================================================================
+/// FR-CHECK comment missing...
+//==============================================================================
+template<TpKernel tker,bool simulate2d,bool shiftadv,bool symm>
+__global__ void KerPreLoopInteraction(unsigned n,unsigned pinit,int scelldiv
+  ,int4 nc,int3 cellzero,const int2* begincell,unsigned cellfluid
+  ,const unsigned* dcell,const float4* poscell,const float4* velrhop
+  ,const typecode* code,const float* ftomassp,float4* shiftvel,unsigned* fstype
+  ,float3* fsnormal,float* fsmindist)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=p+pinit;      //-Number of particle.
+    //-Obtains basic data of particle p1.
+    const float4 pscellp1=poscell[p1];
+    const float4 velrhop1=velrhop[p1];
+    const float pressp1=cufsph::ComputePressCte(velrhop1.w);
+    const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
+    bool    nearfs=false;                     //-Bool for detecting near free-surface particles. <shiftImproved>
+    float4  shiftposp1=make_float4(0,0,0,0);
       
-      float mindist=CTE.kernelh;                //-Set Min Distance from free-surface to kernel radius. <shiftImproved>
-      float maxarccos=0.0;                      //-Variable for identify high-curvature free-surface particle <shiftImproved>
-      bool bound_inter=false;                   //-Variable for identify free-surface that interact with boundary <shiftImproved>
-      float3 fsnormalp1=make_float3(0,0,0);     //-Normals for near free-surface particles <shiftImproved>
-      unsigned fsp1=fstype[p1];                 //-Free-surface identification code: 0-internal, 1-close to free-surface, 2 free-surface, 3-isolated.
-      float   pou=false;                        //-Partition of unity for normal correction.                      <ShiftingAdvanced>
+    float mindist=CTE.kernelh;                //-Set Min Distance from free-surface to kernel radius. <shiftImproved>
+    float maxarccos=0.0;                      //-Variable for identify high-curvature free-surface particle <shiftImproved>
+    bool bound_inter=false;                   //-Variable for identify free-surface that interact with boundary <shiftImproved>
+    float3 fsnormalp1=make_float3(0,0,0);     //-Normals for near free-surface particles <shiftImproved>
+    unsigned fsp1=fstype[p1];                 //-Free-surface identification code: 0-internal, 1-close to free-surface, 2 free-surface, 3-isolated.
+    float   pou=false;                        //-Partition of unity for normal correction.                      <ShiftingAdvanced>
     
-      //-Obtains neighborhood search limits.
-      int ini1,fin1,ini2,fin2,ini3,fin3;
-      cunsearch::InitCte(dcell[p1],scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
+    //-Obtains neighborhood search limits.
+    int ini1,fin1,ini2,fin2,ini3,fin3;
+    cunsearch::InitCte(dcell[p1],scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
 
-      //-Interaction with fluids.
-      ini3+=cellfluid; fin3+=cellfluid;
-      for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
-        unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
-        if(pfin){
-          KerPreLoopInteractionBox<tker,simulate2d,shiftadv,false> (false,p1,pini,pfin,poscell,velrhop
-            ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou);
-          if(symm && rsymp1)KerPreLoopInteractionBox<tker,simulate2d,shiftadv,true> (false,p1,pini,pfin,poscell,velrhop
-            ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou); //<vs_syymmetry>
-        } 
-      }
+    //-Interaction with fluids.
+    ini3+=cellfluid; fin3+=cellfluid;
+    for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
+      unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
+      if(pfin){
+        KerPreLoopInteractionBox<tker,simulate2d,shiftadv,false> (false,p1,pini,pfin,poscell,velrhop
+          ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
+          ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou);
+        if(symm && rsymp1)KerPreLoopInteractionBox<tker,simulate2d,shiftadv,true> (false,p1,pini,pfin,poscell,velrhop
+          ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
+          ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou); //<vs_syymmetry>
+      } 
+    }
 
-
-      //-Interaction with bound.
-      ini3-=cellfluid; fin3-=cellfluid;
-      for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
-        unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
-        if(pfin){
+    //-Interaction with bound.
+    ini3-=cellfluid; fin3-=cellfluid;
+    for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
+      unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
+      if(pfin){
         KerPreLoopInteractionBox<tker,simulate2d,shiftadv,false> (true,p1,pini,pfin,poscell,velrhop
-            ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou);
+          ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
+          ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou);
         if(symm && rsymp1)KerPreLoopInteractionBox<tker,simulate2d,shiftadv,true> (true,p1,pini,pfin,poscell,velrhop
-            ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou); //<vs_syymmetry>
+          ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
+          ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou); //<vs_syymmetry>
       }
-      }
+    }
 
-
-
-      if(shiftadv){
-
-        shiftposp1.w+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.0)*CTE.massf/velrhop1.w;
-
-
+    if(shiftadv){
+      shiftposp1.w+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.0)*CTE.massf/velrhop1.w;
       fsmindist[p1]=mindist;
       //-Assign correct code to near free-surface particle and correct their normals by Shepard's Correction.
       if(fsp1==0 && nearfs){
-      if(pou>1e-6){
-        fsnormalp1=make_float3(fsnormalp1.x,fsnormalp1.y,fsnormalp1.z);
-        float norm=sqrt(fsnormalp1.x*fsnormalp1.x+fsnormalp1.y*fsnormalp1.y+fsnormalp1.z*fsnormalp1.z);
-        fsnormal[p1]=make_float3(fsnormalp1.x/norm,fsnormalp1.y/norm,fsnormalp1.z/norm);
-      }      
-      fstype[p1]=1;
-      if(bound_inter) fstype[p1]=3;
+        if(pou>1e-6){
+          fsnormalp1=make_float3(fsnormalp1.x,fsnormalp1.y,fsnormalp1.z);
+          float norm=sqrt(fsnormalp1.x*fsnormalp1.x+fsnormalp1.y*fsnormalp1.y+fsnormalp1.z*fsnormalp1.z);
+          fsnormal[p1]=make_float3(fsnormalp1.x/norm,fsnormalp1.y/norm,fsnormalp1.z/norm);
+        }      
+        fstype[p1]=1;
+        if(bound_inter) fstype[p1]=3;
       }
-      
       //-Check if free-surface particle interact with bound or has high-curvature.
       if(fsp1==2 && (bound_inter||maxarccos>0.52)) fstype[p1]=3;
-
-
       //-Compute shifting when <shiftImproved> true
       shiftvel[p1]=shiftposp1;
-      }
-      
     }
   }
-
+}
   
-  
-  
-  
-  template<TpKernel tker,bool simulate2d,bool shiftadv> void PreLoopInteractionT3(bool symmetry
-    ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
-    ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
+//==============================================================================
+/// FR-CHECK comment missing...
+//==============================================================================
+template<TpKernel tker,bool simulate2d,bool shiftadv> void PreLoopInteractionT3
+  (bool symmetry,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
+  ,const unsigned* dcell,const float4* poscell,const float4* velrho
+  ,const typecode* code,const float* ftomassp,float4* shiftvel,unsigned* fstype
+  ,float3* fsnormal,float* fsmindist,cudaStream_t stm)
 {
-
   if(fluidnum){
     dim3 sgridf=GetSimpleGridSize(fluidnum,bsfluid);
     if(symmetry) //<vs_syymmetry_ini>
-    KerPreLoopInteraction <tker,simulate2d,shiftadv,true> <<<sgridf,bsfluid,0,stm>>> 
-      (fluidnum,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
-      ,dcell,poscell,velrho,code,ftomassp,shiftvel,fstype,fsnormal,fsmindist);
+      KerPreLoopInteraction <tker,simulate2d,shiftadv,true> <<<sgridf,bsfluid,0,stm>>> 
+        (fluidnum,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
+        ,dcell,poscell,velrho,code,ftomassp,shiftvel,fstype,fsnormal,fsmindist);
     else //<vs_syymmetry_end>
-    KerPreLoopInteraction <tker,simulate2d,shiftadv,false> <<<sgridf,bsfluid,0,stm>>> 
-      (fluidnum,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
-      ,dcell,poscell,velrho,code,ftomassp,shiftvel,fstype,fsnormal,fsmindist);
-
+      KerPreLoopInteraction <tker,simulate2d,shiftadv,false> <<<sgridf,bsfluid,0,stm>>> 
+        (fluidnum,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
+        ,dcell,poscell,velrho,code,ftomassp,shiftvel,fstype,fsnormal,fsmindist);
   }
 }
-
-  template<TpKernel tker,bool simulate2d> void PreLoopInteractionT2(bool shiftadv,bool symmetry
-    ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
-    ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
+//==============================================================================
+template<TpKernel tker,bool simulate2d> void PreLoopInteractionT2(bool shiftadv,bool symmetry
+  ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
+  ,const unsigned* dcell,const float4* poscell,const float4* velrho
+  ,const typecode* code,const float* ftomassp,float4* shiftvel,unsigned* fstype
+  ,float3* fsnormal,float* fsmindist,cudaStream_t stm)
 {
   if(shiftadv){
     PreLoopInteractionT3 <tker,simulate2d,true > (symmetry,bsfluid
@@ -614,11 +606,12 @@ void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d,bool symmetry
         ,shiftvel,fstype,fsnormal,fsmindist,stm);
   }
 }
-
-  template<TpKernel tker> void PreLoopInteractionT(bool simulate2d,bool shiftadv,bool symmetry
-    ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
-    ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
+//==============================================================================
+template<TpKernel tker> void PreLoopInteractionT(bool simulate2d,bool shiftadv,bool symmetry
+  ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
+  ,const unsigned* dcell,const float4* poscell,const float4* velrho
+  ,const typecode* code,const float* ftomassp,float4* shiftvel,unsigned* fstype
+  ,float3* fsnormal,float* fsmindist,cudaStream_t stm)
 {
   if(simulate2d){
     PreLoopInteractionT2 <tker,true > (shiftadv,symmetry,bsfluid
@@ -631,32 +624,29 @@ void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d,bool symmetry
         ,shiftvel,fstype,fsnormal,fsmindist,stm);
   }
 }
-
-
-   void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv,bool symmetry
-    ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
-    ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm)
-  {
-    switch(tkernel){
+//==============================================================================
+void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv,bool symmetry
+  ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
+  ,const unsigned* dcell,const float4* poscell,const float4* velrho
+  ,const typecode* code,const float* ftomassp,float4* shiftvel,unsigned* fstype
+  ,float3* fsnormal,float* fsmindist,cudaStream_t stm)
+{
+  switch(tkernel){
     case KERNEL_Wendland:{ const TpKernel tker=KERNEL_Wendland;
       PreLoopInteractionT <tker> (simulate2d,shiftadv,symmetry,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,stm);
     }break;
-  #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:{ const TpKernel tker=KERNEL_Cubic;
       PreLoopInteractionT <tker> (simulate2d,shiftadv,symmetry,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,stm);
     }break;
-#endif
     default: throw "Kernel unknown at Interaction_MdbcCorrection().";
   }
-  
-    cudaDeviceSynchronize();
-    
-  }
+  cudaDeviceSynchronize();
+}
+
 
   __global__ void KerComputeShiftingVel(unsigned n,unsigned pinit,bool simulate2d
     ,float4* shiftvel,const unsigned* fstype,const float3* fsnormal,const float* fsmindist

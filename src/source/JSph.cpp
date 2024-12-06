@@ -3576,6 +3576,7 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile
   if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
   if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
   filename=DirDataOut+filename;
+  if(fun::GetExtension(filename).empty())filename=fun::AddExtension(filename,"vtk");
   //-Allocates memory.
   const unsigned np=pfin-pini;
   tfloat3* xpos=new tfloat3[np];

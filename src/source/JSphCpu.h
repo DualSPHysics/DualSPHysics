@@ -323,10 +323,6 @@ protected:
     (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
     ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
     ,unsigned* fstype,tfloat4* shiftvel,tfloat3* fsnormal,float* fsmindist)const;
-  template<TpKernel tker,bool sim2d,bool shiftadv> void PreLoopInteraction_ct2
-    (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
-    ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
-    ,unsigned* fstype,tfloat4* shiftvel,tfloat3* fsnormal,float* fsmindist)const;
   template<TpKernel tker,bool sim2d> void PreLoopInteraction_ct1
     (unsigned n,unsigned pinit,StDivDataCpu divdata,const unsigned* dcell
     ,const tdouble3* pos,const typecode* code,const tfloat4* velrho

@@ -40,11 +40,11 @@ void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d,bool symmetry
   ,const unsigned* dcell,const float4* poscell,const typecode* code
   ,const float3* fsnormal,unsigned* listp,unsigned* fstype,cudaStream_t stm);
 
-
 void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv,bool symmetry
-    ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
-    ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm);
+  ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
+  ,const unsigned* dcell,const float4* poscell,const float4* velrho
+  ,const typecode* code,const float* ftomassp,float4* shiftvel,unsigned* fstype
+  ,float3* fsnormal,float* fsmindist,cudaStream_t stm);
 
 
 void ComputeShiftingVel(unsigned bsfluid,unsigned fluidnum,unsigned fluidini,bool simulate2d,float4* shiftvel
