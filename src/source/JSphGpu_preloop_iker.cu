@@ -609,75 +609,74 @@ void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv
   cudaDeviceSynchronize();
 }
 
+//------------------------------------------------------------------------------
+/// FR-CHECK comment missing...
+//------------------------------------------------------------------------------
+__global__ void KerComputeShiftingVel(unsigned n,unsigned pinit,bool simulate2d
+  ,float4* shiftvel,const unsigned* fstype,const float3* fsnormal
+  ,const float* fsmindist,float dt,float shiftcoef,bool ale)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=p+pinit;      //-Number of particle.
+    //-Obtains basic data of particle p1.
+    const unsigned fstypep1=fstype[p1];
+    const float4   shiftp1=shiftvel[p1];
+    const float    fsmindistp1=fsmindist[p1];
+    const float3   fsnormalp1=fsnormal[p1];
+    const float    theta=min(1.f,max(0.f,(fsmindistp1-CTE.kernelsize)/(0.5*CTE.kernelsize-CTE.kernelsize)));
+    float4         shift_final=make_float4(0,0,0,0);
+    const float    normshift=(fsnormalp1.x*shiftp1.x+fsnormalp1.y*shiftp1.y+fsnormalp1.z*shiftp1.z);
 
-  __global__ void KerComputeShiftingVel(unsigned n,unsigned pinit,bool simulate2d
-    ,float4* shiftvel,const unsigned* fstype,const float3* fsnormal,const float* fsmindist
-    ,float dt,float shiftcoef,bool ale)
-  {
-    const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
-    if(p<n){
-      const unsigned p1=p+pinit;      //-Number of particle.
-      //-Obtains basic data of particle p1.
-      const unsigned  fstypep1=fstype[p1];
-      const float4    shiftp1=shiftvel[p1];
-      const float     fsmindistp1=fsmindist[p1];
-      const float3    fsnormalp1=fsnormal[p1];
-      const float     theta=min(1.f,max(0.f,(fsmindistp1-CTE.kernelsize)/(0.5*CTE.kernelsize-CTE.kernelsize)));
-      float4          shift_final=make_float4(0,0,0,0);
-
-      const float     normshift=(fsnormalp1.x*shiftp1.x+fsnormalp1.y*shiftp1.y+fsnormalp1.z*shiftp1.z);
-
-      if(fstypep1==0){
-        shift_final=shiftp1;
-      }
-      else if(fstypep1==1 || fstypep1==2){
-        if(ale){
+    if(fstypep1==0){
+      shift_final=shiftp1;
+    }
+    else if(fstypep1==1 || fstypep1==2){
+      if(ale){
         shift_final.x=shiftp1.x-theta*fsnormalp1.x*normshift;
         shift_final.y=shiftp1.y-theta*fsnormalp1.y*normshift;
         shift_final.z=shiftp1.z-theta*fsnormalp1.z*normshift;
-        }else{
-          shift_final=make_float4(0,0,0,0);
-        }
-      } else if(fstypep1==3){
+      }
+      else{
         shift_final=make_float4(0,0,0,0);
       }
-
-
-
-      if(simulate2d) shift_final.y=0.f;
-
-      const float rhovar=abs(shiftp1.x*shift_final.x+shiftp1.y*shift_final.y+shiftp1.z*shift_final.z)*min(CTE.kernelh,fsmindistp1);
-      const float eps=1e-5;
-      const float umagn_1=shiftcoef*CTE.kernelh/dt;
-      const float umagn_2=abs(eps/(2.f*dt*rhovar));
-      const float umagn=min(umagn_1,umagn_2)*(min(CTE.kernelh,fsmindistp1)*dt);
-      // const float umagn= shiftcoef*CTE.kernelh*fsmindistp1;
-      const float maxdist=0.1f*CTE.dp;
-      shift_final.x=(fabs(umagn*shift_final.x)<maxdist? umagn*shift_final.x: (umagn*shift_final.x>=0? maxdist: -maxdist));
-      shift_final.y=(fabs(umagn*shift_final.y)<maxdist? umagn*shift_final.y: (umagn*shift_final.y>=0? maxdist: -maxdist));
-      shift_final.z=(fabs(umagn*shift_final.z)<maxdist? umagn*shift_final.z: (umagn*shift_final.z>=0? maxdist: -maxdist));
-      shiftvel[p1].x=(shift_final.x)/dt;
-      shiftvel[p1].y=(shift_final.y)/dt;
-      shiftvel[p1].z=(shift_final.z)/dt;
     }
+    else if(fstypep1==3){
+      shift_final=make_float4(0,0,0,0);
+    }
+
+    if(simulate2d) shift_final.y=0.f;
+
+    const float rhovar=abs(shiftp1.x*shift_final.x+shiftp1.y*shift_final.y+shiftp1.z*shift_final.z)*min(CTE.kernelh,fsmindistp1);
+    const float eps=1e-5f;
+    const float umagn_1=shiftcoef*CTE.kernelh/dt;
+    const float umagn_2=abs(eps/(2.f*dt*rhovar));
+    const float umagn=min(umagn_1,umagn_2)*(min(CTE.kernelh,fsmindistp1)*dt);
+    // const float umagn= shiftcoef*CTE.kernelh*fsmindistp1;
+    const float maxdist=0.1f*CTE.dp;
+    shift_final.x=(fabs(umagn*shift_final.x)<maxdist? umagn*shift_final.x: (umagn*shift_final.x>=0? maxdist: -maxdist));
+    shift_final.y=(fabs(umagn*shift_final.y)<maxdist? umagn*shift_final.y: (umagn*shift_final.y>=0? maxdist: -maxdist));
+    shift_final.z=(fabs(umagn*shift_final.z)<maxdist? umagn*shift_final.z: (umagn*shift_final.z>=0? maxdist: -maxdist));
+    shiftvel[p1].x=(shift_final.x)/dt;
+    shiftvel[p1].y=(shift_final.y)/dt;
+    shiftvel[p1].z=(shift_final.z)/dt;
   }
+}
 
-
-
-
-
-  void ComputeShiftingVel(unsigned bsfluid,unsigned fluidnum,unsigned fluidini,bool simulate2d,float4* shiftvel
-    ,const unsigned* fstype,const float3* fsnormal,const float* fsmindist,float dt,float shiftcoef,bool ale,cudaStream_t stm)
+//==============================================================================
+/// FR-CHECK comment missing...
+//==============================================================================
+void ComputeShiftingVel(unsigned bsfluid,unsigned fluidnum,unsigned fluidini
+  ,bool simulate2d,float4* shiftvel,const unsigned* fstype,const float3* fsnormal
+  ,const float* fsmindist,float dt,float shiftcoef,bool ale,cudaStream_t stm)
 {
-
   if(fluidnum){
     dim3 sgridf=GetSimpleGridSize(fluidnum,bsfluid);
     KerComputeShiftingVel<<<sgridf,bsfluid,0,stm>>> 
       (fluidnum,fluidini,simulate2d,shiftvel,fstype,fsnormal,fsmindist,dt,shiftcoef,ale);
   }
-
 }
 
 
-
 }
+

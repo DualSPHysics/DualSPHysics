@@ -637,10 +637,10 @@ void JSphCpuSingle::PreLoopProcedure(TpInterStep interstep){
     if(PeriParent_c){
       const unsigned* periparent=PeriParent_c->ptr();
       unsigned* fstype  =FSType_c->ptr();
-      tfloat4* shiftvel =ShiftVel_c->ptr();
+      tfloat4*  shiftvel=ShiftVel_c->ptr();
       for(unsigned p=Npb;p<Np;p++)if(periparent[p]!=UINT_MAX){
-        fstype[p]   =fstype[periparent[p]];
-        shiftvel[p] =shiftvel[periparent[p]];
+        fstype[p]  =fstype[periparent[p]];
+        shiftvel[p]=shiftvel[periparent[p]];
       }
     }
     //-Saves VTK for debug.

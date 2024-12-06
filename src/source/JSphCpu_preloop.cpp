@@ -23,12 +23,10 @@
 #include "FunSphKernel.h"
 #include "FunctionsMath.h"
 
-
 #include <climits>
 #include <cmath>
 
 using namespace std;
-
 
 //==============================================================================
 /// Creates list with free-surface particle (normal and periodic).
@@ -444,14 +442,14 @@ void JSphCpu::PreLoopInteraction_ct(const StDivDataCpu& divdata
   }
 }
 
-
 //==============================================================================
 /// FR-CHECK comment is wrong...
 /// Computes sub-particle stress tensor divided by rho^2 (tau/rho^2) for SPS 
 /// turbulence model.   
 //==============================================================================
 void JSphCpu::ComputeShiftingVel(bool simulate2d,tfloat4* shiftvel
-    ,const unsigned* fstype,const tfloat3* fsnormal,const float* fsmindist,double dt,float shiftcoef,bool ale)const
+  ,const unsigned* fstype,const tfloat3* fsnormal,const float* fsmindist
+  ,double dt,float shiftcoef,bool ale)const
 {
   const int np=int(Np);
   const int npb=int(Npb);
@@ -460,46 +458,46 @@ void JSphCpu::ComputeShiftingVel(bool simulate2d,tfloat4* shiftvel
     #pragma omp parallel for schedule (static)
   #endif
   for(int p=npb;p<np;p++){
-      const unsigned    fstypep1=fstype[p];
-      const tfloat4     shiftp1=shiftvel[p];
-      const float       fsmindistp1=fsmindist[p];
-      const tfloat3     fsnormalp1=fsnormal[p];
-      const float       theta=min(1.f,max(0.f,(fsmindistp1-(float)KernelSize)/(float)(0.5*KernelSize-KernelSize)));
-      tfloat4           shift_final=TFloat4(0,0,0,0);
+    const unsigned fstypep1=fstype[p];
+    const tfloat4  shiftp1=shiftvel[p];
+    const float    fsmindistp1=fsmindist[p];
+    const tfloat3  fsnormalp1=fsnormal[p];
+    const float    theta=min(1.f,max(0.f,(fsmindistp1-(float)KernelSize)/(float)(0.5*KernelSize-KernelSize)));
+    tfloat4        shift_final=TFloat4(0,0,0,0);
+    const float    normshift=(fsnormalp1.x*shiftp1.x+fsnormalp1.y*shiftp1.y+fsnormalp1.z*shiftp1.z);
 
-      const float     normshift=(fsnormalp1.x*shiftp1.x+fsnormalp1.y*shiftp1.y+fsnormalp1.z*shiftp1.z);
-
-      if(fstypep1==0){
-        shift_final=shiftp1;
-      }
-      else if(fstypep1==1 || fstypep1==2){
-        if(ale){
+    if(fstypep1==0){
+      shift_final=shiftp1;
+    }
+    else if(fstypep1==1 || fstypep1==2){
+      if(ale){
         shift_final.x=shiftp1.x-theta*fsnormalp1.x*normshift;
         shift_final.y=shiftp1.y-theta*fsnormalp1.y*normshift;
         shift_final.z=shiftp1.z-theta*fsnormalp1.z*normshift;
-        }else{
-          shift_final=TFloat4(0,0,0,0);
-        }
-      } else if(fstypep1==3){
+      }
+      else{
         shift_final=TFloat4(0,0,0,0);
       }
+    }
+    else if(fstypep1==3){
+      shift_final=TFloat4(0,0,0,0);
+    }
 
+    if(simulate2d)shift_final.y=0.0;
 
+    const float rhovar=abs(shiftp1.x*shift_final.x+shiftp1.y*shift_final.y+shiftp1.z*shift_final.z)*min(KernelH,fsmindistp1);
+    const float eps=1e-5f;
+    const float umagn_1=float(shiftcoef*KernelH/dt);
+    const float umagn_2=float(abs(eps/(2.f*dt*rhovar)));
+    const float umagn=float(min(umagn_1,umagn_2)*min(KernelH,fsmindistp1)*dt);
 
-      if(simulate2d) shift_final.y=0.0;
-
-      const float rhovar=abs(shiftp1.x*shift_final.x+shiftp1.y*shift_final.y+shiftp1.z*shift_final.z)*min(KernelH,fsmindistp1);
-      const float eps=1e-5f;
-      const float umagn_1=float(shiftcoef*KernelH/dt);
-      const float umagn_2=float(abs(eps/(2.0*dt*rhovar)));
-      const float umagn=float(min(umagn_1,umagn_2)*min(KernelH,fsmindistp1)*dt);
-
-      const float maxdist=float(0.1f*Dp);
-      shift_final.x=(fabs(umagn*shift_final.x)<maxdist? umagn*shift_final.x: (umagn*shift_final.x>=0? maxdist: -maxdist));
-      shift_final.y=(fabs(umagn*shift_final.y)<maxdist? umagn*shift_final.y: (umagn*shift_final.y>=0? maxdist: -maxdist));
-      shift_final.z=(fabs(umagn*shift_final.z)<maxdist? umagn*shift_final.z: (umagn*shift_final.z>=0? maxdist: -maxdist));
-      shiftvel[p].x=float((shift_final.x)/dt);
-      shiftvel[p].y=float((shift_final.y)/dt);
-      shiftvel[p].z=float((shift_final.z)/dt);
+    const float maxdist=float(0.1f*Dp);
+    shift_final.x=(fabs(umagn*shift_final.x)<maxdist? umagn*shift_final.x: (umagn*shift_final.x>=0? maxdist: -maxdist));
+    shift_final.y=(fabs(umagn*shift_final.y)<maxdist? umagn*shift_final.y: (umagn*shift_final.y>=0? maxdist: -maxdist));
+    shift_final.z=(fabs(umagn*shift_final.z)<maxdist? umagn*shift_final.z: (umagn*shift_final.z>=0? maxdist: -maxdist));
+    shiftvel[p].x=float((shift_final.x)/dt);
+    shiftvel[p].y=float((shift_final.y)/dt);
+    shiftvel[p].z=float((shift_final.z)/dt);
   }
 }
+
