@@ -352,10 +352,10 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         TBoundary=int(BC_MDBC);
         SlipMode=int(SLIP_NoSlip);
       }
-      //else if(txword=="MDBC_FREESLIP"){
-      //  TBoundary=int(BC_MDBC);
-      //  SlipMode=int(SLIP_FreeSlip);
-      //}
+      else if(txword=="MDBC_FREESLIP"){
+        TBoundary=int(BC_MDBC);
+        SlipMode=int(SLIP_FreeSlip);
+      }
       else if(txword=="INITNORPLA"){
         InitParms.push_back(opt);
       }

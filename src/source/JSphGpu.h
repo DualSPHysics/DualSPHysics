@@ -165,7 +165,7 @@ protected:
   agfloat*  Ar_g;         ///<Sum of density variation (Null). 
   agfloat*  Delta_g;      ///<Sum of Delta-SPH value when DELTA_DynamicExt (Null).
   agfloat4* ShiftPosfs_g; ///<Particle displacement and free surface detection for Shifting (Null).
-  agfloat4* NoPenShift_g; ///<Particle displacement correction to prevent particle penetrating boundary (Null). // SHABA
+  agfloat4* NoPenShift_g; ///<Particle velocity correction to prevent particle penetrating boundary (Null). // SHABA
 
   double VelMax;      ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;      ///<Maximum value of Ace[] (ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().

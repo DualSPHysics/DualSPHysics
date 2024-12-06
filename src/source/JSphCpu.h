@@ -42,12 +42,14 @@ typedef struct{
   const byte*     boundmode;    //<vs_m2dbc>
   const tfloat3*  tangenvel;    //<vs_m2dbc>
   const tfloat3*  motionvel;    //<vs_m2dbc>
+  const tfloat3*  boundnormal;  //<vs_m2dbcNP> SHABA
   const tfloat3*  dengradcorr;
   float*   ar;
   tfloat3* ace;
   float*   delta;
   TpShifting shiftmode;
   tfloat4*   shiftposfs;
+  tfloat4*   nopenshift; //<vs_m2dbcNP> SHABA
   tsymatrix3f* spstaurho2;
   tsymatrix3f* sps2strain;
 }stinterparmsc;
@@ -60,9 +62,11 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
   ,const byte*    boundmode    //<vs_m2dbc>
   ,const tfloat3* tangenvel    //<vs_m2dbc>
   ,const tfloat3* motionvel    //<vs_m2dbc>
+  ,const tfloat3* boundnormal  //<vs_m2dbcNP> SHABA
   ,const tfloat3* dengradcorr
   ,float* ar,tfloat3* ace,float* delta
   ,TpShifting shiftmode,tfloat4* shiftposfs
+  ,tfloat4* nopenshift          //<vs_m2dbcNP> SHABA
   ,tsymatrix3f* spstaurho2,tsymatrix3f* sps2strain
 )
 {
@@ -71,9 +75,11 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
     ,pos,velrho,idp
     ,code,press
     ,boundmode,tangenvel,motionvel //<vs_m2dbc>
+    ,boundnormal //<vs_m2dbcNP> SHABA
     ,dengradcorr
     ,ar,ace,delta
     ,shiftmode,shiftposfs
+    ,nopenshift //<vs_m2dbcNP> SHABA
     ,spstaurho2,sps2strain
   };
   return(d);
@@ -154,6 +160,8 @@ protected:
   acfloat*    Press_c;      ///<Pressure computed starting from density for interaction (Null). Press[]=fsph::ComputePress(Rho,CSP)
   acfloat*    Delta_c;      ///<Sum of Delta-SPH value when DELTA_DynamicExt (Null).
   acfloat4*   ShiftPosfs_c; ///<Particle displacement and free surface detection for Shifting (Null).
+  acfloat4*   NoPenShift_c; ///<Particle Velocity correction to prevent particle penetrating boundary (Null). // SHABA
+
 
   double VelMax;        ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;        ///<Maximum value of Ace[] sqrt(ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
@@ -208,8 +216,10 @@ protected:
     ,const tdouble3* pos,const tfloat4* velrho,const typecode* code
     ,const unsigned* idp,const float* press,const tfloat3* dengradcorr
     ,const byte* boundmode,const tfloat3* tangenvel,const tfloat3* motionvel //<vs_m2dbc>
+    ,const tfloat3* boundnormal //<vs_m2dbcNP> SHABA
     ,float& viscdt,float* ar,tfloat3* ace,float* delta
-    ,TpShifting shiftmode,tfloat4* shiftposfs)const;
+    ,TpShifting shiftmode,tfloat4* shiftposfs
+    ,tfloat4* nopenshift)const; //<vs_m2dbcNP> SHABA
 
   void InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned* dcell
     ,const unsigned* ftridp,const StDemData* demobjs

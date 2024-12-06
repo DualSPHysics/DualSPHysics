@@ -532,7 +532,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   ,const float2& taup1_xx_xy,const float2& taup1_xz_yy,const float2& taup1_yz_zz
   ,float2& two_strainp1_xx_xy,float2& two_strainp1_xz_yy,float2& two_strainp1_yz_zz
   ,float3& acep1,float& arp1,float& visc,float& deltap1
-  ,TpShifting shiftmode,float4& shiftposfsp1,float4& nonpenshift)
+  ,TpShifting shiftmode,float4& shiftposfsp1,float4& nopenshift)
 {
   for(int p2=pini;p2<pfin;p2++){
     const float4 pscellp2=poscell[p2];
@@ -621,27 +621,35 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
         shiftposfsp1.w-=massrho*dot3;
       }
 
-      //-No Penetration check
+      //-No-Penetration correction SHABA
       if (boundp2 && mdbc2 && !ftp2) {//<vs_m2dbcNP_ini>
-          float rrmag = sqrt(rr2);
-          if (rrmag < 0.8f * CTE.dp) { // if fluid is less than 0.8dp from boundary particle
-              float norm = sqrt(boundnorm[p2].x*boundnorm[p2].x + boundnorm[p2].y*boundnorm[p2].y + boundnorm[p2].z*boundnorm[p2].z);
-             float norx = boundnorm[p2].x / norm; float nory = boundnorm[p2].y / norm; float norz = boundnorm[p2].z / norm;
-              float normdist = normx*drx + normy*dry + normz*drz;
-             if (normdist < 0.5f * CTE.dp) {// if normal distanne is less than dp/2
-                  float Lvel = dvx*normx + dvy*nromy + dvz*normz;
-                  if (Lvel < 0) {
-                      nonpenshift[p1].w += 1.f;
-                      nonpenshift[p1].x -= Lvel*normx; nonpenshift[p1].y -= Lvel*normy; nonpenshift[p1].z -= Lvel*normz;
+          float rrmag=sqrt(rr2);
+          if (rrmag<1.25f*CTE.dp) { //-if fluid particle is less than 1.25dp from a boundary particle
+              float norm=sqrt(boundnorm[p2].x*boundnorm[p2].x+boundnorm[p2].y*boundnorm[p2].y+boundnorm[p2].z*boundnorm[p2].z);
+              float normx=boundnorm[p2].x/norm; float normy=boundnorm[p2].y/norm; float normz=boundnorm[p2].z/norm;
+              float normdist=(normx*drx+normy*dry+normz*drz);
+             if (normdist<0.75f*norm &&norm<1.75f*CTE.dp) {//-if normal distance is less than 0.75 boundary normal size and only first layer of bound
+                  const float3 movvelp2=motionvel[p2];
+                  dvx=velrhop1.x-movvelp2.x; 
+                  dvy=velrhop1.y-movvelp2.y;
+                  dvz=velrhop1.z-movvelp2.z;
+                  float vfc=dvx*normx+dvy*normy+dvz*normz; //-fluid velocity normal to boundary particle
+                  if (vfc<0.f) { //-if fluid particle velocity is pointing towards boundary add correction velocity
+                      nopenshift.w+=1.f; //-boundary particle counter for average
+                      //-delta v = sum uij dot (nj cross nj)
+                      nopenshift.x-=(dvx*normx*normx+dvy*normx*normy+dvz*normx*normz);
+                      nopenshift.y-=(dvx*normx*normy+dvy*normy*normy+dvz*normy*normz);
+                      nopenshift.z-=(dvx*normx*normz+dvy*normy*normz+dvz*normz*normz);
+                      if (normdist<0.25f*norm) {// if normal distanne is less than 0.25 boundary normal size double correction velocity
+                          nopenshift.x-=(dvx*normx*normx+dvy*normx*normy+dvz*normx*normz);
+                          nopenshift.y-=(dvx*normx*normy+dvy*normy*normy+dvz*normy*normz);
+                          nopenshift.z-=(dvx*normx*normz+dvy*normy*normz+dvz*normz*normz);
+                      }
                   }
               }
           }
       }//<vs_m2dbcNP_end>
 
-      //-Changing the mass of boundary particle with boundmode. //<vs_m2dbcFS_ini>
-      //if (mdbc2 && boundp2 && !ftp2) {
-      //    if (boundmode[p2] == BMODE_MDBC2SLIP)compute = false;
-      //} //<vs_m2dbcFS_end>
       //===== Viscosity ===== 
       if(compute){
         if(mdbc2 && boundp2 && !ftp2){ //<vs_m2dbc_ini>
@@ -714,7 +722,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   ,const typecode* code,const unsigned* idp
   ,const byte* boundmode,const float3* tangenvel,const float3* motionvel, const float3* boundnormal //<vs_m2dbc>
   ,float* viscdt,float* ar,float3* ace,float* delta
-  ,TpShifting shiftmode,float4* shiftposfs, float4* nonpenshift)
+  ,TpShifting shiftmode,float4* shiftposfs, float4* nopenshift)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -725,7 +733,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
     //-Variables for Shifting.
     float4 shiftposfsp1;
     if(shift)shiftposfsp1=shiftposfs[p1];
-    float4 nonpenshiftp1 = make_float4(0, 0, 0, 0); // SHABA non penetration
+    float4 nopenshiftp1 = make_float4(0,0,0,0); //-no-penetration array
 
     //-Obtains data of particle p1 in case there are floating bodies.
     bool ftp1;       //-Indicates if it is floating. | Indica si es floating.
@@ -771,7 +779,8 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
                             ,boundmode,tangenvel,motionvel, boundnormal //<vs_m2dbc>
                             ,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
-                            ,deltap1,shiftmode,shiftposfsp1, nonpenshiftp1); // SHABA non penetration
+                            ,deltap1,shiftmode,shiftposfsp1
+                            ,nopenshiftp1);//<vs_m2dbcNP>
 
         //<vs_syymmetry_ini>
         if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,tvisco,tdensity,shift,mdbc2,true >
@@ -779,7 +788,8 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
                             ,boundmode,tangenvel,motionvel, boundnormal //<vs_m2dbc>
                             ,CTE.massf,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
-                            ,deltap1,shiftmode,shiftposfsp1, nonpenshiftp1); // SHABA non penetration
+                            ,deltap1,shiftmode,shiftposfsp1
+                            ,nopenshiftp1);//<vs_m2dbcNP>
         //<vs_syymmetry_end>
       }
     }
@@ -793,30 +803,20 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
                             ,boundmode,tangenvel,motionvel, boundnormal //<vs_m2dbc>
                             ,CTE.massb,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
-                            ,deltap1,shiftmode,shiftposfsp1, nonpenshiftp1); // SHABA non penetration
+                            ,deltap1,shiftmode,shiftposfsp1
+                            ,nopenshiftp1);//<vs_m2dbcNP>
         //<vs_syymmetry_ini>
         if(symm && rsymp1)KerInteractionForcesFluidBox<tker,ftmode,tvisco,tdensity,shift,mdbc2,true >
                             (true,p1,pini,pfin,viscob,ftomassp,tauff,NULL,poscell,velrho,code,idp
                             ,boundmode,tangenvel,motionvel, boundnormal//<vs_m2dbc>
                             ,CTE.massb,ftp1,pscellp1,velrhop1,pressp1,taup1_xx_xy,taup1_xz_yy,taup1_yz_zz
                             ,two_strainp1_xx_xy,two_strainp1_xz_yy,two_strainp1_yz_zz,acep1,arp1,visc
-                            ,deltap1,shiftmode,shiftposfsp1, nonpenshiftp1); // SHABA non penetration
+                            ,deltap1,shiftmode,shiftposfsp1
+                            ,nopenshiftp1);//<vs_m2dbcNP>
         //<vs_syymmetry_end>
       }
     }
-
     //-Stores results.
-    if (mdbc2) { // SHABA non penetration
-        if (nonpenshiftp1.w > 0) {
-            nonpenshift[p1].x = nonpenshiftp1.x / nonpenshiftp1.w;
-            nonpenshift[p1].y = nonpenshiftp1.y / nonpenshiftp1.w;
-            nonpenshift[p1].z = nonpenshiftp1.z / nonpenshiftp1.w;
-            nonpenshift[p1].w = 10;
-        }
-        else {
-            nonpenshift[p1].w = 0;
-        }
-    }
     if(shift||arp1||acep1.x||acep1.y||acep1.z||visc){
       if(tdensity!=DDT_None){
         if(delta){
@@ -836,6 +836,19 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       }
       if(shift)shiftposfs[p1]=shiftposfsp1;
     }
+    //-No-Penetration correction SHABA
+    if (mdbc2){ //<vs_m2dbcNP_end>
+      if (nopenshiftp1.w>0.f){//-if correction required
+        //-Average correction velocity over number of boundary particles
+        nopenshift[p1].x=nopenshiftp1.x/nopenshiftp1.w;
+        nopenshift[p1].y=nopenshiftp1.y/nopenshiftp1.w;
+        nopenshift[p1].z=nopenshiftp1.z/nopenshiftp1.w;
+        nopenshift[p1].w=10; //-correction needed? yes
+      }
+      else{
+        nopenshift[p1].w=0;//-correction needed? no
+      }
+    }//<vs_m2dbcNP_end>
   }
 }
 
@@ -854,7 +867,8 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       ,float2*,const float3*,const float4*,const float4*,const typecode*
       ,const unsigned*
       ,const byte*,const float3*,const float3*, const float3*//<vs_m2dbc>
-      ,float*,float*,float3*,float*,TpShifting,float4*, float4*); // SHABA 
+      ,float*,float*,float3*,float*,TpShifting,float4*
+      ,float4*); //<vs_m2dbcNP>
 
     fun_ptr ptr=&KerInteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2,symm>;
     int qblocksize=0,mingridsize=0;
@@ -909,14 +923,14 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
       KerInteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2,true> <<<sgridf,t.bsfluid,0,t.stm>>> 
       (t.fluidnum,t.fluidini,t.viscob,t.viscof,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,t.dcell
       ,t.ftomassp,(const float2*)t.spstaurho2,(float2*)t.sps2strain,t.dengradcorr,t.poscell,t.velrho,t.code,t.idp
-      ,t.boundmode,t.tangenvel,t.motionvel,t.boundnormal //<vs_m2dbc>
-      ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs,t.nopenshoft);
+      ,t.boundmode,t.tangenvel,t.motionvel,t.boundnormal //<vs_m2dbcNP> SHABA
+      ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs,t.nopenshift); //<vs_m2dbcNP> SHABA
     else //<vs_syymmetry_end>
       KerInteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2,false> <<<sgridf,t.bsfluid,0,t.stm>>> 
       (t.fluidnum,t.fluidini,t.viscob,t.viscof,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,t.dcell
       ,t.ftomassp,(const float2*)t.spstaurho2,(float2*)t.sps2strain,t.dengradcorr,t.poscell,t.velrho,t.code,t.idp
-      ,t.boundmode,t.tangenvel,t.motionvel, t.boundnormal //<vs_m2dbc>
-      ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs,t.nopenshift);
+      ,t.boundmode,t.tangenvel,t.motionvel, t.boundnormal //<vs_m2dbcNP> SHABA
+      ,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs,t.nopenshift); //<vs_m2dbcNP> SHABA
       //KerInteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,false> <<<sgridf,t.bsfluid,0,t.stm>>> (t.fluidnum,t.fluidini,t.scelldiv,t.nc,t.cellfluid,t.viscob,t.viscof,t.begincell,Int3(t.cellmin),t.dcell,t.ftomassp,(const float2*)t.tau,(float2*)t.gradvel,t.poscell,t.velrho,t.code,t.idp,t.viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs);
   }
   //-Interaction Boundary-Fluid.

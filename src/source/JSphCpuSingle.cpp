@@ -604,9 +604,11 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     ,DivData,Dcell_c->cptr()
     ,Pos_c->cptr(),Velrho_c->cptr(),Idp_c->cptr(),Code_c->cptr(),Press_c->cptr()
     ,AC_CPTR(BoundMode_c),AC_CPTR(TangenVel_c),AC_CPTR(MotionVel_c) //<vs_m2dbc>
+    ,AC_CPTR(BoundNor_c) //<vs_m2dbc>
     ,dengradcorr
     ,Ar_c->ptr(),Ace_c->ptr(),AC_PTR(Delta_c)
     ,ShiftingMode,AC_PTR(ShiftPosfs_c)
+    ,AC_PTR(NoPenShift_c)
     ,AC_PTR(SpsTauRho2_c),AC_PTR(Sps2Strain_c)
   );
   StInterResultc res;
@@ -653,7 +655,7 @@ void JSphCpuSingle::MdbcBoundCorrection(){
     Interaction_MdbcCorrection(DivData,Pos_c->cptr(),Code_c->cptr()
       ,Idp_c->cptr(),BoundNor_c->cptr(),Velrho_c->ptr());
   }
-  else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
+  else{ //if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
     //const unsigned fnum=(InterStep==STEP_Verlet? Nstep: (InterStep==INTERSTEP_SymCorrector? Nstep*2+1: Nstep*2));
     //JDebugSphCpu::SaveVtk("vtkdg/PreMdbcCorr.vtk",fnum,0,Np,"all",this);
     const unsigned nmode=(UseNormalsFt? Np: Npb);
@@ -664,7 +666,7 @@ void JSphCpuSingle::MdbcBoundCorrection(){
       ,Idp_c->cptr(),BoundNor_c->cptr(),MotionVel_c->cptr(),MotionAce_c->cptr()
       ,Velrho_c->ptr(),BoundMode_c->ptr(),TangenVel_c->ptr());
   } //<vs_m2dbc_end>
-  else Run_Exceptioon("Error: SlipMode is invalid.");
+ // else Run_Exceptioon("Error: SlipMode is invalid.");
   Timersc->TmStop(TMC_CfPreMDBC);
 }
 

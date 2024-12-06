@@ -461,41 +461,15 @@ template<TpKernel tker,bool sim2d,TpSlipMode tslip,bool sp>
           #endif
           tangenvel[p1]=KerMdbc2TangenVel(bnormalp1,v2);
         }
-        if(tslip==SLIP_FreeSlip){//-No-Penetration and free slip.
-            boundmode[p1] = BMODE_MDBC2SLIP;
-            // copy velocity from ghost node
-            const float3 v2 = make_float3(velrhofinal.x,velrhofinal.y,velrhofinal.z);
-            #ifndef MDBC2_KEEPVEL
-                velrho[p1] = make_float4(v2.x, v2.y, v2.z, rhofinal);
-            #else
-                velrho[p1].w = rhofinal;
-            #endif
+        else if (tslip==SLIP_FreeSlip) {//-Free slip: vel = ghost vel
+          // copy velocity from ghost node
+          const float3 v2 = make_float3(velrhofinal.x, velrhofinal.y, velrhofinal.z);
+          #ifndef MDBC2_KEEPVEL
+            velrho[p1] = make_float4(v2.x, v2.y, v2.z, rhofinal);
+          #else
+            velrho[p1].w = rhofinal;
+          #endif
             tangenvel[p1] = KerMdbc2TangenVel(bnormalp1, v2);
-
-        //  float3 fsvelfinal; //-Final free slip boundary velocity.
-        //  const float3 v=motionvel[p1];
-        //  const float motion=sqrt(v.x*v.x + v.y*v.y + v.z*v.z); //-To check if boundary moving.
-        //  const float norm=sqrt(bnormalp1.x*bnormalp1.x + bnormalp1.y*bnormalp1.y + bnormalp1.z*bnormalp1.z);
-        //  //-Creating a normailsed boundary normal.
-        //  const float3 normal=make_float3(fabs(bnormalp1.x)/norm,fabs(bnormalp1.y)/norm,fabs(bnormalp1.z)/norm);
-        //  //-Finding the velocity componants normal and tangential to boundary.
-        //  const float3 normvel=make_float3(velrhofinal.x*normal.x,velrhofinal.y*normal.y,velrhofinal.z*normal.z);//-Velocity in direction of normal pointing into fluid).
-        //  if(motion>0){ //-If moving boundary.
-        //    const float3 normmot=make_float3(v.x*normal.x,v.y*normal.y,v.z*normal.z); //-Boundary motion in direction normal to boundary.
-        //    fsvelfinal=make_float3(normmot.x+normmot.x - normvel.x,
-        //                           normmot.y+normmot.y - normvel.y,
-        //                           normmot.z+normmot.z - normvel.z);
-        //    //-Only velocity in normal direction for no-penetration.
-        //    //-Fluid sees zero velocity in the tangetial direction.
-        //  }
-        //  else {
-        //    const float3 tangvel=make_float3(velrhofinal.x-normvel.x,velrhofinal.y-normvel.y,velrhofinal.z-normvel.z); //-Velocity tangential to normal.
-        //    fsvelfinal=make_float3(tangvel.x-normvel.x,tangvel.y-normvel.y,tangvel.z-normvel.z);
-        //    //-Tangential velocity equal to fluid velocity for free slip.
-        //    //-Normal velocity reversed for no-penetration.
-        //  }
-        //  //-Save the velocity and density.
-        //  velrho[p1]=make_float4(fsvelfinal.x,fsvelfinal.y,fsvelfinal.z,rhofinal);
         }
       }
       else{//-If unsubmerged switch off boundary particle.
@@ -547,34 +521,34 @@ template<TpKernel tker> void Interaction_Mdbc2CorrectionT(bool simulate2d
   ,cudaStream_t stm)
 {
   switch(slipmode){
-    case SLIP_NoSlip:{ const TpSlipMode tslip=SLIP_NoSlip;
-      if(simulate2d){ const bool sim2d=true;
-        Interaction_Mdbc2CorrectionT2 <tker,sim2d,tslip> (n,nbound,gravity
-          ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel
-          ,motionace,velrho,boundmode,tangenvel,stm);
+    case SLIP_NoSlip: { const TpSlipMode tslip = SLIP_NoSlip;
+      if (simulate2d) {
+          const bool sim2d = true;
+          Interaction_Mdbc2CorrectionT2 <tker, sim2d, tslip>(n, nbound, gravity
+              , dvd, mapposmin, posxy, posz, poscell, code, idp, boundnor, motionvel
+              , motionace, velrho, boundmode, tangenvel, stm);
       }
-      else{ const bool sim2d=false;
-        Interaction_Mdbc2CorrectionT2 <tker,sim2d,tslip> (n,nbound,gravity
-          ,dvd,mapposmin,posxy,posz,poscell,code,idp,boundnor,motionvel
-          ,motionace,velrho,boundmode,tangenvel,stm);
+      else {
+          const bool sim2d = false;
+          Interaction_Mdbc2CorrectionT2 <tker, sim2d, tslip>(n, nbound, gravity
+              , dvd, mapposmin, posxy, posz, poscell, code, idp, boundnor, motionvel
+              , motionace, velrho, boundmode, tangenvel, stm);
       }
-    }
-    case SLIP_FreeSlip: { const TpSlipMode tslip = SLIP_FreeSlip;
-        if (simulate2d) {
-            const bool sim2d = true;
-            Interaction_Mdbc2CorrectionT2 <tker, sim2d, tslip>(n, nbound, gravity
-                , dvd, mapposmin, posxy, posz, poscell, code, idp, boundnor, motionvel
-                , motionace, velrho, boundmode, tangenvel, stm);
-        }
-        else {
-            const bool sim2d = false;
-            Interaction_Mdbc2CorrectionT2 <tker, sim2d, tslip>(n, nbound, gravity
-                , dvd, mapposmin, posxy, posz, poscell, code, idp, boundnor, motionvel
-                , motionace, velrho, boundmode, tangenvel, stm);
-        }
     }break;
-    //case SLIP_FreeSlip:{ const TpSlipMode tslip=SLIP_FreeSlip;
-    //}break;
+    case SLIP_FreeSlip: { const TpSlipMode tslip = SLIP_FreeSlip;
+      if (simulate2d) {
+          const bool sim2d = true;
+          Interaction_Mdbc2CorrectionT2 <tker, sim2d, tslip>(n, nbound, gravity
+              , dvd, mapposmin, posxy, posz, poscell, code, idp, boundnor, motionvel
+              , motionace, velrho, boundmode, tangenvel, stm);
+      }
+      else {
+          const bool sim2d = false;
+          Interaction_Mdbc2CorrectionT2 <tker, sim2d, tslip>(n, nbound, gravity
+              , dvd, mapposmin, posxy, posz, poscell, code, idp, boundnor, motionvel
+              , motionace, velrho, boundmode, tangenvel, stm);
+      }
+    }break;
     default: throw "SlipMode unknown at Interaction_Mdbc2CorrectionT().";
   }
 }

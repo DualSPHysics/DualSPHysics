@@ -174,7 +174,7 @@ void JSphGpu::InitVars(){
   Ar_g=NULL;
   Delta_g=NULL;
   ShiftPosfs_g=NULL;   //-Shifting.
-  NoPenShift_g = NULL; //SHABA
+  NoPenShift_g = NULL; //<vs_m2dbcNP>
 
   SpsTauRho2_g=NULL;   //-Laminar+SPS.
   Sps2Strain_g=NULL;   //-Laminar+SPS.
@@ -350,7 +350,7 @@ void JSphGpu::FreeGpuMemoryParticles(){
   delete Ar_g;          Ar_g=NULL;
   delete Delta_g;       Delta_g=NULL;
   delete ShiftPosfs_g;  ShiftPosfs_g=NULL;  //-Shifting.
-  delete NoPenShift_g;  NoPenShift_g = NULL;  //-No Penetration SHABA
+  delete NoPenShift_g;  NoPenShift_g=NULL;  //-NoPenetration //<vs_m2dbcNP>
 
   delete SpsTauRho2_g;  SpsTauRho2_g=NULL;  //-Laminar+SPS.
   delete Sps2Strain_g;  Sps2Strain_g=NULL;  //-Laminar+SPS.
@@ -650,10 +650,12 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,NULL,NULL,NULL
         ,NULL,NULL,NULL
         ,NULL,NULL,NULL //<vs_m2dbc>
+        ,NULL //<vs_m2dbc> //SHABA4
         ,NULL,NULL,NULL
         ,NULL,NULL,NULL,NULL
         ,NULL
         ,NULL
+        ,NULL // SHABA
         ,NULL,&kerinfo);
       cusph::Interaction_Forces(parms);
       if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat,divdatag,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,&kerinfo);
@@ -818,6 +820,7 @@ void JSphGpu::PosInteraction_Forces(){
   if(Sps2Strain_g)Sps2Strain_g->Free();
   if(BoundMode_g)BoundMode_g->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
   if(TangenVel_g)TangenVel_g->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
+  if(NoPenShift_g)NoPenShift_g->Free(); // SHABA
 }
 
 //==============================================================================
@@ -917,7 +920,7 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   const byte* boundmode=AG_CPTR(BoundMode_g); //<vs_m2dbc>
   cusphs::ComputeStepSymplecticCor(WithFloating,shift,inout,mdbc2,Np,Npb
     ,VelrhoPre_g->cptr(),boundmode,Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
-    ,indirvel,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity
+    ,indirvel,NoPenShift_g->cptr(),dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity // SHABA
     ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
 
   //-Applies displacement to non-periodic fluid particles.

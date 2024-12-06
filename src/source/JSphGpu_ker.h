@@ -83,7 +83,7 @@ typedef struct StrInterParmsg{
   const byte*      boundmode;    //<vs_m2dbc>
   const float3*    tangenvel;    //<vs_m2dbc>
   const float3*    motionvel;    //<vs_m2dbc>
-  const float3*    boundnormal;  //<vs_m2dbc> // SHABA
+  const float3*    boundnormal;  //<vs_m2dbcNP> // SHABA
   const float*     ftomassp;
   const tsymatrix3f* spstaurho2;
   const float3*    dengradcorr;
@@ -94,7 +94,7 @@ typedef struct StrInterParmsg{
   float*  delta;
   tsymatrix3f* sps2strain;
   float4* shiftposfs;
-  float4* nopenshift; // SHABA
+  float4* nopenshift; //<vs_m2dbc> // SHABA
   //-Other values and objects.
   cudaStream_t stm;
   StKerInfo* kerinfo;

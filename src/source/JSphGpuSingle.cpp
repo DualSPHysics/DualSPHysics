@@ -521,7 +521,8 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,0,Nstep,DivData,Dcell_g->cptr()
     ,Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr()
     ,Velrho_g->cptr(),Idp_g->cptr(),Code_g->cptr()
-    ,AG_CPTR(BoundMode_g),AG_CPTR(TangenVel_g),AG_CPTR(MotionVel_g), AG_CPTR(BoundNor_g) //<vs_m2dbc>
+    ,AG_CPTR(BoundMode_g),AG_CPTR(TangenVel_g),AG_CPTR(MotionVel_g)//<vs_m2dbc>
+    ,AG_CPTR(BoundNor_g) //<vs_m2dbcNP>
     ,FtoMasspg,AG_CPTR(SpsTauRho2_g),dengradcorr
     ,ViscDt_g->ptr(),Ar_g->ptr(),Ace_g->ptr(),AG_PTR(Delta_g)
     ,AG_PTR(Sps2Strain_g)
