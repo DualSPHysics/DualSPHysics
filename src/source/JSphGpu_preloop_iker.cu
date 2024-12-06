@@ -282,11 +282,13 @@ void ComputeFSNormals(TpKernel tkernel,bool simulate2d,unsigned bsfluid
           ,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
           ,poscell,velrho,code,fstype,fsnormal,simulate2d,shiftvel,ftomassp,listp);
       }break;
+     #ifndef DISABLE_KERNELS_EXTRA
       case KERNEL_Cubic:{ const TpKernel tker=KERNEL_Cubic;
         KerComputeNormals <tker> <<<sgridf,bsfluid,0,stm>>> (count,fluidini
           ,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
           ,poscell,velrho,code,fstype,fsnormal,simulate2d,shiftvel,ftomassp,listp);
       }break;
+     #endif
       default: throw "Kernel unknown at ComputeFSNormals().";
     }
   }
@@ -606,11 +608,13 @@ void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,stm);
     }break;
+   #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:{ const TpKernel tker=KERNEL_Cubic;
       PreLoopInteractionT <tker> (simulate2d,shiftadv,bsfluid
         ,fluidnum,fluidini,dvd,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,stm);
     }break;
+   #endif
     default: throw "Kernel unknown at PreLoopInteraction().";
   }
   cudaDeviceSynchronize();
