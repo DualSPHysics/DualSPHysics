@@ -621,6 +621,7 @@ void JSphCpuSingle::SaveFluidOut(){
 void JSphCpuSingle::PreLoopProcedure(TpInterStep interstep){
   const bool runshift=(ShiftingAdv && interstep==INTERSTEP_SymPredictor && Nstep!=0);
   if(runshift){
+    Timersc->TmStart(TMC_SuShifting);
     ComputeFSParticles();
     ComputeUmbrellaRegion();
     PreLoopInteraction_ct(DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
@@ -640,8 +641,9 @@ void JSphCpuSingle::PreLoopProcedure(TpInterStep interstep){
       }
     }
     //-Saves VTK for debug.
-    if(1)DgSaveVtkParticlesCpu("Compute_FreeSurface_",Part,0,Np,Pos_c->cptr()
+    if(0)DgSaveVtkParticlesCpu("Compute_FreeSurface_",Part,0,Np,Pos_c->cptr()
       ,Code_c->cptr(),FSType_c->cptr(),ShiftVel_c->cptr(),FSNormal_c->cptr());
+    Timersc->TmStop(TMC_SuShifting);
   }
 }
 

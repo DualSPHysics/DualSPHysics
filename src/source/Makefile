@@ -97,6 +97,7 @@ ifeq ($(CUDAVER),11)
   GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_61,code=\"sm_61,compute_61\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_86,code=\"sm_86,compute_86\"
 endif
 
 #=============== Files to compile ===============

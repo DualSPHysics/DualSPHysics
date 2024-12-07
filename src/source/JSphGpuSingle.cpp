@@ -519,6 +519,7 @@ void JSphGpuSingle::SaveFluidOut(){
 void JSphGpuSingle::PreLoopProcedure(TpInterStep interstep){
   const bool runshift=(ShiftingAdv && interstep==INTERSTEP_SymPredictor && Nstep!=0);
   if(runshift){
+    Timersg->TmStart(TMG_SuShifting,false);
     ComputeFSParticles();
     ComputeUmbrellaRegion();
     const unsigned bsfluid=BlockSizes.forcesfluid;
@@ -535,11 +536,12 @@ void JSphGpuSingle::PreLoopProcedure(TpInterStep interstep){
         ,ShiftVel_g->ptr());
     }
     //-Saves VTK for debug.
-    if(1 && TimeStep+LastDt>=TimePartNext){
+    if(0 && TimeStep+LastDt>=TimePartNext){
 		  DgSaveVtkParticlesGpu("Compute_FreeSurface_",Part,0,Np,Posxy_g->cptr()
         ,Posz_g->cptr(),Code_g->cptr(),FSType_g->cptr(),ShiftVel_g->cptr()
         ,FSNormal_g->cptr());
 	  }
+    Timersg->TmStop(TMG_SuShifting,true);
   }
 }
 
