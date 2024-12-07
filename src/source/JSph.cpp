@@ -921,7 +921,7 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
     if(shiftmode==SHIFT_FS){ //<vs_advshift_ini>
       delete Shifting; Shifting=NULL;
       if(!ShiftingAdv)ShiftingAdv=new JSphShiftingAdv(Simulate2D,Dp,KernelH);
-      ShiftingAdv->ConfigBasic();
+      ShiftingAdv->ConfigBasic(ShiftingAdv->GetShiftCoef(),cfg->ShiftAdvALE,cfg->ShiftAdvNCP);
     } //<vs_advshift_end>
   }
 
