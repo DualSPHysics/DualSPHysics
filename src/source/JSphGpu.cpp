@@ -158,6 +158,8 @@ void JSphGpu::InitVars(){
   PosCell_g=NULL;
   Velrho_g=NULL;
 
+  PeriParent_g=NULL;
+
   BoundNor_g=NULL;     //-mDBC
   MotionVel_g=NULL;    //-mDBC2  //<vs_m2dbc>
   MotionAce_g=NULL;    //-mDBC2  //<vs_m2dbc>
@@ -173,17 +175,16 @@ void JSphGpu::InitVars(){
   Ace_g=NULL;
   Ar_g=NULL;
   Delta_g=NULL;
-  ShiftPosfs_g=NULL;   //-Shifting.
-
-  ShiftVel_g=NULL;     //-ShiftingAdvanced
-  FSType_g=NULL;       //-ShiftingAdvanced
-  FSMinDist_g=NULL;    //-ShiftingAdvanced
-  FSNormal_g=NULL;     //-ShiftingAdvanced
-
-  PeriParent_g=NULL;   //-PreLoop.  //<ShiftingAdvanced>
 
   SpsTauRho2_g=NULL;   //-Laminar+SPS.
   Sps2Strain_g=NULL;   //-Laminar+SPS.
+
+  ShiftPosfs_g=NULL;   //-Shifting.
+
+  ShiftVel_g=NULL;     //-ShiftingAdvanced //<vs_advshift>
+  FSType_g=NULL;       //-ShiftingAdvanced //<vs_advshift>
+  FSMinDist_g=NULL;    //-ShiftingAdvanced //<vs_advshift>
+  FSNormal_g=NULL;     //-ShiftingAdvanced //<vs_advshift>
 
   FreeGpuMemoryParticles();
 
@@ -340,6 +341,8 @@ void JSphGpu::FreeGpuMemoryParticles(){
   delete PosCell_g;     PosCell_g=NULL;
   delete Velrho_g;      Velrho_g=NULL;
 
+  delete PeriParent_g;  PeriParent_g=NULL;
+
   delete BoundNor_g;    BoundNor_g=NULL;    //-mDBC
   delete MotionVel_g;   MotionVel_g=NULL;   //-mDBC2  //<vs_m2dbc>
   delete MotionAce_g;   MotionAce_g=NULL;   //-mDBC2  //<vs_m2dbc>
@@ -355,17 +358,16 @@ void JSphGpu::FreeGpuMemoryParticles(){
   delete Ace_g;         Ace_g=NULL;
   delete Ar_g;          Ar_g=NULL;
   delete Delta_g;       Delta_g=NULL;
-  delete ShiftPosfs_g;  ShiftPosfs_g=NULL;  //-Shifting.
-
-  delete ShiftVel_g;    ShiftVel_g=NULL;    //-ShiftingAdvanced
-  delete FSType_g;      FSType_g=NULL;      //-ShiftingAdvanced
-  delete FSMinDist_g;   FSMinDist_g=NULL;   //-ShiftingAdvanced
-  delete FSNormal_g;    FSNormal_g=NULL;    //-ShiftingAdvanced
-
-  delete PeriParent_g;  PeriParent_g=NULL;  //-ShiftingAdvanced
 
   delete SpsTauRho2_g;  SpsTauRho2_g=NULL;  //-Laminar+SPS.
   delete Sps2Strain_g;  Sps2Strain_g=NULL;  //-Laminar+SPS.
+
+  delete ShiftPosfs_g;  ShiftPosfs_g=NULL;  //-Shifting.
+
+  delete ShiftVel_g;    ShiftVel_g=NULL;    //-ShiftingAdvanced //<vs_advshift>
+  delete FSType_g;      FSType_g=NULL;      //-ShiftingAdvanced //<vs_advshift>
+  delete FSMinDist_g;   FSMinDist_g=NULL;   //-ShiftingAdvanced //<vs_advshift>
+  delete FSNormal_g;    FSNormal_g=NULL;    //-ShiftingAdvanced //<vs_advshift>
 
   //-Free GPU memory for array objects.
   GpuParticlesSize=0;
@@ -418,22 +420,23 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   Ace_g       =new agfloat3("Aceg"   ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
   Ar_g        =new agfloat ("Arg"    ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
   Delta_g     =new agfloat ("Deltag" ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
-  //-Arrays for Advanced Shifting. //<ShiftingAdvanced>
-  if(ShiftingAdv!=NULL){
-    ShiftVel_g    =new agfloat4 ("ShiftVel_g" ,Arrays_Gpu,true); 
-    FSType_g      =new aguint   ("FSType_g"   ,Arrays_Gpu,true);
-    FSNormal_g    =new agfloat3 ("FSNormal_g" ,Arrays_Gpu,false);  //-NO INITIAL MEMORY.
-    FSMinDist_g   =new agfloat  ("FSMinDist_g",Arrays_Gpu,false);  //-NO INITIAL MEMORY.
-    if(PeriActive){
-      PeriParent_g=new aguint(  "PeriParentg" ,Arrays_Gpu,true);
-    }
-  }
-  ShiftPosfs_g=new agfloat4("ShiftPosfsg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
   //-Arrays for Laminar+SPS.
   if(TVisco==VISCO_LaminarSPS){
     SpsTauRho2_g=new agsymatrix3f("SpsTauRho2g",Arrays_Gpu,true);
     Sps2Strain_g=new agsymatrix3f("Sps2Straing",Arrays_Gpu,false); //-NO INITIAL MEMORY.
   }
+  //-Arrays for Shifting.
+  ShiftPosfs_g=new agfloat4("ShiftPosfsg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
+  //-Arrays for Advanced shifting. //<vs_advshift_ini>
+  if(ShiftingAdv!=NULL){
+    ShiftVel_g    =new agfloat4 ("ShiftVel_g" ,Arrays_Gpu,true); 
+    FSType_g      =new aguint   ("FSType_g"   ,Arrays_Gpu,true);
+    FSNormal_g    =new agfloat3 ("FSNormal_g" ,Arrays_Gpu,false);  //-NO INITIAL MEMORY.
+    FSMinDist_g   =new agfloat  ("FSMinDist_g",Arrays_Gpu,false);  //-NO INITIAL MEMORY.
+    if(PeriActive && !PeriParent_g){
+      PeriParent_g=new aguint(  "PeriParentg" ,Arrays_Gpu,true);
+    }
+  }//<vs_advshift_end>
 
   //-Check CUDA errors.
   Check_CudaErroor("Failed GPU memory allocation.");
@@ -846,12 +849,12 @@ void JSphGpu::PosInteraction_Forces(){
   Ar_g->Free();
   Ace_g->Free();
   Delta_g->Free();
-  if(ShiftPosfs_g)ShiftPosfs_g->Free();
+  ShiftPosfs_g->Free();
   if(Sps2Strain_g)Sps2Strain_g->Free();
   if(BoundMode_g)BoundMode_g->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
   if(TangenVel_g)TangenVel_g->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
-  if(FSMinDist_g)FSMinDist_g->Free(); //-ShiftingImproved //<ShiftingAdvanced>
-  if(FSNormal_g)FSNormal_g->Free();   //-ShiftingImproved //<ShiftingAdvanced>
+  if(FSMinDist_g)FSMinDist_g->Free(); //<vs_advshift>
+  if(FSNormal_g)FSNormal_g->Free();   //<vs_advshift>
 }
 
 //==============================================================================
@@ -863,7 +866,6 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=(ShiftingMode!=SHIFT_None);
   const bool inout=(InOut!=NULL);
-  const bool shiftadv=(ShiftingAdv!=NULL); //<ShiftingAdvanced>
   const float3* indirvel=(inout? InOut->GetDirVelg(): NULL);
   const byte* boundmode=AG_CPTR(BoundMode_g); //<vs_m2dbc>
   VerletStep++;
@@ -873,18 +875,18 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   //-Computes displacement, velocity and density.
   if(VerletStep<VerletSteps){
     const double twodt=dt+dt;
-    cusphs::ComputeStepVerlet(WithFloating,shift,shiftadv,inout,mdbc2,Np,Npb
+    cusphs::ComputeStepVerlet(WithFloating,shift,inout,mdbc2,Np,Npb
       ,Velrho_g->cptr(),VelrhoM1_g->cptr(),boundmode,Ar_g->cptr()
       ,Ace_g->cptr(),ShiftPosfs_g->cptr(),indirvel,dt,twodt
       ,RhopZero,RhopOutMin,RhopOutMax,Gravity,Code_g->ptr()
-      ,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),ShiftVel_g->cptr(),NULL);
+      ,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
   }
   else{
-    cusphs::ComputeStepVerlet(WithFloating,shift,shiftadv,inout,mdbc2,Np,Npb
+    cusphs::ComputeStepVerlet(WithFloating,shift,inout,mdbc2,Np,Npb
       ,Velrho_g->cptr(),Velrho_g->cptr(),boundmode,Ar_g->cptr()
       ,Ace_g->cptr(),ShiftPosfs_g->cptr(),indirvel,dt,dt
       ,RhopZero,RhopOutMin,RhopOutMax,Gravity,Code_g->ptr()
-      ,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),ShiftVel_g->cptr(),NULL);
+      ,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
     VerletStep=0;
   }
   //-The new values are calculated in VelrhoM1_g.
@@ -943,18 +945,19 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=(ShiftingMode!=SHIFT_None);
   const bool inout=(InOut!=NULL);
-  const bool shiftadv=(ShiftingAdv!=NULL); //<ShiftingAdvanced>
+  const bool shiftadv=(ShiftingAdv!=NULL); //<vs_advshift>
   //-Allocate memory to compute the diplacement.
   agdouble2 movxyg("movxyg",Arrays_Gpu,true);
   agdouble  movzg("movzg",Arrays_Gpu,true);
   //-Computes displacement, velocity and density.
   const double dt05=dt*.5;
   const float3* indirvel=(InOut? InOut->GetDirVelg(): NULL);
-  const byte* boundmode=AG_CPTR(BoundMode_g); //<vs_m2dbc>
+  const byte*   boundmode=AG_CPTR(BoundMode_g); //<vs_m2dbc>
+  const float4* shiftvel=AG_CPTR(ShiftVel_g); //<vs_advshift>
   cusphs::ComputeStepSymplecticCor(WithFloating,shift,shiftadv,inout,mdbc2,Np,Npb
     ,VelrhoPre_g->cptr(),boundmode,Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
-    ,indirvel,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity
-    ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),AG_CPTR(ShiftVel_g),NULL);
+    ,indirvel,shiftvel,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity
+    ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
 
   //-Applies displacement to non-periodic fluid particles.
   cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb

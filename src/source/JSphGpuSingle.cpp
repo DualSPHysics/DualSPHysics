@@ -270,7 +270,7 @@ void JSphGpuSingle::ResizeParticlesSizeData(unsigned ndatacpu,unsigned ndatagpu
 //==============================================================================
 void JSphGpuSingle::RunPeriodic(){
   Timersg->TmStart(TMG_SuPeriodic,false);
-  if(PeriParent_g)PeriParent_g->CuMemset(255,Np); //<ShiftingAdvanced>
+  if(PeriParent_g)PeriParent_g->CuMemset(255,Np);
   //-Stores the current number of periodic particles.
   //-Guarda numero de periodicas actuales.
   NpfPerM1=NpfPer;
@@ -343,9 +343,9 @@ void JSphGpuSingle::RunPeriodic(){
               cusph::PeriodicDuplicateNormals(count,Np,listpg.cptr()
                 ,BoundNor_g->ptr(),AG_PTR(MotionVel_g),AG_PTR(MotionAce_g)); //<vs_m2dbc>
             }
-            if(PeriParent_g){ //<ShiftingAdvanced_ini>
+            if(PeriParent_g){
               cusph::PeriodicSaveParent(count,Np,listpg.cptr(),PeriParent_g->ptr());
-            } //<ShiftingAdvanced_end>
+            }
             //-Update the total number of particles.
             Np+=count;
             //-Update number of new periodic particles.
@@ -439,19 +439,19 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
       MotionAce_g->SwapPtr(&maceg);
     }//<vs_m2dbc_end>
   }
-  if(ShiftingAdv!=NULL){
+  if(ShiftingAdv!=NULL){//<vs_advshift_ini>
       aguint      fstypeg     ("-",Arrays_Gpu,true);
       agfloat4    shiftvelg   ("-",Arrays_Gpu,true);
       CellDivSingle->SortDataArrays(FSType_g->cptr(),ShiftVel_g->cptr(),fstypeg.ptr(),shiftvelg.ptr());
       FSType_g  ->SwapPtr(&fstypeg);
       ShiftVel_g->SwapPtr(&shiftvelg);
-  }
-  if(PeriParent_g){//<ShiftingAdvanced_ini>
+  }//<vs_advshift_end>
+  if(PeriParent_g){
     aguint auxg("-",Arrays_Gpu,true);
     aguint periparentg("-",Arrays_Gpu,true);
     CellDivSingle->SortArrayPeriParent(auxg.ptr(),PeriParent_g->cptr(),periparentg.ptr());
     PeriParent_g->SwapPtr(&periparentg);
-  } //<ShiftingAdvanced_end>
+  }
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
@@ -526,10 +526,9 @@ void JSphGpuSingle::PreLoopProcedure(TpInterStep interstep){
       ,Npb,DivData,Dcell_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
       ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr()
       ,FSNormal_g->ptr(),FSMinDist_g->ptr(),NULL);
-    cusph::ComputeShiftingVel(bsfluid,Np-Npb,Npb,Simulate2D,ShiftVel_g->ptr()
-      ,FSType_g->cptr(),FSNormal_g->cptr(),FSMinDist_g->cptr()
-      ,float(SymplecticDtPre),ShiftingAdv->GetShiftCoef()
-      ,ShiftingAdv->GetAleActive(),NULL);
+    cusph::ComputeShiftingVel(bsfluid,Np-Npb,Npb,Simulate2D,ShiftingAdv->GetShiftCoef()
+      ,ShiftingAdv->GetAleActive(),float(SymplecticDtPre),FSType_g->cptr()
+      ,FSNormal_g->cptr(),FSMinDist_g->cptr(),ShiftVel_g->ptr(),NULL);
     //-Updates pre-loop variables in periodic particles.
     if(PeriParent_g){
       cusph::PeriPreLoopCorr(Np,0,PeriParent_g->cptr(),FSType_g->ptr()
@@ -715,9 +714,10 @@ void JSphGpuSingle::RunInitialDDTRamp(){
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Ver(){
-  MdbcBoundCorrection(INTERSTEP_SymPredictor); //-Mdbc correction
-  PreInteraction_Forces(INTERSTEP_Verlet);                     //-Allocating temporary arrays.
-  Interaction_Forces(INTERSTEP_Verlet);  //-Interaction.
+  InterStep=INTERSTEP_Verlet;
+  MdbcBoundCorrection(InterStep);        //-mDBC correction
+  PreInteraction_Forces(InterStep);      //-Allocating temporary arrays.
+  Interaction_Forces(InterStep);         //-Interaction.
   const double dt=DtVariable(true);      //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);         //-Calculate motion for moving bodies.
   DemDtForce=dt;                         //-For DEM interaction.

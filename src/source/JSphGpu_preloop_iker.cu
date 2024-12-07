@@ -623,9 +623,9 @@ void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv
 //------------------------------------------------------------------------------
 /// FR-CHECK comment missing...
 //------------------------------------------------------------------------------
-__global__ void KerComputeShiftingVel(unsigned n,unsigned pinit,bool simulate2d
-  ,float4* shiftvel,const unsigned* fstype,const float3* fsnormal
-  ,const float* fsmindist,float dt,float shiftcoef,bool ale)
+__global__ void KerComputeShiftingVel(unsigned n,unsigned pinit,bool sim2d
+  ,float shiftcoef,bool ale,float dt,const unsigned* fstype
+  ,const float3* fsnormal,const float* fsmindist,float4* shiftvel)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<n){
@@ -656,7 +656,7 @@ __global__ void KerComputeShiftingVel(unsigned n,unsigned pinit,bool simulate2d
       shift_final=make_float4(0,0,0,0);
     }
 
-    if(simulate2d) shift_final.y=0.f;
+    if(sim2d)shift_final.y=0.f;
 
     const float rhovar=abs(shiftp1.x*shift_final.x+shiftp1.y*shift_final.y+shiftp1.z*shift_final.z)*min(CTE.kernelh,fsmindistp1);
     const float eps=1e-5f;
@@ -678,13 +678,14 @@ __global__ void KerComputeShiftingVel(unsigned n,unsigned pinit,bool simulate2d
 /// FR-CHECK comment missing...
 //==============================================================================
 void ComputeShiftingVel(unsigned bsfluid,unsigned fluidnum,unsigned fluidini
-  ,bool simulate2d,float4* shiftvel,const unsigned* fstype,const float3* fsnormal
-  ,const float* fsmindist,float dt,float shiftcoef,bool ale,cudaStream_t stm)
+  ,bool sim2d,float shiftcoef,bool ale,float dt,const unsigned* fstype
+  ,const float3* fsnormal,const float* fsmindist,float4* shiftvel
+  ,cudaStream_t stm)
 {
   if(fluidnum){
     dim3 sgridf=GetSimpleGridSize(fluidnum,bsfluid);
     KerComputeShiftingVel<<<sgridf,bsfluid,0,stm>>> 
-      (fluidnum,fluidini,simulate2d,shiftvel,fstype,fsnormal,fsmindist,dt,shiftcoef,ale);
+      (fluidnum,fluidini,sim2d,shiftcoef,ale,dt,fstype,fsnormal,fsmindist,shiftvel);
   }
 }
 

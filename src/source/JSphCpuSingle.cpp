@@ -366,9 +366,6 @@ void JSphCpuSingle::PeriodicDuplicateNormals(unsigned np,unsigned pini
   }
 }
 
-
-
-//<ShiftingAdvanced_ini>
 //==============================================================================
 /// Saves particle index to access to the parent of periodic particles.
 //==============================================================================
@@ -386,7 +383,6 @@ void JSphCpuSingle::PeriodicSaveParent(unsigned np,unsigned pini
     periparent[pnew]=pcopy;
   }
 }
-//<ShiftingAdvanced_end>
 
 //==============================================================================
 /// Marks current periodic particles to be ignored.
@@ -414,7 +410,7 @@ void JSphCpuSingle::PeriodicIgnore(unsigned np,typecode* code)const{
 //==============================================================================
 void JSphCpuSingle::RunPeriodic(){
   Timersc->TmStart(TMC_SuPeriodic);
-  if(PeriParent_c)PeriParent_c->Memset(255,Np); //<ShiftingAdvanced>
+  if(PeriParent_c)PeriParent_c->Memset(255,Np);
   //-Stores the current number of periodic particles.
   //-Guarda numero de periodicas actuales.
   NpfPerM1=NpfPer;
@@ -486,9 +482,9 @@ void JSphCpuSingle::RunPeriodic(){
               PeriodicDuplicateNormals(count,Np,DomCells,perinc,listp.cptr()
                 ,BoundNor_c->ptr(),AC_PTR(MotionVel_c),AC_PTR(MotionAce_c)); //<vs_m2dbc>
             }
-            if(PeriParent_c){ //<ShiftingAdvanced_ini>
-              PeriodicSaveParent(count,Np,listp.cptr(),PeriParent_c->ptr()); //<ShiftingAdvanced>
-            } //<ShiftingAdvanced_end>
+            if(PeriParent_c){
+              PeriodicSaveParent(count,Np,listp.cptr(),PeriParent_c->ptr());
+            }
             //-Update the total number of particles.
             Np+=count;
             //-Update number of new periodic particles.
@@ -544,13 +540,13 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
       CellDivSingle->SortArray(MotionAce_c->ptr());
     } //<vs_m2dbc_end>
   }
-  if(ShiftingAdv){
+  if(ShiftingAdv){ //<vs_advshift_ini>
     CellDivSingle->SortArray(FSType_c->ptr());
     CellDivSingle->SortArray(ShiftVel_c->ptr());
-  }
-  if(PeriParent_c){//<ShiftingAdvanced_ini>
+  } //<vs_advshift_end>
+  if(PeriParent_c){
     CellDivSingle->SortArrayPeriParent(PeriParent_c->ptr());
-  }//<ShiftingAdvanced_end>
+  }
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
@@ -630,9 +626,9 @@ void JSphCpuSingle::PreLoopProcedure(TpInterStep interstep){
     PreLoopInteraction_ct(DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
       ,Velrho_c->cptr(),FSType_c->ptr(),ShiftVel_c->ptr(),FSNormal_c->ptr()
       ,FSMinDist_c->ptr());
-    ComputeShiftingVel(Simulate2D,ShiftVel_c->ptr(),FSType_c->ptr()
-      ,FSNormal_c->ptr(),FSMinDist_c->ptr(),SymplecticDtPre
-      ,ShiftingAdv->GetShiftCoef(),ShiftingAdv->GetAleActive());
+    ComputeShiftingVel(Simulate2D,ShiftingAdv->GetShiftCoef()
+      ,ShiftingAdv->GetAleActive(),SymplecticDtPre,FSType_c->ptr()
+      ,FSNormal_c->ptr(),FSMinDist_c->ptr(),ShiftVel_c->ptr());
     //-Updates pre-loop variables in periodic particles.
     if(PeriParent_c){
       const unsigned* periparent=PeriParent_c->ptr();
@@ -846,7 +842,10 @@ void JSphCpuSingle::RunInitialDDTRamp(){
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphCpuSingle::ComputeStep_Ver(){
-  Interaction_Forces(INTERSTEP_Verlet);  //-Interaction.
+  InterStep=INTERSTEP_Verlet;
+  MdbcBoundCorrection(InterStep);        //-mDBC correction
+  PreInteraction_Forces(InterStep);      //-Allocating temporary arrays.
+  Interaction_Forces(InterStep);         //-Interaction.
   const double dt=DtVariable(true);      //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);         //-Calculate motion for moving bodies.
   DemDtForce=dt;                         //-For DEM interaction.

@@ -130,6 +130,8 @@ protected:
   agfloat4*   PosCell_g; ///<Relative position and cell coordinates for particle interaction {posx,posy,posz,cellxyz}
   agfloat4*   Velrho_g;
 
+  aguint*     PeriParent_g; ///<Particle index to access to the parent of periodic particles (Opt).
+
   //-Variables for mDBC (Opt).
   agfloat3*   BoundNor_g;   ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
   agfloat3*   MotionVel_g;  ///<Velocity of a moving boundary particle (Opt).                  //<vs_m2dbc>
@@ -166,13 +168,13 @@ protected:
   agfloat*  Delta_g;      ///<Sum of Delta-SPH value when DELTA_DynamicExt (Null).
   agfloat4* ShiftPosfs_g; ///<Particle displacement and free surface detection for Shifting (Null).
 
+  //<vs_advshift_ini>
   //-Variable for advanced shifting formulation.
-  agfloat4* ShiftVel_g;       ///<Shifting Velocity vector for advanced shifting.
-  aguint*   FSType_g;           ///<Free-surface identification.
-  agfloat*  FSMinDist_g;       ///<Distance from the Free-Surface (needed for advanced shifting).
-  agfloat3* FSNormal_g;       ///<Normals of Free-Surface particles (needed for advanced shifting).
-
-  aguint*   PeriParent_g;     ///<Particle index to access to the parent of periodic particles (Opt). //<ShiftingAdvanced>
+  agfloat4* ShiftVel_g;   ///<Shifting Velocity vector for advanced shifting.
+  aguint*   FSType_g;     ///<Free-surface identification.
+  agfloat*  FSMinDist_g;  ///<Distance from the Free-Surface (needed for advanced shifting).
+  agfloat3* FSNormal_g;   ///<Normals of Free-Surface particles (needed for advanced shifting).
+  //<vs_advshift_end>
 
   double VelMax;      ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;      ///<Maximum value of Ace[] (ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().

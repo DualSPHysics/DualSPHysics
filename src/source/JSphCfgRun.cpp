@@ -180,7 +180,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("        nobound    Shifting is not applied near boundary\n");
   printf("        nofixed    Shifting is not applied near fixed boundary\n");
   printf("        full       Shifting is always applied\n");
-  printf("        fulladv    Advanced shifting for free-surface\n");
+  printf("        fulladv    Advanced shifting for free-surface\n"); //<vs_advshift>
   printf("\n");
 
   printf("  Simulation options:\n");
@@ -407,7 +407,7 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         else if(tx=="NOBOUND")Shifting=1;
         else if(tx=="NOFIXED")Shifting=2;
         else if(tx=="FULL"   )Shifting=3;
-        else if(tx=="FULLADV")Shifting=4;
+        else if(tx=="FULLADV")Shifting=4; //<vs_advshift>
         else ErrorParm(opt,c,lv,file);
       }
       else if(txword=="SVNORMALS")SvNormals=OptIsEnabled(txoptfull);

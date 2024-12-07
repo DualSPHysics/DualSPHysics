@@ -92,6 +92,8 @@ void JSphCpu::InitVars(){
   Pos_c=NULL;
   Velrho_c=NULL;
 
+  PeriParent_c=NULL;
+
   BoundNor_c=NULL;    //-mDBC
   MotionVel_c=NULL;   //-mDBC2  //<vs_m2dbc>
   MotionAce_c=NULL;   //-mDBC2  //<vs_m2dbc>
@@ -106,21 +108,20 @@ void JSphCpu::InitVars(){
   Ar_c=NULL;
   Press_c=NULL;
   Delta_c=NULL;
-  ShiftPosfs_c=NULL;  //-Shifting.
-
-  ShiftVel_c=NULL;    //-ShiftingAdvanced //<ShiftingAdvanced>
-  FSType_c=NULL;      //-ShiftingAdvanced //<ShiftingAdvanced>
-  FSNormal_c=NULL;    //-ShiftingAdvanced //<ShiftingAdvanced>
-  FSMinDist_c=NULL;   //-ShiftingAdvanced //<ShiftingAdvanced>
-  FSTresh_c=NULL;     //-ShiftingAdvanced //<ShiftingAdvanced>
-  LCorr_c=NULL;       //-ShiftingAdvanced //<ShiftingAdvanced>
-  PressSym_c=NULL;    //-ShiftingAdvanced //<ShiftingAdvanced>
-  PressAsym_c=NULL;   //-ShiftingAdvanced //<ShiftingAdvanced>
-
-  PeriParent_c =NULL; //-ShiftingAdvanced //<ShiftingAdvanced>
 
   SpsTauRho2_c=NULL;  //-Laminar+SPS.
   Sps2Strain_c=NULL;  //-Laminar+SPS.
+
+  ShiftPosfs_c=NULL;  //-Shifting.
+
+  ShiftVel_c=NULL;    //-ShiftingAdvanced //<vs_advshift>
+  FSType_c=NULL;      //-ShiftingAdvanced //<vs_advshift>
+  FSNormal_c=NULL;    //-ShiftingAdvanced //<vs_advshift>
+  FSMinDist_c=NULL;   //-ShiftingAdvanced //<vs_advshift>
+  FSTresh_c=NULL;     //-ShiftingAdvanced //<vs_advshift>
+  LCorr_c=NULL;       //-ShiftingAdvanced //<vs_advshift>
+  PressSym_c=NULL;    //-ShiftingAdvanced //<vs_advshift>
+  PressAsym_c=NULL;   //-ShiftingAdvanced //<vs_advshift>
 
   FreeCpuMemoryParticles();
 
@@ -166,6 +167,8 @@ void JSphCpu::FreeCpuMemoryParticles(){
   delete Pos_c;         Pos_c=NULL;
   delete Velrho_c;      Velrho_c=NULL;
 
+  delete PeriParent_c;  PeriParent_c=NULL;
+
   delete BoundNor_c;    BoundNor_c=NULL;    //-mDBC
   delete MotionVel_c;   MotionVel_c=NULL;   //-mDBC2  //<vs_m2dbc>
   delete MotionAce_c;   MotionAce_c=NULL;   //-mDBC2  //<vs_m2dbc>
@@ -180,23 +183,21 @@ void JSphCpu::FreeCpuMemoryParticles(){
   delete Ar_c;          Ar_c=NULL;
   delete Press_c;       Press_c=NULL;
   delete Delta_c;       Delta_c=NULL;
-  delete ShiftPosfs_c;  ShiftPosfs_c=NULL;  //-Shifting.
 
   delete SpsTauRho2_c;  SpsTauRho2_c=NULL;  //-Laminar+SPS.
   delete Sps2Strain_c;  Sps2Strain_c=NULL;  //-Laminar+SPS.
 
-  delete ShiftVel_c;    ShiftVel_c=NULL;    //-ShiftingAdvanced //<ShiftingAdvanced>
-  delete FSType_c;      FSType_c=NULL;      //-ShiftingAdvanced //<ShiftingAdvanced>
-  delete FSNormal_c;    FSNormal_c=NULL;    //-ShiftingAdvanced //<ShiftingAdvanced>
-  delete FSMinDist_c;   FSMinDist_c=NULL;   //-ShiftingAdvanced //<ShiftingAdvanced>
-  delete FSTresh_c;     FSTresh_c=NULL;     //-ShiftingAdvanced //<ShiftingAdvanced>
-  delete LCorr_c;       LCorr_c=NULL;       //-ShiftingAdvanced //<ShiftingAdvanved>
-  delete PressSym_c;    PressSym_c=NULL;    //-ShiftingAdvanced //<ShiftingAdvanved>
-  delete PressAsym_c;   PressAsym_c=NULL;   //-ShiftingAdvanced //<ShiftingAdvanved>
+  delete ShiftPosfs_c;  ShiftPosfs_c=NULL;  //-Shifting.
 
-  delete PeriParent_c;  PeriParent_c=NULL;  //-ShiftingAdvanced //<ShiftingAdvanced>
-  
-  
+  delete ShiftVel_c;    ShiftVel_c=NULL;    //-ShiftingAdvanced //<vs_advshift>
+  delete FSType_c;      FSType_c=NULL;      //-ShiftingAdvanced //<vs_advshift>
+  delete FSNormal_c;    FSNormal_c=NULL;    //-ShiftingAdvanced //<vs_advshift>
+  delete FSMinDist_c;   FSMinDist_c=NULL;   //-ShiftingAdvanced //<vs_advshift>
+  delete FSTresh_c;     FSTresh_c=NULL;     //-ShiftingAdvanced //<vs_advshift>
+  delete LCorr_c;       LCorr_c=NULL;       //-ShiftingAdvanced //<vs_advshift>
+  delete PressSym_c;    PressSym_c=NULL;    //-ShiftingAdvanced //<vs_advshift>
+  delete PressAsym_c;   PressAsym_c=NULL;   //-ShiftingAdvanced //<vs_advshift>
+    
   //-Free CPU memory for array objects.
   CpuParticlesSize=0;
   if(Arrays_Cpu)Arrays_Cpu->Reset();
@@ -242,14 +243,14 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np){
   Ar_c   =new acfloat ("Arc"   ,Arrays_Cpu,false); //-NO INITIAL MEMORY.
   Press_c=new acfloat ("Pressc",Arrays_Cpu,false); //-NO INITIAL MEMORY.
   Delta_c=new acfloat ("Deltac",Arrays_Cpu,false); //-NO INITIAL MEMORY.
-  //-Arrays for Shifting.
-  ShiftPosfs_c=new acfloat4("ShiftPosfsc",Arrays_Cpu,false); //-NO INITIAL MEMORY.
   //-Arrays for Laminar+SPS.
   if(TVisco==VISCO_LaminarSPS){
     SpsTauRho2_c=new acsymatrix3f("SpsTauRho2c",Arrays_Cpu,true);
     Sps2Strain_c=new acsymatrix3f("Sps2Strainc",Arrays_Cpu,false); //-NO INITIAL MEMORY.
   }
-
+  //-Arrays for Shifting.
+  ShiftPosfs_c=new acfloat4("ShiftPosfsc",Arrays_Cpu,false); //-NO INITIAL MEMORY.
+  //-Arrays for Advanced shifting. //<vs_advshift_ini>
   if(ShiftingAdv!=NULL){
     ShiftVel_c  =new acfloat4   ("ShiftVelc" ,Arrays_Cpu,true);
     FSType_c    =new acuint     ("FStypec"   ,Arrays_Cpu,true);
@@ -259,11 +260,10 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np){
     LCorr_c     =new acmatrix3d ("LCorrc"    ,Arrays_Cpu,false); //-NO INITIAL MEMORY.
     PressSym_c  =new acfloat3   ("PressSymc" ,Arrays_Cpu,false); //-NO INITIAL MEMORY.
     PressAsym_c =new acfloat3   ("PressAsymc",Arrays_Cpu,false); //-NO INITIAL MEMORY.
-    if(PeriActive){
+    if(PeriActive && !PeriParent_c){
       PeriParent_c=new acuint("PeriParentc",Arrays_Cpu,true);
     }
-  }
-
+  }//<vs_advshift_end>
 
   ////-Shows the allocated memory.
   //PrintSizeNp(CpuParticlesSize,MemCpuParticles,0);
@@ -473,7 +473,7 @@ void JSphCpu::PreInteraction_Forces(TpInterStep interstep){
     ,ShiftPosfs_c->ptr());
 
   //<vs_advshift_ini>
-  if((AC_CPTR(ShiftVel_c))&& interstep==INTERSTEP_SymPredictor)
+  if((AC_CPTR(ShiftVel_c)) && interstep==INTERSTEP_SymPredictor)
     ShiftVel_c->Memset(0,Np);
   if(AC_CPTR(FSMinDist_c))FSMinDist_c->Memset(0,Np);
   if(AC_CPTR(FSNormal_c))FSNormal_c->Memset(0,Np);
@@ -570,12 +570,14 @@ void JSphCpu::PosInteraction_Forces(){
   if(Sps2Strain_c)Sps2Strain_c->Free();
   if(BoundMode_c)BoundMode_c->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
   if(TangenVel_c)TangenVel_c->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
-  if(FSNormal_c)FSNormal_c->Free();   //<ShiftingAdvanced>
-  if(FSMinDist_c)FSMinDist_c->Free(); //<ShiftingAdvanced>
-  if(FSTresh_c)FSTresh_c->Free();     //<ShiftingAdvanced>
-  if(LCorr_c)LCorr_c->Free();         //<ShiftingAdvanced>
-  if(PressSym_c)PressSym_c->Free();   //<ShiftingAdvanced>
-  if(PressAsym_c)PressAsym_c->Free(); //<ShiftingAdvanced>
+  //<vs_advshift_ini>
+  if(FSNormal_c)FSNormal_c->Free();
+  if(FSMinDist_c)FSMinDist_c->Free();
+  if(FSTresh_c)FSTresh_c->Free();
+  if(LCorr_c)LCorr_c->Free();
+  if(PressSym_c)PressSym_c->Free();
+  if(PressAsym_c)PressAsym_c->Free();
+  //<vs_advshift_end>
 }
 
 //==============================================================================
@@ -675,17 +677,17 @@ float VanAlbadaLimiter(float beta){
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   ,bool shift,bool mdbc2
-  ,bool shiftadv,bool aleform,bool ncpress> void JSphCpu::InteractionForcesFluid   //<AdvancedShifting>
-  (unsigned n,unsigned pinit,bool boundp2,float visco
-  ,StDivDataCpu divdata,const unsigned* dcell
+  ,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>
+  void JSphCpu::InteractionForcesFluid(unsigned n,unsigned pinit,bool boundp2
+  ,float visco,StDivDataCpu divdata,const unsigned* dcell
   ,const tsymatrix3f* tau,tsymatrix3f* two_strain
   ,const tdouble3* pos,const tfloat4* velrho,const typecode* code
   ,const unsigned* idp,const float* press,const tfloat3* dengradcorr
   ,const byte* boundmode,const tfloat3* tangenvel,const tfloat3* motionvel //<vs_m2dbc>
   ,float& viscdt,float* ar,tfloat3* ace,float* delta
   ,TpShifting shiftmode,tfloat4* shiftposfs
-  ,unsigned* fstype,tfloat4* shiftvel,tmatrix3d* lcorr          //<AdvancedShifting>
-  ,float* fstresh,tfloat3* presssym,tfloat3* pressasym)const    //<AdvancedShifting>
+  ,unsigned* fstype,tfloat4* shiftvel,tmatrix3d* lcorr        //<vs_advshift>
+  ,float* fstresh,tfloat3* presssym,tfloat3* pressasym)const  //<vs_advshift>
 {
   //-Initialize viscth to calculate viscdt maximo con OpenMP. | Inicializa viscth para calcular visdt maximo con OpenMP.
   float viscth[OMP_MAXTHREADS*OMP_STRIDE];
@@ -704,7 +706,6 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
     tfloat4 shiftposfsp1;
     if(shift)shiftposfsp1=shiftposfs[p1];
 
-
     //-Obtain data of particle p1 in case of floating objects. | Obtiene datos de particula p1 en caso de existir floatings.
     bool ftp1=false;     //-Indicate if it is floating. | Indica si es floating.
     if(USE_FLOATING){
@@ -713,7 +714,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       if(ftp1 && shift)shiftposfsp1.x=FLT_MAX;  //-For floating objects do not calculate shifting. | Para floatings no se calcula shifting.
     }
 
-    //-Variables for Shifting Advanced.
+    //-Variables for Advanced Shifting. //<vs_advshift_ini>
     float fstreshp1;
     tmatrix3d     lcorrp1=TMatrix3d(0);
     tfloat4       shiftvelp1=TFloat4(0);
@@ -721,9 +722,10 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
     tfloat3       pressasymp1=TFloat3(0);
     if(ncpress)   presssymp1=presssym[p1];
     if(ncpress)   pressasymp1=pressasym[p1];
-    if(aleform && !ftp1)   shiftvelp1=shiftvel[p1];
+    if(aleform && !ftp1)shiftvelp1=shiftvel[p1];
     if(shiftadv)  fstreshp1=fstresh[p1];
     if(ncpress)   lcorrp1=lcorr[p1];
+    //<vs_advshift_end>
 
     //-Obtain data of particle p1.
     const tdouble3 posp1=pos[p1];
@@ -786,7 +788,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
             acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
           }
 
-          if(ncpress && compute){
+          if(ncpress && compute){ //<vs_advshift_ini>
             const float prs=(pressp1+press[p2])/(rhop1*velrhop2.w)
               +(tker==KERNEL_Cubic? fsph::GetKernelCubic_Tensil(CSP,rr2,rhop1,pressp1,velrhop2.w,press[p2]): 0);
             const float p_vpm=-prs*massp2;
@@ -794,7 +796,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
             const float ncp_vpm=-ncprs*massp2;
             presssym[p1].x+=p_vpm*frx; presssym[p1].y+=p_vpm*fry; presssym[p1].z+=p_vpm*frz;
             pressasym[p1].x+=ncp_vpm*frx; pressasym[p1].y+=ncp_vpm*fry; pressasym[p1].z+=ncp_vpm*frz;
-          }
+          } //<vs_advshift_end>
 
           //-Density derivative (Continuity equation).
           float dvx=velp1.x-velrhop2.x, dvy=velp1.y-velrhop2.y, dvz=velp1.z-velrhop2.z;
@@ -808,7 +810,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
           #endif
           if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz)*(rhop1/velrhop2.w);
 
-          if(aleform && compute){
+          if(aleform && compute){ //<vs_advshift_ini>
             tfloat4 shiftvelp2=TFloat4(0);
             if(!boundp2 && !ftp2 && !ftp1)shiftvelp2=shiftvel[p2];      
 
@@ -830,19 +832,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
             arp1+=massrhop*(dvx1*frx+dvy1*fry+dvz1*frz);
             // //-Density derivative (Continuity equation).
             arp1+=massrhop*(dvx*frx+dvy*fry+dvz*frz)*rhop1;
-          }
-
-          if(shiftadv){
-            const float massrho=(massp2)/velrhop2.w;        
-            const float wab=fsph::GetKernel_Wab<tker>(CSP,rr2);;
-            fstreshp1-=massrho*(drx*frx+dry*fry+drz*frz);
-            if(ncpress && compute){
-              // pou+=wab*massrho;              
-              lcorr[p1].a11+=-drx*frx*massrho; lcorr[p1].a12+=-drx*fry*massrho; lcorr[p1].a13+=-drx*frz*massrho;
-              lcorr[p1].a21+=-dry*frx*massrho; lcorr[p1].a22+=-dry*fry*massrho; lcorr[p1].a23+=-dry*frz*massrho;
-              lcorr[p1].a31+=-drz*frx*massrho; lcorr[p1].a32+=-drz*fry*massrho; lcorr[p1].a33+=-drz*frz*massrho;
-        }
-          }
+          } //<vs_advshift_end>
 
           const float cbar=(float)Cs0;
           //-Density Diffusion Term (Molteni and Colagrossi 2009).
@@ -873,6 +863,19 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
             shiftposfsp1.z+=massrho*frz;
             shiftposfsp1.w-=massrho*(drx*frx+dry*fry+drz*frz);
           }
+
+          //-Advanced shifting. //<vs_advshift_ini>
+          if(shiftadv){
+            const float massrho=(massp2)/velrhop2.w;        
+            const float wab=fsph::GetKernel_Wab<tker>(CSP,rr2);;
+            fstreshp1-=massrho*(drx*frx+dry*fry+drz*frz);
+            if(ncpress && compute){
+              // pou+=wab*massrho;              
+              lcorr[p1].a11+=-drx*frx*massrho; lcorr[p1].a12+=-drx*fry*massrho; lcorr[p1].a13+=-drx*frz*massrho;
+              lcorr[p1].a21+=-dry*frx*massrho; lcorr[p1].a22+=-dry*fry*massrho; lcorr[p1].a23+=-dry*frz*massrho;
+              lcorr[p1].a31+=-drz*frx*massrho; lcorr[p1].a32+=-drz*fry*massrho; lcorr[p1].a33+=-drz*frz*massrho;
+            }
+          } //<vs_advshift_end>
 
           //===== Viscosity ===== 
           if(compute){
@@ -931,36 +934,35 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       }
     }
 
+    //<vs_advshift_ini>
     if(shiftadv)fstresh[p1]=fstreshp1;
     if(ncpress && boundp2){
       if(fstype[p1]==0 && shiftvelp1.w>0.95){
-      tmatrix3d LCorr_inv=TMatrix3d(0);
-      if(Simulate2D){
-        tmatrix2d Lcorr2D;
-        tmatrix2d Lcorr2D_inv;
-        Lcorr2D.a11=lcorr[p1].a11; Lcorr2D.a12=lcorr[p1].a13;
-        Lcorr2D.a21=lcorr[p1].a31; Lcorr2D.a22=lcorr[p1].a33;
-        float lcorr_det=float(Lcorr2D.a11*Lcorr2D.a22-Lcorr2D.a12*Lcorr2D.a21);
-        Lcorr2D_inv.a11=Lcorr2D.a22/lcorr_det; Lcorr2D_inv.a12=-Lcorr2D.a12/lcorr_det; Lcorr2D_inv.a22=Lcorr2D.a11/lcorr_det; Lcorr2D_inv.a21=-Lcorr2D.a21/lcorr_det;
-        LCorr_inv.a11=Lcorr2D_inv.a11;  LCorr_inv.a13=Lcorr2D_inv.a12;
-        LCorr_inv.a31=Lcorr2D_inv.a21;  LCorr_inv.a33=Lcorr2D_inv.a22;
-      } else {
-        const float determ=(float)fmath::Determinant3x3(lcorr[p1]);
-        LCorr_inv = fmath::InverseMatrix3x3(lcorr[p1], determ);
-      }
+        tmatrix3d LCorr_inv=TMatrix3d(0);
+        if(Simulate2D){
+          tmatrix2d Lcorr2D;
+          tmatrix2d Lcorr2D_inv;
+          Lcorr2D.a11=lcorr[p1].a11; Lcorr2D.a12=lcorr[p1].a13;
+          Lcorr2D.a21=lcorr[p1].a31; Lcorr2D.a22=lcorr[p1].a33;
+          float lcorr_det=float(Lcorr2D.a11*Lcorr2D.a22-Lcorr2D.a12*Lcorr2D.a21);
+          Lcorr2D_inv.a11=Lcorr2D.a22/lcorr_det; Lcorr2D_inv.a12=-Lcorr2D.a12/lcorr_det; Lcorr2D_inv.a22=Lcorr2D.a11/lcorr_det; Lcorr2D_inv.a21=-Lcorr2D.a21/lcorr_det;
+          LCorr_inv.a11=Lcorr2D_inv.a11;  LCorr_inv.a13=Lcorr2D_inv.a12;
+          LCorr_inv.a31=Lcorr2D_inv.a21;  LCorr_inv.a33=Lcorr2D_inv.a22;
+        }
+        else{
+          const float determ=(float)fmath::Determinant3x3(lcorr[p1]);
+          LCorr_inv = fmath::InverseMatrix3x3(lcorr[p1], determ);
+        }
         acep1.x+=float(pressasym[p1].x*LCorr_inv.a11 + pressasym[p1].y*LCorr_inv.a12 + pressasym[p1].z*LCorr_inv.a13);
         acep1.y+=float(pressasym[p1].x*LCorr_inv.a21 + pressasym[p1].y*LCorr_inv.a22 + pressasym[p1].z*LCorr_inv.a23);
         acep1.z+=float(pressasym[p1].x*LCorr_inv.a31 + pressasym[p1].y*LCorr_inv.a32 + pressasym[p1].z*LCorr_inv.a33);
-      } else{
-      acep1.x+=presssym[p1].x; acep1.y+=presssym[p1].y; acep1.z+=presssym[p1].z;
+      }
+      else{
+        acep1.x+=presssym[p1].x; acep1.y+=presssym[p1].y; acep1.z+=presssym[p1].z;
       }
     }
+    //<vs_advshift_end>
 
-    // if(ncpress && !boundp2){
-    //   presssym[p1]=presssymp1;
-    //   pressasym[p1]=pressasymp1;
-    // }
-    
     //-Sum results together. | Almacena resultados.
     if(shift||arp1||acep1.x||acep1.y||acep1.z||visc){
       if(tdensity!=DDT_None){
@@ -1091,11 +1093,12 @@ void JSphCpu::InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata
   if(viscdt<demdt)viscdt=demdt;
 }
 
+//<vs_advshift_ini>
 //==============================================================================
 /// Identify probably free'surface particles.   
 //==============================================================================
-void JSphCpu::ComputeFsType(unsigned n,unsigned pini,unsigned* fstype
-  ,const float* fstresh,bool sim2d)const
+void JSphCpu::ComputeFsType(unsigned n,unsigned pini,bool sim2d
+  ,const float* fstresh,unsigned* fstype)const
 {
   const int pfin=int(pini+n);
   #ifdef OMP_USE
@@ -1103,18 +1106,19 @@ void JSphCpu::ComputeFsType(unsigned n,unsigned pini,unsigned* fstype
   #endif
   for(int p=int(pini);p<pfin;p++){
     //-Find particles that are probably on the free-surface.
-     unsigned fstypep1=0;
-      if(sim2d){
-        if(fstresh[p]<1.7) fstypep1=2;
-        if(fstresh[p]<1.1) fstypep1=3;
-      } else {
-        if(fstresh[p]<2.75) fstypep1=2;
-        if(fstresh[p]<1.8 ) fstypep1=3;
-      }
-      fstype[p]=fstypep1;
+    unsigned fstypep1=0;
+    if(sim2d){
+      if(fstresh[p]<1.7) fstypep1=2;
+      if(fstresh[p]<1.1) fstypep1=3;
+    }
+    else{
+      if(fstresh[p]<2.75) fstypep1=2;
+      if(fstresh[p]<1.8 ) fstypep1=3;
+    }
+    fstype[p]=fstypep1;
   }
 }
-
+//<vs_advshift_end>
 
 //==============================================================================
 /// Computes sub-particle stress tensor divided by rho^2 (tau/rho^2) for SPS 
@@ -1158,8 +1162,8 @@ void JSphCpu::ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrho
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   ,bool shift,bool mdbc2
-  ,bool shiftadv,bool aleform,bool ncpress> void JSphCpu::Interaction_ForcesCpuT  //>AdvancedShifting>
-  (const stinterparmsc& t,StInterResultc& res)const
+  ,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>
+  void JSphCpu::Interaction_ForcesCpuT(const stinterparmsc& t,StInterResultc& res)const
 {
   float viscdt=res.viscdt;
   if(t.npf){
@@ -1169,7 +1173,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       ,t.pos,t.velrho,t.code,t.idp,t.press,t.dengradcorr
       ,t.boundmode,t.tangenvel,t.motionvel //<vs_m2dbc>
       ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs
-      ,t.fstype,t.shiftvel,t.lcorr,t.fstresh,t.presssym,t.pressasym);
+      ,t.fstype,t.shiftvel,t.lcorr,t.fstresh,t.presssym,t.pressasym); //<vs_advshift>
     //-Interaction Fluid-Bound.
     const float viscb=Visco*ViscoBoundFactor;
     InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2,shiftadv,aleform,ncpress>
@@ -1177,7 +1181,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       ,t.pos,t.velrho,t.code,t.idp,t.press,NULL
       ,t.boundmode,t.tangenvel,t.motionvel //<vs_m2dbc>
       ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs
-      ,t.fstype,t.shiftvel,t.lcorr,t.fstresh,t.presssym,t.pressasym);
+      ,t.fstype,t.shiftvel,t.lcorr,t.fstresh,t.presssym,t.pressasym); //<vs_advshift>
 
     //-Interaction of DEM Floating-Bound & Floating-Floating. //(DEM)
     if(UseDEM)InteractionForcesDEM(CaseNfloat,t.divdata,t.dcell
@@ -1187,8 +1191,9 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
     if(tvisco==VISCO_LaminarSPS)
       ComputeSpsTau(t.npf,t.npb,t.velrho,t.sps2strain,t.spstaurho2);
     
-    if(shiftadv && InterStep==INTERSTEP_SymCorrector)
-      ComputeFsType(t.npf,t.npb,t.fstype,t.fstresh,Simulate2D);
+    //-Identify probably free-surface particles for advanced shifting.  //<vs_advshift>
+    if(shiftadv && InterStep==INTERSTEP_SymCorrector)                   //<vs_advshift>
+      ComputeFsType(t.npf,t.npb,Simulate2D,t.fstresh,t.fstype);         //<vs_advshift>
   }
   if(t.npbok){
     //-Interaction Bound-Fluid.
@@ -1201,19 +1206,19 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,bool mdbc2> 
   void JSphCpu::Interaction_Forces_ct6(const stinterparmsc& t,StInterResultc& res)const
 {
-  if(ShiftingAdv){
+  if(ShiftingAdv){ //<vs_advshift_ini>
     const bool aleform=ShiftingAdv->GetAleActive();
     const bool ncpress=ShiftingAdv->GetNcPress();
-    if(aleform){
-      if(ncpress) Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,true,true>(t,res);
-      else        Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,true,false>(t,res);
-    }else{
-      if(ncpress) Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,false,true>(t,res);
-      else        Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,false,false>(t,res);
+    if(aleform){ const bool ale=true;
+      if(ncpress)Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,ale,true>(t,res);
+      else       Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,ale,false>(t,res);
     }
-  }else{
-    Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,false,false,false>(t,res);
-  }
+    else{        const bool ale=false;
+      if(ncpress)Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,ale,true>(t,res);
+      else       Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,ale,false>(t,res);
+    }
+  } //<vs_advshift_end>
+  else           Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,false,false,false>(t,res);
 }
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> 
@@ -1596,7 +1601,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
   Timersc->TmStart(TMC_SuComputeStep);
   const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=(Shifting!=NULL);
-  const bool shiftadv=(ShiftingAdv!=NULL); //<ShiftingAdvanced>
+  const bool shiftadv=(ShiftingAdv!=NULL); //<vs_advshift>
   const double dt05=dt*.5;
   const int np=int(Np);
   const int npb=int(Npb);
@@ -1630,7 +1635,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
     const tfloat3*  acec=Ace_c->cptr();
     const tfloat4*  velrhoprec=VelrhoPre_c->cptr();
     const tfloat4*  shiftposfc=ShiftPosfs_c->cptr();
-    const tfloat4*  shiftvel=AC_CPTR(ShiftVel_c);
+    const tfloat4*  shiftvel=AC_CPTR(ShiftVel_c); //<vs_advshift>
     typecode*       codec2=Code_c->ptr();
     tdouble3*       movc=mov_c.ptr();
     tfloat4*        velrhoc=Velrho_c->ptr();
@@ -1658,11 +1663,11 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
           dy+=double(shiftposfc[p].y);
           dz+=double(shiftposfc[p].z);
         }
-        if(shiftadv){
+        if(shiftadv){ //<vs_advshift_ini>
           dx+=double(shiftvel[p].x)*dt;
           dy+=double(shiftvel[p].y)*dt;
           dz+=double(shiftvel[p].z)*dt;
-        }
+        } //<vs_advshift_end>
         bool outrho=(rhonew<RhopOutMin || rhonew>RhopOutMax);
         //-Restore data of inout particles.
         if(InOut && CODE_IsFluidInout(rcode)){

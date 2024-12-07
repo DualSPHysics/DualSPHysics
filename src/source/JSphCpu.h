@@ -43,19 +43,19 @@ typedef struct{
   const tfloat3*  tangenvel;    //<vs_m2dbc>
   const tfloat3*  motionvel;    //<vs_m2dbc>
   const tfloat3*  dengradcorr;
-  float*   ar;
-  tfloat3* ace;
-  float*   delta;
-  TpShifting shiftmode;
-  tfloat4*   shiftposfs;
-  tsymatrix3f* spstaurho2;
-  tsymatrix3f* sps2strain;
-  unsigned*     fstype;         //<AdvancedShifting>
-  tfloat4*      shiftvel;       //<AdvancedShifting>
-  tmatrix3d*    lcorr;          //<AdvancedShifting>        
-  float*        fstresh;        //<AdvancedShifting> 
-  tfloat3*      presssym;       //<AdvancedShifting> 
-  tfloat3*      pressasym;      //<AdvancedShifting>     
+  float*        ar;
+  tfloat3*      ace;
+  float*        delta;
+  TpShifting    shiftmode;
+  tfloat4*      shiftposfs;
+  tsymatrix3f*  spstaurho2;
+  tsymatrix3f*  sps2strain;
+  unsigned*     fstype;        //<vs_advshift>
+  tfloat4*      shiftvel;      //<vs_advshift>
+  tmatrix3d*    lcorr;         //<vs_advshift>
+  float*        fstresh;       //<vs_advshift>
+  tfloat3*      presssym;      //<vs_advshift>
+  tfloat3*      pressasym;     //<vs_advshift>
 }stinterparmsc;
 
 ///Collects parameters for particle interaction on CPU.
@@ -70,8 +70,8 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
   ,float* ar,tfloat3* ace,float* delta
   ,TpShifting shiftmode,tfloat4* shiftposfs
   ,tsymatrix3f* spstaurho2,tsymatrix3f* sps2strain
-  ,unsigned* fstype,tfloat4* shiftvel,tmatrix3d* lcorr    //<AdvancedShifting
-  ,float* fstresh,tfloat3* presssym,tfloat3* pressasym       //<AdvancedShifting
+  ,unsigned* fstype,tfloat4* shiftvel,tmatrix3d* lcorr  //<vs_advshift>
+  ,float* fstresh,tfloat3* presssym,tfloat3* pressasym  //<vs_advshift>
 )
 {
   stinterparmsc d={np,npb,npbok,(np-npb)
@@ -83,8 +83,8 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
     ,ar,ace,delta
     ,shiftmode,shiftposfs
     ,spstaurho2,sps2strain
-    ,fstype,shiftvel,lcorr        //<AdvancedShifting
-    ,fstresh,presssym,pressasym   //<AdvancedShifting      
+    ,fstype,shiftvel,lcorr         //<vs_advshift>
+    ,fstresh,presssym,pressasym    //<vs_advshift>
   };
   return(d);
 }
@@ -144,6 +144,8 @@ protected:
   acdouble3*  Pos_c;
   acfloat4*   Velrho_c;
 
+  acuint*     PeriParent_c; ///<Particle index to access to the parent of periodic particles (Opt).
+
   //-Variables for mDBC (Opt).
   acfloat3*   BoundNor_c;   ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
   acfloat3*   MotionVel_c;  ///<Velocity of a moving boundary particle (Opt).                  //<vs_m2dbc>
@@ -165,17 +167,17 @@ protected:
   acfloat*    Delta_c;      ///<Sum of Delta-SPH value when DELTA_DynamicExt (Null).
   acfloat4*   ShiftPosfs_c; ///<Particle displacement and free surface detection for Shifting (Null).
 
-  //-Variable for advanced shifting formulation.
-  acfloat4*   ShiftVel_c;       ///<Shifting Velocity vector for advanced shifting.
-  acuint*     FSType_c;         ///<Free-surface identification.
-  acfloat*    FSMinDist_c;      ///<Distance from the Free-Surface (needed for advanced shifting).
-  acfloat3*   FSNormal_c;       ///<Normals of Free-Surface particles (needed for advanced shifting).
-  acfloat*    FSTresh_c;        ///<Divergence of position needed to identify probably free-surface particles).
-  acmatrix3d* LCorr_c;          ///<Correction matrix needed for non-conservative pressure formulation (only in Cpu).
-  acfloat3*   PressSym_c;        ///<Array to store symmetric part of the pressure gradient;
-  acfloat3*   PressAsym_c;       ///<Array to store asymmetric part of the pressure gradient;
-
-  acuint*   PeriParent_c;     ///<Particle index to access to the parent of periodic particles (Opt). //<ShiftingAdvanced>
+  //<vs_advshift_ini>
+  //-Variable for advanced shifting formulation. 
+  acfloat4*   ShiftVel_c;   ///<Shifting Velocity vector for advanced shifting.
+  acuint*     FSType_c;     ///<Free-surface identification.
+  acfloat*    FSMinDist_c;  ///<Distance from the Free-Surface (needed for advanced shifting).
+  acfloat3*   FSNormal_c;   ///<Normals of Free-Surface particles (needed for advanced shifting).
+  acfloat*    FSTresh_c;    ///<Divergence of position needed to identify probably free-surface particles).
+  acmatrix3d* LCorr_c;      ///<Correction matrix needed for non-conservative pressure formulation (only in Cpu).
+  acfloat3*   PressSym_c;   ///<Array to store symmetric part of the pressure gradient;
+  acfloat3*   PressAsym_c;  ///<Array to store asymmetric part of the pressure gradient;
+  //<vs_advshift_end>
 
   double VelMax;        ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;        ///<Maximum value of Ace[] sqrt(ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
@@ -224,7 +226,8 @@ protected:
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
     ,bool shift,bool mdbc2
-    ,bool shiftadv,bool aleform,bool ncpress> void InteractionForcesFluid       //>AdvancedShifting>
+    ,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>
+    void InteractionForcesFluid
     (unsigned n,unsigned pinit,bool boundp2,float visco
     ,StDivDataCpu divdata,const unsigned* dcell
     ,const tsymatrix3f* tau,tsymatrix3f* gradvel
@@ -233,8 +236,8 @@ protected:
     ,const byte* boundmode,const tfloat3* tangenvel,const tfloat3* motionvel //<vs_m2dbc>
     ,float& viscdt,float* ar,tfloat3* ace,float* delta
     ,TpShifting shiftmode,tfloat4* shiftposfs
-    ,unsigned* fstype,tfloat4* shiftvel,tmatrix3d* lcorr              //<AdvancedShifting>
-    ,float* fstresh,tfloat3* presssym,tfloat3* pressasym)const;       //<AdvancedShifting>
+    ,unsigned* fstype,tfloat4* shiftvel,tmatrix3d* lcorr        //<vs_advshift>
+    ,float* fstresh,tfloat3* presssym,tfloat3* pressasym)const; //<vs_advshift>
 
   void InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned* dcell
     ,const unsigned* ftridp,const StDemData* demobjs
@@ -242,7 +245,7 @@ protected:
     ,const unsigned* idp,float& viscdt,tfloat3* ace)const;
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,bool mdbc2
-    ,bool shiftadv,bool aleform,bool ncpress>         //<AdvancedShifting>
+    ,bool shiftadv,bool aleform,bool ncpress>  //<vs_advshift>
     void Interaction_ForcesCpuT(const stinterparmsc& t,StInterResultc& res)const;
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,bool mdbc2>
     void Interaction_Forces_ct6(const stinterparmsc& t,StInterResultc& res)const;
@@ -332,12 +335,12 @@ protected:
     ,const tfloat4* velrho,unsigned* fstype,tfloat4* shiftvel,tfloat3* fsnormal
     ,float* fsmindist)const;
 
-  void ComputeShiftingVel(bool simulate2d,tfloat4* shiftvel
-    ,const unsigned* fstype,const tfloat3* fsnormal,const float* fsmindist,double dt
-    ,float shiftcoef,bool ale)const;
+  void ComputeShiftingVel(bool sim2d,float shiftcoef,bool ale,double dt
+    ,const unsigned* fstype,const tfloat3* fsnormal,const float* fsmindist
+    ,tfloat4* shiftvel)const;
 
-  void ComputeFsType(unsigned n,unsigned pini,unsigned* fstype
-  ,const float* fstresh,bool sim2d)const;
+  void ComputeFsType(unsigned n,unsigned pini,bool sim2d
+    ,const float* fstresh,unsigned* fstype)const;
   //------------------------------------------
   //<vs_advshift_end>
 

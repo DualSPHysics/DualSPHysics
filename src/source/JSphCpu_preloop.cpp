@@ -446,9 +446,9 @@ void JSphCpu::PreLoopInteraction_ct(const StDivDataCpu& divdata
 /// Computes sub-particle stress tensor divided by rho^2 (tau/rho^2) for SPS 
 /// turbulence model.   
 //==============================================================================
-void JSphCpu::ComputeShiftingVel(bool simulate2d,tfloat4* shiftvel
+void JSphCpu::ComputeShiftingVel(bool sim2d,float shiftcoef,bool ale,double dt
   ,const unsigned* fstype,const tfloat3* fsnormal,const float* fsmindist
-  ,double dt,float shiftcoef,bool ale)const
+  ,tfloat4* shiftvel)const
 {
   const int np=int(Np);
   const int npb=int(Npb);
@@ -482,7 +482,7 @@ void JSphCpu::ComputeShiftingVel(bool simulate2d,tfloat4* shiftvel
       shift_final=TFloat4(0,0,0,0);
     }
 
-    if(simulate2d)shift_final.y=0.0;
+    if(sim2d)shift_final.y=0.0;
 
     const float rhovar=abs(shiftp1.x*shift_final.x+shiftp1.y*shift_final.y+shiftp1.z*shift_final.z)*min(KernelH,fsmindistp1);
     const float eps=1e-5f;

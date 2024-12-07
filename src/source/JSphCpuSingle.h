@@ -53,7 +53,7 @@ protected:
   void PeriodicDuplicateNormals(unsigned np,unsigned pini,tuint3 cellmax
     ,tdouble3 perinc,const unsigned* listp,tfloat3* normals
     ,tfloat3* motionvel,tfloat3* motionace)const;
-  void PeriodicSaveParent(unsigned np,unsigned pini,const unsigned* listp,unsigned* periparent)const; //<ShiftingAdvanced>
+  void PeriodicSaveParent(unsigned np,unsigned pini,const unsigned* listp,unsigned* periparent)const;
 
   void PeriodicIgnore(unsigned np,typecode* code)const;
   void RunPeriodic();
