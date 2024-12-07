@@ -1240,6 +1240,11 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
       ,MkInfo,FtCount,FtObjs);
   } //<vs_outpaarts_end>
 
+  //-Checks invalid options for advanced shifting. //<vs_advshift_ini>
+  if(ShiftingAdv){
+    if(TStep==STEP_Verlet)Run_Exceptioon("Advanced shifting is not allowed with Verlet.");
+  } //<vs_advshift_end>
+
   //-Checks invalid options for symmetry. //<vs_syymmetry_ini>
   if(Symmetry){
     if(Simulate2D)  Run_Exceptioon("Symmetry is not allowed with 2-D simulations.");
