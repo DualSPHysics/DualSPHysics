@@ -499,7 +499,7 @@ void JSphGpu::GetConstantData(StCteInteraction& ctes)const{
   //-Set values for DDT.
   SetCtegDdt(ctes,DDTkh,DDTgz);
   //-Set values on formulation options.
-  SetCtegOpts(ctes,Symmetry,unsigned(TBoundary));
+  SetCtegOpts(ctes,unsigned(TBoundary));
   //-Set values for open periodic boundaries.
   SetCtegPeriodic(ctes,PeriActive,PeriXinc,PeriYinc,PeriZinc);
   //-Set values for map definition.
@@ -638,7 +638,6 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
     #ifndef DISABLE_BSMODES
       const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
       const StInterParmsg parms=StrInterParmsg(Simulate2D
-        ,Symmetry  //<vs_syymmetry>
         ,TKernel,FtMode
         ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
         ,0,0,0,0,100,0,0

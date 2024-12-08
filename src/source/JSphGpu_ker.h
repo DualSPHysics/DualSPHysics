@@ -54,7 +54,6 @@ typedef struct{
 typedef struct StrInterParmsg{
   //-Configuration options.
   bool simulate2d;
-  bool symmetry;   //<vs_syymmetry>
   TpKernel tkernel;
   TpFtMode ftmode;
   TpVisco tvisco;
@@ -100,7 +99,6 @@ typedef struct StrInterParmsg{
   ///Structure constructor.
   StrInterParmsg(
      bool simulate2d
-    ,bool symmetry //<vs_syymmetry>
     ,TpKernel tkernel
     ,TpFtMode ftmode
     ,TpVisco tvisco
@@ -133,7 +131,6 @@ typedef struct StrInterParmsg{
   {
     //-Configuration options.
     this->simulate2d=simulate2d;
-    this->symmetry=symmetry; //<vs_syymmetry>
     this->tkernel=tkernel; 
     this->ftmode=ftmode;
     this->tvisco=tvisco;

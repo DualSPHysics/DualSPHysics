@@ -165,7 +165,6 @@ void JSph::InitVars(){
   OutPosCount=OutRhoCount=OutMovCount=0;
   Simulate2D=false;
   Simulate2DPosY=0;
-  Symmetry=false;
   Stable=false;
   SvPosDouble=false;
   RunCode=CalcRunCode();
@@ -771,9 +770,6 @@ void JSph::LoadConfigParameters(const JXml* cxml){
   if(eparms.Exists("PartsOutMax"))Log->PrintWarning("The XML option \'PartsOutMax\' is deprecated. Use \'MinFluidStop\' option.");
   MinFluidStop=eparms.GetValueFloat("MinFluidStop",true,0);
 
-  //-Configuration of symmetry calculation.            //<vs_syymmetry>
-  Symmetry=(eparms.GetValueInt("Symmetry",true,0)!=0); //<vs_syymmetry>
-
   //-Configuration of periodic boundaries.
   {
     PeriX=PeriY=PeriZ=false;
@@ -1221,15 +1217,6 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
       ,MkInfo,FtCount,FtObjs);
   } //<vs_outpaarts_end>
 
-  //-Checks invalid options for symmetry. //<vs_syymmetry_ini>
-  if(Symmetry){
-    if(Simulate2D)  Run_Exceptioon("Symmetry is not allowed with 2-D simulations.");
-    if(PeriY)       Run_Exceptioon("Symmetry is not allowed with periodic conditions in axis Y.");
-    if(WithFloating)Run_Exceptioon("Symmetry is not allowed with floating bodies.");
-    if(UseChrono)   Run_Exceptioon("Symmetry is not allowed with Chrono objects.");
-    if(TVisco==VISCO_LaminarSPS)Run_Exceptioon("Symmetry is not allowed with Laminar+SPS viscosity.");
-  } //<vs_syymmetry_end>
-
   //-Defines NpfMinimum according to CaseNfluid. It is updated later to add initial inlet fluid particles.
   NpfMinimum=unsigned(MinFluidStop*CaseNfluid);
 
@@ -1403,8 +1390,6 @@ void JSph::ResizeMapLimits(){
   if(!PeriX){ MapRealPosMin.x=dmin.x; MapRealPosMax.x=dmax.x; }
   if(!PeriY){ MapRealPosMin.y=dmin.y; MapRealPosMax.y=dmax.y; }
   if(!PeriZ){ MapRealPosMin.z=dmin.z; MapRealPosMax.z=dmax.z; }
-  //-Symmetry domain configuration. //<vs_syymmetry>
-  if(Symmetry)MapRealPosMin.y=0;    //<vs_syymmetry>
 }
 
 //==============================================================================
@@ -1493,9 +1478,6 @@ void JSph::VisuConfig(){
     ConfigInfo=ConfigInfo+sep+"2D";
   }
   else ConfigInfo=ConfigInfo+sep+"3D";
-  //-Symmetry. 
-  Log->Print(fun::VarStr("Symmetry",Symmetry));  //<vs_syymmetry>
-  if(Symmetry)ConfigInfo=ConfigInfo+sep+"Symmetry";
   //-SavePosDouble. 
   Log->Print(fun::VarStr("SavePosDouble",SvPosDouble));
   if(SvPosDouble)ConfigInfo=ConfigInfo+sep+"SvPosDouble";
@@ -2176,7 +2158,7 @@ void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
   xml.LoadFile(FileXml);
 
   //-Configuration of GaugeSystem.
-  GaugeSystem->ConfigCtes(CSP,Symmetry,TimeMax,TimePart,Scell,ScellDiv
+  GaugeSystem->ConfigCtes(CSP,TimeMax,TimePart,Scell,ScellDiv
     ,Map_PosMin,Map_PosMin,Map_PosMax);
   if(xml.GetNodeSimple("case.execution.special.gauges",true))
     GaugeSystem->LoadXml(&xml,"case.execution.special.gauges",MkInfo);
@@ -2655,7 +2637,6 @@ void JSph::ConfigSaveData(unsigned piece,unsigned pieces,std::string div
   parthead.ConfigSimNp(NpDynamic,ReuseIds);
   parthead.ConfigSimMap(MapRealPosMin,MapRealPosMax);
   parthead.ConfigSimPeri(TpPeriFromPeriActive(PeriActive),PeriXinc,PeriYinc,PeriZinc);
-  parthead.ConfigSymmetry(Symmetry); //<vs_syymmetry>
   parthead.ConfigVisco(TVisco,Visco,ViscoBoundFactor);
   if(SvData&SDAT_Binx){
     Log->AddFileInfo(DirDataOut+"Part_Head.ibi4","Binary file with basic information of simulation data.");

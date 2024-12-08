@@ -514,7 +514,6 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 
   //-Interaction Fluid-Fluid/Bound & Bound-Fluid.
   const StInterParmsg parms=StrInterParmsg(Simulate2D
-    ,Symmetry //<vs_syymmetry>
     ,TKernel,FtMode
     ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
     ,Visco*ViscoBoundFactor,Visco
@@ -573,8 +572,6 @@ void JSphGpuSingle::MdbcBoundCorrection(){
       ,Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr(),Velrho_g->ptr());
   }
   else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
-    //const unsigned fnum=(InterStep==STEP_Verlet? Nstep: (InterStep==INTERSTEP_SymCorrector? Nstep*2+1: Nstep*2));
-    //JDebugSphGpu::SaveVtk("vtkdg/PreMdbcCorr.vtk",fnum,0,Np,"all",this);
     const unsigned n=(UseNormalsFt? Np: Npb);
     BoundMode_g->Reserve();     //-BoundOnOff_g is freed in PosInteraction_Forces().
     BoundMode_g->CuMemset(0,n); //-BoundMode_g[]=0=BMODE_DBC

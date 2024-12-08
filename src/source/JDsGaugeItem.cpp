@@ -87,7 +87,7 @@ void JGaugeItem::CheckCudaErroor(const std::string& srcfile,int srcline
 /// Initialisation of variables.
 //==============================================================================
 void JGaugeItem::Reset(){
-  Config(CteSphNull(),false,0,0,TDouble3(0),TDouble3(0),TDouble3(0));
+  Config(CteSphNull(),0,0,TDouble3(0),TDouble3(0),TDouble3(0));
   FixedDomMCel=false;
   DomMCelIni0=DomMCelFin0=TUint3(0);
   SaveVtkPart=false;
@@ -101,11 +101,10 @@ void JGaugeItem::Reset(){
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JGaugeItem::Config(const StCteSph& csp,bool symmetry,float scell
-  ,int scelldiv,tdouble3 mapposmin,tdouble3 domposmin,tdouble3 domposmax)
+void JGaugeItem::Config(const StCteSph& csp,float scell,int scelldiv
+  ,tdouble3 mapposmin,tdouble3 domposmin,tdouble3 domposmax)
 {
   CSP=csp;
-  Symmetry=symmetry;
   Scell=scell;
   ScellDiv=scelldiv;
   MapPosMin=mapposmin;

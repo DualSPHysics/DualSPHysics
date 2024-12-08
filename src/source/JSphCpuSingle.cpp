@@ -655,8 +655,6 @@ void JSphCpuSingle::MdbcBoundCorrection(){
       ,Idp_c->cptr(),BoundNor_c->cptr(),Velrho_c->ptr());
   }
   else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
-    //const unsigned fnum=(InterStep==STEP_Verlet? Nstep: (InterStep==INTERSTEP_SymCorrector? Nstep*2+1: Nstep*2));
-    //JDebugSphCpu::SaveVtk("vtkdg/PreMdbcCorr.vtk",fnum,0,Np,"all",this);
     const unsigned nmode=(UseNormalsFt? Np: Npb);
     BoundMode_c->Reserve();       //-BoundMode_c is freed in PosInteraction_Forces().
     BoundMode_c->Memset(0,nmode); //-BoundMode_c[]=0=BMODE_DBC

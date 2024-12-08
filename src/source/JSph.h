@@ -138,7 +138,6 @@ protected:
 
   bool Simulate2D;       ///<Toggles 2D simulation (cancels forces in Y axis). | Activa o desactiva simulacion en 2D (anula fuerzas en eje Y).
   double Simulate2DPosY; ///<Y value in 2D simulations.                        | Valor de Y en simulaciones 2D.
-  bool Symmetry;         ///<Activates symmetry in plane y=0 (default=false).
   bool Stable;
   bool SvPosDouble;      ///<Indicates whether Pos is saved as double in bi4 files. | Indica si en los ficheros bi4 se guarda Pos como double.
 
