@@ -25,7 +25,7 @@
 #include "Functions.h"
 #include "FunGeo3d.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
+#include "JSpVtkShape.h"
 #ifdef _WITHGPU
   #include "JSphShifting_ker.h"
   //#include "FunctionsCuda.h"
@@ -284,14 +284,14 @@ std::string JSphShifting::GetConfigInfo()const{
 void JSphShifting::SaveVtkConfig()const{
   const unsigned nz=GetCount();
   if(nz){
-    JVtkLib sh;
+    JSpVtkShape ss;
     const unsigned nz=GetCount();
     for(unsigned c=0;c<nz;c++){
       const JSphShiftingZone* zo=Zones[c];
-      sh.AddShapeBox(zo->GetPosMin(),zo->GetVecx(),zo->GetVecy(),zo->GetVecz(),c);
+      ss.AddBoxSizeVec(zo->GetPosMin(),zo->GetVecx(),zo->GetVecy(),zo->GetVecz(),word(c));
     }
     const string filevtk=AppInfo.GetDirOut()+"CfgShifting_Zones.vtk";
-    sh.SaveShapeVtk(filevtk,"ZoneId");
+    ss.SaveVtk(filevtk,"ZoneId");
     if(nz==ZonesXml || !ZonesXml)Log->AddFileInfo(filevtk,"Saves VTK file with Shifting zones.");
   }
 }

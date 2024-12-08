@@ -34,6 +34,7 @@
 //:# - No reordena paraticulas para reducir diferencias usando restart. (23-04-2018)
 //:# - Improved definition of the periodic conditions. (27-04-2018)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
+//:# - Loads BoundNor data for mDBC. (26-11-2024)
 //:#############################################################################
 
 /// \file JPartsLoad4.h \brief Declares the class \ref JPartsLoad4.
@@ -89,12 +90,14 @@ protected:
   double DemDtForce;          ///<Dt for tangencial acceleration in DEM calculations.
 
   //-Variables for particles.
-  unsigned Count;    //-Number of particles.
-  unsigned* Idp;
-  tdouble3* Pos;
-  tfloat4*  VelRho;
+  unsigned Count;      ///<Total number of particles.
+  unsigned BoundCount; ///<Number of boundary particles.
+  unsigned* Idp;       ///<Identifier of particle [Count].
+  tdouble3* Pos;       ///<Position of particle [Count].
+  tfloat4*  VelRho;    ///<Velocity + density of particle [Count].
+  tfloat3*  BoundNor;  ///<Normal (x,y,z) pointing from boundary particles to boundary limit [BoundCount].
 
-  void AllocMemory(unsigned count);
+  void AllocMemory(unsigned count,unsigned boundcount);
   template<typename T> T* SortParticles(const unsigned* vsort,unsigned count,T* v)const;
   void CheckSortParticles();
   void SortParticles();
@@ -134,6 +137,7 @@ public:
   const unsigned* GetIdp(){ return(Idp); }
   const tdouble3* GetPos(){ return(Pos); }
   const tfloat4*  GetVelRho(){ return(VelRho); }
+  const tfloat3*  GetBoundNor(){ return(BoundNor); }
 
   tdouble3 GetCasePosMin()const{ return(CasePosMin); }
   tdouble3 GetCasePosMax()const{ return(CasePosMax); }

@@ -55,14 +55,16 @@ typedef struct{
 typedef struct StrInterParmsg{
   //-Configuration options.
   bool simulate2d;
-  bool symmetry;   //<vs_syymmetry>
   TpKernel tkernel;
   TpFtMode ftmode;
   TpVisco tvisco;
   TpDensity tdensity;
   TpShifting shiftmode;
   bool mdbc2;      //<vs_m2dbc>
-  bool shiftadv; bool corrector; bool aleform; bool ncpress; //<ShiftingAdvanced>
+  bool shiftadv;   //<vs_advshift>
+  bool corrector;  //<vs_advshift>
+  bool aleform;    //<vs_advshift>
+  bool ncpress;    //<vs_advshift>
   //-Execution values.
   float viscob,viscof;
   unsigned bsbound,bsfluid;
@@ -93,10 +95,10 @@ typedef struct StrInterParmsg{
   float*  ar;
   float3* ace;
   float*  delta;
-  tsymatrix3f* sps2strain;
-  float4* shiftposfs;
-  unsigned* fstype;             //<ShiftingAdvanced>
-  const float4* shiftvel;       //<ShiftingAdvanced>
+  tsymatrix3f*  sps2strain;
+  float4*       shiftposfs;
+  unsigned*     fstype;          //<vs_advshift>
+  const float4* shiftvel;        //<vs_advshift>
   //-Other values and objects.
   cudaStream_t stm;
   StKerInfo* kerinfo;
@@ -104,14 +106,16 @@ typedef struct StrInterParmsg{
   ///Structure constructor.
   StrInterParmsg(
      bool simulate2d
-    ,bool symmetry //<vs_syymmetry>
     ,TpKernel tkernel
     ,TpFtMode ftmode
     ,TpVisco tvisco
     ,TpDensity tdensity
     ,TpShifting shiftmode
-    ,bool mdbc2                 //<vs_m2dbc>
-    ,bool shiftadv,bool corrector,bool aleform, bool ncpress       //<ShiftingAdvanced>
+    ,bool mdbc2         //<vs_m2dbc>
+    ,bool shiftadv      //<vs_advshift>
+    ,bool corrector     //<vs_advshift>
+    ,bool aleform       //<vs_advshift>
+    ,bool ncpress       //<vs_advshift>
     ,float viscob,float viscof
     ,unsigned bsbound,unsigned bsfluid
     ,unsigned np,unsigned npb,unsigned npbok
@@ -133,21 +137,23 @@ typedef struct StrInterParmsg{
     ,float* delta
     ,tsymatrix3f* sps2strain
     ,float4* shiftposfs
-    ,unsigned* fstype           //<ShiftingAdvanced>
-    ,const float4* shiftvel     //<ShiftingAdvanced>
+    ,unsigned* fstype           //<vs_advshift>
+    ,const float4* shiftvel     //<vs_advshift>
     ,cudaStream_t stm
     ,StKerInfo* kerinfo)
   {
     //-Configuration options.
     this->simulate2d=simulate2d;
-    this->symmetry=symmetry; //<vs_syymmetry>
     this->tkernel=tkernel; 
     this->ftmode=ftmode;
     this->tvisco=tvisco;
     this->tdensity=tdensity;
     this->shiftmode=shiftmode;
-    this->mdbc2=mdbc2;       //<vs_m2dbc>
-    this->shiftadv=shiftadv; this->corrector=corrector; this->aleform=aleform; this->ncpress=ncpress; //<ShiftingAdvanced>
+    this->mdbc2=mdbc2;         //<vs_m2dbc>
+    this->shiftadv=shiftadv;   //<vs_advshift>
+    this->corrector=corrector; //<vs_advshift>
+    this->aleform=aleform;     //<vs_advshift>
+    this->ncpress=ncpress;     //<vs_advshift>
     //-Execution values.
     this->viscob=viscob;   this->viscof=viscof;
     this->bsbound=bsbound; this->bsfluid=bsfluid;
@@ -174,7 +180,8 @@ typedef struct StrInterParmsg{
     this->delta=delta;
     this->sps2strain=sps2strain;
     this->shiftposfs=shiftposfs;
-    this->fstype=fstype; this->shiftvel=shiftvel; //<ShiftingAdvanced>
+    this->fstype=fstype;      //<vs_advshift>
+    this->shiftvel=shiftvel;  //<vs_advshift>
     //-Other values and objects.
     this->stm=stm;
     this->kerinfo=kerinfo;

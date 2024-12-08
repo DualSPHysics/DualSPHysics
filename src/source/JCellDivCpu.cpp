@@ -466,8 +466,6 @@ void JCellDivCpu::SortArray(tsymatrix3f* vec){
   memcpy(vec+ini,VSortSymmatrix3f+ini,sizeof(tsymatrix3f)*(n-ini));
 }
 
-
-//<ShiftingAdvanced_ini>
 //==============================================================================
 /// Reorder PeriParent references.
 //==============================================================================
@@ -489,7 +487,6 @@ void JCellDivCpu::SortArrayPeriParent(unsigned* vec){
   }
   memcpy(vec+ini,VSortInt+ini,sizeof(unsigned)*(n-ini));
 }
-//<ShiftingAdvanced_end>
 
 //==============================================================================
 /// Return current limites of domain.

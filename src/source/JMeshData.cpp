@@ -341,7 +341,7 @@ void JMeshData::ClearData(){
   const unsigned nar=Arrays->Count();
   for(unsigned ca=0;ca<nar;ca++){
     JDataArrays::StDataArray& ar=Arrays->GetArray(ca);
-    memset(ar.ptr,0,SizeOfType(ar.type)*ar.count);
+    memset(ar.ptr,0,TypeSize(ar.type)*ar.count);
   }
 }
 

@@ -64,7 +64,7 @@ class JDsPartMotionSave;
 class JDsPartFloatSave;
 class JDsPartsOut;
 class JSphShifting;
-class JSphShiftingAdv;      //<ShiftAdv>
+class JSphShiftingAdv;     //<vs_advshift>
 class JDsDamping;
 class JXml;
 class JDsOutputTime;
@@ -143,7 +143,6 @@ protected:
 
   bool Simulate2D;       ///<Toggles 2D simulation (cancels forces in Y axis). | Activa o desactiva simulacion en 2D (anula fuerzas en eje Y).
   double Simulate2DPosY; ///<Y value in 2D simulations.                        | Valor de Y en simulaciones 2D.
-  bool Symmetry;         ///<Activates symmetry in plane y=0 (default=false).
   bool Stable;
   bool SvPosDouble;      ///<Indicates whether Pos is saved as double in bi4 files. | Indica si en los ficheros bi4 se guarda Pos como double.
 
@@ -324,7 +323,7 @@ protected:
   JSphShifting* Shifting;       ///<Object for shifting correction.
   TpShifting ShiftingMode;      ///<Mode of Shifting: None, NoBound, NoFixed, Full.
 
-  JSphShiftingAdv* ShiftingAdv; ///<Object for Advanced Shifting>
+  JSphShiftingAdv* ShiftingAdv; ///<Object for Advanced Shifting. //<vs_advshift>
 
   JDsDamping* Damping;          ///<Object for damping zones.
 
@@ -437,8 +436,6 @@ protected:
   void VisuDemCoefficients()const;
 
   void LoadCodeParticles(unsigned np,const unsigned* idp,typecode* code)const;
-  void LoadBoundNormals(unsigned np,const unsigned* idp,const typecode* code
-    ,tfloat3* boundnor);
   void ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
     ,const unsigned* idp,tfloat3* boundnor);
 

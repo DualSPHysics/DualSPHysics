@@ -824,8 +824,6 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
   }
 }
 
-
-//<ShiftingAdvanced_ini>
 //------------------------------------------------------------------------------
 /// Reorders PeriParent references.
 //------------------------------------------------------------------------------
@@ -851,7 +849,6 @@ __global__ void KerSortArrayPeriParent(unsigned n
   }
 }
 
-
 //==============================================================================
 /// Reorders PeriParent references.
 //==============================================================================
@@ -864,7 +861,6 @@ void SortArrayPeriParent(unsigned np,const unsigned* sortpart
     KerSortArrayPeriParent <<<sgrid,DIVBSIZE>>>(np,sortpart,rsortpart,a,a2);
   }
 }
-//<ShiftingAdvanced_end>
 
 //------------------------------------------------------------------------------
 /// Compute minimum and maximum values starting from data[].

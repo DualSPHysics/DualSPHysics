@@ -342,7 +342,8 @@ void JPartDataBi4::AddPartDataVar(const std::string& name
 {
   if(!v)Run_Exceptioon("The pointer data is invalid.");
   //-Comprueba valor de npok. Checks value of npok.
-  if(Part->GetvUint("Npok")!=npok)Run_Exceptioon("Part information is invalid.");
+  if(Part->GetvUint("Npok")!=npok && name!="BoundNor")
+    Run_Exceptioon("Part information is invalid.");
   //-Crea array con particulas validas. Creates valid particles array.
   Part->CreateArray(name,type,npok,v,externalpointer);
 }

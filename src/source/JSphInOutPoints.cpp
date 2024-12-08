@@ -28,7 +28,8 @@
 #include "FunGeo3d.h"
 #include "JMatrix4.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
+#include "JSpVtkData.h"
+#include "JSpVtkShape.h"
  
 #include <cfloat>
 #include <algorithm>
@@ -822,9 +823,9 @@ void JSphInOutPoints::CheckPointsInLine(tdouble3 dir,unsigned np
     const tplane3d pla2=fgeo::PlaneNormalized(fgeo::PlanePtVec(pmin,dir));
     //-Creates VTK file with inlet line.
     {
-      JVtkLib sh;
-      sh.AddShapeLine(pmin,pmin+dirline*fgeo::PointsDist(pmin,pmax),0);
-      sh.SaveShapeVtk(AppInfo.GetDirOut()+"ErrorInOut_InoutPointsInLine_Line.vtk","");
+      JSpVtkShape ss;
+      ss.AddLine(pmin,pmin+dirline*fgeo::PointsDist(pmin,pmax));
+      ss.SaveVtk(AppInfo.GetDirOut()+"ErrorInOut_InoutPointsInLine_Line.vtk");
     }
     //-Creates VTK file with inlet points.
     JDataArrays arrays;
@@ -835,7 +836,7 @@ void JSphInOutPoints::CheckPointsInLine(tdouble3 dir,unsigned np
       dist[p]=fabs(pla2.a*pt.x+pla2.b*pt.y+pla2.c*pt.z+pla2.d);
     } 
     const string file=AppInfo.GetDirOut()+"ErrorInOut_InoutPointsInLine_Points.vtk";
-    JVtkLib::SaveVtkData(file,arrays,"Pos");
+    JSpVtkData::Save(file,arrays,"Pos");
     Log->AddFileInfo(file,"Saves invalid InOut points (too far from the inlet line).");
     Run_ExceptioonFile(fun::PrintStr("All inlet points must be on the same line orthogonal to the direction vector. Check distance to the inlet line in the VTK file \'%s\'.",file.c_str()),xmlrow);
   }
@@ -885,15 +886,15 @@ void JSphInOutPoints::CheckPointsInPlane(tdouble3 dir,unsigned np
     ComputeVectorExtremes(np,points,p0,v3,d3min,d3max);
     //-Creates VTK file with inlet plane.
     {
-      JVtkLib sh;
+      JSpVtkShape ss;
       const tdouble3 p1=p0+v2*d2min+v3*d3min;
       const tdouble3 p2=p0+v2*d2max+v3*d3min;
       const tdouble3 p3=p0+v2*d2max+v3*d3max;
       const tdouble3 p4=p0+v2*d2min+v3*d3max;
-      sh.AddShapeQuad(p1,p2,p3,p4,0);
+      ss.AddQuad(p1,p2,p3,p4);
       const tdouble3 pm=(p1+p2+p3+p4)/4.;
-      sh.AddShapeLine(pm,pm+dir*(Dp*5),0);
-      sh.SaveShapeVtk(AppInfo.GetDirOut()+"ErrorInOut_InoutPointsInPlane_Plane.vtk","");
+      ss.AddLine(pm,pm+dir*(Dp*5));
+      ss.SaveVtk(AppInfo.GetDirOut()+"ErrorInOut_InoutPointsInPlane_Plane.vtk");
     }
     //-Creates VTK file with inlet points.
     JDataArrays arrays;
@@ -904,7 +905,7 @@ void JSphInOutPoints::CheckPointsInPlane(tdouble3 dir,unsigned np
       dist[p]=fabs(pla.a*pt.x+pla.b*pt.y+pla.c*pt.z+pla.d);
     } 
     const string file=AppInfo.GetDirOut()+"ErrorInOut_InoutPointsInPlane_Points.vtk";
-    JVtkLib::SaveVtkData(file,arrays,"Pos");
+    JSpVtkData::Save(file,arrays,"Pos");
     Log->AddFileInfo(file,"Saves invalid InOut points (too far from the inlet plane).");
     Run_ExceptioonFile(fun::PrintStr("All inlet points must be on the same plane orthogonal to the direction vector. Check distance to the inlet plane in the VTK file \'%s\'.",file.c_str()),xmlrow);
   }
@@ -952,7 +953,7 @@ void JSphInOutPoints::CheckPoints(const std::string& xmlrow){
     if(outside)arrays.AddArray("Outside",np,outside,false);
     if(layer)  arrays.AddArray("Layer"  ,np,layer  ,false);
     const string file=AppInfo.GetDirOut()+"ErrorInOut_InoutPoints.vtk";
-    JVtkLib::SaveVtkData(file,arrays,"Pos");
+    JSpVtkData::Save(file,arrays,"Pos");
     Log->AddFileInfo(file,"Saves invalid InOut points (outside the domain).");
     //-Frees memory.
     delete[] pos;     pos=NULL;

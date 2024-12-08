@@ -29,7 +29,6 @@
 #include "JAppInfo.h"
 #include "JTimeControl.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
 #include <climits>
 
 using namespace std;
@@ -107,9 +106,10 @@ void JSphCpuSingle::InOutInit(double timestepini){
     UpdatePos(ps,0,0,0,false,p,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr());
   }
 
-  //-Updates new particle values for Laminar+SPS.
+  //-Updates new particle values for Laminar+SPS, mDBC...
   if(SpsTauRho2_c)SpsTauRho2_c->MemsetOffset(Np,0,newnp);
   if(BoundNor_c)BoundNor_c->MemsetOffset(Np,0,newnp);
+  if(FSType_c)FSType_c->MemsetOffset(Np,3,newnp); //<vs_advshift>
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",0
     ,Np,Np+newnp,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr());
 
@@ -124,10 +124,6 @@ void JSphCpuSingle::InOutInit(double timestepini){
 
   //-Shows configuration.
   InOut->VisuConfig("\nInOut configuration:"," ");
-  //-Checks invalid options for symmetry. //<vs_syymmetry_ini>
-  if(Symmetry && InOut->Use_ExtrapolatedData())
-    Run_Exceptioon("Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled.");
-  //<vs_syymmetry_end>
 
   //-Updates divide information.
   Timersc->TmStop(TMC_SuInOut);
@@ -223,9 +219,10 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
     }
   }
 
-  //-Updates new particle values for Laminar+SPS and normals for mDBC.
+  //-Updates new particle values for Laminar+SPS, mDBC...
   if(SpsTauRho2_c)SpsTauRho2_c->MemsetOffset(Np,0,newnp);
   if(BoundNor_c)BoundNor_c->MemsetOffset(Np,0,newnp);
+  if(FSType_c)FSType_c->MemsetOffset(Np,3,newnp); //<vs_advshift>
 
   //-Updates number of particles.
   if(newnp){

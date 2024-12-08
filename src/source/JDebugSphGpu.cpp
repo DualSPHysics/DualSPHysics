@@ -22,7 +22,7 @@
 #include "JException.h"
 #include "Functions.h"
 #include "FunctionsCuda.h"
-#include "JVtkLib.h"
+#include "JSpVtkData.h"
 #include "JOutputCsv.h"
 #include "JDataArrays.h"
 
@@ -375,7 +375,7 @@ void JDebugSphGpu::SaveVtk(std::string filename,int numfile,unsigned pini
   //-Run user filter.
   RunUserFilters(arrays);
   //-Saves VTK file.
-  JVtkLib::SaveVtkData(file,arrays,"Pos");
+  JSpVtkData::Save(file,arrays,"Pos");
   arrays.Reset();
 }
 

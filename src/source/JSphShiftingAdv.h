@@ -16,18 +16,7 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-//:#############################################################################
-//:# Cambios:
-//:# =========
-//:# - Clase para gestionar zonas de shifting. (24-11-2019)
-//:# - Improved exception management. (19-03-2020)  
-//:# - Objeto JXml pasado como const para operaciones de lectura. (19-03-2020)  
-//:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
-//:# - Nuevo metodo GetConfigInfo(). (03-06-2020)  
-//:# - Cambio de nombre de J.Shifting a J.SphShifting. (28-06-2020)
-//:#############################################################################
-
-/// \file JSphShifting.h \brief Declares the class \ref JSphShifting.
+/// \file JSphShiftingAdv.h \brief Declares the class \ref JSphShiftingAdv.
 
 #ifndef _JSphShiftingAdv_
 #define _JSphShiftingAdv_
@@ -44,10 +33,7 @@ class TiXmlElement;
 //##############################################################################
 //# JSphShiftingAdv
 //##############################################################################
-
-/// \brief Manages the Shifting advanced model
-
-
+/// \brief Manages the Shifting advanced model.
 
 class JSphShiftingAdv : protected JObject
 {
@@ -59,24 +45,21 @@ private:
 
   float ShiftCoef;       ///<Coefficient for shifting computation.
 
-  bool  AleActive;       ///<Arbitrarian Eulerian-Lagrangian model>
-  bool  NcPress;         ///<Non conservative pressure formulation>
-
-
+  bool  AleActive;       ///<Arbitrarian Eulerian-Lagrangian model.
+  bool  NcPress;         ///<Non conservative pressure formulation.
 
 public:
   JSphShiftingAdv(bool simulate2d,double dp,float kernelh);
   ~JSphShiftingAdv();
   void Reset();
 
-  void ConfigBasic(float shiftcoef=-0.01f,bool aleactive=false, bool ncpress=false);
+  void ConfigBasic(float shiftcoef=-0.01f,bool aleactive=false,bool ncpress=false);
   void VisuConfig(std::string txhead="",std::string txfoot="");
   std::string GetConfigInfo()const;
 
   float       GetShiftCoef()const{ return(ShiftCoef); }
-  bool        GetAleActive ()const{ return(AleActive); }
-  bool        GetNcPress   ()const{ return(NcPress); }
-
+  bool        GetAleActive()const{ return(AleActive); }
+  bool        GetNcPress  ()const{ return(NcPress); }
 
 };
 

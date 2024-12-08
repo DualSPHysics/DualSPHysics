@@ -39,6 +39,7 @@
 //:# - Graba mas valoras de fuerzas y aceleraciones. (30-03-2023)
 //:# - Updated for JBinaryData with 64-bit size. (20-06-2023)
 //:# - Nueva implementacion simplificada en JPartFloatInfoBi4Save y JPartFloatInfoBi4Load. (23-07-2023)
+//:# - Error corregido en GetIdxCpt(), GetPartFptXXX() y GetPPartFptXXX(). (24-11-2024)
 //:#############################################################################
 
 /// \file JPartFloatInfoBi4.h \brief Declares the classes \ref JPartFloatInfoBi4Save and class \ref JPartFloatInfoBi4Load.
@@ -191,16 +192,16 @@ class JPartFloatInfoBi4Data : protected JObject
 
   unsigned GetFptCount()const{ return(FptCount); }
   unsigned GetCpt(unsigned cpt)const;
-  unsigned GetIdxCpt(unsigned idx,unsigned cpt)const{ return(GetIdx(idx)*FtCount+GetCpt(cpt)); }
+  unsigned GetIdxCpt(unsigned idx,unsigned cpt)const{ return(GetIdx(idx)*FptCount+GetCpt(cpt)); }
 
-  word     GetPartFptMkbound(unsigned idx,unsigned cpt)const{ return(FptMkbound[GetIdxCf(idx,cpt)]); }
-  tdouble3 GetPartFptPos    (unsigned idx,unsigned cpt)const{ return(FptPos    [GetIdxCf(idx,cpt)]); }
-  tfloat3  GetPartFptForce  (unsigned idx,unsigned cpt)const{ return(FptForce  [GetIdxCf(idx,cpt)]); }
+  word     GetPartFptMkbound(unsigned idx,unsigned cpt)const{ return(FptMkbound[GetIdxCpt(idx,cpt)]); }
+  tdouble3 GetPartFptPos    (unsigned idx,unsigned cpt)const{ return(FptPos    [GetIdxCpt(idx,cpt)]); }
+  tfloat3  GetPartFptForce  (unsigned idx,unsigned cpt)const{ return(FptForce  [GetIdxCpt(idx,cpt)]); }
 
 
-  const word*     GetPPartFptMkbound(unsigned idx)const{ return(FptMkbound+GetIdxCf(idx,0)); }
-  const tdouble3* GetPPartFptPos    (unsigned idx)const{ return(FptPos    +GetIdxCf(idx,0)); }
-  const tfloat3*  GetPPartFptForce  (unsigned idx)const{ return(FptForce  +GetIdxCf(idx,0)); }
+  const word*     GetPPartFptMkbound(unsigned idx)const{ return(FptMkbound+GetIdxCpt(idx,0)); }
+  const tdouble3* GetPPartFptPos    (unsigned idx)const{ return(FptPos    +GetIdxCpt(idx,0)); }
+  const tfloat3*  GetPPartFptForce  (unsigned idx)const{ return(FptForce  +GetIdxCpt(idx,0)); }
 
 };
 

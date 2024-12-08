@@ -47,7 +47,7 @@
 class JXml;
 class TiXmlElement;
 class JLog2;
-class JVtkLib;
+class JSpVtkShape;
 
 //##############################################################################
 //# XML format in _FmtXML_Damping.xml.
@@ -99,7 +99,7 @@ public:
   tfloat3 GetFactorxyz()const{ return(Factorxyz); };
 
   virtual void ReadXml(const JXml* sxml,TiXmlElement* ele)=0;
-  virtual void SaveVtkConfig(double dp,JVtkLib* sh)const=0;
+  virtual void SaveVtkConfig(double dp,JSpVtkShape* ss)const=0;
   virtual void GetConfig(std::vector<std::string>& lines)const=0;
 
   virtual void ComputeDampingCpu(double dt,unsigned n,unsigned pini
@@ -146,7 +146,7 @@ public:
     :JDsDampingOp(id,DA_Plane){ Reset(); ReadXml(sxml,ele); }
   void Reset();
   void ReadXml(const JXml* sxml,TiXmlElement* ele);
-  void SaveVtkConfig(double dp,JVtkLib* sh)const;
+  void SaveVtkConfig(double dp,JSpVtkShape* ss)const;
   void GetConfig(std::vector<std::string>& lines)const;
 
   void ComputeDampingCpu(double dt,unsigned n,unsigned pini
@@ -208,7 +208,7 @@ public:
     :JDsDampingOp(id,DA_Box){ Reset(); ReadXml(sxml,ele); }
   void Reset();
   void ReadXml(const JXml* sxml,TiXmlElement* ele);
-  void SaveVtkConfig(double dp,JVtkLib* sh)const;
+  void SaveVtkConfig(double dp,JSpVtkShape* ss)const;
   void GetConfig(std::vector<std::string>& lines)const;
 
   void ComputeDampingCpu(double dt,unsigned n,unsigned pini
@@ -242,7 +242,7 @@ public:
     :JDsDampingOp(id,DA_Cylinder){ Reset(); ReadXml(sxml,ele); }
   void Reset();
   void ReadXml(const JXml* sxml,TiXmlElement* ele);
-  void SaveVtkConfig(double dp,JVtkLib* sh)const;
+  void SaveVtkConfig(double dp,JSpVtkShape* ss)const;
   void GetConfig(std::vector<std::string>& lines)const;
 
   void ComputeDampingCpu(double dt,unsigned n,unsigned pini

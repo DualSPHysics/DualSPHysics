@@ -393,12 +393,10 @@ int CpyFile(std::string src,const std::string dest);
 
 typedef enum{ BigEndian=1,LittleEndian=0 }TpByteOrder;
 TpByteOrder GetByteOrder();
-void ReverseByteOrder(llong* data,int count,llong* result);
-void ReverseByteOrder(int* data,int count,int* result);
-void ReverseByteOrder(short* data,int count,short* result);
-inline void ReverseByteOrder(llong* data,int count){ ReverseByteOrder(data,count,data); }
-inline void ReverseByteOrder(int*   data,int count){ ReverseByteOrder(data,count,data); }
-inline void ReverseByteOrder(short* data,int count){ ReverseByteOrder(data,count,data); }
+void SetByteOrder32(int* data,int count,int* result);
+void SetByteOrder16(short* data,int count,short* result);
+inline void SetByteOrder32(int*   data,int count){ SetByteOrder32(data,count,data); }
+inline void SetByteOrder16(short* data,int count){ SetByteOrder16(data,count,data); }
 
 byte*     ResizeAlloc(byte*     data,unsigned ndata,unsigned newsize);
 word*     ResizeAlloc(word*     data,unsigned ndata,unsigned newsize);

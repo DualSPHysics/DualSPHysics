@@ -29,38 +29,35 @@
 /// Implements a set of functions and CUDA kernels for preloop.
 namespace cusph{
 
-
-void ComputeFSNormals(TpKernel tkernel,bool simulate2d,bool symmetry,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
-    ,StDivDataGpu& dvd,const unsigned* dcell,const double2* posxy,const double* posz
-    ,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp,float4* shiftposfs
-    ,unsigned* fstype,float3* fsnormal,unsigned* listp,cudaStream_t stm);
+void ComputeFSNormals(TpKernel tkernel,bool simulate2d,unsigned bsfluid
+  ,unsigned fluidini,unsigned fluidnum,StDivDataGpu& dvd,const unsigned* dcell
+  ,const double2* posxy,const double* posz,const float4* poscell
+  ,const float4* velrho,const typecode* code,const float* ftomassp
+  ,float4* shiftposfs,unsigned* fstype,float3* fsnormal,unsigned* listp
+  ,cudaStream_t stm);
     
-void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d,bool symmetry,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
-    ,StDivDataGpu& dvd,const unsigned* dcell,const double2* posxy,const double* posz
-    ,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp,float4* shiftposfs
-    ,unsigned* fstype,float3* fsnormal,unsigned* listp,cudaStream_t stm);
+void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d
+  ,unsigned bsfluid,unsigned fluidini,unsigned fluidnum,StDivDataGpu& dvd
+  ,const unsigned* dcell,const float4* poscell,const typecode* code
+  ,const float3* fsnormal,unsigned* listp,unsigned* fstype,cudaStream_t stm);
 
+void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv
+  ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
+  ,const unsigned* dcell,const float4* poscell,const float4* velrho
+  ,const typecode* code,const float* ftomassp,float4* shiftvel,unsigned* fstype
+  ,float3* fsnormal,float* fsmindist,cudaStream_t stm);
 
-void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv,bool symmetry
-    ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
-    ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,cudaStream_t stm);
+void ComputeShiftingVel(unsigned bsfluid,unsigned fluidnum,unsigned fluidini
+  ,bool sim2d,float shiftcoef,bool ale,float dt,const unsigned* fstype
+  ,const float3* fsnormal,const float* fsmindist,float4* shiftvel
+  ,cudaStream_t stm);    
 
+void PeriodicSaveParent(unsigned n,unsigned pini,const unsigned* listp
+  ,unsigned* periparent);
 
-void ComputeShiftingVel(unsigned bsfluid,unsigned fluidnum,unsigned fluidini,bool simulate2d,float4* shiftvel
-    ,const unsigned* fstype,const float3* fsnormal,const float* fsmindist,float dt,float shiftcoef,bool ale,cudaStream_t stm);    
-
-void PeriodicSaveParent(unsigned n,unsigned pini,const unsigned* listp,unsigned* periparent);
-
-
-void PeriPreLoopCorr(unsigned n,unsigned pinit,const unsigned* periparent,unsigned* fstype,float4* shiftvel);
+void PeriPreLoopCorr(unsigned n,unsigned pinit,const unsigned* periparent
+  ,unsigned* fstype,float4* shiftvel);
 }
 
-
-
-
-
-
-
-
 #endif
+

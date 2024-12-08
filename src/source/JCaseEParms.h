@@ -33,6 +33,7 @@
 //:# - Improved exception management. (18-03-2020)
 //:# - Cambio de nombre de J.SpaceEParms a J.CaseEParms. (28-06-2020)
 //:# - Nuevo atributo active para habilitar o deshabilitar paramtros. (11-10-2024)
+//:# - Nuevo metodo GetValueNumBool(). (04-12-2024)
 //:#############################################################################
 
 /// \file JCaseEParms.h \brief Declares the class \ref JCaseEParms.
@@ -121,11 +122,15 @@ public:
 
   std::string GetValue(const std::string& key);
 
+  bool GetValueNumBool(const std::string& key,int num,bool optional=false,bool valdef=false);
   int GetValueNumInt(const std::string& key,int num,bool optional=false,int valdef=0);
   double GetValueNumDouble(const std::string& key,int num,bool optional=false,double valdef=0);
   float GetValueNumFloat(const std::string& key,int num,bool optional=false,float valdef=0);
   std::string GetValueNumStr(const std::string& key,int num,bool optional=false,std::string valdef="");
   
+  bool GetValueBool(const std::string& key,bool optional=false,bool valdef=0){ 
+    return(GetValueNumBool(key,0,optional,valdef));
+  }
   int GetValueInt(const std::string& key,bool optional=false,int valdef=0){ 
     return(GetValueNumInt(key,0,optional,valdef));
   }

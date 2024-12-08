@@ -35,6 +35,7 @@
 //:#   y IT_BoundNormalParts. (07-07-2020)
 //:# - Nuevas opciones limit en JDsInitializeOp_BoundNormalCylinder. (11-10-2021)
 //:# - Nueva opcion clear para inicializacion de normales. (11-10-2021)
+//:# - Remove outdated and duplicate options for normals initialisation (use GenCase v5.4.350 or higher). (26-11-2024)
 //:#############################################################################
 
 /// \file JDsInitialize.h \brief Declares the class \ref JDsInitialize.
@@ -67,10 +68,6 @@ public:
   typedef enum{ 
     IT_FluidVel=10
    ,IT_BoundNormalSet=30
-   ,IT_BoundNormalPlane=31
-   ,IT_BoundNormalSphere=32
-   ,IT_BoundNormalCylinder=33
-   ,IT_BoundNormalParts=34
   }TpInitialize; 
 
   ///Structure with constant values needed for initialization tasks.
@@ -181,104 +178,6 @@ public:
   void GetConfig(std::vector<std::string>& lines)const;
 };  
 
-//##############################################################################
-//# JDsInitializeOp_BoundNormalPlane
-//##############################################################################
-/// Initializes normals of boundary particles.
-class JDsInitializeOp_BoundNormalPlane : public JDsInitializeOp
-{
-private:
-  std::string MkBound;
-  bool PointAuto;   ///<Point is calculated automatically according to normal configuration.
-  float LimitDist;  ///<Minimum distance (Dp*vdp) between particles and boundary limit to calculate the point (default=0.5).
-  tfloat3 Point;
-  tfloat3 Normal;
-  float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
-  bool InitClear;   ///<Clears previous normal data (default=true).
-public:
-  JDsInitializeOp_BoundNormalPlane(const JXml* sxml,TiXmlElement* ele,StInitCt initct)
-    :JDsInitializeOp(IT_BoundNormalPlane,"BoundNormalPlane",initct){ Reset(); ReadXml(sxml,ele); }
-  JDsInitializeOp_BoundNormalPlane(const std::string& eparm,StInitCt initct)
-    :JDsInitializeOp(IT_BoundNormalPlane,"BoundNormalPlane",initct){ Reset(); ReadKeyvals(eparm); }
-  void Reset();
-  void ReadXml(const JXml* sxml,TiXmlElement* ele);
-  void ReadKeyvals(const std::string& eparm);
-  void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
-    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
-  void GetConfig(std::vector<std::string>& lines)const;
-};  
-
-//##############################################################################
-//# JDsInitializeOp_BoundNormalSphere
-//##############################################################################
-/// Initializes normals of boundary particles.
-class JDsInitializeOp_BoundNormalSphere : public JDsInitializeOp
-{
-private:
-  std::string MkBound;
-  tfloat3 Center;
-  float Radius;
-  bool Inside;      ///<Boundary particles inside the sphere.
-  float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
-  bool InitClear;   ///<Clears previous normal data (default=true).
-public:
-  JDsInitializeOp_BoundNormalSphere(const JXml* sxml,TiXmlElement* ele,StInitCt initct)
-    :JDsInitializeOp(IT_BoundNormalSphere,"BoundNormalSphere",initct){ Reset(); ReadXml(sxml,ele); }
-  void Reset();
-  void ReadXml(const JXml* sxml,TiXmlElement* ele);
-  void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
-    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
-  void GetConfig(std::vector<std::string>& lines)const;
-};  
-
-//##############################################################################
-//# JDsInitializeOp_BoundNormalCylinder
-//##############################################################################
-/// Initializes normals of boundary particles.
-class JDsInitializeOp_BoundNormalCylinder : public JDsInitializeOp
-{
-private:
-  std::string MkBound;
-  tfloat3 Center1;
-  tfloat3 Center2;
-  float Radius;
-  bool Inside;      ///<Boundary particles inside the cylinder.
-  bool Limit1;      ///<Active normals to limit 1 for inside mode (default=true).
-  bool Limit2;      ///<Active normals to limit 2 for inside mode (default=true).
-  float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
-  bool InitClear;   ///<Clears previous normal data (default=true).
-public:
-  JDsInitializeOp_BoundNormalCylinder(const JXml* sxml,TiXmlElement* ele,StInitCt initct)
-    :JDsInitializeOp(IT_BoundNormalCylinder,"BoundNormalCylinder",initct){ Reset(); ReadXml(sxml,ele); }
-  void Reset();
-  void ReadXml(const JXml* sxml,TiXmlElement* ele);
-  void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
-    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
-  void GetConfig(std::vector<std::string>& lines)const;
-};  
-
-//##############################################################################
-//# JDsInitializeOp_BoundNormalParts
-//##############################################################################
-/// Initializes normals of boundary particles.
-class JDsInitializeOp_BoundNormalParts : public JDsInitializeOp
-{
-private:
-  std::string MkBound;
-  float MaxDisteH;  ///<Maximum distance to boundary limit. It uses H*distanceh (default=2).
-public:
-  JDsInitializeOp_BoundNormalParts(const JXml* sxml,TiXmlElement* ele,StInitCt initct)
-    :JDsInitializeOp(IT_BoundNormalParts,"BoundNormalParts",initct){ Reset(); ReadXml(sxml,ele); }
-  JDsInitializeOp_BoundNormalParts(const std::string& eparm,StInitCt initct)
-    :JDsInitializeOp(IT_BoundNormalPlane,"BoundNormalParts",initct){ Reset(); ReadKeyvals(eparm); }
-  void Reset();
-  void ReadXml(const JXml* sxml,TiXmlElement* ele);
-  void ReadKeyvals(const std::string& eparm);
-  void Run(unsigned np,unsigned npb,const tdouble3* pos,const unsigned* idp
-    ,const word* mktype,tfloat4* velrho,tfloat3* boundnor);
-  void GetConfig(std::vector<std::string>& lines)const;
-};  
-
 
 //##############################################################################
 //# JDsInitialize
@@ -302,7 +201,6 @@ public:
   void Reset();
 
   void LoadXml(const JXml* sxml,const std::string& place);
-  void LoadExecParms(const std::vector<std::string>& execparms);
 
   unsigned Count()const{ return(unsigned(Opes.size())); }
 
