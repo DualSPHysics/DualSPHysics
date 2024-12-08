@@ -602,7 +602,6 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
 
     //-Load data of particle p1. | Carga datos de particula p1.
     const tdouble3 posp1=pos[p1];
-    const bool rsymp1=(Symmetry && posp1.y<=KernelSize); //<vs_syymmetry>
     const tfloat4 velrhop1=velrho[p1];
 
     //-Search for neighbours in adjacent cells.
@@ -612,11 +611,9 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
 
       //-Interaction of boundary with type Fluid/Float | Interaccion de Bound con varias Fluid/Float.
       //---------------------------------------------------------------------------------------------
-      bool rsym=false; //<vs_syymmetry>
       for(unsigned p2=pif.x;p2<pif.y;p2++){
         const float drx=float(posp1.x-pos[p2].x);
-              float dry=float(posp1.y-pos[p2].y);
-        if(rsym)    dry=float(posp1.y+pos[p2].y); //<vs_syymmetry>
+        const float dry=float(posp1.y-pos[p2].y);
         const float drz=float(posp1.z-pos[p2].z);
         const float rr2=drx*drx+dry*dry+drz*drz;
         if(rr2<=KernelSize2 && rr2>=ALMOSTZERO){
@@ -635,8 +632,7 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
 
           if(compute){
             //-Density derivative (Continuity equation).
-            tfloat4 velrhop2=velrho[p2];
-            if(rsym)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
+            const tfloat4 velrhop2=velrho[p2];
             const float dvx=velrhop1.x-velrhop2.x, dvy=velrhop1.y-velrhop2.y, dvz=velrhop1.z-velrhop2.z;
             if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz)*(velrhop1.w/velrhop2.w);
 
@@ -646,10 +642,7 @@ template<TpKernel tker,TpFtMode ftmode> void JSphCpu::InteractionForcesBound
               visc=max(dot_rr2,visc);
             }
           }
-          rsym=(rsymp1 && !rsym && float(posp1.y-dry)<=KernelSize); //<vs_syymmetry>
-          if(rsym)p2--;                                             //<vs_syymmetry>
         }
-        else rsym=false;                                            //<vs_syymmetry>
       }
     }
     //-Sum results together. | Almacena resultados.
@@ -732,7 +725,6 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
     const tfloat3 velp1=TFloat3(velrho[p1].x,velrho[p1].y,velrho[p1].z);
     const float rhop1=velrho[p1].w;
     const float pressp1=press[p1];
-    const bool rsymp1=(Symmetry && posp1.y<=KernelSize); //<vs_syymmetry>
     
     //-Variables for Laminar+SPS.
     tsymatrix3f taup1; //-Note that taup1 is tau_a/rho_a^2.
@@ -745,11 +737,9 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 
       //-Interaction of Fluid with type Fluid or Bound. | Interaccion de Fluid con varias Fluid o Bound.
       //------------------------------------------------------------------------------------------------
-      bool rsym=false; //<vs_syymmetry>
       for(unsigned p2=pif.x;p2<pif.y;p2++){
         const float drx=float(posp1.x-pos[p2].x);
-              float dry=float(posp1.y-pos[p2].y);
-        if(rsym)    dry=float(posp1.y+pos[p2].y); //<vs_syymmetry>
+        const float dry=float(posp1.y-pos[p2].y);
         const float drz=float(posp1.z-pos[p2].z);
         const float rr2=drx*drx+dry*dry+drz*drz;
         if(rr2<=KernelSize2 && rr2>=ALMOSTZERO){
@@ -777,8 +767,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
             if(boundmode[p2]==BMODE_MDBC2OFF)massp2=0;
           } //<vs_m2dbc_end>
 
-          tfloat4 velrhop2=velrho[p2];
-          if(rsym)velrhop2.y=-velrhop2.y; //<vs_syymmetry>
+          const tfloat4 velrhop2=velrho[p2];
 
           //-Velocity derivative (Momentum equation).
           if(compute && !ncpress){
@@ -927,10 +916,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
               }
             }
           }
-          rsym=(rsymp1 && !rsym && float(posp1.y-dry)<=KernelSize); //<vs_syymmetry>
-          if(rsym)p2--;                                             //<vs_syymmetry>
         }
-        else rsym=false;                                            //<vs_syymmetry>
       }
     }
 
@@ -1285,7 +1271,6 @@ void JSphCpu::UpdatePos(tdouble3 rpos,double movx,double movy,double movz
   bool outmov=(fabs(float(movx))>MovLimit || fabs(float(movy))>MovLimit || fabs(float(movz))>MovLimit);
   //-Applies dsiplacement. | Aplica desplazamiento.
   rpos.x+=movx; rpos.y+=movy; rpos.z+=movz;
-  if(Symmetry && rpos.y<0)rpos.y=-rpos.y; //<vs_syymmetry>
   //-Check limits of real domain. | Comprueba limites del dominio reales.
   double dx=rpos.x-MapRealPosMin.x;
   double dy=rpos.y-MapRealPosMin.y;

@@ -68,7 +68,6 @@ JGaugeSystem::~JGaugeSystem(){
 void JGaugeSystem::Reset(){
   ConfiguredCtes=false;
   CSP=CteSphNull();
-  Symmetry=false;
   TimeMax=TimePart=0;
   Scell=0;
   ScellDiv=0;
@@ -129,9 +128,9 @@ void JGaugeSystem::ResetCfgDefault(){
 //==============================================================================
 /// Configures constants.
 //==============================================================================
-void JGaugeSystem::ConfigCtes(const StCteSph& csp,bool symmetry,double timemax
-  ,double timepart,float scell,int scelldiv,tdouble3 mapposmin
-  ,tdouble3 domposmin,tdouble3 domposmax)
+void JGaugeSystem::ConfigCtes(const StCteSph& csp,double timemax,double timepart
+  ,float scell,int scelldiv,tdouble3 mapposmin,tdouble3 domposmin
+  ,tdouble3 domposmax)
 {
   CSP=csp;
   //-Wendland kernel is used when Cubic is selected.
@@ -139,7 +138,6 @@ void JGaugeSystem::ConfigCtes(const StCteSph& csp,bool symmetry,double timemax
     Log->PrintfWarning("The kernel Cubic Spline is not available in GaugeSystem, so kernel Wendland is used.");
     if(!CSP.kwend.awen || !CSP.kwend.bwenh)Run_Exceptioon("Constants of kernel Wendland are not defined.");
   }
-  Symmetry=symmetry;
   TimeMax=timemax;
   TimePart=timepart;
   Scell=scell;
@@ -388,7 +386,7 @@ JGaugeVelocity* JGaugeSystem::AddGaugeVel(std::string name,double computestart
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
   JGaugeVelocity* gau=new JGaugeVelocity(GetCount(),name,point,GpuCount);
-  gau->Config(CSP,Symmetry,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
+  gau->Config(CSP,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
   gau->ConfigDomMCel(fixed);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
@@ -410,7 +408,7 @@ JGaugeSwl* JGaugeSystem::AddGaugeSwl(std::string name,double computestart
   if(masslimit<=0)masslimit=CSP.massfluid*(CSP.simulate2d? 0.4f: 0.5f);
   //-Creates object.
   JGaugeSwl* gau=new JGaugeSwl(GetCount(),name,point0,point2,pointdp,masslimit,GpuCount);
-  gau->Config(CSP,Symmetry,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
+  gau->Config(CSP,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
   gau->ConfigDomMCel(fixed);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
@@ -431,7 +429,7 @@ JGaugeMaxZ* JGaugeSystem::AddGaugeMaxZ(std::string name,double computestart
   if(GetGaugeIdx(name)!=UINT_MAX)Run_Exceptioon(fun::PrintStr("The name \'%s\' already exists.",name.c_str()));
   //-Creates object.
   JGaugeMaxZ* gau=new JGaugeMaxZ(GetCount(),name,point0,height,distlimit,GpuCount);
-  gau->Config(CSP,Symmetry,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
+  gau->Config(CSP,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
   gau->ConfigDomMCel(fixed);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
@@ -456,7 +454,7 @@ JGaugeMesh* JGaugeSystem::AddGaugeMesh(std::string name,double computestart
   //-Creates object.
   JGaugeMesh* gau=new JGaugeMesh(GetCount(),name,meshbas,outdata,tfmt
     ,buffersize,kclimit,kcdummy,masslimit,GpuCount);
-  gau->Config(CSP,Symmetry,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
+  gau->Config(CSP,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
   gau->ConfigDomMCel(fixed);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.
@@ -490,7 +488,7 @@ JGaugeForce* JGaugeSystem::AddGaugeForce(std::string name,double computestart
   //-Creates object.
   JGaugeForce* gau=new JGaugeForce(GetCount(),name,mkbound,typeparts,idbegin
     ,count,code,center,GpuCount);
-  gau->Config(CSP,Symmetry,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
+  gau->Config(CSP,Scell,ScellDiv,MapPosMin,DomPosMin,DomPosMax);
   gau->ConfigDomMCel(fixed);
   gau->ConfigComputeTiming(computestart,computeend,computedt);
   //-Uses common configuration.

@@ -179,7 +179,6 @@ protected:
 
   //-Constant values for calculation (they are constant).
   StCteSph CSP;        ///<Structure with main SPH constants values and configurations.
-  bool Symmetry;       ///<Use of symmetry in plane y=0.
   float Scell;         ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
   int ScellDiv;        ///<Value to divide KernelSize (1 or 2).
   tdouble3 MapPosMin;  ///<Lower limit of simulation + edge (KernelSize) if periodic conditions. MapPosMin=MapRealPosMin-KernelSize(in periodic axis) | Limite inferior de simulacion + borde (KernelSize) si hay condiciones periodicas.
@@ -245,7 +244,7 @@ public:
   const unsigned Idx;
   const std::string Name;
 
-  void Config(const StCteSph& csp,bool symmetry,float scell,int scelldiv
+  void Config(const StCteSph& csp,float scell,int scelldiv
     ,tdouble3 mapposmin,tdouble3 domposmin,tdouble3 domposmax);
   virtual void ConfigDomMCel(bool fixed)=0;
   void SetSaveVtkPart(bool save){ SaveVtkPart=save; }

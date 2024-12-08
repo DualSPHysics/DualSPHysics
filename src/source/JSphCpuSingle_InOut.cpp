@@ -124,10 +124,6 @@ void JSphCpuSingle::InOutInit(double timestepini){
 
   //-Shows configuration.
   InOut->VisuConfig("\nInOut configuration:"," ");
-  //-Checks invalid options for symmetry. //<vs_syymmetry_ini>
-  if(Symmetry && InOut->Use_ExtrapolatedData())
-    Run_Exceptioon("Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled.");
-  //<vs_syymmetry_end>
 
   //-Updates divide information.
   Timersc->TmStop(TMC_SuInOut);

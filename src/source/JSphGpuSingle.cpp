@@ -590,7 +590,6 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 
   //-Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces).
   const StInterParmsg parms=StrInterParmsg(Simulate2D
-    ,Symmetry //<vs_syymmetry>
     ,TKernel,FtMode
     ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
     ,shiftadv,corrector,aleform,ncpress //<vs_advshift>
