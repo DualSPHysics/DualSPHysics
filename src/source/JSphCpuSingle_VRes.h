@@ -1,5 +1,5 @@
-#ifndef _JSphCpuSingle_Mr_
-#define _JSphCpuSingle_Mr_
+#ifndef _JSphCpuSingle_VRes_
+#define _JSphCpuSingle_VRes_
 
 
 
@@ -7,13 +7,13 @@
 #include "JCellDivCpuSingle.h"
 // #include "JSphGpu_Buffer_iker.h"
 // #include "JSphGpu_cte.h"
-#include "JSphBuffer.h"
+#include "JSphVRes.h"
 #include "JCaseVRes.h"
 #include "JSphCpu.h"
 
 
 
-class JSphBuffer;
+class JSphVRes;
 class JXml;
 
 
@@ -33,10 +33,10 @@ inline stinterparmscb StInterparmscb(unsigned np,unsigned npb,unsigned npbok
 }
 
 
-class JSphCpuSingle_Mr  :  public JSphCpuSingle
+class JSphCpuSingle_VRes  :  public JSphCpuSingle
 {
 protected:
-	JSphBuffer* Multires;
+	JSphVRes* Multires;
 
 //   StCteInteraction CTE;
   double SymplecticDtPre1;
@@ -51,8 +51,8 @@ protected:
 
 
 public:
-	JSphCpuSingle_Mr();
-	~JSphCpuSingle_Mr();
+	JSphCpuSingle_VRes();
+	~JSphCpuSingle_VRes();
   void Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
     ,unsigned vrescount,unsigned vresid);
   void InitMultires(const JSphCfgRun *cfg, JCaseVRes casemultires, unsigned id);

@@ -2940,8 +2940,8 @@ void ComputeOutputPartsMk(byte resmask,bool cmband,bool inverse
 #include "JSphGpu_preloop_iker.cu"
 
 //##############################################################################
-//# Kernels for MultiRes (JSphBuffer).
-//# Kernels para MultiRes (JSphBuffer).
+//# Kernels for variable resolution (JSphVRes).
+//# Kernels para variable resolution (JSphVRes).
 //##############################################################################
 
 #include "JSphGpu_Buffer_iker.cu"

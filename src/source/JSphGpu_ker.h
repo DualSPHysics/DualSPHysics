@@ -31,7 +31,7 @@
 #include "JSphGpu_cte.h"
 #include "JCellDivDataGpu.h"
 #include <cuda_runtime_api.h>
-#include "JSphBuffer.h"       //<vs_vrres
+#include "JSphVRes.h"       //<vs_vrres
 
 class JLog2;
 

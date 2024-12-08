@@ -11,7 +11,7 @@
 #include "JCellDivDataGpu.h"
 #include "JSphGpu_ker.h"
 #include <cuda_runtime_api.h>
-#include "JSphBuffer.h"
+#include "JSphVRes.h"
 #include "JSphVResDef.h"
 
 typedef struct StrInterParmsbg{
@@ -64,12 +64,12 @@ typedef struct StrInterParmsbg{
 namespace cusphbuffer{
 
 unsigned BufferCreateList(bool stable,unsigned n,unsigned pini,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner
-    ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const bool inner,const double2 *posxy,const double *posz
-    ,typecode *code,unsigned *listp,tmatrix4f mat,bool tracking,unsigned nzone);
+  ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const bool inner,const double2 *posxy,const double *posz
+  ,typecode *code,unsigned *listp,tmatrix4f mat,bool tracking,unsigned nzone);
 
 unsigned BufferCreateList1(bool stable,unsigned n,unsigned pini,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner
-    ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const bool inner,const double2 *posxy,const double *posz
-    ,typecode *code,unsigned *listp,unsigned nzone);
+  ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const bool inner,const double2 *posxy,const double *posz
+  ,typecode *code,unsigned *listp,unsigned nzone);
 
 unsigned BufferCreateListInit(bool stable,unsigned n,unsigned pini,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner
   ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const tdouble3 boxlimitminmid,const tdouble3 boxlimitmaxmid
@@ -79,8 +79,14 @@ void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart,con
 		const double2 *posxyb,const double *poszb,float4* velrhop,typecode *code1,bool fastsingle,const TpVresOrder order,float mrthreshold);
 
 
-void Interaction_BufferExtrapFlux(unsigned bufferpartcount,unsigned pini,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes,double dp,double dt,float3* velmot,bool fastsingle,const TpVresOrder vrorder,float mrthreshold);
+void Interaction_BufferExtrapFlux(const StInterParmsbg &t,StrDataVresGpu &vres
+  ,double dp,double dt,bool fastsingle,const TpVresOrder vrorder,float mrthreshold);
+
+
+void CheckMassFlux(unsigned n,unsigned pini
+  ,const StDivDataGpu& dvd,const tdouble3& mapposmin,const double2* posxy
+  ,const double* posz,const typecode *code,const float4* poscell,const double2 *posxyb
+  ,const double *poszb,float3 *normals,float *fluxes);
 
 void BufferComputeStep(unsigned n,int *inoutpart,const double2 *posxy,const double *posz,typecode *code
     ,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner,const tdouble3 boxlimitminouter

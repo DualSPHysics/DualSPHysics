@@ -1,6 +1,6 @@
-#include "JSphGpuSingle_Mr.h"
+#include "JSphGpuSingle_VRes.h"
 #include "JSphGpuSingle.h"
-#include "JSphBuffer.h"
+#include "JSphVRes.h"
 #include "JSphGpu_Buffer_iker.h"
 #include "JTimeControl.h"
 #include "JDsOutputTime.h"
@@ -12,7 +12,6 @@
 #include "JDsPartFloatSave.h"
 #include "JSphShifting.h"
 #include "JSphShiftingAdv.h"
-#include "JSphBuffer.h"
 #include "JSphGpu_preloop_iker.h"
 
 
@@ -20,7 +19,7 @@
 /// Constructor.
 //==============================================================================
 using namespace std;
-JSphGpuSingle_Mr::JSphGpuSingle_Mr():JSphGpuSingle(){
+JSphGpuSingle_VRes::JSphGpuSingle_VRes():JSphGpuSingle(){
   ClassName="JSphGpuSingle";
   MRfastsingle=false;
   MROrder=0;
@@ -35,7 +34,7 @@ JSphGpuSingle_Mr::JSphGpuSingle_Mr():JSphGpuSingle(){
 //==============================================================================
 /// Destructor.
 //==============================================================================
-JSphGpuSingle_Mr::~JSphGpuSingle_Mr(){
+JSphGpuSingle_VRes::~JSphGpuSingle_VRes(){
   DestructorActive=true;
   delete Multires; Multires=NULL;
 }
@@ -44,7 +43,7 @@ JSphGpuSingle_Mr::~JSphGpuSingle_Mr(){
 //==============================================================================
 /// Load VRes configuration.
 //==============================================================================
-void JSphGpuSingle_Mr::LoadVResConfigParameters(const JSphCfgRun* cfg){
+void JSphGpuSingle_VRes::LoadVResConfigParameters(const JSphCfgRun* cfg){
   if(cfg->MROrder>=0){
     switch(cfg->MROrder){
       case 0:   VResOrder=VrOrder_0th;
@@ -58,7 +57,7 @@ void JSphGpuSingle_Mr::LoadVResConfigParameters(const JSphCfgRun* cfg){
 //==============================================================================
 /// Initialises VRes simulation.
 //==============================================================================
-void JSphGpuSingle_Mr::Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
+void JSphGpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
   ,unsigned vrescount,unsigned vresid)
 {
   if(!cfg || !log)return;
@@ -91,7 +90,10 @@ void JSphGpuSingle_Mr::Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
   ConfigDomain();
   ConfigRunMode();
   VisuParticleSummary();
-  CollectCTEdata();
+  
+  //-Store Interaction parameters for vres.
+  GetConstantData(CTE);
+
 
   //-Initialisation of execution variables.
   InitRunGpu();
@@ -110,26 +112,27 @@ void JSphGpuSingle_Mr::Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
 }
 
 //==============================================================================
-/// Last step of initialization of VRes simulation.
+/// Complete initialization of VRes simulation.
 //==============================================================================
-double JSphGpuSingle_Mr::Init2(){
-    cusph::CteInteractionUp(&CTE);
+double JSphGpuSingle_VRes::Init2(){
+  cusph::CteInteractionUp(&CTE);
 
-
-	 //-Main Loop.
-	  //------------
-	  JTimeControl tc("30,60,300,600");//-Shows information at 0.5, 1, 5 y 10 minutes (before first PART).
-	  bool partoutstop=false;
-	  TimerSim.Start();
-	  TimerPart.Start();
-	  Log->Print(string("\n[Initialising simulation (")+RunCode+")  "+fun::GetDateTime()+"]");
-	  if(DsPips)ComputePips(true);
-	  PrintHeadPart();
-	  return(TimeMax);
+	//-Main Loop.
+	//------------
+	JTimeControl tc("30,60,300,600");//-Shows information at 0.5, 1, 5 y 10 minutes (before first PART).
+	bool partoutstop=false;
+	TimerSim.Start();
+	TimerPart.Start();
+	Log->Print(string("\n[Initialising simulation (")+RunCode+")  "+fun::GetDateTime()+"]");
+	if(DsPips)ComputePips(true);
+	PrintHeadPart();
+	return(TimeMax);
 }
 
-
-double JSphGpuSingle_Mr::ComputeStep_SymB(){
+//==============================================================================
+/// Compute time step of VRes simulation.
+//==============================================================================
+double JSphGpuSingle_VRes::ComputeStep_SymB(){
 
   cusph::CteInteractionUp(&CTE);
   const double dt=SymplecticDtPre;
@@ -162,70 +165,58 @@ double JSphGpuSingle_Mr::ComputeStep_SymB(){
   if(Damping)RunDamping(dt);                    //-Aplies Damping.
   if(RelaxZones)RunRelaxZone(dt);               //-Generate waves using RZ.
 
-  SymplecticDtPre1=min(dt_p,dt_c);            //-Calculate dt for next ComputeStep.
+  SymplecticDtPre1=min(dt_p,dt_c);              //-Calculate dt for next ComputeStep.
   return(dt);
 }
 
-
-void JSphGpuSingle_Mr::Finish(double dt1){
+//==============================================================================
+/// Complete time step of VRes simulation.
+//==============================================================================
+void JSphGpuSingle_VRes::Finish(double dt1){
 	cusph::CteInteractionUp(&CTE);
-	    RunGaugeSystem(TimeStep+dt1);
-	    if(CaseNmoving)RunMotion(dt1);
-	    if(InOut)InOutComputeStep(dt1);
-	    // else RunCellDivide(true);
-	    TimeStep+=dt1;
-	    LastDt=dt1;
-      Nstep++;
-    //-Save extra PART data.
-    if(TimeOutExtraCheck(TimeStep)){
-      if(PartFloatSave)PartFloatSave->AddDataExtra(Part,TimeStep,Nstep);
-      if(PartMotionSave)PartMotionSave->AddDataExtraGpu(Part,TimeStep,Nstep,Np
-        ,Posxy_g->cptr(),Posz_g->cptr(),RidpMotg);
-      TimeOutExtraUpdate(TimeStep);
-    }
-	    if(TimeStep>=TimePartNext ){
-        // MultiRes->SaveFluxesData(DirDataOut,Part);
-	    	if(VRES_DG_SAVEVTK)DgSaveVtkParticlesGpuMultiRes("Compute_",Part,0,Np,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),Velrho_g->cptr(),NULL,NULL);
-        if(VRES_DG_SAVEVTK)Multires->SaveNormals(DirDataOut+"NormalsBuffer_",Part);
-        if(VRES_DG_SAVEVTK)Multires->SaveVtkDomains(DirDataOut+"Domains",Part,Simulate2D);
-        if(VRES_DG_SAVEVTK)Multires->SaveVResData(Part,TimeStep,Nstep);
+	RunGaugeSystem(TimeStep+dt1);
+	if(CaseNmoving)RunMotion(dt1);
+	if(InOut)InOutComputeStep(dt1);
+	// else RunCellDivide(true);
+	TimeStep+=dt1;
+	LastDt=dt1;
+  Nstep++;
+  //-Save extra PART data.
+  if(TimeOutExtraCheck(TimeStep)){
+    if(PartFloatSave)PartFloatSave->AddDataExtra(Part,TimeStep,Nstep);
+    if(PartMotionSave)PartMotionSave->AddDataExtraGpu(Part,TimeStep,Nstep,Np
+      ,Posxy_g->cptr(),Posz_g->cptr(),RidpMotg);
+    TimeOutExtraUpdate(TimeStep);
+  }
+	if(TimeStep>=TimePartNext ){
+    if(VRES_DG_SAVEVTK)DgSaveVtkParticlesGpuMultiRes("Compute_",Part,0,Np,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),Velrho_g->cptr(),NULL,NULL);
+    if(VRES_DG_SAVEVTK)Multires->SaveNormals(DirDataOut+"NormalsBuffer_",Part);
+    if(VRES_DG_SAVEVTK)Multires->SaveVtkDomains(DirDataOut+"Domains",Part,Simulate2D);
+    if(VRES_DG_SAVEVTK)Multires->SaveVResData(Part,TimeStep,Nstep);
 
-	      SaveData();
-	      Part++;
-	      PartNstep=Nstep;
-	      TimeStepM1=TimeStep;
-        TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
-	      TimerPart.Start();
-	    }
-	    UpdateMaxValues();
+    SaveData();
+    Part++;
+    PartNstep=Nstep;
+    TimeStepM1=TimeStep;
+    TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
+    TimerPart.Start();
+	}
+	UpdateMaxValues();
 }
 
-void JSphGpuSingle_Mr::Finish2(){
+void JSphGpuSingle_VRes::Finish2(){
 	TimerSim.Stop(); TimerTot.Stop();
-
-	  //-End of Simulation.
-	  //--------------------
-	  FinishRun(false);
-
+	//-End of Simulation.
+	//--------------------
+	FinishRun(false);
 }
 
-void JSphGpuSingle_Mr::InitMultires(const JSphCfgRun* cfg, JCaseVRes casemultires, unsigned id){
-  // unsigned numzone=casemultires.Count();
-
-  // const JCaseVRes_Box* Zone= casemultires.GetZoneBox(id);
-
-  // unsigned numsubzone=Zone->Count();
-
-  // tdouble3 innerdomainmin= Zone->GetBuffMax();
-  // tdouble3 innerdomainmax=Zone->GetBuffMin();
-
-
-  // JXml xml; xml.LoadFile(FileXml);
-   Multires=new JSphBuffer(Cpu,CSP,casemultires,id,AppName,DirDataOut,PartBegin,PartBeginDir);
+void JSphGpuSingle_VRes::InitMultires(const JSphCfgRun* cfg, JCaseVRes casemultires, unsigned id){
+   Multires=new JSphVRes(Cpu,CSP,casemultires,id,AppName,DirDataOut,PartBegin,PartBeginDir);
    Multires->Config();
 }
 
-StInterParmsbg JSphGpuSingle_Mr::getParms(){
+StInterParmsbg JSphGpuSingle_VRes::getParms(){
 	StrInterParmsbg parms=StrInterParmsbg(Simulate2D,TKernel
 		    ,DivData,CTE,Map_PosMin,Dcell_g->cptr()
 		    ,Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr()
@@ -235,137 +226,132 @@ StInterParmsbg JSphGpuSingle_Mr::getParms(){
 }
 
 
-void JSphGpuSingle_Mr::CollectCTEdata(){
+void JSphGpuSingle_VRes::CollectCTEdata(){
   GetConstantData(CTE);
 }
 
-void JSphGpuSingle_Mr::BufferInit(StInterParmsbg *parms){
-    cusph::CteInteractionUp(&CTE);
+void JSphGpuSingle_VRes::BufferInit(StInterParmsbg *parms){
+  cusph::CteInteractionUp(&CTE);
+
 
 	for(unsigned i=0;i<Multires->GetCount();i++){
 		agint bufferpartg("-",Arrays_Gpu,true);
 		unsigned buffercountpre;
 
 //		DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-		buffercountpre=Multires->CreateListGpuInit(Np,0,Posxy_g->cptr(),Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize,bufferpartg.ptr(),i);
-		// std::cout << buffercountpre << std::endl;
-
+		buffercountpre=Multires->CreateListGpuInit(Np,0,Posxy_g->cptr()
+      ,Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize,bufferpartg.ptr(),i);
 	}
 
   RunCellDivide(true);
-    if(VRES_DG_SAVEVTK)DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),Velrho_g->cptr());
+  if(VRES_DG_SAVEVTK)DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),Velrho_g->cptr());
 
 }
 
-void JSphGpuSingle_Mr::BufferExtrapolateData(StInterParmsbg *parms){
 
-	for(unsigned i=0;i<Multires->GetCount();i++){
-		
+void JSphGpuSingle_VRes::BufferExtrapolateData(StInterParmsbg *parms){
+  const unsigned count=Multires->GetCount();
+	for(unsigned i=0;i<count;i++){
+    
+    //-Compute list of buffer particles.	
     agint bufferpartg("-",Arrays_Gpu,true);
-		unsigned buffercountpre;
-
-		buffercountpre=Multires->CreateListGpu(Np-Npb,Npb,Posxy_g->cptr(),Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize,bufferpartg.ptr(),i);
-
-		
+		const unsigned buffercountpre=Multires->CreateListGpu(Np-Npb,Npb
+      ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize
+      ,bufferpartg.ptr(),i);
+	
+    //-Update constant memory and perform interpolation.  
 		unsigned id=Multires->GetZone(i)->getZone()-1;
-
-
 		cusph::CteInteractionUp(&parms[id].cte);
-		cusphbuffer::Interaction_BufferExtrap(buffercountpre,bufferpartg.ptr(),parms[id],Posxy_g->cptr(),Posz_g->cptr(),Velrho_g->ptr(),Code_g->ptr(),true,VrOrder_2nd,100);
-		// if(Nstep==0)  DgSaveVtkParticlesGpuMultiRes("Compute_Init_",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg,rcond);
-
-		double t1=TimeStep+LastDt;
-		double t2=TimePartNext;
-		if(t1>=t2 ){
-  // if(VRES_DG_SAVEVTK)DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),Velrho_g->cptr());
-		}
-
-
-		
+		cusphbuffer::Interaction_BufferExtrap(buffercountpre,bufferpartg.ptr(),parms[id]
+      ,Posxy_g->cptr(),Posz_g->cptr(),Velrho_g->ptr(),Code_g->ptr(),true,VrOrder_2nd,100);
 	}
-	// cudaFree(rcond);
 }
 
-void JSphGpuSingle_Mr::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,StInterParmsbg *parms){
-	// TmgStart(Timers,TMG_SuBuffer);
-    Multires->UpdateMatMov(mat);
-	  Multires->MoveBufferZone(dt,mat);
-	// TmgStart(Timers,TMG_SuBuffer);
+//==============================================================================
+/// ComputeStep over buffer regions:
+/// - If buffer particle is moved to fluid zone then it changes to fluid particle.
+/// - If fluid particle is moved to buffer zone then it changes to buffer particle.
+/// - If buffer particle is moved out the domain then it changes to ignore particle.
+/// - Create buffer particle based on eulerian flux on the accumulations points.
+/// - Update position of buffer regions and compute motion velocity.
+//==============================================================================
+void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,StInterParmsbg *parms){
+    
+  //-Compute movement for VRes regions
+  Multires->UpdateMatMov(mat);
+	Multires->MoveBufferZone(dt,mat);
 
-	// Multires->MoveBufferZone(dt,velmot);
-	
+	//- ComputeStep for each buffer region.
 	for(unsigned i=0;i<Multires->GetCount();i++){
     
-    cusph::CteInteractionUp(&CTE);
+    cusph::CteInteractionUp(&CTE);                            //-Update constant memory.
 
-		agint bufferpartg("-",Arrays_Gpu,true);
-		
-    
-    unsigned buffercountpre=0;
+    //-Compute list of buffer particles.
+		agint bufferpartg("-",Arrays_Gpu,true);       
+		const unsigned buffercountpre=Multires->CreateListGpu(Np-Npb,Npb
+      ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize
+      ,bufferpartg.ptr(),i);
 
-		buffercountpre=Multires->CreateListGpu(Np-Npb,Npb,Posxy_g->cptr(),Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize,bufferpartg.ptr(),i);
+    //-Compute eulerian flux on the mass accumulation points.
+  	unsigned id=Multires->GetZone(i)->getZone()-1;      
+		cusph::CteInteractionUp(&parms[id].cte);                  //-Update constant memory.
 
-    StrDataVresGpu vresdata=Multires->GetZoneFluxInfoGpu(i);
-			
-    // cusphbuffer::MoveBufferZone(nini,ntot,posxy,posz,dt,velmot[i]);
-
-
-		unsigned id=Multires->GetZone(i)->getZone()-1;
-
-
-		cusph::CteInteractionUp(&parms[id].cte);
-		
-    cusphbuffer::Interaction_BufferExtrapFlux(vresdata.ntot,vresdata.nini,parms[id],vresdata.ptposxy,vresdata.ptposz,vresdata.normals,vresdata.mass,CTE.dp,dt,vresdata.velmot,true,VrOrder_1st,100);
-
-		Multires->ComputeStepGpu(buffercountpre,bufferpartg.ptr(),IdMax+1,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr()
-        ,Code_g->ptr(),Idp_g->ptr(),Velrho_g->ptr(),NULL,this,i);
+    StrDataVresGpu vresdata=Multires->GetZoneFluxInfoGpu(i);  //-Retrieve buffer parameters.			
 
 		
+    cusphbuffer::Interaction_BufferExtrapFlux(parms[id]
+      ,vresdata,CTE.dp,dt,true,VrOrder_1st,100);
+
+		
+    Multires->ComputeStepGpu(buffercountpre,bufferpartg.ptr(),IdMax+1,Posxy_g->ptr()
+      ,Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr(),Idp_g->ptr(),Velrho_g->ptr(),NULL,this,i);
+
+		
+    cusph::CteInteractionUp(&CTE);                            //-Update constant memory.
     
     int *newpart=NULL;
-			cudaMalloc((void**)&newpart, sizeof(int)*(vresdata.ntot+1));
-			cudaMemset(newpart,0,vresdata.ntot*sizeof(int));
+		cudaMalloc((void**)&newpart, sizeof(int)*(vresdata.ntot+1));
+		cudaMemset(newpart,0,vresdata.ntot*sizeof(int));
 
-		cusph::CteInteractionUp(&CTE);
-		unsigned newnp=cusphbuffer::BufferListCreate(false,vresdata.ntot,vresdata.nini,vresdata.ntot, vresdata.mass, newpart, CTE.massf);
-		if(newnp){			
+		
+    cusphbuffer::CheckMassFlux(vresdata.ntot,vresdata.nini,DivData,Map_PosMin
+      ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),PosCell_g->cptr()
+      ,vresdata.ptposxy,vresdata.ptposz,vresdata.normals,vresdata.mass);
+		
+    
+    unsigned newnp=cusphbuffer::BufferListCreate(false,vresdata.ntot,vresdata.nini
+      ,vresdata.ntot, vresdata.mass, newpart, CTE.massf);
+		
+    if(newnp){			
       if(!CheckGpuParticlesSize(Np+newnp)){
         const unsigned ndatacpu=0,ndatagpu=Np;
         ResizeParticlesSizeData(ndatacpu,ndatagpu,Np+newnp,Np+newnp, 0.2,true);
         CellDivSingle->SetIncreaseNp(newnp);
-			}
-      
+			}  
       cusphbuffer::BufferCreateNewPart(PeriActive,newnp,vresdata.nini,newpart,Np,IdMax+1,vresdata.normals,CTE.dp,Posxy_g->ptr(),Posz_g->ptr()
-          ,vresdata.ptposxy,vresdata.ptposz,Dcell_g->ptr(),Code_g->ptr(),Idp_g->ptr(),Velrho_g->ptr(),i);
-    }
+        ,vresdata.ptposxy,vresdata.ptposz,Dcell_g->ptr(),Code_g->ptr(),Idp_g->ptr(),Velrho_g->ptr(),i);
       
-        
-    if(newnp){      
+      //-Updates basic arrays.
       if(SpsTauRho2_g)SpsTauRho2_g->CuMemsetOffset(Np,0,newnp);
       if(BoundNor_g)BoundNor_g->CuMemsetOffset(Np,0,newnp);
-      // if(MotionAce_g)MotionAce_g->CuMemsetOffset(Np,0,newnp);
       if(FSType_g)FSType_g->CuMemsetOffset(Np,0,newnp);
       if(ShiftVel_g)ShiftVel_g->CuMemsetOffset(Np,0,newnp);
       Np+=newnp; 
       TotalNp+=newnp;
       IdMax=unsigned(TotalNp-1);
-		} 
-    cudaFree(newpart);
-          newpart=NULL;
-
+    }      
+    cudaFree(newpart);  newpart=NULL; 
 	}
-  // abort();
-  // if(VRES_DG_SAVEVTK)DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),Velrho_g->cptr());
 }
 
-void JSphGpuSingle_Mr::BufferShifting(){
+void JSphGpuSingle_VRes::BufferShifting(){
   StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
 	cusphbuffer::BufferShiftingGpu(Np,Npb,Posxy_g->ptr(),Posz_g->ptr(),ShiftVel_g->ptr(),Code_g->ptr(),vresgdata,NULL);
 }
 
 
 
-void JSphGpuSingle_Mr::CallRunCellDivide(){
+void JSphGpuSingle_VRes::CallRunCellDivide(){
   	cusph::CteInteractionUp(&CTE);
     RunCellDivide(true);
 }
@@ -375,7 +361,7 @@ void JSphGpuSingle_Mr::CallRunCellDivide(){
 /// PreLoop for additional models computation.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
-void JSphGpuSingle_Mr::PreLoopProcedureVRes(TpInterStep interstep){
+void JSphGpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
   bool runshift=(interstep==INTERSTEP_SymPredictor && Nstep!=0 && ShiftingAdv!=NULL);
   if(runshift){
     ComputeFSParticlesVRes();
@@ -414,7 +400,7 @@ void JSphGpuSingle_Mr::PreLoopProcedureVRes(TpInterStep interstep){
 /// Compute free-surface particles and their normals.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
-void JSphGpuSingle_Mr::ComputeFSParticlesVRes(){
+void JSphGpuSingle_VRes::ComputeFSParticlesVRes(){
   unsigned bsfluid=BlockSizes.forcesfluid;
   StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
 
@@ -430,7 +416,7 @@ void JSphGpuSingle_Mr::ComputeFSParticlesVRes(){
 /// Scan Umbrella region to identify free-surface particle.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
-void JSphGpuSingle_Mr::ComputeUmbrellaRegionVRes(){
+void JSphGpuSingle_VRes::ComputeUmbrellaRegionVRes(){
   unsigned bsfluid=BlockSizes.forcesfluid;
   StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
 
@@ -447,7 +433,7 @@ void JSphGpuSingle_Mr::ComputeUmbrellaRegionVRes(){
 /// Interaction for force computation.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
-void JSphGpuSingle_Mr::Interaction_ForcesB(TpInterStep interstep){
+void JSphGpuSingle_VRes::Interaction_ForcesB(TpInterStep interstep){
   const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
   const bool mdbc2=(runmdbc && SlipMode>=SLIP_NoSlip);
   InterStep=interstep;
@@ -519,36 +505,32 @@ void JSphGpuSingle_Mr::Interaction_ForcesB(TpInterStep interstep){
 
 
 
-JMatrix4d JSphGpuSingle_Mr::CalcVelMotion(unsigned trackingmk,double dt){
+JMatrix4d JSphGpuSingle_VRes::CalcVelMotion(unsigned trackingmk,double dt){
   //Check if the mkbound is in one of the motion objects
   JMatrix4d mat;
   if(CaseNmoving){
-     const unsigned nref=DsMotion->GetNumObjects();
-      for(unsigned ref=0;ref<nref;ref++){
+    const unsigned nref=DsMotion->GetNumObjects();
+    for(unsigned ref=0;ref<nref;ref++){
       const StMotionData& m=DsMotion->GetMotionData(ref);
       const unsigned mk=m.mkbound;
       if(trackingmk==mk) return(CalcMotionMoving(m,dt));
-      }
+    }
   }
   //Check if the mkbound is in one of the floating objects
   if(CaseNfloat){
     for(unsigned cf=0;cf<FtCount;cf++){
-      //-Get Floating object values.
+    //-Get Floating object values.
       const StFloatingData fobj=FtObjs[cf];
       const unsigned mk=fobj.mkbound;
       if(trackingmk==mk) return(CalcMotionFloating(fobj,dt));
+    }
   }
-  }
-
   return (mat);
-
-	
-
 }
 
 
 
-JMatrix4d JSphGpuSingle_Mr::CalcMotionMoving(const StMotionData m,double dt){
+JMatrix4d JSphGpuSingle_VRes::CalcMotionMoving(const StMotionData m,double dt){
   JMatrix4d mat;
   if(m.type==MOTT_Linear){
     mat.Move(TDouble3(dt*m.linvel.x,dt*m.linvel.y,dt*m.linvel.z));
@@ -560,7 +542,7 @@ JMatrix4d JSphGpuSingle_Mr::CalcMotionMoving(const StMotionData m,double dt){
   
 }
 
-JMatrix4d JSphGpuSingle_Mr::CalcMotionFloating(const StFloatingData m,double dt){
+JMatrix4d JSphGpuSingle_VRes::CalcMotionFloating(const StFloatingData m,double dt){
   JMatrix4d mat;
   const tfloat3  fvel   =m.fvel;
   const tfloat3  fomega =m.fomega;
@@ -572,6 +554,5 @@ JMatrix4d JSphGpuSingle_Mr::CalcMotionFloating(const StFloatingData m,double dt)
   mat.Rotate(dang);
   mat.Move(TDouble3(-m.center.x,-m.center.y,-m.center.z));
   mat.Move(TDouble3(dt*fvel.x,dt*fvel.y,dt*fvel.z)); 
-  return(mat);
-  
+  return(mat);  
 }

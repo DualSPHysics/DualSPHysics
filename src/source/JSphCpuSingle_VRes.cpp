@@ -1,7 +1,6 @@
-#include "JSphCpuSingle_Mr.h"
+#include "JSphCpuSingle_VRes.h"
 #include "JSphCpuSingle.h"
-#include "JSphBuffer.h"
-// #include "JSphGpu_Buffer_iker.h"
+#include "JSphVRes.h"
 #include "JTimeControl.h"
 #include "JDsOutputTime.h"
 #include "JCellDivCpuSingle.h"
@@ -12,14 +11,12 @@
 #include "JDsPartFloatSave.h"
 #include "JSphShifting.h"
 #include "JSphShiftingAdv.h"
-#include "JSphBuffer.h"
 #include "JSph.h"
-// #include "JSphCpu_preloop_iker.h"
 
 
 
 using namespace std;
-JSphCpuSingle_Mr::JSphCpuSingle_Mr():JSphCpuSingle(){
+JSphCpuSingle_VRes::JSphCpuSingle_VRes():JSphCpuSingle(){
   ClassName="JSphGpuSingle";
   MRfastsingle=true;
   MROrder=0;
@@ -31,7 +28,7 @@ JSphCpuSingle_Mr::JSphCpuSingle_Mr():JSphCpuSingle(){
 
 
 
-JSphCpuSingle_Mr::~JSphCpuSingle_Mr(){
+JSphCpuSingle_VRes::~JSphCpuSingle_VRes(){
   DestructorActive=true;
   delete Multires; Multires=NULL;
 }
@@ -39,7 +36,7 @@ JSphCpuSingle_Mr::~JSphCpuSingle_Mr(){
 //==============================================================================
 /// ???
 //==============================================================================
-void JSphCpuSingle_Mr::Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
+void JSphCpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
   ,unsigned vrescount,unsigned vresid)
 {
   if(!cfg || !log)return;
@@ -84,7 +81,7 @@ void JSphCpuSingle_Mr::Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
   PartNstep=0; Part++;
 }
 
-double JSphCpuSingle_Mr::Init2(){
+double JSphCpuSingle_VRes::Init2(){
 	 //-Main Loop.
 	JTimeControl tc("30,60,300,600");//-Shows information at 0.5, 1, 5 y 10 minutes (before first PART).
   bool minfluidstopped=false;
@@ -97,7 +94,7 @@ double JSphCpuSingle_Mr::Init2(){
 }
 
 
-double JSphCpuSingle_Mr::ComputeStep_SymB(){
+double JSphCpuSingle_VRes::ComputeStep_SymB(){
   const double dt=SymplecticDtPre;
   if(CaseNmoving)CalcMotion(dt);               //-Calculate motion for moving bodies.
   //-Predictor
@@ -132,7 +129,7 @@ double JSphCpuSingle_Mr::ComputeStep_SymB(){
 }
 
 
-void JSphCpuSingle_Mr::Finish(double dt1){
+void JSphCpuSingle_VRes::Finish(double dt1){
 	    RunGaugeSystem(TimeStep+dt1);
 	    if(CaseNmoving)RunMotion(dt1);
 	    if(InOut)InOutComputeStep(dt1);
@@ -167,7 +164,7 @@ void JSphCpuSingle_Mr::Finish(double dt1){
 	    UpdateMaxValues();
 }
 
-void JSphCpuSingle_Mr::Finish2(){
+void JSphCpuSingle_VRes::Finish2(){
 	TimerSim.Stop(); TimerTot.Stop();
 
 	  //-End of Simulation.
@@ -176,12 +173,12 @@ void JSphCpuSingle_Mr::Finish2(){
 
 }
 
-void JSphCpuSingle_Mr::InitMultires(const JSphCfgRun* cfg, JCaseVRes casemultires, unsigned id){
-   Multires=new JSphBuffer(Cpu,CSP,casemultires,id,AppName,DirDataOut,PartBegin,PartBeginDir);
+void JSphCpuSingle_VRes::InitMultires(const JSphCfgRun* cfg, JCaseVRes casemultires, unsigned id){
+   Multires=new JSphVRes(Cpu,CSP,casemultires,id,AppName,DirDataOut,PartBegin,PartBeginDir);
    Multires->Config();
 }
 
-stinterparmscb JSphCpuSingle_Mr::getParms()
+stinterparmscb JSphCpuSingle_VRes::getParms()
 {
 	 stinterparmscb parms=StInterparmscb(Np,Npb,NpbOk
 	    ,DivData,Dcell_c->cptr()
@@ -193,7 +190,7 @@ stinterparmscb JSphCpuSingle_Mr::getParms()
 
 
 
-void JSphCpuSingle_Mr::BufferInit(stinterparmscb *parms){
+void JSphCpuSingle_VRes::BufferInit(stinterparmscb *parms){
 
   for(unsigned i=0;i<Multires->GetCount();i++){
       acint bufferpartc("-",Arrays_Cpu,true);
@@ -210,7 +207,7 @@ void JSphCpuSingle_Mr::BufferInit(stinterparmscb *parms){
 
 }
 
-void JSphCpuSingle_Mr::BufferExtrapolateData(stinterparmscb *parms){
+void JSphCpuSingle_VRes::BufferExtrapolateData(stinterparmscb *parms){
 
 	for(unsigned i=0;i<Multires->GetCount();i++){
 		
@@ -232,7 +229,7 @@ void JSphCpuSingle_Mr::BufferExtrapolateData(stinterparmscb *parms){
 	}
 }
 
-void JSphCpuSingle_Mr::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,stinterparmscb *parms){
+void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,stinterparmscb *parms){
 	// // TmgStart(Timers,TMG_SuBuffer);
   //   Multires->UpdateMatMov(mat);
 	//   Multires->MoveBufferZone(dt,mat);
@@ -281,14 +278,14 @@ void JSphCpuSingle_Mr::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,st
 	}
 }
 
-void JSphCpuSingle_Mr::BufferShifting(){
+void JSphCpuSingle_VRes::BufferShifting(){
   // StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
 	// cusphbuffer::BufferShiftingGpu(Np,Npb,Posxy_g->ptr(),Posz_g->ptr(),ShiftVel_g->ptr(),Code_g->ptr(),vresgdata,NULL);
 }
 
 
 
-void JSphCpuSingle_Mr::CallRunCellDivide(){
+void JSphCpuSingle_VRes::CallRunCellDivide(){
     RunCellDivide(true);
 }
 
@@ -297,7 +294,7 @@ void JSphCpuSingle_Mr::CallRunCellDivide(){
 /// PreLoop for additional models computation.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
-void JSphCpuSingle_Mr::PreLoopProcedureVRes(TpInterStep interstep){
+void JSphCpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
   // bool runshift=(interstep==INTERSTEP_SymPredictor && Nstep!=0 && ShiftingAdv!=NULL);
   // if(runshift){
   //   ComputeFSParticlesVRes();
@@ -336,7 +333,7 @@ void JSphCpuSingle_Mr::PreLoopProcedureVRes(TpInterStep interstep){
 /// Compute free-surface particles and their normals.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
-void JSphCpuSingle_Mr::ComputeFSParticlesVRes(){
+void JSphCpuSingle_VRes::ComputeFSParticlesVRes(){
   // unsigned bsfluid=BlockSizes.forcesfluid;
   // StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
 
@@ -352,7 +349,7 @@ void JSphCpuSingle_Mr::ComputeFSParticlesVRes(){
 /// Scan Umbrella region to identify free-surface particle.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
-void JSphCpuSingle_Mr::ComputeUmbrellaRegionVRes(){
+void JSphCpuSingle_VRes::ComputeUmbrellaRegionVRes(){
   // unsigned bsfluid=BlockSizes.forcesfluid;
   // StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
 
@@ -369,7 +366,7 @@ void JSphCpuSingle_Mr::ComputeUmbrellaRegionVRes(){
 /// Interaction for force computation.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
-void JSphCpuSingle_Mr::Interaction_ForcesB(TpInterStep interstep){
+void JSphCpuSingle_VRes::Interaction_ForcesB(TpInterStep interstep){
   //-Boundary correction for mDBC.
   const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
   const bool mdbc2=(runmdbc && SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
@@ -427,7 +424,7 @@ void JSphCpuSingle_Mr::Interaction_ForcesB(TpInterStep interstep){
 
 
 
-JMatrix4d JSphCpuSingle_Mr::CalcVelMotion(unsigned trackingmk,double dt){
+JMatrix4d JSphCpuSingle_VRes::CalcVelMotion(unsigned trackingmk,double dt){
   //Check if the mkbound is in one of the motion objects
   JMatrix4d mat;
   if(CaseNmoving){
@@ -456,7 +453,7 @@ JMatrix4d JSphCpuSingle_Mr::CalcVelMotion(unsigned trackingmk,double dt){
 
 
 
-JMatrix4d JSphCpuSingle_Mr::CalcMotionMoving(const StMotionData m,double dt){
+JMatrix4d JSphCpuSingle_VRes::CalcMotionMoving(const StMotionData m,double dt){
   JMatrix4d mat;
   if(m.type==MOTT_Linear){
     mat.Move(TDouble3(dt*m.linvel.x,dt*m.linvel.y,dt*m.linvel.z));
@@ -468,7 +465,7 @@ JMatrix4d JSphCpuSingle_Mr::CalcMotionMoving(const StMotionData m,double dt){
   
 }
 
-JMatrix4d JSphCpuSingle_Mr::CalcMotionFloating(const StFloatingData m,double dt){
+JMatrix4d JSphCpuSingle_VRes::CalcMotionFloating(const StFloatingData m,double dt){
   JMatrix4d mat;
   const tfloat3  fvel   =m.fvel;
   const tfloat3  fomega =m.fomega;

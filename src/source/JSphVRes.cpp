@@ -5,7 +5,7 @@
  *      Author: francesco
  */
 
-#include "JSphBuffer.h"
+#include "JSphVRes.h"
 #include "JSphCpu.h"
 #include "JXml.h"
 #include "JLog2.h"
@@ -37,26 +37,15 @@
 #include <fstream>
 #include <iomanip>
 
-#define checkCudaErrors(call)                                 \
-  do                                                          \
-  {                                                           \
-    cudaError_t err = call;                                   \
-    if (err != cudaSuccess)                                   \
-    {                                                         \
-      printf("CUDA error at %s %d: %s\n", __FILE__, __LINE__, \
-             cudaGetErrorString(err));                        \
-      exit(EXIT_FAILURE);                                     \
-    }                                                         \
-  } while (0)
 
 using namespace std;
 
-JSphBuffer::JSphBuffer(bool cpu, const StCteSph &csp,const JCaseVRes vreszone,unsigned zoneid
+JSphVRes::JSphVRes(bool cpu, const StCteSph &csp,const JCaseVRes vreszone,unsigned zoneid
     ,std::string appname,std::string dirdataout,unsigned partbegin,std::string partbegindir)
     : Log(AppInfo.LogPtr()), Cpu(cpu), CSP(csp),VresZone(vreszone),ZoneId(zoneid)
     ,AppName(appname),DirDataOut(dirdataout),PartBegin(partbegin),PartBeginDir(partbegindir)
 {
-  ClassName = "JSphBuffer";
+  ClassName = "JSphVRes";
   BoxLimitMin=NULL;  BoxLimitMax=NULL; BoxDomMin=NULL;  BoxDomMax=NULL; 
   Width=NULL; Inner=NULL;  Tracking=NULL;
   NIni=NULL;  NPoints=NULL; Matmov=NULL;
@@ -73,7 +62,7 @@ JSphBuffer::JSphBuffer(bool cpu, const StCteSph &csp,const JCaseVRes vreszone,un
 //==============================================================================
 /// Destructor.
 //==============================================================================
-JSphBuffer::~JSphBuffer()
+JSphVRes::~JSphVRes()
 {
   DestructorActive = true;
   Reset();
@@ -82,7 +71,7 @@ JSphBuffer::~JSphBuffer()
 //==============================================================================
 /// Initialisation of variables.
 //==============================================================================
-void JSphBuffer::Reset()
+void JSphVRes::Reset()
 {
 
   // ZoneId=0;
@@ -98,7 +87,7 @@ void JSphBuffer::Reset()
 //==============================================================================
 /// Allocates memory for vres zone configurations.
 //==============================================================================
-void JSphBuffer::AllocateMemory(unsigned listsize){
+void JSphVRes::AllocateMemory(unsigned listsize){
   ListSize=listsize;
   try{
     BoxLimitMin   =new tdouble3 [ListSize];
@@ -131,7 +120,7 @@ void JSphBuffer::AllocateMemory(unsigned listsize){
   #endif
 }
 
-void JSphBuffer::FreeMemory(){
+void JSphVRes::FreeMemory(){
   ListSize = 0;
   delete[]BoxLimitMin;  BoxLimitMin=NULL;
   delete[]BoxLimitMax;  BoxLimitMax=NULL;
@@ -151,7 +140,7 @@ void JSphBuffer::FreeMemory(){
 //==============================================================================
 /// Allocates memory for reference points.
 //==============================================================================
-void JSphBuffer::AllocatePtMemory(unsigned ptcount){
+void JSphVRes::AllocatePtMemory(unsigned ptcount){
   PtCount=ptcount;
   try{
     PtPointsIni     =new tdouble3   [ptcount];
@@ -181,7 +170,7 @@ void JSphBuffer::AllocatePtMemory(unsigned ptcount){
 //==============================================================================
 /// Allocates memory for reference points on GPU.
 //==============================================================================
-void JSphBuffer::AllocatePtMemoryGpu(unsigned ptcount){
+void JSphVRes::AllocatePtMemoryGpu(unsigned ptcount){
   fcuda::Malloc(&PtPosxyg   ,ptcount);
   fcuda::Malloc(&PtPoszg    ,ptcount);
   fcuda::Malloc(&PtNormalsg ,ptcount);
@@ -192,7 +181,7 @@ void JSphBuffer::AllocatePtMemoryGpu(unsigned ptcount){
 //==============================================================================
 /// Frees allocated memory for reference points and auxiliary memory on GPU.
 //==============================================================================
-void JSphBuffer::FreePtMemoryGpu(){
+void JSphVRes::FreePtMemoryGpu(){
   if(PtPosxyg)     cudaFree(PtPosxyg);      PtPosxyg=NULL;
   if(PtPoszg)      cudaFree(PtPoszg);       PtPoszg=NULL;
   if(PtNormalsg)   cudaFree(PtNormalsg);    PtNormalsg=NULL;
@@ -203,7 +192,7 @@ void JSphBuffer::FreePtMemoryGpu(){
 //==============================================================================
 /// Allocates memory on GPU.
 //==============================================================================
-void JSphBuffer::AllocateMemoryGpu(unsigned listsize){
+void JSphVRes::AllocateMemoryGpu(unsigned listsize){
  try{
     fcuda::Malloc(&BoxLimitMing   ,ListSize);
     fcuda::Malloc(&BoxLimitMaxg   ,ListSize);
@@ -224,7 +213,7 @@ void JSphBuffer::AllocateMemoryGpu(unsigned listsize){
 //==============================================================================
 /// Frees allocated memory on GPU.
 //==============================================================================
-void JSphBuffer::FreeMemoryGpu(){
+void JSphVRes::FreeMemoryGpu(){
   if(BoxLimitMing)    cudaFree(BoxLimitMing);   BoxLimitMing=NULL;
   if(BoxLimitMaxg)    cudaFree(BoxLimitMaxg);   BoxLimitMaxg=NULL;
   if(BoxDomMing)      cudaFree(BoxDomMing);     BoxDomMing=NULL;
@@ -241,7 +230,7 @@ void JSphBuffer::FreeMemoryGpu(){
 //==============================================================================
 /// Store vres configuration from XML.
 //==============================================================================
-void JSphBuffer::CreateZones(){
+void JSphVRes::CreateZones(){
 
   const JCaseVRes_Box* zone= VresZone.GetZoneBox(ZoneId);
 
@@ -290,7 +279,7 @@ void JSphBuffer::CreateZones(){
 //==============================================================================
 /// Configures basic parameter of the simulation and prepares execution.
 //==============================================================================
-void JSphBuffer::Config()
+void JSphVRes::Config()
 {
   //-Read XML file for vres zone configurations.
   CreateZones();
@@ -384,7 +373,7 @@ void JSphBuffer::Config()
 }
 
 
-StrDataVresGpu JSphBuffer::GetZoneFluxInfoGpu(unsigned nzone){
+StrDataVresGpu JSphVRes::GetZoneFluxInfoGpu(unsigned nzone){
   unsigned nini=NIni[nzone];
   unsigned npoints=NPoints[nzone];
 
@@ -397,7 +386,7 @@ StrDataVresGpu JSphBuffer::GetZoneFluxInfoGpu(unsigned nzone){
 }
 
 
-StrDataVresCpu JSphBuffer::GetZoneFluxInfoCpu(unsigned nzone){
+StrDataVresCpu JSphVRes::GetZoneFluxInfoCpu(unsigned nzone){
   unsigned nini=NIni[nzone];
   unsigned npoints=NPoints[nzone];
 
@@ -421,7 +410,7 @@ StrDataVresCpu JSphBuffer::GetZoneFluxInfoCpu(unsigned nzone){
 
 
 
-void JSphBuffer::UpdateMatMov(std::vector<JMatrix4d> mat){
+void JSphVRes::UpdateMatMov(std::vector<JMatrix4d> mat){
 
   for(unsigned ci=0; ci<ListSize; ci++){
     JMatrix4d mat_new=mat[ci];    
@@ -445,7 +434,7 @@ void JSphBuffer::UpdateMatMov(std::vector<JMatrix4d> mat){
 #endif
 }
 
-void JSphBuffer::SaveVResData(int part,double timestep,int nstep){
+void JSphVRes::SaveVResData(int part,double timestep,int nstep){
 
   SvVResDataBi4->InitPartData(part,timestep,nstep);
 
@@ -473,7 +462,7 @@ void JSphBuffer::SaveVResData(int part,double timestep,int nstep){
 }
 
 
-void JSphBuffer::LoadVResData(){
+void JSphVRes::LoadVResData(){
 
   JDsVResDataLoad edat(Log);
   edat.LoadPartData(PartBeginDir,int(PartBegin));
@@ -498,7 +487,7 @@ void JSphBuffer::LoadVResData(){
 
 
 
-unsigned JSphBuffer::CreateListCpu(unsigned npf,unsigned pini
+unsigned JSphVRes::CreateListCpu(unsigned npf,unsigned pini
 		  ,const tdouble3 *pos,const unsigned *idp,typecode *code,int *inoutpart,unsigned nzone)
 {
 unsigned count=0;
@@ -524,7 +513,7 @@ return(count);
 }
 
 
-unsigned JSphBuffer::CreateListCpuInit(unsigned npf,unsigned pini
+unsigned JSphVRes::CreateListCpuInit(unsigned npf,unsigned pini
 		  ,const tdouble3 *pos,const unsigned *idp,typecode *code,int *inoutpart,unsigned nzone)
 {
     unsigned count=0;
@@ -557,7 +546,7 @@ unsigned JSphBuffer::CreateListCpuInit(unsigned npf,unsigned pini
 
 
 #ifdef _WITHGPU
-unsigned JSphBuffer::CreateListGpuInit(unsigned npf, unsigned pini, const double2 *posxyg, const double *poszg, typecode *codeg, unsigned size, int *inoutpartg, unsigned nzone)
+unsigned JSphVRes::CreateListGpuInit(unsigned npf, unsigned pini, const double2 *posxyg, const double *poszg, typecode *codeg, unsigned size, int *inoutpartg, unsigned nzone)
 {
   unsigned count = 0;
   tmatrix4f mat=Matmov[nzone].GetMatrix4f();
@@ -575,7 +564,7 @@ unsigned JSphBuffer::CreateListGpuInit(unsigned npf, unsigned pini, const double
   // Log->Printf("%u> -------->CreateListXXX>> InOutcount:%u",nstep,count);
   return (count);
 }
-unsigned JSphBuffer::CreateListGpu(unsigned npf, unsigned pini, const double2 *posxyg, const double *poszg, typecode *codeg, unsigned size, int *inoutpartg, unsigned nzone)
+unsigned JSphVRes::CreateListGpu(unsigned npf, unsigned pini, const double2 *posxyg, const double *poszg, typecode *codeg, unsigned size, int *inoutpartg, unsigned nzone)
 {
   unsigned count = 0;
   tmatrix4f mat=Matmov[nzone].GetMatrix4f();
@@ -595,7 +584,7 @@ unsigned JSphBuffer::CreateListGpu(unsigned npf, unsigned pini, const double2 *p
 #endif
 //
 //
-  unsigned JSphBuffer::ComputeStepCpu(unsigned bufferpartcount,int *bufferpart
+  unsigned JSphVRes::ComputeStepCpu(unsigned bufferpartcount,int *bufferpart
 		,typecode *code,const tdouble3 *pos,unsigned nzone){
 //	/-Updates code according to particle position and define new particles to create.
 	  const int ncp=int(bufferpartcount);
@@ -639,7 +628,7 @@ unsigned JSphBuffer::CreateListGpu(unsigned npf, unsigned pini, const double2 *p
 	  return(newcp);
   }
 
-  void JSphBuffer::CreateNewPart(const unsigned idnext,unsigned *dcell,typecode *code,tdouble3 *pos,unsigned *idp,
+  void JSphVRes::CreateNewPart(const unsigned idnext,unsigned *dcell,typecode *code,tdouble3 *pos,unsigned *idp,
 		tfloat4 *velrhop,const JSphCpu *sphcpu,unsigned np,unsigned nzone){    
     unsigned newcp=0;
     const unsigned nini=NIni[nzone];
@@ -670,7 +659,7 @@ unsigned JSphBuffer::CreateListGpu(unsigned npf, unsigned pini, const double2 *p
 ///   it creates a new in/out particle.
 /// - If particle is moved out the domain then it changes to ignore particle.
 //==============================================================================
-void JSphBuffer::ComputeStepGpu(unsigned bufferpartcount,int *bufferpart,unsigned idnext,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg
+void JSphVRes::ComputeStepGpu(unsigned bufferpartcount,int *bufferpart,unsigned idnext,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg
     ,unsigned *idpg,float4 *velrhopg,byte *newizoneg,const JSphGpuSingle *gp,unsigned nzone)
 {
 
@@ -695,16 +684,31 @@ void JSphBuffer::ComputeStepGpu(unsigned bufferpartcount,int *bufferpart,unsigne
 #endif
 
 
-void JSphBuffer::MoveBufferZone(double dt,std::vector<JMatrix4d> mat){
+void JSphVRes::MoveBufferZone(double dt,std::vector<JMatrix4d> mat){
   for(int i=0; i<List.size(); i++){
     unsigned ntot=NPoints[i];
+    unsigned nini=NIni[i];
     tmatrix4d mat_i=mat[i].GetMatrix();
-    if(Tracking[i])cusphbuffer::MoveBufferZone(NIni[i],ntot,PtPosxyg,PtPoszg,PtNormalsg,PtVelMotg,dt,mat_i,i );
+    if(Tracking[i]){
+      if(Cpu){
+        for(int p=nini;p<ntot;p++){
+          const tdouble3 posp=PtPoints[p];
+          const tdouble3 normalp=ToTDouble3(PtNormals[p]);
+          const tdouble3 pospnew=mat[i].MulPoint(posp);
+          const tfloat3 normalpnew=ToTFloat3(mat[i].MulNormal(normalp));
+          if(dt>0) PtVelMot[p]=ToTFloat3(pospnew-posp)/dt;
+          PtPoints[p]=pospnew;
+          PtNormals[p]=normalpnew;
+        }
+      }else{
+        cusphbuffer::MoveBufferZone(NIni[i],ntot,PtPosxyg,PtPoszg,PtNormalsg,PtVelMotg,dt,mat_i,i );
+      }
+    }
   }
 }
 
 
-void JSphBuffer::SaveNormals(std::string filename,int numfile){
+void JSphVRes::SaveNormals(std::string filename,int numfile){
 
   
   tfloat3 *normals = new tfloat3[PtCount];
@@ -727,7 +731,7 @@ void JSphBuffer::SaveNormals(std::string filename,int numfile){
 
 }
 
-void JSphBuffer::SaveVtkNormals(std::string filename,int numfile,unsigned np
+void JSphVRes::SaveVtkNormals(std::string filename,int numfile,unsigned np
   ,const tdouble3* pos,const tfloat3* boundnor,const tfloat3* velflux,const float* flux)const
 {
   if(JVtkLib::Available()){
@@ -754,7 +758,7 @@ void JSphBuffer::SaveVtkNormals(std::string filename,int numfile,unsigned np
 }
 
 
-void JSphBuffer::GetQuadPoints2d(tdouble3 pmin,tdouble3 pmax,tdouble3* vpt)const{
+void JSphVRes::GetQuadPoints2d(tdouble3 pmin,tdouble3 pmax,tdouble3* vpt)const{
   const tdouble3 s=pmax-pmin;
   vpt[0]=pmin;
   vpt[1]=TDouble3(pmin.x+s.x,pmin.y,pmin.z);
@@ -765,7 +769,7 @@ void JSphBuffer::GetQuadPoints2d(tdouble3 pmin,tdouble3 pmax,tdouble3* vpt)const
 //==============================================================================
 // Saves VTK file with domain of zones.
 //==============================================================================
-void JSphBuffer::SaveVtkDomains(std::string filename,int numfile,bool is2d)const{
+void JSphVRes::SaveVtkDomains(std::string filename,int numfile,bool is2d)const{
   string file=fun::FileNameSec(filename,numfile);
   const unsigned nz=ListSize;
   JVtkLib sh;
@@ -774,7 +778,8 @@ void JSphBuffer::SaveVtkDomains(std::string filename,int numfile,bool is2d)const
       sh.SetShapeWireMode(true);
       tdouble3 pt[4];
       GetQuadPoints2d(BoxLimitMin[id],BoxLimitMax[id],pt);
-      sh.AddShapeQuadWire(Matmov[id].MulPoint(pt[0]),Matmov[id].MulPoint(pt[1]),Matmov[id].MulPoint(pt[2]),Matmov[id].MulPoint(pt[3]),id);
+      sh.AddShapeQuadWire(Matmov[id].MulPoint(pt[0]),Matmov[id].MulPoint(pt[1])
+        ,Matmov[id].MulPoint(pt[2]),Matmov[id].MulPoint(pt[3]),id);
     }
     sh.SaveShapeVtk(file+".vtk","Zone");
   }
@@ -793,7 +798,7 @@ void JSphBuffer::SaveVtkDomains(std::string filename,int numfile,bool is2d)const
   }
 }
 
-void JSphBuffer::GetRotMatrix(const JBoxDef& boxdef,JMatrix4d& mat,const tdouble3 posmin){
+void JSphVRes::GetRotMatrix(const JBoxDef& boxdef,JMatrix4d& mat,const tdouble3 posmin){
   tmatrix4d rotmat=TMatrix4d();
   tdouble3 vx=boxdef.GetVx();
   tdouble3 vy=boxdef.GetVy();

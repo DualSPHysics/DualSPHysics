@@ -1,5 +1,5 @@
-#ifndef JSPHGPUWRAPPER_H_
-#define JSPHGPUWRAPPER_H_
+#ifndef _JSphVResDriver_
+#define _JSphVResDriver_
 
 #include <iostream>
 #include <string>
@@ -9,7 +9,7 @@
 
 #include "JObject.h"
 #include "JLog2.h"
-#include "JSphBuffer.h"
+#include "JSphVRes.h"
 #include "JSphCfgRun.h"
 #include "JCaseVRes.h"
 #include "JMatrix4.h"
@@ -18,7 +18,7 @@
 
 
 template<typename T, typename TP>
-class JSphGpuWrapper : protected JObject {
+class JSphVResDriver : protected JObject {
 public:
     void Run(std::string appname, JSphCfgRun* cfg, JLog2* log);
     void BufferExtrapolateData(TP* parms);
@@ -40,7 +40,7 @@ using namespace std;
 
 //==============================================================================
 template<typename T, typename TP>
-void JSphGpuWrapper<T, TP>::InitProc(std::string appname, JSphCfgRun* cfg, JLog2* log) {
+void JSphVResDriver<T, TP>::InitProc(std::string appname, JSphCfgRun* cfg, JLog2* log) {
     const string casename = cfg->CaseName;
     const string begindir = cfg->PartBeginDir;
     for (unsigned i = 0; i < Num_SubDomains; i++) {
@@ -57,7 +57,7 @@ void JSphGpuWrapper<T, TP>::InitProc(std::string appname, JSphCfgRun* cfg, JLog2
 
 //==============================================================================
 template<typename T, typename TP>
-void JSphGpuWrapper<T, TP>::BufferExtrapolateData(TP* parms) {
+void JSphVResDriver<T, TP>::BufferExtrapolateData(TP* parms) {
     for (unsigned i = 0; i < Num_SubDomains; i++) SubDomains[i].CallRunCellDivide();
     for (unsigned i = 0; i < Num_SubDomains; i++) parms[i] = SubDomains[i].getParms();
     for (unsigned i = 0; i < Num_SubDomains; i++) SubDomains[i].BufferExtrapolateData(parms);
@@ -65,7 +65,7 @@ void JSphGpuWrapper<T, TP>::BufferExtrapolateData(TP* parms) {
 }
 
 template<typename T, typename TP>
-void JSphGpuWrapper<T, TP>::ComputeStepBuffer(double dt, TP* parms, JCaseVRes& casemultires) {
+void JSphVResDriver<T, TP>::ComputeStepBuffer(double dt, TP* parms, JCaseVRes& casemultires) {
     for (unsigned i = 0; i < Num_SubDomains; i++) parms[i] = SubDomains[i].getParms();
     std::vector<std::vector<JMatrix4d>> mat = CalcBufferMotion(casemultires, dt);
     for (unsigned i = 0; i < Num_SubDomains; i++) {
@@ -78,7 +78,7 @@ void JSphGpuWrapper<T, TP>::ComputeStepBuffer(double dt, TP* parms, JCaseVRes& c
 }
 
 template<typename T, typename TP>
-std::vector<std::vector<JMatrix4d>> JSphGpuWrapper<T, TP>::CalcBufferMotion(JCaseVRes& casemultires, double dt) {
+std::vector<std::vector<JMatrix4d>> JSphVResDriver<T, TP>::CalcBufferMotion(JCaseVRes& casemultires, double dt) {
     std::vector<std::vector<JMatrix4d>> mat;
     unsigned count = casemultires.Count();
     mat.resize(count);
@@ -96,7 +96,7 @@ std::vector<std::vector<JMatrix4d>> JSphGpuWrapper<T, TP>::CalcBufferMotion(JCas
 }
 
 template<typename T, typename TP>
-JMatrix4d JSphGpuWrapper<T, TP>::GetBufferMotion(const JCaseVRes_Box* box, double dt, int mkbound) {
+JMatrix4d JSphVResDriver<T, TP>::GetBufferMotion(const JCaseVRes_Box* box, double dt, int mkbound) {
     unsigned idzone = box->Id;
     bool IsTracking = box->TrackingIsActive();
     JMatrix4d mat;
@@ -114,7 +114,7 @@ JMatrix4d JSphGpuWrapper<T, TP>::GetBufferMotion(const JCaseVRes_Box* box, doubl
 
 //==============================================================================
 template<typename T, typename TP>
-void JSphGpuWrapper<T, TP>::LoadCaseVRes(const JSphCfgRun* cfg) {
+void JSphVResDriver<T, TP>::LoadCaseVRes(const JSphCfgRun* cfg) {
     const string filexml = cfg->CaseName + fun::PrintStr("_vres%02u", 0) + ".xml";
     CaseVRes.LoadFileXmlRun(filexml, "case.execution.vres");
     //-Saves data of VR zones for post-processing.
@@ -125,7 +125,7 @@ void JSphGpuWrapper<T, TP>::LoadCaseVRes(const JSphCfgRun* cfg) {
 
 //==============================================================================
 template<typename T, typename TP>
-void JSphGpuWrapper<T, TP>::Run(std::string appname, JSphCfgRun* cfg, JLog2* log) {
+void JSphVResDriver<T, TP>::Run(std::string appname, JSphCfgRun* cfg, JLog2* log) {
     LoadCaseVRes(cfg);
     Num_SubDomains = CaseVRes.Count();
     AllocateProc();
@@ -135,7 +135,7 @@ void JSphGpuWrapper<T, TP>::Run(std::string appname, JSphCfgRun* cfg, JLog2* log
 }
 
 template<typename T, typename TP>
-void JSphGpuWrapper<T, TP>::RunNormal(JCaseVRes& casemultires) {
+void JSphVResDriver<T, TP>::RunNormal(JCaseVRes& casemultires) {
     std::vector<TP> parms;
     if (Num_SubDomains > 1) {
         for (unsigned i = 0; i < Num_SubDomains; i++) parms.push_back(SubDomains[i].getParms());

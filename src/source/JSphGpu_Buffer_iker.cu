@@ -12,7 +12,7 @@
 #include <math_constants.h>
 #include "DualSphDef.h"
 #include "JSphGpu_ker.h"
-#include "JSphBuffer.h"
+#include "JSphVRes.h"
 namespace cusphbuffer{
 
 #include "FunctionsBasic_iker.h"
@@ -119,49 +119,6 @@ unsigned BufferCreateList(bool stable,unsigned n,unsigned pini,const tdouble3 bo
   return(count);
 }
 
-
-
-////------------------------------------------------------------------------------
-///// Creates list with current inout particles and normal (no periodic) fluid in
-///// inlet/outlet zones (update its code).
-////------------------------------------------------------------------------------
-//__global__ void KerBufferCreateList1(unsigned n,unsigned pini
-//  ,const double3 boxlimitmininner,const double3 boxlimitmaxinner,const double3 boxlimitminouter,const double3 boxlimitmaxouter,const bool inner
-//  ,const double2 *posxy,const double *posz
-//  ,typecode *code,unsigned *listp,unsigned nzone)
-//{
-//  extern __shared__ unsigned slist[];
-//  //float *splanes=(float*)(slist+(n+1));
-//  if(!threadIdx.x)slist[0]=0;
-//  __syncthreads();
-//  const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
-//  if(pp<n){
-//    const unsigned p=pp+pini;
-//    const typecode rcode=code[p];
-//    if(CODE_IsNormal(rcode) && CODE_IsFluid(rcode)){//-It includes only normal fluid particles (no periodic).
-//      bool select=CODE_IsFluidBuffer(rcode);//-Particles already selected as InOut.
-//      if(select){
-//        const byte izone0=byte(CODE_GetIzoneFluidBuffer(rcode));
-//    	  		const byte izone=(izone0&CODE_TYPE_FLUID_INOUT015MASK);
-//    	  		if(izone !=byte(nzone)) select=false;
-//      }
-//    	  
-//      }
-//      if(select)slist[atomicAdd(slist,1)+1]=p; //-Add particle in the list.
-//    }
-//  
-//  __syncthreads();
-//  const unsigned ns=slist[0];
-//  __syncthreads();
-//  if(!threadIdx.x && ns)slist[0]=atomicAdd((listp+n),ns);
-//  __syncthreads();
-//  if(threadIdx.x<ns){
-//    const unsigned cp=slist[0]+threadIdx.x;
-//    listp[cp]=slist[threadIdx.x+1];
-//  }
-//}
-
-
 //------------------------------------------------------------------------------
 /// Creates list with current inout particles and normal (no periodic) fluid in
 /// inlet/outlet zones (update its code).
@@ -172,7 +129,6 @@ __global__ void KerBufferCreateListInit(unsigned n,unsigned pini
   ,typecode *code,unsigned *listp,tmatrix4f mat,bool tracking,unsigned nzone)
 {
   extern __shared__ unsigned slist[];
-  //float *splanes=(float*)(slist+(n+1));
   if(!threadIdx.x)slist[0]=0;
   __syncthreads();
   bool inner1=inner;
@@ -629,8 +585,8 @@ template <TpKernel tker,bool sim2d,TpVresOrder vrorder, typename T = float>
 __global__ void KerInteractionBufferExtrap_SingleFlux
   (unsigned bufferpartcount,unsigned pini,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid,const float4* poscell, double3 mapposmin
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
-  ,const float4 *velrhop,const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes,
-  double dp,double dt,float3* velflux,float mrthreshold,const unsigned cellfluid)
+  ,const float4 *velrhop,const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes
+  ,float3* velflux,double dp,double dt,float mrthreshold,const unsigned cellfluid)
 {
   const unsigned cp=blockIdx.x*blockDim.x+threadIdx.x; //-Number of particle.
   if(cp<bufferpartcount){
@@ -659,41 +615,41 @@ __global__ void KerInteractionBufferExtrap_SingleFlux
     T mindp=min(dp,CTE.dp);
     //-Obtains neighborhood search limits.
     int ini1,fin1,ini2,fin2,ini3,fin3;
-    // cunsearch::InitCte(posp1.x,posp1.y,posp1.z,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
+    cunsearch::InitCte(posp1.x,posp1.y,posp1.z,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
 
-    // //-Interaction with fluids.
-    // for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
-    //   unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
-    //   if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
-    //     T drx,dry,drz;
-    //     if (sizeof(T)==sizeof(float)){
-    //       const float4 pscellp2 = poscell[p2];
-    //       drx=gpscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(gpscellp1.w)-PSCEL_GetfX(pscellp2.w));
-    //       dry=gpscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(gpscellp1.w)-PSCEL_GetfY(pscellp2.w));
-    //       drz=gpscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(gpscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-    //     }else{
-    //       const double2 p2xy=posxy[p2];
-    //       drx=T(posp1.x-p2xy.x);
-    //       dry=T(posp1.y-p2xy.y);
-    //       drz=T(posp1.z-posz[p2]);
-    //     }
-    //     const T rr2=drx*drx+dry*dry+drz*drz;
-    //     if (rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
-    //     // Computes kernel.
-    //       float fac;
-    //       float facc;
-    //       const T wab=cufsph::GetKernel_WabFacFacc<tker>(rr2,fac,facc);
-    //       const T frx=drx*fac,fry=dry*fac,frz=drz*fac; //-Gradients.
+    //-Interaction with fluids.
+    for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
+      unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
+      if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
+        T drx,dry,drz;
+        if (sizeof(T)==sizeof(float)){
+          const float4 pscellp2 = poscell[p2];
+          drx=gpscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(gpscellp1.w)-PSCEL_GetfX(pscellp2.w));
+          dry=gpscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(gpscellp1.w)-PSCEL_GetfY(pscellp2.w));
+          drz=gpscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(gpscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+        }else{
+          const double2 p2xy=posxy[p2];
+          drx=T(posp1.x-p2xy.x);
+          dry=T(posp1.y-p2xy.y);
+          drz=T(posp1.z-posz[p2]);
+        }
+        const T rr2=drx*drx+dry*dry+drz*drz;
+        if (rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
+        // Computes kernel.
+          float fac;
+          float facc;
+          const T wab=cufsph::GetKernel_WabFacFacc<tker>(rr2,fac,facc);
+          const T frx=drx*fac,fry=dry*fac,frz=drz*fac; //-Gradients.
 
-    //       float4 velrhopp2 = velrhop[p2];
-    //       // Get mass and volume of particle p2
-    //       T massp2=T(CTE.massf);
-    //       T volp2=massp2/T(velrhopp2.w);
-    //       ShiftTFS-=volp2*(drx*frx+dry*fry+drz*frz);
+          float4 velrhopp2 = velrhop[p2];
+          // Get mass and volume of particle p2
+          T massp2=T(CTE.massf);
+          T volp2=massp2/T(velrhopp2.w);
+          ShiftTFS-=volp2*(drx*frx+dry*fry+drz*frz);
 
-    //     }
-    //   }
-    // }
+        }
+      }
+    }
 
     cunsearch::InitCte(posp1.x,posp1.y,posp1.z,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
     ini3+=cellfluid; fin3+=cellfluid;
@@ -846,17 +802,18 @@ __global__ void KerInteractionBufferExtrap_SingleFlux
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
 template<TpKernel tker,bool sim2d,TpVresOrder vrorder>
-void Interaction_BufferExtrapFluxT(unsigned bufferpartcount,unsigned pini,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes,double dp,double dt,float3* velflux,bool fastsingle,float mrthreshold)
+void Interaction_BufferExtrapFluxT(const StInterParmsbg &t,StrDataVresGpu &vres
+	,double dp,double dt,bool fastsingle,float mrthreshold)
 {
   const StDivDataGpu &dvd=t.divdatag;
   const int2* beginendcellfluid=dvd.beginendcell/* +dvd.cellfluid */;
   //-Interaction GhostBoundaryNodes-Fluid.
-  if(bufferpartcount){
+  const unsigned n=vres.ntot;
+  if(n){
     const unsigned bsize=128;
-    dim3 sgrid=GetSimpleGridSize(bufferpartcount,bsize);
-    if(fastsingle)  KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,float> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero
-      ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);
+    dim3 sgrid=GetSimpleGridSize(n,bsize);
+    if(fastsingle)  KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,float> <<<sgrid,bsize>>> (vres.ntot,vres.nini,dvd.scelldiv,dvd.nc,dvd.cellzero
+      ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,vres.ptposxy,vres.ptposz,vres.normals,vres.mass,vres.velmot,dp,dt,mrthreshold,dvd.cellfluid);
     // else KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,double> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero
     //   ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);    
   }
@@ -867,14 +824,14 @@ void Interaction_BufferExtrapFluxT(unsigned bufferpartcount,unsigned pini,const 
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
 template<TpKernel tker>
-void Interaction_BufferExtrapFlux_gt0(unsigned bufferpartcount,unsigned pini,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes,double dp,double dt,float3* velflux,bool fastsingle,const TpVresOrder vrorder,float mrthreshold)
+void Interaction_BufferExtrapFlux_gt0(const StInterParmsbg &t,StrDataVresGpu &vres
+	,double dp,double dt,bool fastsingle,const TpVresOrder vrorder,float mrthreshold)
 {
   if(t.simulate2d){
     switch(vrorder){
-      case VrOrder_0th: Interaction_BufferExtrapFluxT<tker,true,VrOrder_0th>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,mrthreshold); break;
-      case VrOrder_1st: Interaction_BufferExtrapFluxT<tker,true,VrOrder_1st>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,mrthreshold); break;
-      case VrOrder_2nd: Interaction_BufferExtrapFluxT<tker,true,VrOrder_2nd>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,mrthreshold); break;
+      case VrOrder_0th: Interaction_BufferExtrapFluxT<tker,true,VrOrder_0th>(t,vres,dp,dt,fastsingle,mrthreshold); break;
+      case VrOrder_1st: Interaction_BufferExtrapFluxT<tker,true,VrOrder_1st>(t,vres,dp,dt,fastsingle,mrthreshold); break;
+      case VrOrder_2nd: Interaction_BufferExtrapFluxT<tker,true,VrOrder_2nd>(t,vres,dp,dt,fastsingle,mrthreshold); break;
     }
   }else{
       switch(vrorder){
@@ -889,12 +846,12 @@ void Interaction_BufferExtrapFlux_gt0(unsigned bufferpartcount,unsigned pini,con
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-void Interaction_BufferExtrapFlux(unsigned bufferpartcount,unsigned pini,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float3 *normals,float *fluxes,double dp,double dt,float3* velflux,bool fastsingle,const TpVresOrder vrorder,float mrthreshold)
+void Interaction_BufferExtrapFlux(const StInterParmsbg &t,StrDataVresGpu &vres
+	,double dp,double dt,bool fastsingle,const TpVresOrder vrorder,float mrthreshold)
 {
   switch(t.tkernel){
     case KERNEL_Wendland:
-      Interaction_BufferExtrapFlux_gt0<KERNEL_Wendland>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,vrorder,mrthreshold);
+      Interaction_BufferExtrapFlux_gt0<KERNEL_Wendland>(t,vres,dp,dt,fastsingle,vrorder,mrthreshold);
     break;
 #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:
@@ -903,7 +860,58 @@ void Interaction_BufferExtrapFlux(unsigned bufferpartcount,unsigned pini,const S
 #endif
     default: throw "Kernel unknown at Interaction_InOutExtrap().";
   }
-  cudaDeviceSynchronize();
+}
+
+
+__global__ void KerCheckMassFlux(unsigned n,unsigned pini2,double3 mapposmin,float poscellsize
+  ,const float4* poscell,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
+  ,unsigned cellfluid,const double2* posxy,const double* posz,const typecode *code,const double2 *posxyb
+  ,const double *poszb,float3 *normals,float *fluxes)
+{
+  const unsigned cp=blockIdx.x*blockDim.x+threadIdx.x; //-Number of particle.
+  if(cp<n){
+    const unsigned p1=cp+pini2;
+
+      //-Calculates ghost node position.
+    double3 posp1 = make_double3(posxyb[p1].x, posxyb[p1].y, poszb[p1]);
+    const float4 gpscellp1 = cusph::KerComputePosCell(posp1,mapposmin,CTE.poscellsize);
+
+    //-Obtains neighborhood search limits.
+    int ini1,fin1,ini2,fin2,ini3,fin3;
+    cunsearch::InitCte(posp1.x,posp1.y,posp1.z,scelldiv,nc,cellzero,ini1,fin1,ini2,fin2,ini3,fin3);
+    // ini3-=cellfluid; fin3-=cellfluid;
+    //-Boundary-Fluid interaction.
+    for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
+      unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,beginendcellfluid,pini,pfin);
+      if(pfin)for(unsigned p2=pini;p2<pfin;p2++){
+        const float4 pscellp2=poscell[p2];
+        float drx=gpscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(gpscellp1.w)-PSCEL_GetfX(pscellp2.w));
+        float dry=gpscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(gpscellp1.w)-PSCEL_GetfY(pscellp2.w));
+        float drz=gpscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(gpscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+        const float rr2=drx*drx+dry*dry+drz*drz;
+        if(rr2<CTE.dp*CTE.dp){
+          const float3 normalp1=normals[p1];
+          const float norm = (-normalp1.x*drx+-normalp1.y*dry-normalp1.z*drz)/sqrt(rr2);
+          if(acos(norm)>0.785398) fluxes[p1]=0;      
+        }
+      }
+    }
+  }
+}
+
+
+void CheckMassFlux(unsigned n,unsigned pini
+  ,const StDivDataGpu& dvd,const tdouble3& mapposmin,const double2* posxy
+  ,const double* posz,const typecode *code,const float4* poscell,const double2 *posxyb
+  ,const double *poszb,float3 *normals,float *fluxes)
+{
+  if(n){
+    const unsigned bsbound=128;
+    dim3 sgrid=GetSimpleGridSize(n,bsbound);
+    KerCheckMassFlux<<<sgrid,bsbound>>>(n,pini,Double3(mapposmin),dvd.poscellsize
+      ,poscell,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
+      ,posxy,posz,code,posxyb,poszb,normals,fluxes);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -961,7 +969,7 @@ unsigned BufferListCreate(bool stable,unsigned n,unsigned pini,unsigned nmax, fl
 
 
 //------------------------------------------------------------------------------
-/// Creates new inlet particles to replace the particles moved to fluid domain.
+/// Creates new vres buffer particles to replace the particles moved to fluid domain.
 //------------------------------------------------------------------------------
 template<bool periactive> __global__ void KerBufferCreateNewPart(unsigned newn,unsigned pini
   ,int *bufferpart
@@ -987,7 +995,7 @@ template<bool periactive> __global__ void KerBufferCreateNewPart(unsigned newn,u
 }
 
 //==============================================================================
-/// Creates new inlet particles to replace the particles moved to fluid domain.
+/// Creates new vres buffer particles to replace the particles moved to fluid domain.
 //==============================================================================
 void BufferCreateNewPart(byte periactive,unsigned newn,unsigned pini
 		  ,int *bufferpart

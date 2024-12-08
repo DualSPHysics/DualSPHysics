@@ -1,5 +1,5 @@
-#ifndef JSPHBUFFER_H_
-#define JSPHBUFFER_H_
+#ifndef _JSphVResh_
+#define _JSphVResh_
 
 #include <string>
 #include <vector>
@@ -103,7 +103,7 @@ class JDsVResDataLoad;
 	
 // #endif
 
-class JSphBuffer : protected JObject {
+class JSphVRes : protected JObject {
   
 private:
     
@@ -211,9 +211,9 @@ public:
   
   const bool Cpu;
   const StCteSph CSP;  ///< Structure with main SPH constants values and configurations.
-  JSphBuffer(bool cpu, const StCteSph &csp,const JCaseVRes vreszone,unsigned zoneid
+  JSphVRes(bool cpu, const StCteSph &csp,const JCaseVRes vreszone,unsigned zoneid
       ,std::string appname,std::string dirdataout,unsigned partbegin,std::string partbegindir);
-  ~JSphBuffer();
+  ~JSphVRes();
   void Reset();
   void Config();
   StrDataVresGpu GetZoneFluxInfoGpu(unsigned nzone);
@@ -269,4 +269,4 @@ public:
 
 };
 
-#endif /* JSPHBUFFER_H_ */
+#endif 

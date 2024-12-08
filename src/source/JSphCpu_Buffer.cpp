@@ -13,7 +13,7 @@
 #include "FunSphKernel.h"
 #include "FunctionsMath.h"
 #include "FunGeo3d.h"
-#include "JSphCpuSingle_Mr.h"
+#include "JSphCpuSingle_VRes.h"
 #include <climits>
 #include <cstring>
 #include <algorithm>

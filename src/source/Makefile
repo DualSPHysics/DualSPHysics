@@ -1,7 +1,7 @@
 #DualSPHysics GPU/CPU v5.4.344 12-10-2024
 
 #=============== Compilation Options (YES/NO) ===============
-USE_DEBUG=YES
+USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_VTKLIB=YES
@@ -121,7 +121,7 @@ OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphInOut.o JSphInOutZone.o JSphIn
 OBINOUTGPU=JSphGpuSingle_InOut.o
 OBMDBC=JPartNormalData.o
 OBMESH=JMeshData.o JMeshTDatas.o JMeshTDatasLoad.o JMeshTDatasSave.o JMeshTDatasDsVel.o JMeshTDatasXml.o
-OBVRES=JSphBuffer.o JSphBufferZone.o JSphCpuSingle_Mr.o JSphGpuSingle_Mr.o JSphCpu_Buffer.o JCaseVRes.o JVResDataLimits.o JDsVresData.o JBoxDef.o
+OBVRES=JSphVRes.o JSphBufferZone.o JSphCpuSingle_VRes.o JSphGpuSingle_VRes.o JSphCpu_Buffer.o JCaseVRes.o JVResDataLimits.o JDsVresData.o JBoxDef.o
 
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
 OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)
