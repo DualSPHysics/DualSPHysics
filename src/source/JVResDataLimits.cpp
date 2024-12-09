@@ -21,7 +21,7 @@
 #include "JVResDataLimits.h"
 #include "JBinaryData.h"
 #include "JCaseVRes.h"
-#include "JVtkLib.h"
+// #include "JVtkLib.h"
 #include "Functions.h"
 
 #include <algorithm>
@@ -347,103 +347,103 @@ void JVResDataLimits::GetBoxPoints3d(JBoxDef box,tdouble3* ptvec){
 // Saves VTK file with limits of zones.
 //==============================================================================
 void JVResDataLimits::SaveVtkLimits(std::string fname,bool onefile)const{
-  string file=fun::GetWithoutExtension(fname);
-  const unsigned nz=Count();
-  if(nz<2)Run_ExceptioonFile("No subdomains are available.",file+".vtk");
-  JVtkLib sh_1;
-  if(Is2D){
-    for(unsigned id=0;id<nz;id++){
-      JVtkLib sh_2;
-      JVtkLib& sh=(onefile? sh_1: sh_2);
-      sh.SetShapeWireMode(true);
-      const JVResDataLimitsZone* pzone=GetZone(id);
-      //-Draws outter limits of zone.
-      if(pzone->OutLimits){
-        tdouble3 pt[4],pt2[4];
-        GetBoxPoints2d(pzone->GetOutLimit(),pt);
-        GetBoxPoints2d(pzone->GetOutLimit2h(),pt2);
-        sh.AddShapeQuadWire(pt[0],pt[1],pt[2],pt[3],id);
-        sh.AddShapeQuadWire(pt2[0],pt2[1],pt2[2],pt2[3],id);
-        for(unsigned c=0;c<4;c++){
-          sh.AddShapeLine(pt[c],pt2[c],id);
-        }
-      }
-      //-Draws inner limits of zone.
-      const unsigned nsub=pzone->SubCount();
-      for(unsigned csub=0;csub<nsub;csub++){
-        tdouble3 pt[4],pt2[4];
-        GetBoxPoints2d(pzone->GetInnLimit(csub),pt);
-        GetBoxPoints2d(pzone->GetInnLimit2h(csub),pt2);
-        sh.AddShapeQuadWire(pt[0],pt[1],pt[2],pt[3],id);
-        sh.AddShapeQuadWire(pt2[0],pt2[1],pt2[2],pt2[3],id);
-        for(unsigned c=0;c<4;c++){
-          sh.AddShapeLine(pt[c],pt2[c],id);
-        }
-      }
-      if(!onefile)sh_2.SaveShapeVtk(file+fun::PrintStr("%02d.vtk",id),"Zone");
-    }
-    sh_1.SaveShapeVtk(file+".vtk","Zone");
-  }
-  else{
-    for(unsigned id=0;id<nz;id++){
-      JVtkLib sh_2;
-      JVtkLib& sh=(onefile? sh_1: sh_2);
-      sh.SetShapeWireMode(true);
-      const JVResDataLimitsZone* pzone=GetZone(id);
-      //-Draws outter limits of zone.
-      if(pzone->OutLimits){
-        tdouble3 ptvec[4];
-        GetBoxPoints3d(pzone->GetOutLimit(),ptvec);
-        sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
-        tdouble3 ptvec2[4];
-        GetBoxPoints3d(pzone->GetOutLimit2h(),ptvec2);
-        sh.AddShapeBox(ptvec2[0],ptvec2[1],ptvec2[2],ptvec2[3],id);
-        //for(unsigned c=0;c<4;c++){
-        //  const tdouble3 sx=TDouble3(ptb.x-pta.x,0,0);
-        //  const tdouble3 sy=TDouble3(0,ptb.y-pta.y,0);
-        //  const tdouble3 sz=TDouble3(0,0,ptb.z-pta.z);
-        //  const tdouble3 sx2=TDouble3(pt2b.x-pt2a.x,0,0);
-        //  const tdouble3 sy2=TDouble3(0,pt2b.y-pt2a.y,0);
-        //  const tdouble3 sz2=TDouble3(0,0,pt2b.z-pt2a.z);
-        //  sh.AddShapeLine(pta         ,pt2a            ,id);
-        //  sh.AddShapeLine(pta+sx      ,pt2a+sx2        ,id);
-        //  sh.AddShapeLine(pta+sy      ,pt2a+sy2        ,id);
-        //  sh.AddShapeLine(pta+sx+sy   ,pt2a+sx2+sy2    ,id);
-        //  sh.AddShapeLine(pta+sz      ,pt2a+sz2        ,id);
-        //  sh.AddShapeLine(pta+sz+sx   ,pt2a+sz2+sx2    ,id);
-        //  sh.AddShapeLine(pta+sz+sy   ,pt2a+sz2+sy2    ,id);
-        //  sh.AddShapeLine(pta+sz+sx+sy,pt2a+sz2+sx2+sy2,id);
-        //}
-      }
-      //-Draws inner limits of zone.
-      const unsigned nsub=pzone->SubCount();
-      for(unsigned csub=0;csub<nsub;csub++){
-        tdouble3 ptvec[4];
-        GetBoxPoints3d(pzone->GetInnLimit(csub),ptvec);
-        sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
-        tdouble3 ptvec2[4];
-        GetBoxPoints3d(pzone->GetInnLimit2h(csub),ptvec2);
-        sh.AddShapeBox(ptvec2[0],ptvec2[1],ptvec2[2],ptvec2[3],id);
-        //for(unsigned c=0;c<4;c++){
-        //  const tdouble3 sx=TDouble3(ptb.x-pta.x,0,0);
-        //  const tdouble3 sy=TDouble3(0,ptb.y-pta.y,0);
-        //  const tdouble3 sz=TDouble3(0,0,ptb.z-pta.z);
-        //  const tdouble3 sx2=TDouble3(pt2b.x-pt2a.x,0,0);
-        //  const tdouble3 sy2=TDouble3(0,pt2b.y-pt2a.y,0);
-        //  const tdouble3 sz2=TDouble3(0,0,pt2b.z-pt2a.z);
-        //  sh.AddShapeLine(pta         ,pt2a            ,id);
-        //  sh.AddShapeLine(pta+sx      ,pt2a+sx2        ,id);
-        //  sh.AddShapeLine(pta+sy      ,pt2a+sy2        ,id);
-        //  sh.AddShapeLine(pta+sx+sy   ,pt2a+sx2+sy2    ,id);
-        //  sh.AddShapeLine(pta+sz      ,pt2a+sz2        ,id);
-        //  sh.AddShapeLine(pta+sz+sx   ,pt2a+sz2+sx2    ,id);
-        //  sh.AddShapeLine(pta+sz+sy   ,pt2a+sz2+sy2    ,id);
-        //  sh.AddShapeLine(pta+sz+sx+sy,pt2a+sz2+sx2+sy2,id);
-        //}
-      }
-      if(!onefile)sh_2.SaveShapeVtk(file+fun::PrintStr("%02d.vtk",id),"Zone");
-    }
-    sh_1.SaveShapeVtk(file+".vtk","Zone");
-  }
+  // string file=fun::GetWithoutExtension(fname);
+  // const unsigned nz=Count();
+  // if(nz<2)Run_ExceptioonFile("No subdomains are available.",file+".vtk");
+  // JVtkLib sh_1;
+  // if(Is2D){
+  //   for(unsigned id=0;id<nz;id++){
+  //     JVtkLib sh_2;
+  //     JVtkLib& sh=(onefile? sh_1: sh_2);
+  //     sh.SetShapeWireMode(true);
+  //     const JVResDataLimitsZone* pzone=GetZone(id);
+  //     //-Draws outter limits of zone.
+  //     if(pzone->OutLimits){
+  //       tdouble3 pt[4],pt2[4];
+  //       GetBoxPoints2d(pzone->GetOutLimit(),pt);
+  //       GetBoxPoints2d(pzone->GetOutLimit2h(),pt2);
+  //       sh.AddShapeQuadWire(pt[0],pt[1],pt[2],pt[3],id);
+  //       sh.AddShapeQuadWire(pt2[0],pt2[1],pt2[2],pt2[3],id);
+  //       for(unsigned c=0;c<4;c++){
+  //         sh.AddShapeLine(pt[c],pt2[c],id);
+  //       }
+  //     }
+  //     //-Draws inner limits of zone.
+  //     const unsigned nsub=pzone->SubCount();
+  //     for(unsigned csub=0;csub<nsub;csub++){
+  //       tdouble3 pt[4],pt2[4];
+  //       GetBoxPoints2d(pzone->GetInnLimit(csub),pt);
+  //       GetBoxPoints2d(pzone->GetInnLimit2h(csub),pt2);
+  //       sh.AddShapeQuadWire(pt[0],pt[1],pt[2],pt[3],id);
+  //       sh.AddShapeQuadWire(pt2[0],pt2[1],pt2[2],pt2[3],id);
+  //       for(unsigned c=0;c<4;c++){
+  //         sh.AddShapeLine(pt[c],pt2[c],id);
+  //       }
+  //     }
+  //     if(!onefile)sh_2.SaveShapeVtk(file+fun::PrintStr("%02d.vtk",id),"Zone");
+  //   }
+  //   sh_1.SaveShapeVtk(file+".vtk","Zone");
+  // }
+  // else{
+  //   for(unsigned id=0;id<nz;id++){
+  //     JVtkLib sh_2;
+  //     JVtkLib& sh=(onefile? sh_1: sh_2);
+  //     sh.SetShapeWireMode(true);
+  //     const JVResDataLimitsZone* pzone=GetZone(id);
+  //     //-Draws outter limits of zone.
+  //     if(pzone->OutLimits){
+  //       tdouble3 ptvec[4];
+  //       GetBoxPoints3d(pzone->GetOutLimit(),ptvec);
+  //       sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
+  //       tdouble3 ptvec2[4];
+  //       GetBoxPoints3d(pzone->GetOutLimit2h(),ptvec2);
+  //       sh.AddShapeBox(ptvec2[0],ptvec2[1],ptvec2[2],ptvec2[3],id);
+  //       //for(unsigned c=0;c<4;c++){
+  //       //  const tdouble3 sx=TDouble3(ptb.x-pta.x,0,0);
+  //       //  const tdouble3 sy=TDouble3(0,ptb.y-pta.y,0);
+  //       //  const tdouble3 sz=TDouble3(0,0,ptb.z-pta.z);
+  //       //  const tdouble3 sx2=TDouble3(pt2b.x-pt2a.x,0,0);
+  //       //  const tdouble3 sy2=TDouble3(0,pt2b.y-pt2a.y,0);
+  //       //  const tdouble3 sz2=TDouble3(0,0,pt2b.z-pt2a.z);
+  //       //  sh.AddShapeLine(pta         ,pt2a            ,id);
+  //       //  sh.AddShapeLine(pta+sx      ,pt2a+sx2        ,id);
+  //       //  sh.AddShapeLine(pta+sy      ,pt2a+sy2        ,id);
+  //       //  sh.AddShapeLine(pta+sx+sy   ,pt2a+sx2+sy2    ,id);
+  //       //  sh.AddShapeLine(pta+sz      ,pt2a+sz2        ,id);
+  //       //  sh.AddShapeLine(pta+sz+sx   ,pt2a+sz2+sx2    ,id);
+  //       //  sh.AddShapeLine(pta+sz+sy   ,pt2a+sz2+sy2    ,id);
+  //       //  sh.AddShapeLine(pta+sz+sx+sy,pt2a+sz2+sx2+sy2,id);
+  //       //}
+  //     }
+  //     //-Draws inner limits of zone.
+  //     const unsigned nsub=pzone->SubCount();
+  //     for(unsigned csub=0;csub<nsub;csub++){
+  //       tdouble3 ptvec[4];
+  //       GetBoxPoints3d(pzone->GetInnLimit(csub),ptvec);
+  //       sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
+  //       tdouble3 ptvec2[4];
+  //       GetBoxPoints3d(pzone->GetInnLimit2h(csub),ptvec2);
+  //       sh.AddShapeBox(ptvec2[0],ptvec2[1],ptvec2[2],ptvec2[3],id);
+  //       //for(unsigned c=0;c<4;c++){
+  //       //  const tdouble3 sx=TDouble3(ptb.x-pta.x,0,0);
+  //       //  const tdouble3 sy=TDouble3(0,ptb.y-pta.y,0);
+  //       //  const tdouble3 sz=TDouble3(0,0,ptb.z-pta.z);
+  //       //  const tdouble3 sx2=TDouble3(pt2b.x-pt2a.x,0,0);
+  //       //  const tdouble3 sy2=TDouble3(0,pt2b.y-pt2a.y,0);
+  //       //  const tdouble3 sz2=TDouble3(0,0,pt2b.z-pt2a.z);
+  //       //  sh.AddShapeLine(pta         ,pt2a            ,id);
+  //       //  sh.AddShapeLine(pta+sx      ,pt2a+sx2        ,id);
+  //       //  sh.AddShapeLine(pta+sy      ,pt2a+sy2        ,id);
+  //       //  sh.AddShapeLine(pta+sx+sy   ,pt2a+sx2+sy2    ,id);
+  //       //  sh.AddShapeLine(pta+sz      ,pt2a+sz2        ,id);
+  //       //  sh.AddShapeLine(pta+sz+sx   ,pt2a+sz2+sx2    ,id);
+  //       //  sh.AddShapeLine(pta+sz+sy   ,pt2a+sz2+sy2    ,id);
+  //       //  sh.AddShapeLine(pta+sz+sx+sy,pt2a+sz2+sx2+sy2,id);
+  //       //}
+  //     }
+  //     if(!onefile)sh_2.SaveShapeVtk(file+fun::PrintStr("%02d.vtk",id),"Zone");
+  //   }
+  //   sh_1.SaveShapeVtk(file+".vtk","Zone");
+  // }
 }
 

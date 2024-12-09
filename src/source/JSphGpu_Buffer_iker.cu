@@ -1371,7 +1371,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
     }
   }
 
-  void ComputeFSNormals(TpKernel tkernel,bool simulate2d,bool symmetry,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
+  void ComputeFSNormals(TpKernel tkernel,bool simulate2d,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
     ,StDivDataGpu& dvd,const unsigned* dcell,const double2* posxy,const double* posz
     ,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp,float4* shiftposfs
     ,unsigned* fstype,float3* fsnormal,unsigned* listp,StrGeomVresGpu* vresgdata,cudaStream_t stm)
@@ -1390,14 +1390,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
 
     if(count){
       dim3 sgridf=GetSimpleGridSize(count,bsfluid);
-      if(symmetry) //<vs_syymmetry_ini>
-        KerComputeNormals<true> <<<sgridf,bsfluid,0,stm>>> 
-        (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
-            ,poscell,velrho,code,fstype,fsnormal,simulate2d,shiftposfs
-            ,ftomassp,listp
-            ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
-      else //<vs_syymmetry_end>
-        KerComputeNormals<false> <<<sgridf,bsfluid,0,stm>>> 
+      KerComputeNormals<false> <<<sgridf,bsfluid,0,stm>>> 
         (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
             ,poscell,velrho,code,fstype,fsnormal,simulate2d,shiftposfs
             ,ftomassp,listp
@@ -1578,7 +1571,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
 
 
 
-  void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d,bool symmetry,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
+  void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
     ,StDivDataGpu& dvd,const unsigned* dcell,const double2* posxy,const double* posz
     ,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp,float4* shiftposfs
     ,unsigned* fstype,float3* fsnormal,unsigned* listp,StrGeomVresGpu* vresgdata,cudaStream_t stm)
@@ -1597,13 +1590,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
 
     if(count){
       dim3 sgridf=GetSimpleGridSize(count,bsfluid);
-      if(symmetry) //<vs_syymmetry_ini>
-        KerScanUmbrellaRegion<true> <<<sgridf,bsfluid,0,stm>>> 
-        (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
-            ,poscell,code,fstype,fsnormal,simulate2d,listp
-            ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
-      else //<vs_syymmetry_end>
-        KerScanUmbrellaRegion<false> <<<sgridf,bsfluid,0,stm>>> 
+      KerScanUmbrellaRegion<false> <<<sgridf,bsfluid,0,stm>>> 
         (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
             ,poscell,code,fstype,fsnormal,simulate2d,listp
             ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);

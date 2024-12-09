@@ -23,7 +23,7 @@
 #include "Functions.h"
 #include "FunctionsMath.h"
 #include "JXml.h"
-#include "JVtkLib.h"
+// #include "JVtkLib.h"
 
 
 #include <algorithm>
@@ -1151,235 +1151,235 @@ void JCaseVRes::GetBoxPoints3d(JBoxDef box,double resize,tdouble3* ptvec){
 // Saves VTK file with domain of zones.
 //==============================================================================
 void JCaseVRes::SaveVtkDomains(std::string fname,bool onefile,bool halfdp)const{
-  string file=fun::GetWithoutExtension(fname);
-  if(Count()<2)Run_ExceptioonFile("No subdomains are available.",file+".vtk");
-  const unsigned nz=Count();
-  JVtkLib sh_1;
-  if(Is2D){
-    for(unsigned id=0;id<nz;id++){
-      JVtkLib sh_2;
-      JVtkLib& sh=(onefile? sh_1: sh_2);
-      sh.SetShapeWireMode(true);
-      const JCaseVRes_Box* pzone=GetZoneBox(id);
-      const double fdpm=(halfdp && id? pzone->Dp/2: 0);
-      const double dpm=(halfdp? pzone->Dp/2: 0);
-      tdouble3 pt[4];
-      GetBoxPoints2d(pzone->GetPtBox(),fdpm,pt);
-      sh.AddShapeQuadWire(pt[0],pt[1],pt[2],pt[3],id);
-      if(id){
-        tdouble3 pt[4];
-        GetBoxPoints2d(pzone->GetBuffBox(),dpm,pt);
-        sh.AddShapeQuadWire(pt[0],pt[1],pt[2],pt[3],id);
-        //GetBoxPoints2d(pzone->GetFixedBox(),dpm,pt);
-        //sh.AddShapeQuadWire(pt[0],pt[1],pt[2],pt[3],id);
-      }
-      const unsigned n2=pzone->Count();
-      for(unsigned c2=0;c2<n2;c2++){
-        const JCaseVRes_Box* psubzone=pzone->GetSubZoneBox(c2);
-        tdouble3 pt[4];
-        GetBoxPoints2d(psubzone->GetParentBuffIniBox(),-dpm,pt);
-        tdouble3 pb[4];
-        GetBoxPoints2d(psubzone->GetParentBuffEndBox(),-dpm,pb);
-        //tdouble3 pf[4];
-        //GetBoxPoints2d(psubzone->GetParentFixedBox(),-dpm,pf);
-        sh.AddShapeQuadWire(pt[0],pt[1],pt[2],pt[3],id);
-        sh.AddShapeQuadWire(pb[0],pb[1],pb[2],pb[3],id);
-        //sh.AddShapeQuadWire(pf[0],pf[1],pf[2],pf[3],id);
-        for(unsigned c=0;c<4;c++){
-          sh.AddShapeLine(pt[c],pb[c],id);
-          //sh.AddShapeLine(pb[c],pf[c],id);
-        }
-      }
-      if(!onefile)sh_2.SaveShapeVtk(file+fun::PrintStr("%02d.vtk",id),"Zone");
-    }
-    sh_1.SaveShapeVtk(file+".vtk","Zone");
-  }
-  else{
-    for(unsigned id=0;id<nz;id++){
-      JVtkLib sh_2;
-      JVtkLib& sh=(onefile? sh_1: sh_2);
-      sh.SetShapeWireMode(!true);
-      const JCaseVRes_Box* pzone=GetZoneBox(id);
-      const double fdpm=(halfdp && id? pzone->Dp/2: 0);
-      const double dpm=(halfdp? pzone->Dp/2: 0);
+  // string file=fun::GetWithoutExtension(fname);
+  // if(Count()<2)Run_ExceptioonFile("No subdomains are available.",file+".vtk");
+  // const unsigned nz=Count();
+  // JVtkLib sh_1;
+  // if(Is2D){
+  //   for(unsigned id=0;id<nz;id++){
+  //     JVtkLib sh_2;
+  //     JVtkLib& sh=(onefile? sh_1: sh_2);
+  //     sh.SetShapeWireMode(true);
+  //     const JCaseVRes_Box* pzone=GetZoneBox(id);
+  //     const double fdpm=(halfdp && id? pzone->Dp/2: 0);
+  //     const double dpm=(halfdp? pzone->Dp/2: 0);
+  //     tdouble3 pt[4];
+  //     GetBoxPoints2d(pzone->GetPtBox(),fdpm,pt);
+  //     sh.AddShapeQuadWire(pt[0],pt[1],pt[2],pt[3],id);
+  //     if(id){
+  //       tdouble3 pt[4];
+  //       GetBoxPoints2d(pzone->GetBuffBox(),dpm,pt);
+  //       sh.AddShapeQuadWire(pt[0],pt[1],pt[2],pt[3],id);
+  //       //GetBoxPoints2d(pzone->GetFixedBox(),dpm,pt);
+  //       //sh.AddShapeQuadWire(pt[0],pt[1],pt[2],pt[3],id);
+  //     }
+  //     const unsigned n2=pzone->Count();
+  //     for(unsigned c2=0;c2<n2;c2++){
+  //       const JCaseVRes_Box* psubzone=pzone->GetSubZoneBox(c2);
+  //       tdouble3 pt[4];
+  //       GetBoxPoints2d(psubzone->GetParentBuffIniBox(),-dpm,pt);
+  //       tdouble3 pb[4];
+  //       GetBoxPoints2d(psubzone->GetParentBuffEndBox(),-dpm,pb);
+  //       //tdouble3 pf[4];
+  //       //GetBoxPoints2d(psubzone->GetParentFixedBox(),-dpm,pf);
+  //       sh.AddShapeQuadWire(pt[0],pt[1],pt[2],pt[3],id);
+  //       sh.AddShapeQuadWire(pb[0],pb[1],pb[2],pb[3],id);
+  //       //sh.AddShapeQuadWire(pf[0],pf[1],pf[2],pf[3],id);
+  //       for(unsigned c=0;c<4;c++){
+  //         sh.AddShapeLine(pt[c],pb[c],id);
+  //         //sh.AddShapeLine(pb[c],pf[c],id);
+  //       }
+  //     }
+  //     if(!onefile)sh_2.SaveShapeVtk(file+fun::PrintStr("%02d.vtk",id),"Zone");
+  //   }
+  //   sh_1.SaveShapeVtk(file+".vtk","Zone");
+  // }
+  // else{
+  //   for(unsigned id=0;id<nz;id++){
+  //     JVtkLib sh_2;
+  //     JVtkLib& sh=(onefile? sh_1: sh_2);
+  //     sh.SetShapeWireMode(!true);
+  //     const JCaseVRes_Box* pzone=GetZoneBox(id);
+  //     const double fdpm=(halfdp && id? pzone->Dp/2: 0);
+  //     const double dpm=(halfdp? pzone->Dp/2: 0);
 
-      tdouble3 ptvec[4];
-      GetBoxPoints3d(pzone->GetPtBox(),fdpm,ptvec);
-      sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
-      if(id){
-        tdouble3 ptvec[4];
-        GetBoxPoints3d(pzone->GetBuffBox(),dpm,ptvec);
-        sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
-        //GetBoxPoints3d(pzone->GetFixedBox(),dpm,ptvec);
-        //sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
-      }
-      const unsigned n2=pzone->Count();
-      for(unsigned c2=0;c2<n2;c2++){
-        const JCaseVRes_Box* psubzone=pzone->GetSubZoneBox(c2);
-        tdouble3 ptvec[4];
-        GetBoxPoints3d(psubzone->GetParentBuffIniBox(),-dpm,ptvec);
-        sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
-        GetBoxPoints3d(psubzone->GetParentBuffEndBox(),-dpm,ptvec);
-        sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
-        //GetBoxPoints3d(psubzone->GetParentFixedBox(),-dpm,ptvec);
-        //sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
-      }
-      if(!onefile)sh_2.SaveShapeVtk(file+fun::PrintStr("%02d.vtk",id),"Zone");
-    }
-    sh_1.SaveShapeVtk(file+".vtk","Zone");
-  }
+  //     tdouble3 ptvec[4];
+  //     GetBoxPoints3d(pzone->GetPtBox(),fdpm,ptvec);
+  //     sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
+  //     if(id){
+  //       tdouble3 ptvec[4];
+  //       GetBoxPoints3d(pzone->GetBuffBox(),dpm,ptvec);
+  //       sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
+  //       //GetBoxPoints3d(pzone->GetFixedBox(),dpm,ptvec);
+  //       //sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
+  //     }
+  //     const unsigned n2=pzone->Count();
+  //     for(unsigned c2=0;c2<n2;c2++){
+  //       const JCaseVRes_Box* psubzone=pzone->GetSubZoneBox(c2);
+  //       tdouble3 ptvec[4];
+  //       GetBoxPoints3d(psubzone->GetParentBuffIniBox(),-dpm,ptvec);
+  //       sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
+  //       GetBoxPoints3d(psubzone->GetParentBuffEndBox(),-dpm,ptvec);
+  //       sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
+  //       //GetBoxPoints3d(psubzone->GetParentFixedBox(),-dpm,ptvec);
+  //       //sh.AddShapeBox(ptvec[0],ptvec[1],ptvec[2],ptvec[3],id);
+  //     }
+  //     if(!onefile)sh_2.SaveShapeVtk(file+fun::PrintStr("%02d.vtk",id),"Zone");
+  //   }
+  //   sh_1.SaveShapeVtk(file+".vtk","Zone");
+  // }
 }
 
 //==============================================================================
 // Saves VTK file with points of zones.
 //==============================================================================
 void JCaseVRes::SaveVtkPoints(std::string fname,bool onefile)const{
-  string file=fun::GetWithoutExtension(fname);
-  if(Count()<2)Run_ExceptioonFile("No subdomains are available.",file+".vtk");
-  vector<tdouble3> vpos;
-  vector<byte>     vzone;
-  const unsigned nzone=Count();
-  for(unsigned id=0;id<nzone;id++){
-    //printf("--> Zone: %u\n",id);
-    const JCaseVRes_Box* pzone=GetZoneBox(id);
-    if(!pzone->UseSimpleBoxes())
-      Run_Exceptioon("Non-simple box definition is not supported by this method.");
-    //-Compute limits of full points in domain.
-    const double dp=pzone->Dp;
-    const JBoxDef dbox=(id? pzone->GetFixedBox(): pzone->GetPtBox());
-    const tdouble3 pmin=dbox.GetPosMin();
-    const tdouble3 vx=dbox.GetVx();
-    const tdouble3 vy=dbox.GetVy();
-    const tdouble3 vz=dbox.GetVz();
-    const double sx=fun::Length(vx);
-    const double sy=fun::Length(vy);
-    const double sz=fun::Length(vz);
-    const unsigned nx=unsigned(round(sx/dp))+1;
-    const unsigned ny=(Is2D? 0: unsigned(round(sy/dp))+1);
-    const unsigned nz=unsigned(round(sz/dp))+1;
-    //-Domain limits.
-    const double dlim=dp*0.001;
-    const tdouble3 dlim3=TDouble3(dlim);
-    const tdouble3 ptmin=pzone->GetPtBox().GetPosMin()-dlim3;
-    const tdouble3 ptmax=pzone->GetPtBox().GetPosMax()+dlim3;
-    const tdouble3 ptbufmin=(id? pzone->GetBuffBox().GetPosMin()-dlim3: ptmin);
-    const tdouble3 ptbufmax=(id? pzone->GetBuffBox().GetPosMax()+dlim3: ptmax);
-    const tdouble3 ptfixmin=(id? pzone->GetFixedBox().GetPosMin()-dlim3: ptmin);
-    const tdouble3 ptfixmax=(id? pzone->GetFixedBox().GetPosMax()+dlim3: ptmax);
-    //-Loads parents limits of subdomains.
-    //printf("Points_z%u> pmin:%s  ptmin:%s\n",pzone->Id,fun::Double3Str(pmin).c_str(),fun::Double3Str(ptmin).c_str());
-    const unsigned nsub=pzone->Count();
-    vector<byte> vsubid;
-    vector<tdouble3> vptmin,vptmax;
-    vector<tdouble3> vpinimin,vpinimax;
-    vector<tdouble3> vpendmin,vpendmax;
-    vector<tdouble3> vpfixmin,vpfixmax;
-    for(unsigned cs=0;cs<nsub;cs++){
-      const JCaseVRes_Box* psubzone=pzone->GetSubZoneBox(cs);
-      const double sdlim=psubzone->Dp*0.001;
-      const tdouble3 sdlim3=TDouble3(sdlim);
-      vsubid  .push_back(byte(psubzone->Id));
-      vptmin  .push_back(psubzone->GetPtBox().GetPosMin()-sdlim3);
-      vptmax  .push_back(psubzone->GetPtBox().GetPosMax()+sdlim3);
-      vpinimin.push_back(psubzone->GetParentBuffIniBox().GetPosMin()+sdlim3);
-      vpinimax.push_back(psubzone->GetParentBuffIniBox().GetPosMax()-sdlim3);
-      vpendmin.push_back(psubzone->GetParentBuffEndBox().GetPosMin()+sdlim3);
-      vpendmax.push_back(psubzone->GetParentBuffEndBox().GetPosMax()-sdlim3);
-      vpfixmin.push_back(psubzone->GetParentFixedBox().GetPosMin()+sdlim3);
-      vpfixmax.push_back(psubzone->GetParentFixedBox().GetPosMax()-sdlim3);
-      if(Is2D){
-        vptmin[cs].y=vpinimin[cs].y=vpendmin[cs].y=vpfixmin[cs].y=ptmin.y-dp;
-        vptmax[cs].y=vpinimax[cs].y=vpendmax[cs].y=vpfixmax[cs].y=ptmin.y+dp;
-      }
-      //if(id==0){
-      //  printf("sc:%02d__Points_z%u> ptmin:%s  ParentBuffMin:%s\n",cs,psubzone->Id
-      //    ,fun::Double3Str(psubzone->GetPtMin()).c_str()
-      //    ,fun::Double3Str(psubzone->GetParentBuffMin()).c_str());
-      //  printf("sc:%02d__Points_z%u> ptmax:%s  ParentBuffMax:%s\n",cs,psubzone->Id
-      //    ,fun::Double3Str(psubzone->GetPtMax()).c_str()
-      //    ,fun::Double3Str(psubzone->GetParentBuffMax()).c_str());
-      //}
-    }
-    //-Creates domain points.
-    for(unsigned cz=0;cz<=nz;cz++)for(unsigned cy=0;cy<=ny;cy++)for(unsigned cx=0;cx<=nx;cx++){
-      tdouble3 ps=pmin+TDouble3(dp*cx,dp*cy,dp*cz);
-      const bool inzone=(ptfixmin<=ps && ps<=ptfixmax);
-      unsigned insubzone=nzone;
-      bool innormal=false;
-      bool inbuff=false;
-      bool infixed=false;
-      bool invoid=false;
-      if(inzone){
-        innormal=true;
-        //-Check parent limits.
-        for(unsigned cs=0;innormal && cs<nsub;cs++){
-          if(vpinimin[cs]<=ps && ps<=vpinimax[cs]){
-            innormal=false;
-            inbuff=true;
-            if(vpendmin[cs]<=ps && ps<=vpendmax[cs]){
-              inbuff=false;
-              infixed=true;
-              if(vpfixmin[cs]<=ps && ps<=vpfixmax[cs]){
-                infixed=false;
-                invoid=true;
-              }
-            }
-          }
-        }
-        //-Check outter limits for subdomains.
-        if(innormal && id){
-          if(ptbufmin<=ps && ps<=ptbufmax){
-            inbuff=true;
-            if(ptmin<=ps && ps<=ptmax)inbuff=false;
-          }
-          else infixed=true;
-          innormal=(!inbuff && !infixed);
-        }
-        //-Check subdomains limits.
-        for(unsigned cs=0;cs<nsub;cs++){
-          if(vptmin[cs]<=ps && ps<=vptmax[cs])insubzone=vsubid[cs];
-        }
-      }
-      if(onefile){
-        byte idzone=nzone;
-        if(insubzone<nzone)idzone=byte(insubzone);
-        else if(ptmin<=ps && ps<=ptmax)idzone=byte(id);
-        if(idzone<nzone){
-          vpos.push_back(ps);
-          vzone.push_back(idzone);
-        }
-      }
-      else{
-        byte idzone=28;
-        if(invoid)idzone=4;
-        else if(infixed)idzone=3;
-        else if(inbuff)idzone=2;
-        else if(innormal)idzone=1;
-        if(idzone<4){
-          vpos.push_back(ps);
-          vzone.push_back(idzone);
-        }
-      }
-    }
-    if(!onefile){
-      const unsigned np=unsigned(vpos.size());
-      JDataArrays arrays;
-      arrays.AddArray("Pos",np,vpos.data());
-      arrays.AddArray("Zone",np,vzone.data());
-      const string filevtk=file+fun::PrintStr("%02d.vtk",id);
-      JVtkLib::SaveVtkData(filevtk,arrays,"Pos");
-      vpos.clear();
-      vzone.clear();
-    }
-    //sh1.SaveShapeVtk(file+".vtk","Zone");
-  }
-  if(onefile){
-    const unsigned np=unsigned(vpos.size());
-    JDataArrays arrays;
-    arrays.AddArray("Pos",np,vpos.data());
-    arrays.AddArray("Zone",np,vzone.data());
-    JVtkLib::SaveVtkData(file+".vtk",arrays,"Pos");
-  }
+  // string file=fun::GetWithoutExtension(fname);
+  // if(Count()<2)Run_ExceptioonFile("No subdomains are available.",file+".vtk");
+  // vector<tdouble3> vpos;
+  // vector<byte>     vzone;
+  // const unsigned nzone=Count();
+  // for(unsigned id=0;id<nzone;id++){
+  //   //printf("--> Zone: %u\n",id);
+  //   const JCaseVRes_Box* pzone=GetZoneBox(id);
+  //   if(!pzone->UseSimpleBoxes())
+  //     Run_Exceptioon("Non-simple box definition is not supported by this method.");
+  //   //-Compute limits of full points in domain.
+  //   const double dp=pzone->Dp;
+  //   const JBoxDef dbox=(id? pzone->GetFixedBox(): pzone->GetPtBox());
+  //   const tdouble3 pmin=dbox.GetPosMin();
+  //   const tdouble3 vx=dbox.GetVx();
+  //   const tdouble3 vy=dbox.GetVy();
+  //   const tdouble3 vz=dbox.GetVz();
+  //   const double sx=fun::Length(vx);
+  //   const double sy=fun::Length(vy);
+  //   const double sz=fun::Length(vz);
+  //   const unsigned nx=unsigned(round(sx/dp))+1;
+  //   const unsigned ny=(Is2D? 0: unsigned(round(sy/dp))+1);
+  //   const unsigned nz=unsigned(round(sz/dp))+1;
+  //   //-Domain limits.
+  //   const double dlim=dp*0.001;
+  //   const tdouble3 dlim3=TDouble3(dlim);
+  //   const tdouble3 ptmin=pzone->GetPtBox().GetPosMin()-dlim3;
+  //   const tdouble3 ptmax=pzone->GetPtBox().GetPosMax()+dlim3;
+  //   const tdouble3 ptbufmin=(id? pzone->GetBuffBox().GetPosMin()-dlim3: ptmin);
+  //   const tdouble3 ptbufmax=(id? pzone->GetBuffBox().GetPosMax()+dlim3: ptmax);
+  //   const tdouble3 ptfixmin=(id? pzone->GetFixedBox().GetPosMin()-dlim3: ptmin);
+  //   const tdouble3 ptfixmax=(id? pzone->GetFixedBox().GetPosMax()+dlim3: ptmax);
+  //   //-Loads parents limits of subdomains.
+  //   //printf("Points_z%u> pmin:%s  ptmin:%s\n",pzone->Id,fun::Double3Str(pmin).c_str(),fun::Double3Str(ptmin).c_str());
+  //   const unsigned nsub=pzone->Count();
+  //   vector<byte> vsubid;
+  //   vector<tdouble3> vptmin,vptmax;
+  //   vector<tdouble3> vpinimin,vpinimax;
+  //   vector<tdouble3> vpendmin,vpendmax;
+  //   vector<tdouble3> vpfixmin,vpfixmax;
+  //   for(unsigned cs=0;cs<nsub;cs++){
+  //     const JCaseVRes_Box* psubzone=pzone->GetSubZoneBox(cs);
+  //     const double sdlim=psubzone->Dp*0.001;
+  //     const tdouble3 sdlim3=TDouble3(sdlim);
+  //     vsubid  .push_back(byte(psubzone->Id));
+  //     vptmin  .push_back(psubzone->GetPtBox().GetPosMin()-sdlim3);
+  //     vptmax  .push_back(psubzone->GetPtBox().GetPosMax()+sdlim3);
+  //     vpinimin.push_back(psubzone->GetParentBuffIniBox().GetPosMin()+sdlim3);
+  //     vpinimax.push_back(psubzone->GetParentBuffIniBox().GetPosMax()-sdlim3);
+  //     vpendmin.push_back(psubzone->GetParentBuffEndBox().GetPosMin()+sdlim3);
+  //     vpendmax.push_back(psubzone->GetParentBuffEndBox().GetPosMax()-sdlim3);
+  //     vpfixmin.push_back(psubzone->GetParentFixedBox().GetPosMin()+sdlim3);
+  //     vpfixmax.push_back(psubzone->GetParentFixedBox().GetPosMax()-sdlim3);
+  //     if(Is2D){
+  //       vptmin[cs].y=vpinimin[cs].y=vpendmin[cs].y=vpfixmin[cs].y=ptmin.y-dp;
+  //       vptmax[cs].y=vpinimax[cs].y=vpendmax[cs].y=vpfixmax[cs].y=ptmin.y+dp;
+  //     }
+  //     //if(id==0){
+  //     //  printf("sc:%02d__Points_z%u> ptmin:%s  ParentBuffMin:%s\n",cs,psubzone->Id
+  //     //    ,fun::Double3Str(psubzone->GetPtMin()).c_str()
+  //     //    ,fun::Double3Str(psubzone->GetParentBuffMin()).c_str());
+  //     //  printf("sc:%02d__Points_z%u> ptmax:%s  ParentBuffMax:%s\n",cs,psubzone->Id
+  //     //    ,fun::Double3Str(psubzone->GetPtMax()).c_str()
+  //     //    ,fun::Double3Str(psubzone->GetParentBuffMax()).c_str());
+  //     //}
+  //   }
+  //   //-Creates domain points.
+  //   for(unsigned cz=0;cz<=nz;cz++)for(unsigned cy=0;cy<=ny;cy++)for(unsigned cx=0;cx<=nx;cx++){
+  //     tdouble3 ps=pmin+TDouble3(dp*cx,dp*cy,dp*cz);
+  //     const bool inzone=(ptfixmin<=ps && ps<=ptfixmax);
+  //     unsigned insubzone=nzone;
+  //     bool innormal=false;
+  //     bool inbuff=false;
+  //     bool infixed=false;
+  //     bool invoid=false;
+  //     if(inzone){
+  //       innormal=true;
+  //       //-Check parent limits.
+  //       for(unsigned cs=0;innormal && cs<nsub;cs++){
+  //         if(vpinimin[cs]<=ps && ps<=vpinimax[cs]){
+  //           innormal=false;
+  //           inbuff=true;
+  //           if(vpendmin[cs]<=ps && ps<=vpendmax[cs]){
+  //             inbuff=false;
+  //             infixed=true;
+  //             if(vpfixmin[cs]<=ps && ps<=vpfixmax[cs]){
+  //               infixed=false;
+  //               invoid=true;
+  //             }
+  //           }
+  //         }
+  //       }
+  //       //-Check outter limits for subdomains.
+  //       if(innormal && id){
+  //         if(ptbufmin<=ps && ps<=ptbufmax){
+  //           inbuff=true;
+  //           if(ptmin<=ps && ps<=ptmax)inbuff=false;
+  //         }
+  //         else infixed=true;
+  //         innormal=(!inbuff && !infixed);
+  //       }
+  //       //-Check subdomains limits.
+  //       for(unsigned cs=0;cs<nsub;cs++){
+  //         if(vptmin[cs]<=ps && ps<=vptmax[cs])insubzone=vsubid[cs];
+  //       }
+  //     }
+  //     if(onefile){
+  //       byte idzone=nzone;
+  //       if(insubzone<nzone)idzone=byte(insubzone);
+  //       else if(ptmin<=ps && ps<=ptmax)idzone=byte(id);
+  //       if(idzone<nzone){
+  //         vpos.push_back(ps);
+  //         vzone.push_back(idzone);
+  //       }
+  //     }
+  //     else{
+  //       byte idzone=28;
+  //       if(invoid)idzone=4;
+  //       else if(infixed)idzone=3;
+  //       else if(inbuff)idzone=2;
+  //       else if(innormal)idzone=1;
+  //       if(idzone<4){
+  //         vpos.push_back(ps);
+  //         vzone.push_back(idzone);
+  //       }
+  //     }
+  //   }
+  //   if(!onefile){
+  //     const unsigned np=unsigned(vpos.size());
+  //     JDataArrays arrays;
+  //     arrays.AddArray("Pos",np,vpos.data());
+  //     arrays.AddArray("Zone",np,vzone.data());
+  //     const string filevtk=file+fun::PrintStr("%02d.vtk",id);
+  //     JVtkLib::SaveVtkData(filevtk,arrays,"Pos");
+  //     vpos.clear();
+  //     vzone.clear();
+  //   }
+  //   //sh1.SaveShapeVtk(file+".vtk","Zone");
+  // }
+  // if(onefile){
+  //   const unsigned np=unsigned(vpos.size());
+  //   JDataArrays arrays;
+  //   arrays.AddArray("Pos",np,vpos.data());
+  //   arrays.AddArray("Zone",np,vzone.data());
+  //   JVtkLib::SaveVtkData(file+".vtk",arrays,"Pos");
+  // }
 }
 
 //==============================================================================

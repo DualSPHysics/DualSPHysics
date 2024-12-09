@@ -12,13 +12,14 @@
 #include "JAppInfo.h"
 #include "Functions.h"
 #include "FunGeo3d.h"
-#include "JVtkLib.h"
 #include "JSimpleNeigs.h"
 #include "JTimeControl.h"
 #include "JDsGaugeSystem.h"
 #include "JSphGpu_Buffer_iker.h"
 #include "JCaseVRes.h"
-#include "JVtkLib.h"
+#include "JSpVtkData.h"
+#include "JSpVtkShape.h"
+#include "JDataArrays.h"
 #include "JDsVresData.h"
 #include "JBoxDef.h"
 #ifdef _WITHGPU
@@ -734,7 +735,7 @@ void JSphVRes::SaveNormals(std::string filename,int numfile){
 void JSphVRes::SaveVtkNormals(std::string filename,int numfile,unsigned np
   ,const tdouble3* pos,const tfloat3* boundnor,const tfloat3* velflux,const float* flux)const
 {
-  if(JVtkLib::Available()){
+    if(fun::GetExtension(filename).empty())filename=fun::AddExtension(filename,"vtk");
     if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
     //-Find floating particles.
        //-Allocate memory for boundary particles.
@@ -751,10 +752,9 @@ void JSphVRes::SaveVtkNormals(std::string filename,int numfile,unsigned np
     memcpy(vflux,velflux,sizeof(tfloat3)*npsel);
     memcpy(vmass,flux,sizeof(float)*npsel);
     //-Saves VTK file.
-    JVtkLib::SaveVtkData(filename,arrays,"Pos");
+    JSpVtkData::Save(filename,arrays,"Pos");
     //-Frees memory.
     arrays.Reset();
-  }
 }
 
 
@@ -772,29 +772,27 @@ void JSphVRes::GetQuadPoints2d(tdouble3 pmin,tdouble3 pmax,tdouble3* vpt)const{
 void JSphVRes::SaveVtkDomains(std::string filename,int numfile,bool is2d)const{
   string file=fun::FileNameSec(filename,numfile);
   const unsigned nz=ListSize;
-  JVtkLib sh;
+  JSpVtkShape sh;
   if(is2d){
     for(unsigned id=0;id<nz;id++){
-      sh.SetShapeWireMode(true);
       tdouble3 pt[4];
       GetQuadPoints2d(BoxLimitMin[id],BoxLimitMax[id],pt);
-      sh.AddShapeQuadWire(Matmov[id].MulPoint(pt[0]),Matmov[id].MulPoint(pt[1])
+      sh.AddQuadWire(Matmov[id].MulPoint(pt[0]),Matmov[id].MulPoint(pt[1])
         ,Matmov[id].MulPoint(pt[2]),Matmov[id].MulPoint(pt[3]),id);
     }
-    sh.SaveShapeVtk(file+".vtk","Zone");
+    sh.SaveVtk(file+".vtk","Zone");
   }
   else{
     for(unsigned id=0;id<nz;id++){
-      sh.SetShapeWireMode(!true);
       const tdouble3 p0=Matmov[id].MulPoint(BoxLimitMin[id]),s0=Matmov[id].MulPoint(BoxLimitMax[id])-p0;
       const tdouble3 size=BoxLimitMax[id]-BoxLimitMin[id];
       const tdouble3 vx=Matmov[id].MulNormal(TDouble3(size.x,0,0));
       const tdouble3 vy=Matmov[id].MulNormal(TDouble3(0,size.y,0));
       const tdouble3 vz=Matmov[id].MulNormal(TDouble3(0,0,size.z));
 
-      sh.AddShapeBox(p0,vx,vy,vz,id);
+      sh.AddBoxSizeVec(p0,vx,vy,vz,id);
     }     
-    sh.SaveShapeVtk(file+".vtk","Zone");
+    sh.SaveVtk(file+".vtk","Zone");
   }
 }
 

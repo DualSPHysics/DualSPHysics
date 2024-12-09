@@ -3733,7 +3733,7 @@ void JSph::DgSaveVtkParticlesCpuMR(std::string filename,int numfile,unsigned pin
 //  if(xarc) delete[] xarc;
 //  if(xpou) delete[] xpou;
 
-  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  JSpVtkData::Save(filename,arrays,"Pos");
   arrays.Reset();
 
  
@@ -3785,7 +3785,7 @@ void JSph::DgSaveVtkParticlesCpuMRBuffer(std::string filename,int numfile,unsign
   // if(xace) arrays.AddArray("Ace" ,count,xace ,true);
   // if(xrcond) arrays.AddArray("Rcond" ,count,xrcond ,true);
   // if(xshift) arrays.AddArray("Shift" ,count,xshift ,true);
-  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  JSpVtkData::Save(filename,arrays,"Pos");
   arrays.Reset();
 
 //  delete[] xpos;
@@ -3833,7 +3833,7 @@ void JSph::DgSaveVtkParticlesCpuMRBound(std::string filename,int numfile,unsigne
   if(xvel) arrays.AddArray("Vel" ,count,xvel ,true);
   if(xrhop)arrays.AddArray("Rhop",count,xrhop,true);
   if(xace) arrays.AddArray("Ace" ,count,xace ,true);
-  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  JSpVtkData::Save(filename,arrays,"Pos");
   arrays.Reset();
 
 //  delete[] xpos;
