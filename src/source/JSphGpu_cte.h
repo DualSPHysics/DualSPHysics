@@ -45,7 +45,6 @@ typedef struct{
   float ovrhopzero;         ///<ovrhopzero=1/RhopZero
   float movlimit;
   //-Values on formulation options.
-  unsigned symmetry;   //<vs_syymmetry>
   unsigned tboundary;  
   //-Values for open periodic boundaries.
   unsigned periactive;
@@ -135,10 +134,7 @@ inline void SetCtegDomain(StCteInteraction& cte,TpMgDivMode axis
 //==============================================================================
 /// Set values on formulation options.
 //==============================================================================
-inline void SetCtegOpts(StCteInteraction& cte,unsigned symmetry
-  ,unsigned tboundary)
-{
-  cte.symmetry =symmetry;   //<vs_syymmetry>
+inline void SetCtegOpts(StCteInteraction& cte,unsigned tboundary){
   cte.tboundary=tboundary;  
 }
 

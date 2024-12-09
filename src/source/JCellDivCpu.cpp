@@ -467,6 +467,28 @@ void JCellDivCpu::SortArray(tsymatrix3f* vec){
 }
 
 //==============================================================================
+/// Reorder PeriParent references.
+//==============================================================================
+void JCellDivCpu::SortArrayPeriParent(unsigned* vec){
+  memset(VSortInt,255,sizeof(unsigned)*Nptot);
+  const int n=int(Nptot);
+  const int ini=(DivideFull? 0: int(NpbFinal));
+  unsigned* resortpart=(unsigned*)(VSortInt+Nptot);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
+  #endif
+  for(int p=ini;p<n;p++)resortpart[SortPart[p]]=p;
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
+  #endif
+  for(int p=ini;p<n;p++){
+    const unsigned pp=vec[SortPart[p]];
+    VSortInt[p]=(pp!=UINT_MAX? resortpart[pp]: pp);
+  }
+  memcpy(vec+ini,VSortInt+ini,sizeof(unsigned)*(n-ini));
+}
+
+//==============================================================================
 /// Return current limites of domain.
 /// Devuelve limites actuales del dominio.
 //==============================================================================

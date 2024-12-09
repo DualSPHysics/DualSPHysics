@@ -208,17 +208,8 @@
     <ClInclude Include="..\source\JDataArrays.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JPartNormalData.h">
-      <Filter>CommonDsph</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JOutputCsv.h">
       <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JVtkLib.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JVtkLibUndef.h">
-      <Filter>Libs</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JWaveGenUndef.h">
       <Filter>Libs</Filter>
@@ -233,9 +224,6 @@
       <Filter>Libs</Filter>
     </ClInclude>
     <ClInclude Include="..\source\DSphMoorDynPlusUndef.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JVtkLibDef.h">
       <Filter>Libs</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JDsPips_ker.h">
@@ -362,9 +350,6 @@
       <Filter>CommonDsph</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JCaseProperties.h">
-      <Filter>CommonDsph</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JCaseVtkOut.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JDsGauge_ker.h">
@@ -532,6 +517,20 @@
     <ClInclude Include="..\source\JXmlDef.h">
       <Filter>Common\JXml</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_preloop_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphShiftingAdv.h">
+      <Filter>Source</Filter>
+    <ClInclude Include="..\source\JChronoGeoObj.h">
+      <Filter>Src_Chrono</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSpVtkData.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSpVtkShape.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -635,9 +634,6 @@
     </ClCompile>
     <ClCompile Include="..\source\JDataArrays.cpp">
       <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JPartNormalData.cpp">
-      <Filter>CommonDsph</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JOutputCsv.cpp">
       <Filter>Common</Filter>
@@ -747,9 +743,6 @@
     <ClCompile Include="..\source\JCaseProperties.cpp">
       <Filter>CommonDsph</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\JCaseVtkOut.cpp">
-      <Filter>CommonDsph</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\JWaveSpectrumGpu.cpp">
       <Filter>Source\Other</Filter>
     </ClCompile>
@@ -855,6 +848,20 @@
     <ClCompile Include="..\source\JDebugSphCpu.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\JSphShiftingAdv.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpu_preloop.cpp">
+      <Filter>Source</Filter>
+    <ClCompile Include="..\source\JChronoGeoObj.cpp">
+      <Filter>Src_Chrono</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSpVtkData.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSpVtkShape.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuildStep Include="..\source\JSphGpu.h">
@@ -905,6 +912,9 @@
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\JSphGpu_mdbc_iker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_preloop_iker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
   </ItemGroup>

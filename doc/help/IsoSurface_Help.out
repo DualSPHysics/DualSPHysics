@@ -1,20 +1,20 @@
 
 
- <ISOSURFACE>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <ISOSURFACE>  Copyright (c) 2024 by Dr Jose M. Dominguez
  All rights reserved.
 
  IsoSurface is a free tool for DualSPHysics simulations.
  DualSPHysics project is an international collaboration between
  University of Vigo (Spain) and University of Manchester (UK).
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- * Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+ Redistribution and use in binary form, without modification, are
+ permitted provided that the following conditions are met:
  * Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
+ * Redistributions or modifications of source code are not permitted 
+   unless expressly authorised, and must retain the above copyright 
+   notice, this list of conditions and the following disclaimer.
  * Neither the name of the IsoSurface nor the names of its contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
@@ -31,7 +31,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-IsoSurface v5.3.215 (30-07-2023)
+IsoSurface v5.4.257 (12-09-2024)
 =================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -44,8 +44,8 @@ Information about parameters of execution:
     -opt <file>    Loads configuration of a file
 
   Define input file:
-    -dirin <dir>       Directory with particle data
-    -casein <casename> Name of case file with particle data
+    -dirdata <dir>     Directory with particle data (Part_XXXX.bi4)
+    -filedata <file>   File with particle data (file.bi4)
 
     -filexml file.xml  Loads xml file with information of mk and
                        and other information. The word 'AUTO' can
@@ -73,6 +73,7 @@ Information about parameters of execution:
        +/-floating:  Floating body particles
        +/-fluid:     Fluid particles (no excluded)
        (Preselected types: fluid)
+    -onlyzone:<values>   Indicates the VRes zone of selected particles
 
     -vars:<values>  Indicates the variables to be computed and stored
        (+ means include, - means do not include)
@@ -118,12 +119,13 @@ Information about parameters of execution:
     -distnode_dp:<float>   Defines the distance between nodes by multiplying dp
      and the given value (option by default)
     -distnode:<float>      Distance between nodes is given
+    -zonecfg:v             Defines node distance according values of selected
+                           VRes zone (lowest resolution zone by default).
 
   Define output files:
     -saveiso <file.vtk>    Generates VTK files (polydata) with the isosurface
-     calculated starting from a variable mass and using the limit value. When
-     limit value is not given, the threshold mass value of the fluid is
-     considered (0.5*fluid particle mass)
+     calculated starting from a variable and using the limit value. When limit
+     value is not given, the threshold 0.5 of kernel sum is considered.
     -isovar:var:<values>   Generates isosurface calculated starting from a
      variable given and using the limit values.
 
@@ -140,8 +142,6 @@ Information about parameters of execution:
        nearest       Copy data from nearest vertex
        interpolate   Interpolate data (default)
 
-    -savedepth <dir>  Generates files with depth data using default
-                      configuration by option -saveiso.
 
     -createdirs:<0/1>    Creates full path for output files
                          (value by default is read from DsphConfig.xml or 1)

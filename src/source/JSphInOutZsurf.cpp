@@ -25,7 +25,7 @@
 #include "JLog2.h"
 #include "JLinearValue.h"
 #include "JDsGaugeSystem.h"
-#include "JVtkLib.h"
+#include "JSpVtkShape.h"
 #include "JAppInfo.h"
 #include "JMeshData.h"   //<vs_meeshdat>
 #include "JMeshTDatas.h" //<vs_meeshdat>

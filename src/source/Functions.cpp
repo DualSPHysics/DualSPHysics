@@ -1948,25 +1948,18 @@ TpByteOrder GetByteOrder(){
 }
 
 //==============================================================================
-/// Reverses the order of the bytes to exchange BigEndian and LittleEndian.
+/// Set the order of the bytes to exchange BigEndian and LittleEndian.
 //==============================================================================
-void ReverseByteOrder(llong* data,int count,llong* result){
-  for(int c=0;c<count;c++){
-    unsigned int v=((unsigned int*)data)[c*2+1];
-    unsigned int v2=((unsigned int*)data)[c*2];
-    ((unsigned int*)result)[c*2  ]=((v <<24)&0xFF000000)|((v <<8)&0x00FF0000)|((v >>8)&0x0000FF00)|((v >>24)&0x000000FF);
-    ((unsigned int*)result)[c*2+1]=((v2<<24)&0xFF000000)|((v2<<8)&0x00FF0000)|((v2>>8)&0x0000FF00)|((v2>>24)&0x000000FF);
-  }
-}
-//==============================================================================
-void ReverseByteOrder(int* data,int count,int* result){
+void SetByteOrder32(int* data,int count,int* result){
   for(int c=0;c<count;c++){
     unsigned int v=((unsigned int*)data)[c];
     result[c]=((v<<24)&0xFF000000)|((v<<8)&0x00FF0000)|((v>>8)&0x0000FF00)|((v>>24)&0x000000FF);
   }
 }
 //==============================================================================
-void ReverseByteOrder(short* data,int count,short* result){
+/// Set the order of the bytes to exchange BigEndian and LittleEndian.
+//==============================================================================
+void SetByteOrder16(short* data,int count,short* result){
   for(int c=0;c<count;c++){
     unsigned short v=((unsigned short*)data)[c];
     result[c]=((v<<8)&0xFF00)|((v>>8)&0x00FF);

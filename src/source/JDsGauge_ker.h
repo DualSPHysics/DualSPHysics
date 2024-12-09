@@ -58,14 +58,6 @@ void ComputeGaugeMeshZsurf(float masslimit,const jmsh::StMeshPts& mp
   ,const float* ptmass,float* ptzsurf);
 //<vs_meeshdat_end>
 
-#ifndef DISABLE_GAUGEFLOW //<vs_flowdat_ini>
-//-Kernel for JGaugeFlow.
-void ComputeGaugeFlow(const StCteSph& CSP,const StDivDataGpu& dvd
-  ,const jmsh::StMeshPts& mp,float kclimit,const double2* posxy
-  ,const double* posz,const typecode* code,const float4* velrhop
-  ,float* ptvdir);
-#endif //<vs_flowdat_end>
-
 //-Kernel for JGaugeForce.
 void Interaction_GaugeForce(const StCteSph& CSP,const StDivDataGpu& dvd
   ,unsigned n,unsigned idbegin,typecode codesel,const double2* posxy,const double* posz

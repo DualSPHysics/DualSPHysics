@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<case app="GenCase v5.0.295 (11-08-2023)" date="30-08-2023 19:23:51">
-    <casedef requiredversion="v5.0.295">
+<case app="GenCase v5.4.350 (26-11-2024)" date="26-11-2024 13:51:08">
+    <casedef requiredversion="v5.4.350">
         <constantsdef>
             <lattice bound="2" fluid="1" comment="Type of lattice to create the initial particles (default=1)" />
             <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
@@ -93,6 +93,14 @@
                         <point x="1.11" y="1.21" z="1.31" />
                         <point x="1.12" y="1.22" z="1.32" />
                     </rotateline>
+                    <rotateadv ang1="45" ang2="30" ang3="-10" axes="ZYZ" intrinsic="true" />
+                    <rotateadv ang1="45" ang2="30" ang3="-10" axes="XYX" intrinsic="false">
+                        <center x="0.1" y="0.2" z="0" />
+                    </rotateadv>
+                    <rotateadv ang1="45" ang2="30" ang3="-10" axes="XYZ" intrinsic="true">
+                        <center x="0.1" y="0.2" z="0" />
+                    </rotateadv>
+                    <rotateadv ang1="45" ang2="30" ang3="-10" axes="ZXY" intrinsic="false" />
                     <mksave />
                     <mkload />
                     <setmkvoid />
@@ -124,6 +132,7 @@
                     <setmkbackclear />
                     <clipreset />
                     <clipdomain />
+                    <clipdomain resize="0.1" />
                     <clipplane>
                         <point1 x="0" y="0" z="0" />
                         <point2 x="1" y="0" z="0" />
@@ -357,25 +366,42 @@
                         <drawmove x="0.5" y="0" z="0" />
                         <drawrotate angx="10" angy="15" angz="30" />
                         <drawscale x="1" y="1" z="0.8" />
+                        <drawcenter x="4" y="-3" z="5" />
+                    </drawfilestl>
+                    <drawfilestl file="File.stl">
+                        <clipdomain resize="0.01" />
                     </drawfilestl>
                     <drawfilestl file="File.stl" advanced="true">
                         <depth depthmin="0.02" />
                     </drawfilestl>
+                    <drawfilestl file="File.stl" advanced="true" reverse="true">
+                        <depth depthmin="0.02" depthmax="0.1" />
+                    </drawfilestl>
                     <drawfileply file="File.ply" />
                     <drawfileply file="File.ply">
                         <drawmove x="0.5" y="0" z="0" />
+                        <drawrotate angx="10" angy="15" angz="30" />
+                        <drawscale x="0.8" y="0.7" z="1.2" />
+                        <drawcenter x="4" y="-3" z="5" />
                     </drawfileply>
                     <drawfileply file="File.ply">
                         <drawmove x="0.5" y="0" z="0" />
-                        <drawrotate angx="10" angy="15" angz="30" />
                     </drawfileply>
                     <drawfileply file="File.ply" autofill="true">
                         <drawrotate angx="10" angy="15" angz="30" />
+                    </drawfileply>
+                    <drawfileply file="File.ply">
+                        <clipdomain resize="0.01" />
                     </drawfileply>
                     <drawfileply file="File.ply" advanced="true">
                         <drawmove x="0.5" y="0" z="0" />
                         <drawrotate angx="10" angy="15" angz="30" />
                         <depth depthmax="0.02" />
+                    </drawfileply>
+                    <drawfileply file="File.ply" advanced="true" reverse="true">
+                        <drawmove x="0.5" y="0" z="0" />
+                        <drawrotate angx="10" angy="15" angz="30" />
+                        <depth depthmin="0.1" depthmax="0.02" />
                     </drawfileply>
                     <drawfilevtk file="File.vtk" />
                     <drawfilevtk file="File.vtp" />
@@ -398,17 +424,50 @@
                     <drawfilevtk file="File.vtk">
                         <polyselec>polygons</polyselec>
                     </drawfilevtk>
+                    <drawfilevtk file="File.vtk">
+                        <drawmove x="0.5" y="0" z="0" />
+                        <drawrotate angx="10" angy="15" angz="30" />
+                        <drawscale x="0.8" y="0.7" z="1.2" />
+                        <drawcenter x="4" y="-3" z="5" />
+                    </drawfilevtk>
                     <drawfilevtk file="File.vtk" advanced="true" />
                     <drawfilevtk file="File.vtk" advanced="true">
+                        <depth depthmin="0.02" depthmax="0.1" />
+                    </drawfilevtk>
+                    <drawfilevtk file="File.vtk" advanced="true" reverse="true">
                         <depth depthmin="0.02" depthmax="0.1" />
                     </drawfilevtk>
                     <drawfilevtk file="File.vtk" autofill="true" advanced="true">
                         <depth depthmin="0.02" />
                     </drawfilevtk>
+                    <drawfilevtk file="File.vtk" advanced="true">
+                        <clipdomain resize="0.01" />
+                        <depth depthmin="0.02" depthmax="0.1" />
+                    </drawfilevtk>
+                    <drawfilevtm file="Surfaces.vtm">
+                        <onlysurfaces index="10" />
+                    </drawfilevtm>
+                    <drawfilevtm file="Surfaces.vtm">
+                        <onlysurfaces index="0-3" mkbound="12-15" />
+                    </drawfilevtm>
+                    <drawfilevtm file="Surfaces.vtm">
+                        <onlysurfaces name="Solid5" />
+                    </drawfilevtm>
+                    <drawfilevtm file="Surfaces.vtm">
+                        <onlysurfaces name="Water" mkfluid="5" />
+                    </drawfilevtm>
+                    <drawfilevtm file="Surfaces.vtm">
+                        <onlysurfaces index="0-3" />
+                        <onlysurfaces index="4,8,6,9" mkbound="40-42,49" />
+                        <onlysurfaces name="Solid1,Solid2" />
+                        <onlysurfaces name="Solid3" mkbound="3" />
+                        <onlysurfaces name="Solid44" mkbound="44" />
+                    </drawfilevtm>
                     <drawfilecsv file="Bathymetry.csv" mode="bathymetry">
                         <drawmove x="0.5" y="0" z="0" />
                         <drawrotate angx="10" angy="15" angz="30" />
                         <drawscale x="1" y="1" z="0.8" />
+                        <drawcenter x="4" y="-3" z="5" />
                     </drawfilecsv>
                     <drawbathymetry>
                         <zpoints file="FileData.xyz" comment="File with positions using format XYZ or VTK" />
@@ -593,6 +652,7 @@
                     <shapeout file="fshape_2" />
                     <shapeout file="fshape_2" format="vtp" />
                     <shapeout file="fshape_2" format="VTU" />
+                    <shapeout file="fshape_2" format="STL" />
                     <shapeout file="fshape_3" reset="false" savenormal="1.5" />
                     <cellsout file="filecellsAll" />
                     <cellsout file="filecellsBound5" mkbound="5" />
@@ -608,7 +668,7 @@
             </commands>
         </geometry>
         <initials>
-            <velocity mkfluid="0" x="0.1" y="0.4" z="0.2" />
+            <velocity mkfluid="0" x="0.1" y="0.4" z="0.2" active="true" />
             <velocity mkfluid="9" x="6" y="5" z="4">
                 <onlypos>
                     <posmin x="1" y="2" z="3" />
@@ -938,7 +998,7 @@
                     <file name="filemotionZ_T.dat" fields="2" fieldtime="1" fieldz="0" />
                 </mvrectfile>
                 <mvrotfile id="138" duration="1" anglesunits="degrees">
-                    <file name="fileRotationT_Ang.dat" />
+                    <file name="fileRotationT_Deg.dat" />
                     <axisp1 x="0" y="-1" z="0" />
                     <axisp2 x="0" y="1" z="0" />
                 </mvrotfile>
@@ -947,25 +1007,100 @@
                     <axisp1 x="0" y="-1" z="0" />
                     <axisp2 x="0" y="1" z="0" />
                 </mvrotfile>
+                <mvrotadvfile id="140" duration="1" anglesunits="degrees">
+                    <file name="fileEulerRotationXYZ_Deg.dat" fields="4" fieldtime="0" fieldang1="1" fieldang2="2" fieldang3="3" />
+                    <center x="0.1" y="0.2" z="3" />
+                    <intrinsic value="false" />
+                    <axes value="XYZ" />
+                </mvrotadvfile>
+                <mvrotadvfile id="141" duration="1" anglesunits="degrees">
+                    <file name="fileEulerRotationZYZ_Deg.dat" fields="4" fieldtime="0" fieldang1="1" fieldang2="2" fieldang3="3" />
+                    <center x="0.1" y="0.2" z="3" />
+                    <intrinsic value="true" />
+                    <axes value="ZYZ" />
+                </mvrotadvfile>
+                <mvpathfile id="142" duration="1" anglesunits="degrees">
+                    <file name="filePath_Deg.dat" fields="7" fieldtime="0" fieldx="1" fieldy="2" fieldz="3" fieldang1="4" fieldang2="5" fieldang3="6" />
+                    <center x="0" y="0" z="0" />
+                    <movecenter value="true" />
+                    <intrinsic value="false" />
+                    <axes value="XYZ" />
+                </mvpathfile>
+                <mvpathfile id="143" duration="1" anglesunits="radians">
+                    <file name="filePath_Rad.dat" fields="7" fieldtime="0" fieldx="4" fieldy="5" fieldz="6" fieldang1="1" fieldang2="2" fieldang3="3" />
+                    <center x="0.1" y="1" z="1.1" />
+                    <movecenter value="false" />
+                    <intrinsic value="true" />
+                    <axes value="ZYZ" />
+                </mvpathfile>
             </objreal>
         </motion>
         <normals active="true">
-            <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format)" />
-            <distanceh value="2.0" comment="Maximum distance (H*distanceh) to compute normals data (default=2)" />
-            <svnormals value="1" comment="Saves VTK with particle normals according to <computenormals> for debug (default=1)" />
-            <svshapes value="0" comment="Saves VTK with geometry in triangles and quads with its normals for debug (default=0)" />
+            <norgeometry comment="Define initial configuration of normals before applying other configurations">
+                <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format)" />
+                <distanceh v="2" comment="Maximum orthogonal distance (H*value) to compute normals data (default=2)" />
+                <maxsizeh v="2.1" comment="Maximum allowed normal size (H*value) (disabled=0, default=0)" />
+                <svshapes v="true" comment="Saves VTK with geometry in triangles and quads with its normals for debug (default=false)" />
+            </norgeometry>
+            <norset mkbound="0" active="false">
+                <normal x="1" y="0" z="0" />
+            </norset>
+            <norset mkbound="0,2-4">
+                <onlypos>
+                    <posmin x="1" y="2" z="3" />
+                    <posmax x="11" y="22" z="33" />
+                </onlypos>
+                <normal x="0" y="1" z="0" />
+            </norset>
+            <norplane mkbound="5">
+                <onlypos>
+                    <posmin x="0" />
+                    <posmax z="1" />
+                </onlypos>
+                <point x="0.1" y="0" z="0.1" />
+                <normal x="0" y="0" z="1" />
+                <maxdisth v="2" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />
+                <clear v="true" comment="Clears previous normal data (default=true)" />
+            </norplane>
+            <norplane mkbound="6">
+                <point auto="true" comment="Point is calculated automatically accoding to normal configuration" />
+                <limitdist vdp="0.5" comment="Minimun distance (Dp*vdp) between particles and boundary limit to calculate the point (default=0.5)" />
+                <normal x="0" y="0" z="1" />
+                <maxdisth v="2.5" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />
+                <clear v="false" comment="Clears previous normal data (default=true)" />
+            </norplane>
+            <norsphere mkbound="7">
+                <center x="0" y="0" z="0" />
+                <radius v="0.2" />
+                <inside v="true" comment="Boundary particles inside the sphere" />
+                <maxdisth v="2" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />
+                <clear v="true" comment="Clears previous normal data (default=true)" />
+            </norsphere>
+            <norcylinder mkbound="8-9">
+                <center1 x="0" y="0" z="0" />
+                <center2 x="0" y="0" z="0.5" />
+                <radius v="0.2" />
+                <inside v="true" comment="Boundary particles inside the cylinder" />
+                <limit1 v="false" comment="Active normals to limit 1 for inside mode (default=true)" />
+                <limit2 v="true" comment="Active normals to limit 2 for inside mode (default=true)" />
+                <maxdisth v="2" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />
+                <clear v="true" comment="Clears previous normal data (default=true)" />
+            </norcylinder>
+            <norparts mkbound="5,7-9">
+                <maxdisth v="2.1" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />
+            </norparts>
         </normals>
     </casedef>
     <execution>
         <parameters>
             <parameter key="SavePosDouble" value="0" comment="Saves particle position using double precision (default=0)" />
-            <parameter key="PosDouble" value="1" comment="**DEPRECATED** Precision in particle interaction 0:Simple, 1:Double, 2:Uses and saves double (default=0)" />
             <parameter key="Boundary" value="1" comment="Boundary method 1:DBC, 2:mDBC (default=1)" />
+            <parameter key="SlipMode" value="1" comment="Slip mode for mDBC 1:DBC vel=0, 2:No-slip (default=1)" />
             <parameter key="StepAlgorithm" value="2" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />
             <parameter key="VerletSteps" value="40" comment="Verlet only: Number of steps to apply Euler timestepping (default=40)" />
             <parameter key="Kernel" value="2" comment="Interaction Kernel 1:Cubic Spline, 2:Wendland, 3:Gaussian (default=2)" />
-            <parameter key="ViscoTreatment" value="1" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS (default=1)" />
-            <parameter key="Visco" value="0.01" comment="Viscosity value" />
+            <parameter key="ViscoTreatment" value="1" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS, 3:Laminar (default=1)" />
+            <parameter key="Visco" value="0.01" comment="Viscosity value. Typically 0.01 for Artificial and 1e-6 m^2/s (water kinematic viscosity) for Laminar" />
             <parameter key="ViscoBoundFactor" value="1" comment="Multiply viscosity value with boundary (default=1)" />
             <parameter key="DensityDT" value="0" comment="Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)" />
             <parameter key="DensityDTvalue" value="0.1" comment="DDT value (default=0.1)" />
@@ -983,10 +1118,11 @@
             <parameter key="DtAllParticles" value="0" comment="Velocity of particles used to calculate DT. 1:All, 0:Only fluid/floating (default=0)" />
             <parameter key="TimeMax" value="1.5" comment="Time of simulation" units_comment="seconds" />
             <parameter key="TimeOut" value="0.01" comment="Time out data" units_comment="seconds" />
-            <parameter key="RhopOutMin" value="700" comment="Minimum rhop valid (default=700)" units_comment="kg/m^3" />
-            <parameter key="RhopOutMax" value="1300" comment="Maximum rhop valid (default=1300)" units_comment="kg/m^3" />
-            <parameter key="PartsOutMax" value="1" comment="%%/100 of fluid particles allowed to be excluded from domain (default=1)" units_comment="decimal" />
+            <parameter key="RhopOutMin" value="700" comment="Minimum density valid (default=700)" units_comment="kg/m^3" />
+            <parameter key="RhopOutMax" value="1300" comment="Maximum density valid (default=1300)" units_comment="kg/m^3" />
             <parameter key="WrnPartsOut" value="1" comment="Active warning according to number of out particles (default=1)" />
+            <parameter key="MinFluidStop" value="0" comment="Minimum proportion of initial fluid particles to continue the simulation 0:Never stops, 0.1:Stops when fluid drops to 10%. (default=0)" />
+            <parameter key="PartsOutMax" value="1" comment="**DEPRECATED** Proportion of initial fluid particles that can be excluded 0:none, 0.5:half, 1:all (default=1)" />
             <parameter key="IncZ" value="0.5" comment="**DEPRECATED** Increase of Z+ (default=0)" units_comment="decimal" />
             <parameter key="DomainFixed" value="0:0:0:1:1:1" comment="**DEPRECATED** The domain is fixed with the specified values (xmin:ymin:zmin:xmax:ymax:zmax)" units_comment="metres (m)" />
             <parameter key="DomainFixedXmin" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
@@ -995,8 +1131,8 @@
             <parameter key="DomainFixedYmax" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
             <parameter key="DomainFixedZmin" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
             <parameter key="DomainFixedZmax" value="0" comment="**DEPRECATED** The domain is fixed in the specified limit (default=not applied)" units_comment="metres (m)" />
-            <parameter key="XPeriodicIncZ" value="0" comment="Increase of Z with periodic BC in axis X" units_comment="metres (m)" />
-            <parameter key="XPeriodicIncY" value="0" comment="Increase of Y with periodic BC in axis X" units_comment="metres (m)" />
+            <parameter key="XPeriodicIncZ" value="0" active="true" comment="Increase of Z with periodic BC in axis X" units_comment="metres (m)" />
+            <parameter key="XPeriodicIncY" value="0" active="false" comment="Increase of Y with periodic BC in axis X" units_comment="metres (m)" />
             <parameter key="YPeriodicIncX" value="0" comment="Increase of X with periodic BC in axis Y" units_comment="metres (m)" />
             <parameter key="YPeriodicIncZ" value="0" comment="Increase of Z with periodic BC in axis Y" units_comment="metres (m)" />
             <parameter key="ZPeriodicIncX" value="0" comment="Increase of X with periodic BC in axis Z" units_comment="metres (m)" />
@@ -1004,8 +1140,7 @@
             <parameter key="XYPeriodic" value="0" comment="Periodic BC in axes X and Y" units_comment="metres (m)" />
             <parameter key="XZPeriodic" value="0" comment="Periodic BC in axes X and Z" units_comment="metres (m)" />
             <parameter key="YZPeriodic" value="0" comment="Periodic BC in axes Y and Z" units_comment="metres (m)" />
-            <parameter key="Symmetry" value="0" comment="Activates symmetry in plane y=0 (default=0)" />
-            <simulationdomain comment="Defines domain of simulation (default=Uses minimun and maximum position of the generated particles)">
+            <simulationdomain comment="Defines domain of simulation (default=Uses minimum and maximum position of the generated particles)">
                 <posmin x="0.5" y="default - 2" z="default - 20%" comment="e.g.: x=0.5, y=default-1, z=default-10%" />
                 <posmax x="default" y="default + 1" z="default + 10%" />
             </simulationdomain>

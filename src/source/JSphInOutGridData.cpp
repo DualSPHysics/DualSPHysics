@@ -26,7 +26,7 @@
 #include "JReadDatafile.h"
 #include "JSaveCsv2.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
+#include "JSpVtkData.h"
 #ifdef _WITHGPU
   #include "FunctionsCuda.h"
   #include "JSphGpu_InOut_iker.h"
@@ -528,7 +528,7 @@ void JSphInOutGridData::SaveVtk(const JSphInOutGridDataTime* gdt
   JDataArrays arrays;
   arrays.AddArray("Pos",Npt,pos,true);
   arrays.AddArray("Vel",Npt,vel,true);
-  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  JSpVtkData::Save(filename,arrays,"Pos");
   arrays.Reset();
   ////-Old style...
   //std::vector<JFormatFiles2::StScalarData> fields;

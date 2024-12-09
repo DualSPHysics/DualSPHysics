@@ -69,6 +69,8 @@ void JSphCfgRun::Reset(){
   DDTValue=-1;
   DDTValueTRamp=DDTValueTMax=DDTValueMax=0;  //<vs_ddramp>
   Shifting=-1;
+  ShiftAdvALE=false; //<vs_advshift>
+  ShiftAdvNCP=false; //<vs_advshift>
   Sv_Binx=true; 
   Sv_Info=true;
   Sv_Vtk=false;
@@ -175,11 +177,12 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -ddtvalue:<float> Constant for DDT (0.1 by default)\n");
   printf("    -ddtramp:tramp:tmax:maxvalue  Total time of DDT ramp and time for maxvalue\n"); //<vs_ddramp>
   printf("\n");
-  printf("    -shifting:<mode> Specifies the use of Shifting correction\n");
+  printf("    -shifting:<mode> Set Shifting correction (with default paramters)\n");
   printf("        none       Shifting is disabled (by default)\n");
   printf("        nobound    Shifting is not applied near boundary\n");
   printf("        nofixed    Shifting is not applied near fixed boundary\n");
   printf("        full       Shifting is always applied\n");
+  printf("        fulladv    Advanced shifting for free-surface (mode:ale:ncp)\n"); //<vs_advshift>
   printf("\n");
 
   printf("  Simulation options:\n");
@@ -356,10 +359,6 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         TBoundary=int(BC_MDBC);
         SlipMode=int(SLIP_FreeSlip);
       }
-      else if(txword=="INITNORPLA"){
-        InitParms.push_back(opt);
-      }
-      else if(txword=="INITNORPART")InitParms.push_back(opt);
       else if(txword=="SYMPLECTIC")TStep=STEP_Symplectic;
       else if(txword=="VERLET"){
         TStep=STEP_Verlet; 
@@ -405,11 +404,16 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         if(DDTValueTMax>DDTValueTRamp)DDTValueTMax=DDTValueTRamp;
       } //<vs_ddramp_end>
       else if(txword=="SHIFTING"){
-        const string tx=fun::StrUpper(txoptfull);
+        const string tx=fun::StrUpper(txopt1);
         if(tx=="NONE")Shifting=0;
         else if(tx=="NOBOUND")Shifting=1;
         else if(tx=="NOFIXED")Shifting=2;
-        else if(tx=="FULL")Shifting=3;
+        else if(tx=="FULL"   )Shifting=3;
+        else if(tx=="FULLADV"){ //<vs_advshift_ini>
+          Shifting=4;
+          if(!txopt2.empty())ShiftAdvALE=OptIsEnabled(txopt2);
+          if(!txopt3.empty())ShiftAdvNCP=OptIsEnabled(txopt3);
+        } //<vs_advshift_end>
         else ErrorParm(opt,c,lv,file);
       }
       else if(txword=="SVNORMALS")SvNormals=OptIsEnabled(txoptfull);

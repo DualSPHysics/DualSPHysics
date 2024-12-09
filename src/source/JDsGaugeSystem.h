@@ -66,7 +66,6 @@ private:
   bool ConfiguredCtes;
   //-Constant values for calculation (they are constant).
   StCteSph CSP;         ///<Structure with main SPH constants values and configurations.
-  bool Symmetry;        ///<Use of symmetry in plane y=0.
   double TimeMax;       ///<Total time to simulate [s].
   double TimePart;      ///<Time of output data [s].
   float Scell;          ///<Cell size: KernelSize/ScellDiv (KernelSize or KernelSize/2).
@@ -108,7 +107,7 @@ public:
   void FreeMemoryGpu(int id);
  #endif            
 
-  void ConfigCtes(const StCteSph& csp,bool symmetry,double timemax,double timepart
+  void ConfigCtes(const StCteSph& csp,double timemax,double timepart
     ,float scell,int scelldiv,tdouble3 mapposmin,tdouble3 domposmin,tdouble3 domposmax);
 
   void LoadXml(const JXml* sxml,const std::string& place,const JSphMk* mkinfo);
@@ -143,10 +142,6 @@ public:
     ,tdouble3 point0,double height,float distlimit);
   JGaugeMesh*     AddGaugeMesh (std::string name,double computestart,double computeend,double computedt,bool fixed                          //<vs_meeshdat>
     ,const jmsh::StMeshBasic& meshbas,std::string outdata,unsigned tfmt,unsigned buffersize,float kclimit,float kcdummy,float masslimit=0); //<vs_meeshdat>
-#ifndef DISABLE_GAUGEFLOW //<vs_flowdat_ini>
-  JGaugeFlow*     AddGaugeFlow (std::string name,double computestart,double computeend,double computedt,bool fixed
-      ,const jmsh::StMeshBasic& meshbas,float kclimit,unsigned buffersize);
-#endif //<vs_flowdat_end>
   JGaugeForce*    AddGaugeForce(std::string name,double computestart,double computeend,double computedt,bool fixed
     ,const JSphMk* mkinfo,word mkbound);
 

@@ -399,6 +399,27 @@ void JCellDivGpu::SortDataArrays(const float* a, float* a2){
 }
 
 //==============================================================================
+/// Reorders data arrays according to SortPart (for uint,float4 values).
+/// Ordena arrays de datos segun SortPart (para valores uint,float4).
+//==============================================================================
+void JCellDivGpu::SortDataArrays(const unsigned* a,const float4* b
+  ,unsigned* a2,float4* b2)
+{
+  const unsigned pini=(DivideFull? 0: NpbFinal);
+  cudiv::SortDataParticles(Nptot,pini,SortPart,a,b,a2,b2);
+}
+
+//==============================================================================
+/// Reorders PeriParent references.
+//==============================================================================
+void JCellDivGpu::SortArrayPeriParent(unsigned* aux,const unsigned* a
+  ,unsigned* a2)
+{
+  //const unsigned pini=(DivideFull? 0: NpbFinal);
+  cudiv::SortArrayPeriParent(Nptot,SortPart,aux,a,a2);
+}
+
+//==============================================================================
 /// Returns a pointer with the auxiliary memory allocated in the GPU, only
 /// used as intermediate in some tasks, in order to use it in other tasks.
 /// This memoery is resized according to the particle number thus its

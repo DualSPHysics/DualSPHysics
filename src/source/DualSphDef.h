@@ -48,22 +48,11 @@
 
 
 //-Removes dependencies from precompiled libraries.
-#include "JVtkLibDef.h"      //Defines DISABLE_VTKLIB to compile without VTK library.
 //#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll, ChronoEngine.dll and ChronoEngine_parallel.dll).
 #define DISABLE_CHRONO_OMP   ///<It allows compile without parallel module of Chrono (ignores ChronoEngine_parallel.dll).
 //#define DISABLE_WAVEGEN    ///<It allows compile without Wave-Paddles, Multi-Layer Pistons and Relaxation Zones libraries.
 //#define DISABLE_MOORDYNPLUS    ///<It allows compile without LibDSphMoorDynPlus library.
-//#define DISABLE_GAUGEFLOW  ///<It allows compile without GaugeFlow code.
 
-
-//-Defines AVAILABLE_VTKLIB when this feature is compiled.
-// *** VtkLib library must be disabled in JVtkLibDef.h *** 
-// *** or for all cpp files by compile parameters.     ***
-#ifdef DISABLE_VTKLIB
-  #define AVAILABLE_VTKLIB false
-#else
-  #define AVAILABLE_VTKLIB true
-#endif
 
 //-Defines AVAILABLE_CHRONO and AVAILABLE_CHRONO_OMP when these features are compiled.
 #ifdef DISABLE_CHRONO
@@ -448,13 +437,12 @@ typedef enum{
 
 ///Types of Shifting applied to fluid particles. 
 typedef enum{
-  SHIFT_Full=3,             ///<Shifting is applied to all fluid particles.
-  SHIFT_NoFixed=2,          ///<Shifting is applied to fluid particles except those that interact with fixed boundaries.
-  SHIFT_NoBound=1,          ///<Shifting is applied to fluid particles except those that interact with all boundaries.
-  SHIFT_None=0              ///<Shifting is not applied.
+  SHIFT_None=0     ///<Shifting is not applied.
+ ,SHIFT_NoBound=1  ///<Shifting is applied to fluid particles except those that interact with all boundaries.
+ ,SHIFT_NoFixed=2  ///<Shifting is applied to fluid particles except those that interact with fixed boundaries.
+ ,SHIFT_Full=3     ///<Shifting is applied to all fluid particles.
+ ,SHIFT_FS=4       ///<Advanced shifting for free-surface detection. //<vs_advshift>
 }TpShifting; 
-
-
 
 ///Structure with main SPH constants and configurations.
 typedef struct{

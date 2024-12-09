@@ -29,7 +29,9 @@
 #include "JAppInfo.h"
 #include "Functions.h"
 #include "FunGeo3d.h"
-#include "JVtkLib.h"
+#include "JDataArrays.h"
+#include "JSpVtkData.h"
+#include "JSpVtkShape.h"
 #include "JSimpleNeigs.h"
 #include "JTimeControl.h"
 #include "JDsGaugeSystem.h"
@@ -460,21 +462,22 @@ void JSphInOut::SaveVtkDomains(){
   const float dp=float(CSP.dp);
   //-InOut real domains.
   {
-    JVtkLib sh;
+    JSpVtkShape ss;
     for(unsigned ci=0;ci<GetCount();ci++){
+      const word cid=word(ci);
       const JSphInOutZone* izone=List[ci];
       const tdouble3* ptdom=izone->GetPtDomain();
-      if(simulate2d)sh.AddShapeQuad(ptdom[0],ptdom[1],ptdom[2],ptdom[3],ci);
-      else sh.AddShapeBoxFront(ptdom[0],ptdom[1],ptdom[2],ptdom[3],ptdom[4],ptdom[5],ptdom[6],ptdom[7],ci);
-      sh.AddShapeLine(ptdom[8],ptdom[9],ci); //-Normal line.
+      if(simulate2d)ss.AddQuad(ptdom[0],ptdom[1],ptdom[2],ptdom[3],cid);
+      else ss.AddBoxFront(ptdom[0],ptdom[1],ptdom[2],ptdom[3],ptdom[4],ptdom[5],ptdom[6],ptdom[7],cid);
+      ss.AddLine(ptdom[8],ptdom[9],cid); //-Normal line.
     }
     const string filevtk=AppInfo.GetDirOut()+"CfgInOut_DomainReal.vtk";
-    sh.SaveShapeVtk(filevtk,"izone");
+    ss.SaveVtk(filevtk,"izone");
     Log->AddFileInfo(filevtk,"Saves real domain of InOut configurations.");
   }
   //-InOut box domains.
   {
-    JVtkLib sh;
+    JSpVtkShape ss;
     for(unsigned ci=0;ci<GetCount();ci++){
       tfloat3 boxmin=List[ci]->GetBoxLimitMin();
       tfloat3 boxmax=List[ci]->GetBoxLimitMax();
@@ -482,10 +485,11 @@ void JSphInOut::SaveVtkDomains(){
         boxmin.y=boxmax.y=simulate2dposy;
         const tfloat3 pt1=TFloat3(boxmax.x,boxmin.y,boxmin.z);
         const tfloat3 pt2=TFloat3(boxmin.x,boxmax.y,boxmax.z);
-        sh.AddShapeQuad(boxmin,pt1,boxmax,pt2,ci);
+        ss.AddQuad(boxmin,pt1,boxmax,pt2,word(ci));
       }
-      else sh.AddShapeBoxSize(boxmin,boxmax-boxmin,ci);
+      else ss.AddBoxSize(boxmin,boxmax-boxmin,word(ci));
     }
+    const word ncc=word(GetCount());
     //-Draws FreeCentre.
     {
       tfloat3 pc0=FreeCentre-TFloat3(dp/2);
@@ -494,9 +498,9 @@ void JSphInOut::SaveVtkDomains(){
       tfloat3 pc3=TFloat3(pc0.x,pc2.y,pc2.z);
       if(simulate2d){
         pc0.y=pc1.y=pc2.y=pc3.y=simulate2dposy;
-        sh.AddShapeQuad(pc0,pc1,pc2,pc3,GetCount());
+        ss.AddQuad(pc0,pc1,pc2,pc3,ncc);
       }
-      else sh.AddShapeBoxSize(pc0,pc2-pc0,GetCount());
+      else ss.AddBoxSize(pc0,pc2-pc0,ncc);
     }
     //-Draws FreeLimitMin/Max.
     {
@@ -506,12 +510,12 @@ void JSphInOut::SaveVtkDomains(){
       tfloat3 pc3=TFloat3(pc0.x,pc2.y,pc2.z);
       if(simulate2d){
         pc0.y=pc1.y=pc2.y=pc3.y=simulate2dposy;
-        sh.AddShapeQuad(pc0,pc1,pc2,pc3,GetCount());
+        ss.AddQuad(pc0,pc1,pc2,pc3,ncc);
       }
-      else sh.AddShapeBoxSize(pc0,pc2-pc0,GetCount());
+      else ss.AddBoxSize(pc0,pc2-pc0,ncc);
     }
     const string filevtk=AppInfo.GetDirOut()+"CfgInOut_DomainBox.vtk";
-    sh.SaveShapeVtk(filevtk,"izone");
+    ss.SaveVtk(filevtk,"izone");
     Log->AddFileInfo(filevtk,"Saves box domain of InOut configurations.");
   }
 }
@@ -666,7 +670,7 @@ unsigned JSphInOut::Config(double timestep,bool stable,byte periactive
       arrays.AddArray("Pos",PtCount,PtPos,false);
       if(PtZone)arrays.AddArray("PtZone",PtCount,PtZone,false);
       const string filevtk=AppInfo.GetDirOut()+"CfgInOut_PtInit.vtk";
-      JVtkLib::SaveVtkData(filevtk,arrays,"Pos");
+      JSpVtkData::Save(filevtk,arrays,"Pos");
       Log->AddFileInfo(filevtk,"Saves initial InOut points for DEBUG (by JSphInOut).");
     }
   }
@@ -759,7 +763,7 @@ void JSphInOut::InitCheckProximity(unsigned np,unsigned newnp,float scell
     arrays.AddArray("Pos",n,vpos,false);
     arrays.AddArray("ErrorType",n,vtype,false);
     const string filevtk=AppInfo.GetDirOut()+(n>nfluid? "CfgInOut_ErrorParticles.vtk": "CfgInOut_ExcludedParticles.vtk");
-    JVtkLib::SaveVtkData(filevtk,arrays,"Pos");
+    JSpVtkData::Save(filevtk,arrays,"Pos");
     if(nerr>nfluid)Log->AddFileInfo(filevtk,"Saves error fluid and boundary particles too close to inout particles.");
     else Log->AddFileInfo(filevtk,"Saves excluded fluid particles too close to inout particles.");
     delete[] vpos;  vpos=NULL;
@@ -1479,9 +1483,10 @@ void JSphInOut::SavePartFiles(unsigned part){
 void JSphInOut::SaveVtkZsurf(unsigned part){
   const bool simulate2d=CSP.simulate2d;
   const float simulate2dposy=float(CSP.simulate2dposy);
-  JVtkLib sh;
+  JSpVtkShape ss;
   bool usesh=false;
   for(unsigned ci=0;ci<GetCount();ci++){
+    const word cid=word(ci);
     if(List[ci]->GetInOutZsurf()->GetSvVtkZsurf()){
       usesh=true;
       const StZsurfResult& zres=List[ci]->GetInOutZsurf()->GetZsurfResults();
@@ -1492,7 +1497,7 @@ void JSphInOut::SaveVtkZsurf(unsigned part){
             const float py=simulate2dposy;
             const tfloat3 pt1=TFloat3(float(zres.pt.x-zres.vdp.x),py,zsurf);
             const tfloat3 pt2=TFloat3(float(zres.pt.x+zres.vdp.x),py,zsurf);
-            sh.AddShapeLine(pt1,pt2,ci);
+            ss.AddLine(pt1,pt2,cid);
           }
           else{
             const float d=CSP.kernelsize;
@@ -1500,7 +1505,7 @@ void JSphInOut::SaveVtkZsurf(unsigned part){
             const tfloat3 pt2=TFloat3(float(zres.pt.x+d),float(zres.pt.y-d),zsurf);
             const tfloat3 pt3=TFloat3(float(zres.pt.x+d),float(zres.pt.y+d),zsurf);
             const tfloat3 pt4=TFloat3(float(zres.pt.x-d),float(zres.pt.y+d),zsurf);
-            sh.AddShapeQuad(pt1,pt2,pt3,pt4,ci);
+            ss.AddQuad(pt1,pt2,pt3,pt4,cid);
           }
         }
         else{
@@ -1510,13 +1515,13 @@ void JSphInOut::SaveVtkZsurf(unsigned part){
             const float py=simulate2dposy;
             const tfloat3 pt1=TFloat3(boxmin.x,py,zsurf);
             const tfloat3 pt2=TFloat3(boxmax.x,py,zsurf);
-            sh.AddShapeLine(pt1,pt2,ci);
+            ss.AddLine(pt1,pt2,cid);
           }
           else{
             boxmin.z=boxmax.z=zsurf;
             const tfloat3 pt1=TFloat3(boxmax.x,boxmin.y,boxmin.z);
             const tfloat3 pt2=TFloat3(boxmin.x,boxmax.y,boxmax.z);
-            sh.AddShapeQuad(boxmin,pt1,boxmax,pt2,ci);
+            ss.AddQuad(boxmin,pt1,boxmax,pt2,cid);
           }
         }
       }
@@ -1527,14 +1532,14 @@ void JSphInOut::SaveVtkZsurf(unsigned part){
           tdouble3 p1=p0+zres.vdp;
           p0.z=zres.zsurf[cp];
           p1.z=zres.zsurf[cp+1];
-          sh.AddShapeQuad(p0,p1,p1-dir,p0-dir,ci);
+          ss.AddQuad(p0,p1,p1-dir,p0-dir,cid);
         }
       }
     }
   }
   if(usesh){
     const string filevtk=AppInfo.GetDirDataOut()+"InOut_Zsurf.vtk";
-    sh.SaveShapeVtk(fun::FileNameSec(filevtk,part),"izone");
+    ss.SaveVtk(fun::FileNameSec(filevtk,part),"izone");
     Log->AddFileInfo(filevtk,"Saves VTK files with Zsurf (by JSphInOut).");
   }
 }
