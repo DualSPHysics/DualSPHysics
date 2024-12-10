@@ -40,7 +40,7 @@ ifeq ($(COMPILE_MOORDYNPLUS), NO)
 endif
 
 #=============== CUDA selection ===============
-CUDAVER=11
+CUDAVER=00
 
 #=============== CUDA toolkit directory (make appropriate for local CUDA installation) ===============
 ifeq ($(CUDAVER),00)
@@ -61,8 +61,8 @@ endif
 
 #=============== Select GPU architectures ===============
 ifeq ($(CUDAVER),00)
-  GENCODE:=$(GENCODE) -gencode=arch=compute_20,code=\"sm_20,compute_20\"
-  GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
+#  GENCODE:=$(GENCODE) -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+#  GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
 endif
 ifeq ($(CUDAVER),75)
   GENCODE:=$(GENCODE) -gencode=arch=compute_20,code=\"sm_20,compute_20\"
@@ -165,12 +165,12 @@ ifeq ($(CUDAVER),11)
 endif
 
 all:$(EXECS_DIRECTORY)/$(EXECNAME)
-	rm -rf *.o
+#	rm -rf *.o
 ifeq ($(USE_DEBUG), NO)
 	@echo "  --- Compiled Release GPU version ---"
 else
 	@echo "  --- Compiled Debug GPU version ---"
-	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECNAME)_debug
+#	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECNAME)_debug
 endif
 
 $(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)

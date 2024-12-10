@@ -65,7 +65,7 @@ namespace cusphbuffer{
 
 unsigned BufferCreateList(bool stable,unsigned n,unsigned pini,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner
   ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const bool inner,const double2 *posxy,const double *posz
-  ,typecode *code,unsigned *listp,tmatrix4f mat,bool tracking,unsigned nzone);
+  ,typecode *code,unsigned *listp,tmatrix4f* mat,bool tracking,unsigned nzone);
 
 unsigned BufferCreateList1(bool stable,unsigned n,unsigned pini,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner
   ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const bool inner,const double2 *posxy,const double *posz
@@ -90,7 +90,7 @@ void CheckMassFlux(unsigned n,unsigned pini
 
 void BufferComputeStep(unsigned n,int *inoutpart,const double2 *posxy,const double *posz,typecode *code
     ,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner,const tdouble3 boxlimitminouter
-    ,const tdouble3 boxlimitmaxouter,const bool inner,tmatrix4f mat,bool tracking,unsigned nzone);
+    ,const tdouble3 boxlimitmaxouter,const bool inner,tmatrix4f* mat,bool tracking,unsigned nzone);
 
 void ComputeFluxesBuffer(unsigned n,double3 *normals,double *fluxes,double* rhs,double dp,double dt,bool simulate2d);
 

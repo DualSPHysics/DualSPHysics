@@ -26,9 +26,10 @@ namespace cusphbuffer{
 #include "JCellSearch_iker.h"
 
 __device__ void MovePoint(double2 rxy,double rz,double2& rxy_t,double& rz_t,tmatrix4f mat){
-  rxy_t.x=rxy.x*mat.a11+rxy.y*mat.a21+rz*mat.a31+mat.a14;
-  rxy_t.y=rxy.x*mat.a12+rxy.y*mat.a22+rz*mat.a32+mat.a24;
-  rz_t   =rxy.x*mat.a13+rxy.y*mat.a23+rz*mat.a33+mat.a34;
+  rxy.x-=mat.a14;   rxy.y-=mat.a24;   rz-=mat.a34;
+  rxy_t.x=rxy.x*mat.a11+rxy.y*mat.a21+rz*mat.a31/* +mat.a14 */;
+  rxy_t.y=rxy.x*mat.a12+rxy.y*mat.a22+rz*mat.a32/* +mat.a24 */;
+  rz_t   =rxy.x*mat.a13+rxy.y*mat.a23+rz*mat.a33/* +mat.a34 */;
 }
 
 __device__ bool KerBufferInZone(double2 rxy,double rz,double3 boxlimitmin,double3 boxlimitmax)
@@ -42,7 +43,7 @@ __device__ bool KerBufferInZone(double2 rxy,double rz,double3 boxlimitmin,double
 //------------------------------------------------------------------------------
 __global__ void KerBufferCreateList(unsigned n,unsigned pini,const double3 boxlimitmininner,const double3 boxlimitmaxinner
   ,const double3 boxlimitminouter,const double3 boxlimitmaxouter,const bool inner,const double2 *posxy,const double *posz
-  ,typecode *code,unsigned *listp,tmatrix4f mat,bool tracking,unsigned nzone)
+  ,typecode *code,unsigned *listp,tmatrix4f* mat,bool tracking,unsigned nzone)
 {
   extern __shared__ unsigned slist[];
   //float *splanes=(float*)(slist+(n+1));
@@ -60,7 +61,7 @@ __global__ void KerBufferCreateList(unsigned n,unsigned pini,const double3 boxli
         if(tracking){
           double2 rxy_t=make_double2(0,0);
           double rz_t=0.0;
-          MovePoint(rxy,rz,rxy_t,rz_t,mat);
+          MovePoint(rxy,rz,rxy_t,rz_t,mat[nzone]);
           rxy=rxy_t; rz=rz_t;
         }
         byte zone=255;
@@ -95,7 +96,7 @@ __global__ void KerBufferCreateList(unsigned n,unsigned pini,const double3 boxli
 //==============================================================================
 unsigned BufferCreateList(bool stable,unsigned n,unsigned pini,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner,
           const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const bool inner,const double2 *posxy,const double *posz
-	        ,typecode *code,unsigned *listp,tmatrix4f mat,bool tracking,unsigned nzone)
+	        ,typecode *code,unsigned *listp,tmatrix4f* mat,bool tracking,unsigned nzone)
 {
   unsigned count=0;
   if(n){
@@ -212,7 +213,7 @@ unsigned BufferCreateListInit(bool stable,unsigned n,unsigned pini
 
 __global__ void KerBufferComputeStep(unsigned n,int *inoutpart,const double2 *posxy,const double *posz
   ,typecode *code,const double3 boxlimitmininner,const double3 boxlimitmaxinner,const double3 boxlimitminouter
-  ,const double3 boxlimitmaxouter,const bool inner,tmatrix4f mat,bool tracking,unsigned nzone)
+  ,const double3 boxlimitmaxouter,const bool inner,tmatrix4f* mat,bool tracking,unsigned nzone)
 {
 	const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
 	if(cp<n){
@@ -226,7 +227,7 @@ __global__ void KerBufferComputeStep(unsigned n,int *inoutpart,const double2 *po
     if(tracking){
           double2 rxy_t=make_double2(0,0);
           double rz_t=0.0;
-          MovePoint(rxy,rz,rxy_t,rz_t,mat);
+          MovePoint(rxy,rz,rxy_t,rz_t,mat[nzone]);
           rxy=rxy_t; rz=rz_t;
         }
 		if(izone==byte(nzone)){
@@ -255,7 +256,7 @@ __global__ void KerBufferComputeStep(unsigned n,int *inoutpart,const double2 *po
 /// If particle is moved out the domain then it changes to ignore particle.
 //==============================================================================
 void BufferComputeStep(unsigned n,int *inoutpart,const double2 *posxy,const double *posz
-  ,typecode *code,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const bool inner,tmatrix4f mat,bool tracking,unsigned nzone)
+  ,typecode *code,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const bool inner,tmatrix4f* mat,bool tracking,unsigned nzone)
 {
   if(n){
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
@@ -1125,7 +1126,7 @@ void BufferShiftingGpu(unsigned np,unsigned npb,const double2 *posxy,const doubl
   }
 }
 
-template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,const double3 posp1
+__device__ void KerComputeNormalsBufferBox(unsigned p1,const double3 posp1
   ,float massp2,float& fs_treshold,float3& gradc,tmatrix3f& lcorr,unsigned& neigh
   ,float& pou,const double3 boxlimitmin,const double3 boxlimitmax,const bool inner
   ,const tmatrix4f mat,const bool tracking,const bool sim2d)
@@ -1149,9 +1150,9 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       const float rr2=drx*drx+dry*dry+drz*drz;
       float rx1=rx; float ry1=ry; float rz1=rz;
       if(tracking){          
-        rx1=rx*mat.a11+ry*mat.a21+rz*mat.a31+mat.a14;
-        ry1=rx*mat.a12+ry*mat.a22+rz*mat.a32+mat.a24;
-        rz1=rx*mat.a13+ry*mat.a23+rz*mat.a33+mat.a34;
+        rx1=(rx-mat.a14)*mat.a11+(ry-mat.a24)*mat.a21+(rz-mat.a34)*mat.a31;
+        ry1=(rx-mat.a14)*mat.a12+(ry-mat.a24)*mat.a22+(rz-mat.a34)*mat.a32;
+        rz1=(rx-mat.a14)*mat.a13+(ry-mat.a24)*mat.a23+(rz-mat.a34)*mat.a33;
       }
       bool outside=(inner ? !KerBufferInZone(make_double2(rx1,ry1),rz1,boxlimitmin,boxlimitmax) : KerBufferInZone(make_double2(rx1,ry1),rz1,boxlimitmin,boxlimitmax));
       if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO && outside){
@@ -1180,7 +1181,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
 
 
 
-  template<bool symm>  __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
+__device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
     ,const unsigned &pini,const unsigned &pfin,const float4 *poscell
     ,const float4* velrhop,const typecode* code,float massp2,const float4 &pscellp1
     ,float& fs_treshold,float3& gradc,tmatrix3f& lcorr,unsigned& neigh,float& pou,const float* ftomassp)
@@ -1191,7 +1192,6 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
       float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
       float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-      if(symm)dry=pscellp1.y+pscellp2.y + CTE.poscellsize*PSCEL_GetfY(pscellp2.w); //<vs_syymmetry>
       const double rr2=drx*drx+dry*dry+drz*drz;
       if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
         //-Computes kernel.
@@ -1230,7 +1230,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
 
 
 
-  template<bool symm>
+
     __global__ void KerComputeNormals(unsigned n,unsigned pinit
     ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
     ,const float4 *poscell,const float4 *velrhop,const typecode *code
@@ -1243,7 +1243,6 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       //-Obtains basic data of particle p1.
       const float4 pscellp1=poscell[p1];
       const float4 velrhop1=velrhop[p1];
-      const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
       
       float fs_treshold=0.f;                            //-Divergence of the position.
       float3 gradc=make_float3(0,0,0);                  //-Gradient of the concentration
@@ -1275,9 +1274,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
         unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
         if(pfin){
-          KerComputeNormalsBox<false> (false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,fs_treshold,gradc,lcorr,neigh,pou,ftomassp);
-          if(symm && rsymp1)KerComputeNormalsBox<true > (false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,
-                                                          fs_treshold,gradc,lcorr,neigh,pou,ftomassp); //<vs_syymmetry>
+          KerComputeNormalsBox (false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,fs_treshold,gradc,lcorr,neigh,pou,ftomassp);
         }
       }
 
@@ -1286,9 +1283,8 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
         unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
         if(pfin){
-          KerComputeNormalsBox<false> (false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,fs_treshold,gradc,lcorr,neigh,pou,ftomassp);
-          if(symm && rsymp1)KerComputeNormalsBox<true > (false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,
-                                                          fs_treshold,gradc,lcorr,neigh,pou,ftomassp); //<vs_syymmetry>
+          KerComputeNormalsBox(false,p1,pini,pfin,poscell,velrhop,code,CTE.massf,pscellp1,fs_treshold,gradc,lcorr,neigh,pou,ftomassp);
+
         }
       }
 
@@ -1302,8 +1298,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
         const tmatrix4f rmat      =mat        [izone];
         const bool      track     =tracking   [izone]; 
         const double3   posp1     =make_double3(posxy[p1].x,posxy[p1].y,posz[p1]); 
-        KerComputeNormalsBufferBox<false> (p1,posp1,CTE.massf,fs_treshold,gradc,lcorr,neigh,pou,boxlimmin,boxlimmax,inn,rmat,track,simulate2d);
-        if(symm && rsymp1)KerComputeNormalsBufferBox<false> (p1,posp1,CTE.massf,fs_treshold,gradc,lcorr,neigh,pou,boxlimmin,boxlimmax,inn,rmat,track,simulate2d); //<vs_syymmetry> 
+        KerComputeNormalsBufferBox (p1,posp1,CTE.massf,fs_treshold,gradc,lcorr,neigh,pou,boxlimmin,boxlimmax,inn,rmat,track,simulate2d);
       }
 
       unsigned fstypep1=0;
@@ -1390,7 +1385,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
 
     if(count){
       dim3 sgridf=GetSimpleGridSize(count,bsfluid);
-      KerComputeNormals<false> <<<sgridf,bsfluid,0,stm>>> 
+      KerComputeNormals <<<sgridf,bsfluid,0,stm>>> 
         (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
             ,poscell,velrho,code,fstype,fsnormal,simulate2d,shiftposfs
             ,ftomassp,listp
@@ -1401,7 +1396,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
     
   }
 
-    template<bool symm>  __device__ void KerScanUmbrellaRegionBufferBox(unsigned p1
+  __device__ void KerScanUmbrellaRegionBufferBox(unsigned p1
     ,const double3 posp1,bool& fs_flag,const float3* fsnormal
     ,const double3 boxlimitmin,const double3 boxlimitmax,const bool inner
     ,const tmatrix4f mat,const bool tracking,const bool sim2d)
@@ -1425,9 +1420,9 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       const float rr2=drx*drx+dry*dry+drz*drz;
       float rx1=rx; float ry1=ry; float rz1=rz;
       if(tracking){          
-        rx1=rx*mat.a11+ry*mat.a21+rz*mat.a31+mat.a14;
-        ry1=rx*mat.a12+ry*mat.a22+rz*mat.a32+mat.a24;
-        rz1=rx*mat.a13+ry*mat.a23+rz*mat.a33+mat.a34;
+        rx1=(rx-mat.a14)*mat.a11+(ry-mat.a24)*mat.a21+(rz-mat.a34)*mat.a31;
+        ry1=(rx-mat.a14)*mat.a12+(ry-mat.a24)*mat.a22+(rz-mat.a34)*mat.a32;
+        rz1=(rx-mat.a14)*mat.a13+(ry-mat.a24)*mat.a23+(rz-mat.a34)*mat.a33;
       }
       bool outside=(inner ? !KerBufferInZone(make_double2(rx1,ry1),rz1,boxlimitmin,boxlimitmax) : KerBufferInZone(make_double2(rx1,ry1),rz1,boxlimitmin,boxlimitmax));
       if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO && outside){
@@ -1462,7 +1457,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
   if(fs_flag) return;
   }
 
-  template<bool symm>  __device__ void KerScanUmbrellaRegionBox(bool boundp2,unsigned p1
+ __device__ void KerScanUmbrellaRegionBox(bool boundp2,unsigned p1
     ,const unsigned &pini,const unsigned &pfin,const float4 *poscell,const float4 &pscellp1
     ,bool& fs_flag,const float3* fsnormal,bool simulate2d)
   {
@@ -1471,7 +1466,6 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
       float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
       float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-      if(symm)dry=pscellp1.y+pscellp2.y + CTE.poscellsize*PSCEL_GetfY(pscellp2.w); //<vs_syymmetry>
       const double rr2=drx*drx+dry*dry+drz*drz;
       if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
 
@@ -1504,7 +1498,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
     if(fs_flag) return;
   }
 
-  template<bool symm>
+
   __global__ void KerScanUmbrellaRegion(unsigned n,unsigned pinit
     ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
     ,const float4 *poscell,const typecode* code,unsigned* fstype,float3* fsnormal,bool simulate2d,const unsigned* listp
@@ -1516,7 +1510,6 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       //-Obtains basic data of particle p1.
       const float4 pscellp1=poscell[p1];
       
-      const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
 
       bool fs_flag=false;
       int ini1,fin1,ini2,fin2,ini3,fin3;
@@ -1528,8 +1521,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
         unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
         if(pfin){
-          KerScanUmbrellaRegionBox<false> (false,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d);
-          if(symm && rsymp1)KerScanUmbrellaRegionBox<true > (false,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d); //<vs_syymmetry>
+          KerScanUmbrellaRegionBox (false,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d);
         }
       }
 
@@ -1537,8 +1529,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
         unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
         if(pfin){
-          KerScanUmbrellaRegionBox<false> (true,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d);
-          if(symm && rsymp1)KerScanUmbrellaRegionBox<true > (true,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d); //<vs_syymmetry>
+          KerScanUmbrellaRegionBox(true,p1,pini,pfin,poscell,pscellp1,fs_flag,fsnormal,simulate2d);
         }
       }
 
@@ -1552,8 +1543,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
         const tmatrix4f rmat      =mat        [izone];
         const bool      track     =tracking   [izone]; 
         const double3   posp1     =make_double3(posxy[p1].x,posxy[p1].y,posz[p1]); 
-        KerScanUmbrellaRegionBufferBox<false> (p1,posp1,fs_flag,fsnormal,boxlimmin,boxlimmax,inn,rmat,track,simulate2d);
-        if(symm && rsymp1)KerScanUmbrellaRegionBufferBox<false> (p1,posp1,fs_flag,fsnormal,boxlimmin,boxlimmax,inn,rmat,track,simulate2d); //<vs_syymmetry> 
+        KerScanUmbrellaRegionBufferBox (p1,posp1,fs_flag,fsnormal,boxlimmin,boxlimmax,inn,rmat,track,simulate2d);
       }
 
       
@@ -1590,7 +1580,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
 
     if(count){
       dim3 sgridf=GetSimpleGridSize(count,bsfluid);
-      KerScanUmbrellaRegion<false> <<<sgridf,bsfluid,0,stm>>> 
+      KerScanUmbrellaRegion<<<sgridf,bsfluid,0,stm>>> 
         (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
             ,poscell,code,fstype,fsnormal,simulate2d,listp
             ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
@@ -1600,7 +1590,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
     
   }
 
-    template<bool symm>  __device__ void KerComputeShiftingVelBufferBox(unsigned p1,const double3 posp1
+ __device__ void KerComputeShiftingVelBufferBox(unsigned p1,const double3 posp1
     ,float massp2,float4& shiftvel,const double3 boxlimitmin,const double3 boxlimitmax
     ,const bool inner,const tmatrix4f mat,const bool tracking,const bool sim2d)
   {    
@@ -1623,9 +1613,9 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
           const float rr2=drx*drx+dry*dry+drz*drz;
           float rx1=rx; float ry1=ry; float rz1=rz;
           if(tracking){          
-            rx1=rx*mat.a11+ry*mat.a21+rz*mat.a31+mat.a14;
-            ry1=rx*mat.a12+ry*mat.a22+rz*mat.a32+mat.a24;
-            rz1=rx*mat.a13+ry*mat.a23+rz*mat.a33+mat.a34;
+            rx1=(rx-mat.a14)*mat.a11+(ry-mat.a24)*mat.a21+(rz-mat.a34)*mat.a31;
+            ry1=(rx-mat.a14)*mat.a12+(ry-mat.a24)*mat.a22+(rz-mat.a34)*mat.a32;
+            rz1=(rx-mat.a14)*mat.a13+(ry-mat.a24)*mat.a23+(rz-mat.a34)*mat.a33;
           }
           bool outside=(inner ? !KerBufferInZone(make_double2(rx1,ry1),rz1,boxlimitmin,boxlimitmax) : KerBufferInZone(make_double2(rx1,ry1),rz1,boxlimitmin,boxlimitmax));
           if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO && outside){
@@ -1646,7 +1636,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
 
 
 
-  template<TpKernel tker,bool simulate2d,bool shiftadv,bool symm>
+  template<TpKernel tker,bool simulate2d,bool shiftadv>
   __device__ void KerPreLoopInteractionBox(bool boundp2,unsigned p1
     ,const unsigned &pini,const unsigned &pfin,const float4 *poscell,const float4 *velrhop
     ,const typecode *code,float massp2,const float4 &pscellp1,const float4 &velrhop1,const float* ftomassp
@@ -1658,7 +1648,6 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       float drx=pscellp1.x-pscellp2.x + CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
       float dry=pscellp1.y-pscellp2.y + CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
       float drz=pscellp1.z-pscellp2.z + CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
-      if(symm)dry=pscellp1.y+pscellp2.y + CTE.poscellsize*PSCEL_GetfY(pscellp2.w); //<vs_syymmetry>
       const double rr2=drx*drx+dry*dry+drz*drz;
       if(rr2<=CTE.kernelsize2 && rr2>=ALMOSTZERO){
 
@@ -1709,7 +1698,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
     }
   }
 
-  template<TpKernel tker,bool simulate2d,bool shiftadv,bool symm>
+  template<TpKernel tker,bool simulate2d,bool shiftadv>
   __global__ void KerPreLoopInteraction(unsigned n
     ,unsigned pinit,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid
     ,const unsigned *dcell,const float4 *poscell,const float4 *velrhop,const typecode *code
@@ -1724,7 +1713,6 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       const float4 pscellp1=poscell[p1];
       const float4 velrhop1=velrhop[p1];
       const float pressp1=cufsph::ComputePressCte(velrhop1.w);
-      const bool rsymp1=(symm && PSCEL_GetPartY(__float_as_uint(pscellp1.w))==0); //<vs_syymmetry>
       bool    nearfs=false;                     //-Bool for detecting near free-surface particles. <shiftImproved>
       float4  shiftposp1=make_float4(0,0,0,0);
 
@@ -1745,13 +1733,10 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
         unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
         if(pfin){
-          KerPreLoopInteractionBox<tker,simulate2d,shiftadv,false> (false,p1,pini,pfin,poscell,velrhop
+          KerPreLoopInteractionBox<tker,simulate2d,shiftadv> (false,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
             ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou);
-          if(symm && rsymp1)KerPreLoopInteractionBox<tker,simulate2d,shiftadv,true> (false,p1,pini,pfin,poscell,velrhop
-            ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou); //<vs_syymmetry>
-        } 
+        }
       }
 
 
@@ -1760,12 +1745,9 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
       for(int c3=ini3;c3<fin3;c3+=nc.w)for(int c2=ini2;c2<fin2;c2+=nc.x){
         unsigned pini,pfin=0;  cunsearch::ParticleRange(c2,c3,ini1,fin1,begincell,pini,pfin);
         if(pfin){
-        KerPreLoopInteractionBox<tker,simulate2d,shiftadv,false> (true,p1,pini,pfin,poscell,velrhop
+        KerPreLoopInteractionBox<tker,simulate2d,shiftadv> (true,p1,pini,pfin,poscell,velrhop
             ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
             ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou);
-        if(symm && rsymp1)KerPreLoopInteractionBox<tker,simulate2d,shiftadv,true> (true,p1,pini,pfin,poscell,velrhop
-            ,code,CTE.massf,pscellp1,velrhop1,ftomassp,shiftposp1
-            ,fstype,fsnormal,nearfs,mindist,maxarccos,bound_inter,fsnormalp1,pou); //<vs_syymmetry>
       }
       }
 
@@ -1783,8 +1765,7 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
           const tmatrix4f rmat      =mat        [izone];
           const bool      track     =tracking   [izone]; 
           const double3   posp1     =make_double3(posxy[p1].x,posxy[p1].y,posz[p1]); 
-          KerComputeShiftingVelBufferBox<false> (p1,posp1,CTE.massf,shiftposp1,boxlimmin,boxlimmax,inn,rmat,track,simulate2d);
-          if(symm && rsymp1)KerComputeShiftingVelBufferBox<false> (p1,posp1,CTE.massf,shiftposp1,boxlimmin,boxlimmax,inn,rmat,track,simulate2d); //<vs_syymmetry> 
+          KerComputeShiftingVelBufferBox(p1,posp1,CTE.massf,shiftposp1,boxlimmin,boxlimmax,inn,rmat,track,simulate2d);
         }
 
         shiftposp1.w+=cufsph::GetKernel_Wab<KERNEL_Wendland>(0.0)*CTE.massf/velrhop1.w;
@@ -1817,77 +1798,71 @@ template<bool symm>  __device__ void KerComputeNormalsBufferBox(unsigned p1,cons
   
   
   
-  template<TpKernel tker,bool simulate2d,bool shiftadv> void PreLoopInteractionT3(bool symmetry
-    ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
+  template<TpKernel tker,bool simulate2d,bool shiftadv> void PreLoopInteractionT3(unsigned bsfluid
+    ,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
     ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu* vresgdata,cudaStream_t stm)
 {
 
   if(fluidnum){
     dim3 sgridf=GetSimpleGridSize(fluidnum,bsfluid);
-    if(symmetry) //<vs_syymmetry_ini>
-    KerPreLoopInteraction <tker,simulate2d,shiftadv,true> <<<sgridf,bsfluid,0,stm>>> 
+    KerPreLoopInteraction <tker,simulate2d,shiftadv> <<<sgridf,bsfluid,0,stm>>> 
       (fluidnum,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
       ,dcell,poscell,velrho,code,ftomassp,shiftvel,fstype,fsnormal,fsmindist
-      ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
-    else //<vs_syymmetry_end>
-    KerPreLoopInteraction <tker,simulate2d,shiftadv,false> <<<sgridf,bsfluid,0,stm>>> 
-      (fluidnum,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
-      ,dcell,poscell,velrho,code,ftomassp,shiftvel,fstype,fsnormal,fsmindist
-      ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
+      ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking); 
 
   }
 }
 
-  template<TpKernel tker,bool simulate2d> void PreLoopInteractionT2(bool shiftadv,bool symmetry
+  template<TpKernel tker,bool simulate2d> void PreLoopInteractionT2(bool shiftadv
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
     ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu* vresgdata,cudaStream_t stm)
 {
   if(shiftadv){
-    PreLoopInteractionT3 <tker,simulate2d,true > (symmetry,bsfluid
+    PreLoopInteractionT3 <tker,simulate2d,true > (bsfluid
         ,fluidnum,fluidini,dvd,posxy,posz,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,vresgdata,stm);
   }
   else{
-    PreLoopInteractionT3 <tker,simulate2d,false> (symmetry,bsfluid
+    PreLoopInteractionT3 <tker,simulate2d,false> (bsfluid
         ,fluidnum,fluidini,dvd,posxy,posz,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,vresgdata,stm);
   }
 }
 
-  template<TpKernel tker> void PreLoopInteractionT(bool simulate2d,bool shiftadv,bool symmetry
+  template<TpKernel tker> void PreLoopInteractionT(bool simulate2d,bool shiftadv
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
     ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu* vresgdata,cudaStream_t stm)
 {
   if(simulate2d){
-    PreLoopInteractionT2 <tker,true > (shiftadv,symmetry,bsfluid
+    PreLoopInteractionT2 <tker,true > (shiftadv,bsfluid
         ,fluidnum,fluidini,dvd,posxy,posz,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,vresgdata,stm);
   }
   else{
-    PreLoopInteractionT2 <tker,false> (shiftadv,symmetry,bsfluid
+    PreLoopInteractionT2 <tker,false> (shiftadv,bsfluid
         ,fluidnum,fluidini,dvd,posxy,posz,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,vresgdata,stm);
   }
 }
 
 
-   void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv,bool symmetry
+   void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
     ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu* vresgdata,cudaStream_t stm)
   {
     switch(tkernel){
     case KERNEL_Wendland:{ const TpKernel tker=KERNEL_Wendland;
-      PreLoopInteractionT <tker> (simulate2d,shiftadv,symmetry,bsfluid
+      PreLoopInteractionT <tker> (simulate2d,shiftadv,bsfluid
         ,fluidnum,fluidini,dvd,posxy,posz,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,vresgdata,stm);
     }break;
   #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:{ const TpKernel tker=KERNEL_Cubic;
-      PreLoopInteractionT <tker> (simulate2d,shiftadv,symmetry,bsfluid
+      PreLoopInteractionT <tker> (simulate2d,shiftadv,bsfluid
         ,fluidnum,fluidini,dvd,posxy,posz,dcell,poscell,velrho,code,ftomassp
         ,shiftvel,fstype,fsnormal,fsmindist,vresgdata,stm);
     }break;

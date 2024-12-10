@@ -231,8 +231,8 @@ void JSphCpuSingle_VRes::BufferExtrapolateData(stinterparmscb *parms){
 
 void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,stinterparmscb *parms){
 	// // TmgStart(Timers,TMG_SuBuffer);
-  //   Multires->UpdateMatMov(mat);
-	//   Multires->MoveBufferZone(dt,mat);
+    Multires->UpdateMatMov(mat);
+	  Multires->MoveBufferZone(dt,mat);
 	// // TmgStart(Timers,TMG_SuBuffer);
 
 	// // Multires->MoveBufferZone(dt,velmot);

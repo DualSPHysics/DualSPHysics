@@ -239,7 +239,7 @@ void JSphGpuSingle_VRes::BufferInit(StInterParmsbg *parms){
 		unsigned buffercountpre;
 
 //		DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-		buffercountpre=Multires->CreateListGpuInit(Np,0,Posxy_g->cptr()
+		buffercountpre=Multires->CreateListGpu(Np,0,Posxy_g->cptr()
       ,Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize,bufferpartg.ptr(),i);
 	}
 
@@ -369,13 +369,16 @@ void JSphGpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
   const bool runshift=(ShiftingAdv && interstep==INTERSTEP_SymPredictor && Nstep!=0);
   if(runshift){
     Timersg->TmStart(TMG_SuShifting,false);
-    ComputeFSParticles();
-    ComputeUmbrellaRegion();
+    ComputeFSParticlesVRes();
+    ComputeUmbrellaRegionVRes();
     const unsigned bsfluid=BlockSizes.forcesfluid;
-    cusph::PreLoopInteraction(TKernel,Simulate2D,runshift,bsfluid,Np-Npb
-      ,Npb,DivData,Dcell_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
-      ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr()
-      ,FSNormal_g->ptr(),FSMinDist_g->ptr(),NULL);
+     StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
+
+  if(runshift)cusphbuffer::PreLoopInteraction(TKernel,Simulate2D,runshift,bsfluid,Np-Npb,Npb,DivData
+    ,Posxy_g->cptr(),Posz_g->cptr(),Dcell_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr()
+    ,FSType_g->ptr(),FSNormal_g->ptr(),FSMinDist_g->ptr(),vresgdata,NULL);
+
+      
     cusph::ComputeShiftingVel(bsfluid,Np-Npb,Npb,Simulate2D,ShiftingAdv->GetShiftCoef()
       ,ShiftingAdv->GetAleActive(),float(SymplecticDtPre),FSType_g->cptr()
       ,FSNormal_g->cptr(),FSMinDist_g->cptr(),ShiftVel_g->ptr(),NULL);
@@ -386,7 +389,7 @@ void JSphGpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
         ,ShiftVel_g->ptr());
     }
     //-Saves VTK for debug.
-    if(0 && TimeStep+LastDt>=TimePartNext){
+    if(1 && TimeStep+LastDt>=TimePartNext){
 		  DgSaveVtkParticlesGpu("Compute_FreeSurface_",Part,0,Np,Posxy_g->cptr()
         ,Posz_g->cptr(),Code_g->cptr(),FSType_g->cptr(),ShiftVel_g->cptr()
         ,FSNormal_g->cptr());

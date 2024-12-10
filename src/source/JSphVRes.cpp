@@ -309,7 +309,7 @@ void JSphVRes::Config()
     npt+=NPoints[ci];
   }
 
-
+  //-Upload vres zone configurations on the gpu memory.
 #ifdef _WITHGPU
   if(!Cpu){
     cudaMemcpy(BoxLimitMing ,BoxLimitMin  ,sizeof(double3)  *ListSize,cudaMemcpyHostToDevice);
@@ -326,17 +326,18 @@ void JSphVRes::Config()
     for(unsigned ci=0; ci<ListSize; ci++){
     tmatrix4f mat_new=Matmov[ci].GetMatrix4f();
     matc[ci]=mat_new;
-    matc[ci].a14=-(mat_new.a14*mat_new.a11+mat_new.a24*mat_new.a21+mat_new.a34*mat_new.a31);
-    matc[ci].a24=-(mat_new.a14*mat_new.a12+mat_new.a24*mat_new.a22+mat_new.a34*mat_new.a32);
-    matc[ci].a34=-(mat_new.a14*mat_new.a13+mat_new.a24*mat_new.a23+mat_new.a34*mat_new.a33);
+    // matc[ci].a14=-(mat_new.a14*mat_new.a11+mat_new.a24*mat_new.a21+mat_new.a34*mat_new.a31);
+    // matc[ci].a24=-(mat_new.a14*mat_new.a12+mat_new.a24*mat_new.a22+mat_new.a34*mat_new.a32);
+    // matc[ci].a34=-(mat_new.a14*mat_new.a13+mat_new.a24*mat_new.a23+mat_new.a34*mat_new.a33);
   }
   cudaMemcpy(Matmovg,matc,sizeof(tmatrix4f)*ListSize,cudaMemcpyHostToDevice);
   delete[] matc;  matc=NULL;
   }
 #endif
-
+  //-Create object for retrieving vres zone configurations.
   GeomInfo=new StrGeomVresGpu(BoxLimitMing,BoxLimitMaxg,BoxDomMing,BoxDomMaxg,Trackingg,Innerg,Matmovg);
 
+  //-Allocate memory on the cpu for interface points.
   AllocatePtMemory(npt);
 
   for(unsigned ci=0;ci<ListSize;ci++){
@@ -350,8 +351,10 @@ void JSphVRes::Config()
   memcpy(PtPoints  ,PtPointsIni  ,sizeof(tdouble3)*PtCount);
   memcpy(PtNormals ,PtNormalsIni ,sizeof(tfloat3) *PtCount);
 
+  //-Load data for restart.
   if(PartBegin)LoadVResData();
 
+  //-Upload interface points info on the gpu memory.
 #ifdef _WITHGPU
   if(!Cpu){
     tdouble2* pxy=new tdouble2[PtCount];
@@ -425,9 +428,9 @@ void JSphVRes::UpdateMatMov(std::vector<JMatrix4d> mat){
     for(unsigned ci=0; ci<ListSize; ci++){
       tmatrix4f mat_1=Matmov[ci].GetMatrix4f();
       matc[ci]=mat_1;
-      matc[ci].a14=-(mat_1.a14*mat_1.a11+mat_1.a24*mat_1.a21+mat_1.a34*mat_1.a31);
-      matc[ci].a24=-(mat_1.a14*mat_1.a12+mat_1.a24*mat_1.a22+mat_1.a34*mat_1.a32);
-      matc[ci].a34=-(mat_1.a14*mat_1.a13+mat_1.a24*mat_1.a23+mat_1.a34*mat_1.a33);
+      // matc[ci].a14=-(mat_1.a14*mat_1.a11+mat_1.a24*mat_1.a21+mat_1.a34*mat_1.a31);
+      // matc[ci].a24=-(mat_1.a14*mat_1.a12+mat_1.a24*mat_1.a22+mat_1.a34*mat_1.a32);
+      // matc[ci].a34=-(mat_1.a14*mat_1.a13+mat_1.a24*mat_1.a23+mat_1.a34*mat_1.a33);
     }
     cudaMemcpy(Matmovg,matc,sizeof(tmatrix4f)*ListSize,cudaMemcpyHostToDevice);
     delete[] matc;  matc=NULL;
@@ -500,8 +503,10 @@ unsigned count=0;
         inoutpart[count]=p; count++;
       }
       else{//-Fluid particles no buffer.
-          byte zone=255;
-            if(List[nzone]->InZoneBox(pos[p]))zone=byte(0);
+        tdouble3 ps=pos[p];
+        if(Tracking[nzone]) ps=MovePoint(ps,Matmov[nzone].GetMatrix4d());
+        byte zone=255;
+        if(List[nzone]->InZoneBox(ps))zone=byte(0);
           if(zone!=255){//-Particulas fluid que pasan a in/out.
             code[p]=CODE_ToFluidBuffer(rcode,zone)|CODE_TYPE_FLUID_BUFFERNUM; //-Adds 16 to indicate new particle in zone.
             inoutpart[count]=p; count++;
@@ -526,9 +531,10 @@ unsigned JSphVRes::CreateListCpuInit(unsigned npf,unsigned pini
             inoutpart[count]=p; count++;
           }
           else{//-Fluid particles no buffer.
-              byte zone=255;
-              tdouble3 ps=pos[p];
-                if(List[nzone]->InZoneBox(ps))zone=byte(0);
+            tdouble3 ps=pos[p];
+            if(Tracking[nzone]) ps=MovePoint(ps,Matmov[nzone].GetMatrix4d());
+            byte zone=255;
+             if(List[nzone]->InZoneBox(ps))zone=byte(0);
               if(zone!=255){//-Particulas fluid que pasan a in/out.
                 code[p]=CODE_ToFluidBuffer(rcode,zone)|CODE_TYPE_FLUID_BUFFERNUM; //-Adds 16 to indicate new particle in zone.
                 inoutpart[count]=p; count++;
@@ -552,9 +558,9 @@ unsigned JSphVRes::CreateListGpuInit(unsigned npf, unsigned pini, const double2 
   unsigned count = 0;
   tmatrix4f mat=Matmov[nzone].GetMatrix4f();
   tmatrix4f matc=mat;
-  matc.a14=-(mat.a14*mat.a11+mat.a24*mat.a21+mat.a34*mat.a31);
-  matc.a24=-(mat.a14*mat.a12+mat.a24*mat.a22+mat.a34*mat.a32);
-  matc.a34=-(mat.a14*mat.a13+mat.a24*mat.a23+mat.a34*mat.a33);
+  // matc.a14=-(mat.a14*mat.a11+mat.a24*mat.a21+mat.a34*mat.a31);
+  // matc.a24=-(mat.a14*mat.a12+mat.a24*mat.a22+mat.a34*mat.a32);
+  // matc.a34=-(mat.a14*mat.a13+mat.a24*mat.a23+mat.a34*mat.a33);
 
   // bool inner=List[nzone]->Inner;
   bool Stable = false;
@@ -570,14 +576,14 @@ unsigned JSphVRes::CreateListGpu(unsigned npf, unsigned pini, const double2 *pos
   unsigned count = 0;
   tmatrix4f mat=Matmov[nzone].GetMatrix4f();
   tmatrix4f matc=mat;
-  matc.a14=-(mat.a14*mat.a11+mat.a24*mat.a21+mat.a34*mat.a31);
-  matc.a24=-(mat.a14*mat.a12+mat.a24*mat.a22+mat.a34*mat.a32);
-  matc.a34=-(mat.a14*mat.a13+mat.a24*mat.a23+mat.a34*mat.a33);
+  // matc.a14=-(mat.a14*mat.a11+mat.a24*mat.a21+mat.a34*mat.a31);
+  // matc.a24=-(mat.a14*mat.a12+mat.a24*mat.a22+mat.a34*mat.a32);
+  // matc.a34=-(mat.a14*mat.a13+mat.a24*mat.a23+mat.a34*mat.a33);
 
   // bool inner=List[nzone]->Inner;
   bool Stable = false;
   count = cusphbuffer::BufferCreateList(Stable,npf,pini,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner,List[nzone]->BoxLimitMinOuter
-  ,List[nzone]->BoxLimitMaxOuter, List[nzone]->Inner,posxyg,poszg,codeg,(unsigned *)inoutpartg,matc,Tracking[nzone],nzone);
+  ,List[nzone]->BoxLimitMaxOuter, List[nzone]->Inner,posxyg,poszg,codeg,(unsigned *)inoutpartg,Matmovg,Tracking[nzone],nzone);
 
   // Log->Printf("%u> -------->CreateListXXX>> InOutcount:%u",nstep,count);
   return (count);
@@ -585,6 +591,18 @@ unsigned JSphVRes::CreateListGpu(unsigned npf, unsigned pini, const double2 *pos
 #endif
 //
 //
+tdouble3 JSphVRes::MovePoint(tdouble3 oldpos,const tmatrix4d& mat){
+  tdouble3 newpos=TDouble3(0);
+  oldpos.x-=mat.a14;  oldpos.y-=mat.a24;  oldpos.z-=mat.a34;
+  newpos.x=oldpos.x*mat.a11+oldpos.y*mat.a21+oldpos.z*mat.a31;
+  newpos.y=oldpos.x*mat.a12+oldpos.y*mat.a22+oldpos.z*mat.a32;
+  newpos.z=oldpos.x*mat.a13+oldpos.y*mat.a23+oldpos.z*mat.a33;
+  return(newpos);
+}
+
+
+
+
   unsigned JSphVRes::ComputeStepCpu(unsigned bufferpartcount,int *bufferpart
 		,typecode *code,const tdouble3 *pos,unsigned nzone){
 //	/-Updates code according to particle position and define new particles to create.
@@ -600,7 +618,8 @@ unsigned JSphVRes::CreateListGpu(unsigned npf, unsigned pini, const double2 *pos
 		  const typecode rcode=code[p];
 		  const unsigned izone0=CODE_GetIzoneFluidBuffer(rcode);
 		  const unsigned izone=(izone0&CODE_TYPE_FLUID_BUFFER015MASK); //-Substract 16 to obtain the actual zone (0-15).
-		  const tdouble3 ps=pos[p];
+		  tdouble3 ps=pos[p];
+      if(Tracking[nzone]) ps=MovePoint(ps,Matmov[nzone].GetMatrix4d());
 
 		  if(izone0>=16){//-Normal fluid particle in buffer zone.
 			  cod= rcode^0x10 ; //-Converts to buffer particle or not.
@@ -666,13 +685,13 @@ void JSphVRes::ComputeStepGpu(unsigned bufferpartcount,int *bufferpart,unsigned 
 
   tmatrix4f mat=Matmov[nzone].GetMatrix4f();
   tmatrix4f matc=mat;
-  matc.a14=-(mat.a14*mat.a11+mat.a24*mat.a21+mat.a34*mat.a31);
-  matc.a24=-(mat.a14*mat.a12+mat.a24*mat.a22+mat.a34*mat.a32);
-  matc.a34=-(mat.a14*mat.a13+mat.a24*mat.a23+mat.a34*mat.a33);
+  // matc.a14=-(mat.a14*mat.a11+mat.a24*mat.a21+mat.a34*mat.a31);
+  // matc.a24=-(mat.a14*mat.a12+mat.a24*mat.a22+mat.a34*mat.a32);
+  // matc.a34=-(mat.a14*mat.a13+mat.a24*mat.a23+mat.a34*mat.a33);
 
   //-Checks particle position.
   cusphbuffer::BufferComputeStep(bufferpartcount,bufferpart,posxyg,poszg,codeg,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner
-      ,List[nzone]->BoxLimitMinOuter,List[nzone]->BoxLimitMaxOuter,List[nzone]->Inner,matc,Tracking[nzone],nzone);
+      ,List[nzone]->BoxLimitMinOuter,List[nzone]->BoxLimitMaxOuter,List[nzone]->Inner,Matmovg,Tracking[nzone],nzone);
   //-Create list for new inlet particles to create.
   //  const unsigned newnp=cusphinout::InOutListCreate(Stable,inoutcount,sizenp-1,newizoneg,inoutpartg);
   //  if(inoutcount+newnp>=sizenp)Run_Exceptioon("Allocated memory is not enough for new particles inlet.");

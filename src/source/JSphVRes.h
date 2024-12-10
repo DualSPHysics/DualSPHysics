@@ -204,6 +204,7 @@ private:
 
 void CreateZones();
 void GetQuadPoints2d(tdouble3 pmin,tdouble3 pmax,tdouble3* vpt)const;
+tdouble3 MovePoint(tdouble3 oldpos,const tmatrix4d& mat);
 
 public:
 
