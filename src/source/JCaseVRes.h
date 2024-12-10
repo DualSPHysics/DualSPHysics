@@ -22,6 +22,8 @@
 //:# - Class to loads basic Variable Resolution configuration. (16-06-2022)
 //:# - Avoids VTK shapes of fixed limits. (16-05-2024)
 //:# - New general-purpose section <extra>. (31-05-2024)
+//:# - Use JSpVtkShape instead of JVtk Lib. (10-12-2024)
+//:# - Removes SaveVtkPoints(). (10-12-2024)
 //:#############################################################################
 
 /// \file JCaseVRes.h \brief Declares the class \ref JCaseVRes.
@@ -109,6 +111,12 @@ public:
 
   std::vector<JCaseVResBase*> SubZones;
 
+  //-Number of particles for summary.
+  ullong NpFixed;
+  ullong NpMoving;
+  ullong NpFloating;
+  ullong NpFluid;
+
 //-Attributes for computing domain limits in definition step.
 protected:
   const double Hdp;
@@ -142,6 +150,9 @@ public:
   virtual ~JCaseVResBase();
   void SetExtraData(const JCaseVResExtra& edata);
 
+  void NpReset();
+  void NpSet(ullong npfixed,ullong npmoving,ullong npfloating,ullong npfluid);
+
   void SimReset();
   void SimReadXmlDef(const JXml* sxml,const TiXmlElement* node);
   void SimConfigPartsPos(tdouble3 partpmin,tdouble3 partpmax);
@@ -158,6 +169,7 @@ public:
   unsigned Count()const{ return(unsigned(SubZones.size())); }
   const JCaseVResBase* GetSubZone(unsigned idx)const;
   const JCaseVRes_Box* GetSubZoneBox(unsigned idx)const;
+  std::string GetSubZonesStr()const;
 
   JCaseVResExtra ExtraData()const{ return(Extra_Data); }
 };
@@ -292,13 +304,14 @@ public:
     ,tdouble3 ptmin,tdouble3 ptmax);
   void SaveXmlRun(JXml* sxml,const std::string& place,unsigned vresid,bool halfdp)const;
   void SaveXmlSimRun(JXml* sxml,const std::string& place,unsigned vresid)const;
+  void NpSet(unsigned id,ullong npfixed,ullong npmoving,ullong npfloating,ullong npfluid);
 
   //-Methods for DualSPHysics.
   unsigned LoadFileXmlRun(const std::string& file,const std::string& place);
   unsigned LoadXmlRun(const JXml* sxml,const std::string& place);
 
   void SaveVtkDomains(std::string fname,bool onefile,bool halfdp)const;
-  void SaveVtkPoints(std::string fname,bool onefile)const;
+  void SaveVtkLimits(std::string fname,bool halfdp)const;
 };
 
 #endif
