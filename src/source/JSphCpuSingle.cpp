@@ -645,7 +645,7 @@ void JSphCpuSingle::PreLoopProcedure(TpInterStep interstep){
       }
     }
     //-Saves VTK for debug.
-    if(0)DgSaveVtkParticlesCpu("Compute_FreeSurface_",Part,0,Np,Pos_c->cptr()
+    if(1)DgSaveVtkParticlesCpu("Compute_FreeSurface_",Part,0,Np,Pos_c->cptr()
       ,Code_c->cptr(),FSType_c->cptr(),ShiftVel_c->cptr(),FSNormal_c->cptr());
     Timersc->TmStop(TMC_SuShifting);
   }
@@ -687,8 +687,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     ,Ar_c->ptr(),Ace_c->ptr(),AC_PTR(Delta_c)
     ,ShiftingMode,AC_PTR(ShiftPosfs_c)
     ,AC_PTR(SpsTauRho2_c),AC_PTR(Sps2Strain_c)
-    ,AC_PTR(FSType_c),AC_PTR(ShiftVel_c),AC_PTR(LCorr_c)      //<vs_advshift>
-    ,AC_PTR(FSTresh_c),AC_PTR(PressSym_c),AC_PTR(PressAsym_c) //<vs_advshift>
+    ,AC_PTR(FSType_c),AC_PTR(ShiftVel_c) //<vs_advshift>
   );
   StInterResultc res;
   res.viscdt=0;
