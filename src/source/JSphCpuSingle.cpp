@@ -129,7 +129,11 @@ void JSphCpuSingle::ConfigDomain(){
   Velrho_c->CopyFrom(PartsLoaded->GetVelRho(),Np);
   if(UseNormals){
     BoundNor_c->Memset(0,Np);
-    BoundNor_c->CopyFrom(PartsLoaded->GetBoundNor(),CaseNbound);
+    if(PartsLoaded->GetBoundNor())BoundNor_c->CopyFrom(PartsLoaded->GetBoundNor(),CaseNbound);
+    else if(AbortNoNormals)Run_ExceptioonFile(
+      "No normal data for mDBC in the input file.",PartsLoaded->GetFileLoaded());
+    else Log->PrintWarning(fun::PrintStr("No normal data for mDBC in the input file (%s)."
+      ,PartsLoaded->GetFileLoaded().c_str()));
   }
 
   //-Computes radius of floating bodies.
