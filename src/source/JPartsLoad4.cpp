@@ -54,6 +54,7 @@ JPartsLoad4::~JPartsLoad4(){
 /// Initialisation of variables.
 //==============================================================================
 void JPartsLoad4::Reset(){
+  FileLoaded="";
   Npiece=0;
   Simulate2D=false;
   Simulate2DPosY=0;
@@ -185,6 +186,7 @@ void JPartsLoad4::LoadParticles(const std::string& casedir
     else Run_ExceptioonFile("File of the particles was not found.",file1);
   }
   //-Obtains configuration. | Obtiene configuracion.
+  FileLoaded=pd.GetFileLoaded();
   PartBeginTimeStep=(!PartBegin? 0: pd.Get_TimeStep());
   Npiece=pd.GetNpiece();
   Simulate2D=pd.Get_Data2d();

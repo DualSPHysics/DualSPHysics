@@ -195,6 +195,7 @@ void JSph::InitVars(){
   UseNormals=false;
   UseNormalsFt=false;
   SvNormals=false;
+  AbortNoNormals=true;
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
   UseChrono=false;
@@ -1366,7 +1367,10 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
   SaveVtkNormals(file2,-1,np,npb,pos,idp,boundnor,1.f);
   if(nerr  >0)Log->PrintfWarning("There are %u of %u fixed or moving boundary particles without normal data.",nerr,npb);
   if(nerrft>0)Log->PrintfWarning("There are %u of %u floating particles without normal data.",nerrft,CaseNfloat);
-  if(TBoundary==BC_MDBC && nerr==npb && nerrft==CaseNfloat)Run_Exceptioon("No valid normal vectors for using mDBC.");
+  if(TBoundary==BC_MDBC && nerr==npb && nerrft==CaseNfloat){
+    if(AbortNoNormals)Run_Exceptioon("No valid normal vectors for using mDBC.");
+    else Log->PrintfWarning("No valid normal vectors for using mDBC.");
+  }
   if(UseNormalsFt && (!UseChrono || !ChronoObjects->GetUseCollision()))
     Log->PrintWarning("When mDBC is applied to floating bodies, their collisions should be solved using Chrono (RigidAlgorithm=3).");
 }

@@ -167,7 +167,11 @@ void JSphGpuSingle::ConfigDomain(){
   acfloat3 boundnorc("boundnor",Arrays_Cpu,UseNormals);
   if(UseNormals){
     boundnorc.Memset(0,Np);
-    boundnorc.CopyFrom(PartsLoaded->GetBoundNor(),CaseNbound);
+    if(PartsLoaded->GetBoundNor())boundnorc.CopyFrom(PartsLoaded->GetBoundNor(),CaseNbound);
+    else if(AbortNoNormals)Run_ExceptioonFile(
+      "No normal data for mDBC in the input file.",PartsLoaded->GetFileLoaded());
+    else Log->PrintWarning(fun::PrintStr("No normal data for mDBC in the input file (%s)."
+      ,PartsLoaded->GetFileLoaded().c_str()));
   }
 
   //-Computes radius of floating bodies.
