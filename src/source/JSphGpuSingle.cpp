@@ -578,7 +578,6 @@ void JSphGpuSingle::ComputeUmbrellaRegion(){
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
-  const bool mdbc2=(TBoundary==BC_MDBC && SlipMode>=SLIP_NoSlip);
   float3* dengradcorr=NULL;
 
   Timersg->TmStart(TMG_CfForces,true);
@@ -595,7 +594,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces).
   const StInterParmsg parms=StrInterParmsg(Simulate2D
     ,TKernel,FtMode
-    ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
+    ,TVisco,TDensity,ShiftingMode,TMdbc2 //<vs_m2dbcNP>
     ,shiftadv,corrector,aleform,ncpress //<vs_advshift>
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
@@ -603,12 +602,11 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr()
     ,Velrho_g->cptr(),Idp_g->cptr(),Code_g->cptr()
     ,AG_CPTR(BoundMode_g),AG_CPTR(TangenVel_g),AG_CPTR(MotionVel_g)//<vs_m2dbc>
-    ,AG_CPTR(BoundNor_g) //<vs_m2dbcNP>
+    ,AG_CPTR(BoundNor_g),AG_PTR(NoPenShift_g) //<vs_m2dbcNP>
     ,FtoMasspg,AG_CPTR(SpsTauRho2_g),dengradcorr
     ,ViscDt_g->ptr(),Ar_g->ptr(),Ace_g->ptr(),AG_PTR(Delta_g)
     ,AG_PTR(Sps2Strain_g)
     ,AG_PTR(ShiftPosfs_g)
-    ,AG_PTR(NoPenShift_g) // SHABA
     ,AG_PTR(FSType_g),AG_CPTR(ShiftVel_g) //<vs_advshift>
     ,NULL,NULL);
   cusph::Interaction_Forces(parms);

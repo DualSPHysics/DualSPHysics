@@ -49,6 +49,7 @@ public:
   bool CellDomFixed;    ///<The Cell domain is fixed according maximum domain size (default=false).
   int TBoundary;        ///<Boundary method: -1:None, 1:DBC (by default), 2:mDBC (SlipMode: 1:DBC vel=0)
   int SlipMode;         ///<Slip mode for mDBC: -1:None, 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).
+  bool NoPenetration;   ///<No Penetration for mDBC2.
 
   TpStep TStep;
   int VerletSteps;

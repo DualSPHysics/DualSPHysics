@@ -42,14 +42,14 @@ typedef struct{
   const byte*     boundmode;    //<vs_m2dbc>
   const tfloat3*  tangenvel;    //<vs_m2dbc>
   const tfloat3*  motionvel;    //<vs_m2dbc>
-  const tfloat3*  boundnormal;  //<vs_m2dbcNP> SHABA
+  const tfloat3*  boundnormal;  //<vs_m2dbcNP> 
+  tfloat4*   nopenshift;        //<vs_m2dbcNP> 
   const tfloat3*  dengradcorr;
   float*        ar;
   tfloat3*      ace;
   float*        delta;
   TpShifting    shiftmode;
   tfloat4*      shiftposfs;
-  tfloat4*   nopenshift; //<vs_m2dbcNP> SHABA
   tsymatrix3f*  spstaurho2;
   tsymatrix3f*  sps2strain;
   unsigned*     fstype;        //<vs_advshift>
@@ -68,11 +68,11 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
   ,const byte*    boundmode    //<vs_m2dbc>
   ,const tfloat3* tangenvel    //<vs_m2dbc>
   ,const tfloat3* motionvel    //<vs_m2dbc>
-  ,const tfloat3* boundnormal  //<vs_m2dbcNP> SHABA
+  ,const tfloat3* boundnormal  //<vs_m2dbcNP> 
+  ,tfloat4* nopenshift         //<vs_m2dbcNP> 
   ,const tfloat3* dengradcorr
   ,float* ar,tfloat3* ace,float* delta
   ,TpShifting shiftmode,tfloat4* shiftposfs
-  ,tfloat4* nopenshift          //<vs_m2dbcNP> SHABA
   ,tsymatrix3f* spstaurho2,tsymatrix3f* sps2strain
   ,unsigned* fstype,tfloat4* shiftvel,tmatrix3d* lcorr  //<vs_advshift>
   ,float* fstresh,tfloat3* presssym,tfloat3* pressasym  //<vs_advshift>
@@ -83,11 +83,10 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
     ,pos,velrho,idp
     ,code,press
     ,boundmode,tangenvel,motionvel //<vs_m2dbc>
-    ,boundnormal //<vs_m2dbcNP> SHABA
+    ,boundnormal,nopenshift       //<vs_m2dbcNP> 
     ,dengradcorr
     ,ar,ace,delta
     ,shiftmode,shiftposfs
-    ,nopenshift //<vs_m2dbcNP> SHABA
     ,spstaurho2,sps2strain
     ,fstype,shiftvel,lcorr         //<vs_advshift>
     ,fstresh,presssym,pressasym    //<vs_advshift>
@@ -233,7 +232,7 @@ protected:
     ,float& viscdt,float* ar)const;
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
-    ,bool shift,bool mdbc2
+    ,bool shift,TpMdbc2Mode mdbc2
     ,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>
     void InteractionForcesFluid
     (unsigned n,unsigned pinit,bool boundp2,float visco
@@ -254,10 +253,10 @@ protected:
     ,const tdouble3* pos,const tfloat4* velrho,const typecode* code
     ,const unsigned* idp,float& viscdt,tfloat3* ace)const;
 
-  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,bool mdbc2
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,TpMdbc2Mode mdbc2
     ,bool shiftadv,bool aleform,bool ncpress>  //<vs_advshift>
     void Interaction_ForcesCpuT(const stinterparmsc& t,StInterResultc& res)const;
-  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,bool mdbc2>
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,TpMdbc2Mode mdbc2>
     void Interaction_Forces_ct6(const stinterparmsc& t,StInterResultc& res)const;
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> 
     void Interaction_Forces_ct5(const stinterparmsc& t,StInterResultc& res)const;
@@ -361,7 +360,7 @@ protected:
   void ComputeVerletVarsFluid(bool shift,const tfloat3* indirvel
     ,const tfloat4* velrho1,const tfloat4* velrho2,const byte* boundmode
     ,double dt,double dt2,const float* ar,const tfloat3* ace,const tfloat4* shiftposfs
-    ,tdouble3* pos,unsigned* cell,typecode* code,tfloat4* velrhonew)const;
+    ,tdouble3* pos,unsigned* cell,typecode* code,tfloat4* velrhonew,const tfloat4* nopenshift)const;
   void ComputeVelrhoBound(const tfloat4* velrhoold,const byte* boundmode
     ,const float* ar,double armul,tfloat4* velrhonew)const;
   void ComputeVerlet(double dt);

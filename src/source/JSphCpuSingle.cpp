@@ -683,11 +683,10 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     ,DivData,Dcell_c->cptr()
     ,Pos_c->cptr(),Velrho_c->cptr(),Idp_c->cptr(),Code_c->cptr(),Press_c->cptr()
     ,AC_CPTR(BoundMode_c),AC_CPTR(TangenVel_c),AC_CPTR(MotionVel_c) //<vs_m2dbc>
-    ,AC_CPTR(BoundNor_c) //<vs_m2dbc>
+    ,AC_CPTR(BoundNor_c),AC_PTR(NoPenShift_c) //<vs_m2dbcNP>
     ,dengradcorr
     ,Ar_c->ptr(),Ace_c->ptr(),AC_PTR(Delta_c)
     ,ShiftingMode,AC_PTR(ShiftPosfs_c)
-    ,AC_PTR(NoPenShift_c)
     ,AC_PTR(SpsTauRho2_c),AC_PTR(Sps2Strain_c)
     ,AC_PTR(FSType_c),AC_PTR(ShiftVel_c),AC_PTR(LCorr_c)      //<vs_advshift>
     ,AC_PTR(FSTresh_c),AC_PTR(PressSym_c),AC_PTR(PressAsym_c) //<vs_advshift>
@@ -1025,7 +1024,6 @@ void JSphCpuSingle::FtPartsUpdate(double dt,bool updatenormals
   ,tdouble3* posc,tfloat4* velrhoc,unsigned* dcellc,typecode* codec
   ,tfloat3* boundnorc,tfloat3* motionvelc,tfloat3* motionacec)const
 {
-  const bool mdbc2=(updatenormals && (SlipMode>=SLIP_NoSlip)); //<vs_m2dbc>
   const int ftcount=int(FtCount);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
@@ -1065,7 +1063,7 @@ void JSphCpuSingle::FtPartsUpdate(double dt,bool updatenormals
         vr.z=fvel.z+(fomega.x*dist.y - fomega.y*dist.x);
         velrhoc[p]=vr;
         //-Updates motionvel and motionace for mDBC no-slip.
-        if(mdbc2){ //<vs_m2dbc_ini>
+        if(TMdbc2>=MDBC2_Std){ //<vs_m2dbc_ini>
           const tfloat3 mvel0=motionvelc[p];
           motionacec[p]=TFloat3(float((double(vr.x)-mvel0.x)/dt),
                                 float((double(vr.y)-mvel0.y)/dt),

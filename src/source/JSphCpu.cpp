@@ -246,7 +246,9 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np){
   Press_c=new acfloat ("Pressc",Arrays_Cpu,false); //-NO INITIAL MEMORY.
   Delta_c=new acfloat ("Deltac",Arrays_Cpu,false); //-NO INITIAL MEMORY.
   //-Arrays for No Penetration.
-  NoPenShift_c=new acfloat4("NoPenShiftc",Arrays_Cpu,false); //-NO INITIAL MEMORY.  //<vs_m2dbcNP>
+  if(TMdbc2==MDBC2_NoPen){
+    NoPenShift_c=new acfloat4("NoPenShiftc",Arrays_Cpu,false); //-NO INITIAL MEMORY.  //<vs_m2dbcNP>
+  }
   //-Arrays for Laminar+SPS.
   if(TVisco==VISCO_LaminarSPS){
     SpsTauRho2_c=new acsymatrix3f("SpsTauRho2c",Arrays_Cpu,true);
@@ -456,7 +458,7 @@ void JSphCpu::PreInteraction_Forces(TpInterStep interstep){
   if(DDTArray)Delta_c->Reserve();
   if(Shifting)ShiftPosfs_c->Reserve();
   if(TVisco==VISCO_LaminarSPS)Sps2Strain_c->Reserve();
-  if(SlipMode>=SLIP_NoSlip)NoPenShift_c->Reserve(); //<vs_m2dbcNP>
+  if(TMdbc2==MDBC2_NoPen)NoPenShift_c->Reserve(); //<vs_m2dbcNP>
     if(ShiftingAdv){ //<vs_advshift_ini>
     FSMinDist_c->Reserve();
     FSNormal_c->Reserve();
@@ -676,7 +678,7 @@ float VanAlbadaLimiter(float beta){
 /// Realiza interaccion entre particulas: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
-  ,bool shift,bool mdbc2
+  ,bool shift,TpMdbc2Mode mdbc2
   ,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>
   void JSphCpu::InteractionForcesFluid(unsigned n,unsigned pinit,bool boundp2
   ,float visco,StDivDataCpu divdata,const unsigned* dcell
@@ -773,7 +775,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
             compute=!(USE_FTEXTERNAL && ftp1 && (boundp2 || ftp2)); //-Deactivate when using DEM and if it is of type float-float or float-bound. | Se desactiva cuando se usa DEM y es float-float o float-bound.
           }
           //-Changing the mass of boundary particle with boundmode. //<vs_m2dbc_ini>
-          if(mdbc2 && boundp2 && !ftp2){
+          if(mdbc2>=MDBC2_Std && boundp2 && !ftp2){
             if(boundmode[p2]==BMODE_MDBC2OFF)massp2=0;
           } //<vs_m2dbc_end>
 
@@ -800,7 +802,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
           //-Density derivative (Continuity equation).
           float dvx=velp1.x-velrhop2.x, dvy=velp1.y-velrhop2.y, dvz=velp1.z-velrhop2.z;
           #ifndef MDBC2_KEEPVEL
-            if(mdbc2 && boundp2 && !ftp2){ //<vs_m2dbc_ini>
+            if(mdbc2>=MDBC2_Std && boundp2 && !ftp2){ //<vs_m2dbc_ini>
               const tfloat3 movvelp2=motionvel[p2];
               dvx=velp1.x-movvelp2.x; //-mDBC2 no slip.
               dvy=velp1.y-movvelp2.y;
@@ -864,7 +866,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
           }
 
           //-No Penetration Correction SHABA
-          if (boundp2 && mdbc2 && !ftp2) {//<vs_m2dbcNP_ini>
+          if (boundp2 && mdbc2==MDBC2_NoPen && !ftp2) {//<vs_m2dbcNP_ini>
               float rrmag = sqrt(rr2);
               if (rrmag < 1.25f * Dp) { //-if fluid particle is less than 1.25dp from a boundary particle
                   float norm = sqrt(boundnorm[p2].x * boundnorm[p2].x + boundnorm[p2].y * boundnorm[p2].y + boundnorm[p2].z * boundnorm[p2].z);
@@ -907,7 +909,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 
           //===== Viscosity ===== 
           if(compute){
-            if(mdbc2 && boundp2 && !ftp2){ //<vs_m2dbc_ini>
+            if(mdbc2>=MDBC2_Std && boundp2 && !ftp2){ //<vs_m2dbc_ini>
               const tfloat3 tangentvelp2=tangenvel[p2];
               dvx=velp1.x-tangentvelp2.x;
               dvy=velp1.y-tangentvelp2.y;
@@ -1009,7 +1011,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       if(shift)shiftposfs[p1]=shiftposfsp1;
     }
     //-No-Penetration correction SHABA
-    if (mdbc2) { //<vs_m2dbcNP_end>
+    if (mdbc2==MDBC2_NoPen) { //<vs_m2dbcNP_end>
         if (nopenshiftp1.w > 0.f) {//-if correction required
             //-Average correction velocity over number of boundary particles
             nopenshift[p1].x = nopenshiftp1.x / nopenshiftp1.w;
@@ -1199,7 +1201,7 @@ void JSphCpu::ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrho
 /// Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
-  ,bool shift,bool mdbc2
+  ,bool shift,TpMdbc2Mode mdbc2
   ,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>
   void JSphCpu::Interaction_ForcesCpuT(const stinterparmsc& t,StInterResultc& res)const
 {
@@ -1241,7 +1243,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   res.viscdt=viscdt;
 }
 //==============================================================================
-template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,bool mdbc2> 
+template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,TpMdbc2Mode mdbc2> 
   void JSphCpu::Interaction_Forces_ct6(const stinterparmsc& t,StInterResultc& res)const
 {
   if(ShiftingAdv){ //<vs_advshift_ini>
@@ -1262,14 +1264,15 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> 
   void JSphCpu::Interaction_Forces_ct5(const stinterparmsc& t,StInterResultc& res)const
 {
-  const bool usemdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
-  if(usemdbc2){ const bool mdbc2=true;
-    if(Shifting)Interaction_Forces_ct6<tker,ftmode,tvisco,tdensity,true ,mdbc2>(t,res);
-    else        Interaction_Forces_ct6<tker,ftmode,tvisco,tdensity,false,mdbc2>(t,res);
-  }
-  else{         const bool mdbc2=false;
-    if(Shifting)Interaction_Forces_ct6<tker,ftmode,tvisco,tdensity,true ,mdbc2>(t,res);
-    else        Interaction_Forces_ct6<tker,ftmode,tvisco,tdensity,false,mdbc2>(t,res);
+  if(TMdbc2==MDBC2_None){ 
+    if(Shifting)Interaction_Forces_ct6<tker,ftmode,tvisco,tdensity,true ,MDBC2_None>(t,res);
+    else        Interaction_Forces_ct6<tker,ftmode,tvisco,tdensity,false,MDBC2_None>(t,res);
+  }else if(TMdbc2==MDBC2_Std){         
+    if(Shifting)Interaction_Forces_ct6<tker,ftmode,tvisco,tdensity,true ,MDBC2_Std>(t,res);
+    else        Interaction_Forces_ct6<tker,ftmode,tvisco,tdensity,false,MDBC2_Std>(t,res);
+  }else{
+    if(Shifting)Interaction_Forces_ct6<tker,ftmode,tvisco,tdensity,true ,MDBC2_NoPen>(t,res);
+    else        Interaction_Forces_ct6<tker,ftmode,tvisco,tdensity,false,MDBC2_NoPen>(t,res);
   }
 }
 //==============================================================================
@@ -1378,7 +1381,7 @@ void JSphCpu::UpdatePos(tdouble3 rpos,double movx,double movy,double movz
 void JSphCpu::ComputeVerletVarsFluid(bool shift,const tfloat3* indirvel
   ,const tfloat4* velrho1,const tfloat4* velrho2,const byte* boundmode
   ,double dt,double dt2,const float* ar,const tfloat3* ace,const tfloat4* shiftposfs 
-  ,tdouble3* pos,unsigned* dcell,typecode* code,tfloat4* velrhonew)const
+  ,tdouble3* pos,unsigned* dcell,typecode* code,tfloat4* velrhonew,const tfloat4* nopenshift)const
 {
   const double dt205=0.5*dt*dt;
   const tdouble3 gravity=ToTDouble3(Gravity);
@@ -1407,6 +1410,18 @@ void JSphCpu::ComputeVerletVarsFluid(bool shift,const tfloat3* indirvel
         float(double(velrho2[p].y) + acegr.y*dt2),
         float(double(velrho2[p].z) + acegr.z*dt2),
         rhonew);
+      if (TMdbc2==MDBC2_NoPen) {//<vs_m2dbcNP_start>
+            if (nopenshift[p].w > 5.f) { //-check if correction should be applied or not
+                //-Correcting velocity
+                rvelrhonew.x = velrho2[p].x + nopenshift[p].x;
+                rvelrhonew.y = velrho2[p].y + nopenshift[p].y;
+                rvelrhonew.z = velrho2[p].z + nopenshift[p].z;
+                // Adding displacement
+                dx = double(rvelrhonew.x) * dt;
+                dy = double(rvelrhonew.y) * dt;
+                dz = double(rvelrhonew.z) * dt;
+            }
+        }//<vs_m2dbcNP_end>
       //-Restore data of inout particles.
       if(InOut && CODE_IsFluidInout(code[p])){
         outrho=false;
@@ -1446,9 +1461,8 @@ void JSphCpu::ComputeVerletVarsFluid(bool shift,const tfloat3* indirvel
 void JSphCpu::ComputeVelrhoBound(const tfloat4* velrhoold,const byte* boundmode
   ,const float* ar,double armul,tfloat4* velrhonew)const
 {
-  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const int npb=int(Npb);
-  if(mdbc2){ //<vs_m2dbc_ini>
+  if(TMdbc2==MDBC2_None){ //<vs_m2dbc_ini>
     #ifdef OMP_USE
       #pragma omp parallel for schedule (static) if(npb>OMP_LIMIT_COMPUTESTEP)
     #endif
@@ -1485,14 +1499,14 @@ void JSphCpu::ComputeVerlet(double dt){
     const double twodt=dt+dt;
     ComputeVerletVarsFluid(shift,indirvel,Velrho_c->cptr(),VelrhoM1_c->cptr()
       ,boundmode,dt,twodt,Ar_c->cptr(),Ace_c->cptr(),ShiftPosfs_c->cptr()
-      ,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr(),VelrhoM1_c->ptr());
+      ,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr(),VelrhoM1_c->ptr(),AC_CPTR(NoPenShift_c));
     ComputeVelrhoBound(VelrhoM1_c->cptr(),boundmode,Ar_c->cptr()
       ,twodt,VelrhoM1_c->ptr());
   }
   else{
     ComputeVerletVarsFluid(shift,indirvel,Velrho_c->cptr(),Velrho_c->cptr()
       ,boundmode,dt,dt,Ar_c->cptr(),Ace_c->cptr(),ShiftPosfs_c->cptr()
-      ,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr(),VelrhoM1_c->ptr());
+      ,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr(),VelrhoM1_c->ptr(),NoPenShift_c->cptr());
     ComputeVelrhoBound(Velrho_c->cptr(),boundmode,Ar_c->cptr()
       ,dt,VelrhoM1_c->ptr());
     VerletStep=0;
@@ -1509,7 +1523,6 @@ void JSphCpu::ComputeVerlet(double dt){
 //==============================================================================
 void JSphCpu::ComputeSymplecticPre(double dt){
   Timersc->TmStart(TMC_SuComputeStep);
-  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=false; //(ShiftingMode!=SHIFT_None); //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
   const double dt05=dt*.5;
   const int np=int(Np);
@@ -1533,7 +1546,7 @@ void JSphCpu::ComputeSymplecticPre(double dt){
     #endif
     for(int p=0;p<npb;p++){
       tfloat4 vr=velrhoprec[p];
-      if(!mdbc2 || boundmode[p]<BMODE_MDBC2){ //-For DBC or mDBC1 //<vs_m2dbc>
+      if(TMdbc2==MDBC2_None || boundmode[p]<BMODE_MDBC2){ //-For DBC or mDBC1 //<vs_m2dbc>
         vr.w=float(double(vr.w)+dt05*arc[p]);
         vr.w=(vr.w<RhopZero? RhopZero: vr.w); //-To prevent absorption of fluid particles by boundaries. | Evita que las boundary absorvan a las fluidas.
       }
@@ -1597,7 +1610,7 @@ void JSphCpu::ComputeSymplecticPre(double dt){
       }
       else{//-Floating Particles.
         velrhoc[p]=velrhoprec[p];
-        if(!mdbc2 || boundmode[p]<BMODE_MDBC2) //<vs_m2dbc>
+        if(TMdbc2==MDBC2_None || boundmode[p]<BMODE_MDBC2) //<vs_m2dbc>
           velrhoc[p].w=(rhonew<RhopZero? RhopZero: rhonew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.
       }
     }
@@ -1636,7 +1649,6 @@ void JSphCpu::ComputeSymplecticPre(double dt){
 //==============================================================================
 void JSphCpu::ComputeSymplecticCorr(double dt){
   Timersc->TmStart(TMC_SuComputeStep);
-  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=(Shifting!=NULL);
   const bool shiftadv=(ShiftingAdv!=NULL); //<vs_advshift>
   const double dt05=dt*.5;
@@ -1654,7 +1666,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
       #pragma omp parallel for schedule (static) if(npb>OMP_LIMIT_COMPUTESTEP)
     #endif
     for(int p=0;p<npb;p++){
-      if(!mdbc2 || boundmode[p]<BMODE_MDBC2){ //<vs_m2dbc>
+      if(TMdbc2==MDBC2_None || boundmode[p]<BMODE_MDBC2){ //<vs_m2dbc>
         const double epsilon_rdot=(-double(arc[p])/double(velrhoc[p].w))*dt;
         const float rhonew=float(double(velrhoprec[p].w)*  (2.-epsilon_rdot)/(2.+epsilon_rdot));
         velrhoc[p]=TFloat4(0,0,0,(rhonew<RhopZero? RhopZero: rhonew));//-Avoid fluid particles being absorbed by boundary ones. | Evita q las boundary absorvan a las fluidas.
@@ -1677,7 +1689,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
     tdouble3*       movc=mov_c.ptr();
     tfloat4*        velrhoc=Velrho_c->ptr();
     const byte*     boundmode=AC_CPTR(BoundMode_c); //<vs_m2dbc>
-    const tfloat4*  nopenshift=NoPenShift_c->cptr(); //<vs_m2dbcNP> SHABA 
+    const tfloat4*  nopenshift=AC_CPTR(NoPenShift_c); //<vs_m2dbcNP> SHABA 
     #ifdef OMP_USE
       #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTESTEP)
     #endif
@@ -1697,7 +1709,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
         double dy=(double(velrhoprec[p].y)+double(rvelrhonew.y))*  dt05; 
         double dz=(double(velrhoprec[p].z)+double(rvelrhonew.z))*  dt05;
         //-Adding no-penetration correction velocity SHABA
-        if (mdbc2) {//<vs_m2dbcNP_start>
+        if (TMdbc2==MDBC2_NoPen) {//<vs_m2dbcNP_start>
             if (nopenshift[p].w > 5.f) { //-check if correction should be applied or not
                 //-Correcting velocity
                 rvelrhonew.x = velrhoprec[p].x + nopenshift[p].x;
@@ -1744,7 +1756,7 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
       }
       else{//-Floating Particles.
         velrhoc[p]=velrhoprec[p];
-        if(!mdbc2 || boundmode[p]<BMODE_MDBC2) //<vs_m2dbc>
+        if(TMdbc2==MDBC2_None || boundmode[p]<BMODE_MDBC2) //<vs_m2dbc>
           velrhoc[p].w=(rhonew<RhopZero? RhopZero: rhonew); //-Avoid fluid particles being absorbed by floating ones. | Evita q las floating absorvan a las fluidas.
       }
     }

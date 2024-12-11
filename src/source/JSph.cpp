@@ -196,6 +196,8 @@ void JSph::InitVars(){
   UseNormalsFt=false;
   SvNormals=false;
   AbortNoNormals=true;
+  NoPenetration=false;                //<vs_m2dbcNP>
+  TMdbc2=MDBC2_None;                  //<vs_m2dbcNP>  
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
   UseChrono=false;
@@ -691,13 +693,17 @@ void JSph::LoadConfigParameters(const JXml* cxml){
     default: Run_Exceptioon("Boundary Condition method is not valid.");
   }
   if(TBoundary==BC_MDBC){
-    UseNormals=true;
+    UseNormals=true;    
     switch(eparms.GetValueInt("SlipMode",true,1)){
       case 1:  SlipMode=SLIP_Vel0;      break;
       case 2:  SlipMode=SLIP_NoSlip;    break;
       case 3:  SlipMode=SLIP_FreeSlip;  break;
       default: Run_Exceptioon("Slip mode is not valid.");
     }
+    //<vs_m2dbcNP_ini>
+    if(SlipMode>=SLIP_NoSlip) NoPenetration=eparms.GetValueBool("NoPenetration",true,false);   
+    if(SlipMode>=SLIP_NoSlip) TMdbc2=(NoPenetration? MDBC2_NoPen: MDBC2_Std);
+    //<vs_m2dbcNP_end>
   } 
 
   //-Density Diffusion Term configuration.
@@ -866,6 +872,8 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   //}
   MdbcCorrector=(SlipMode>=SLIP_NoSlip);
   UseNormals=(TBoundary==BC_MDBC);
+  if(SlipMode>=SLIP_NoSlip)NoPenetration=cfg->NoPenetration;
+  if(SlipMode>=SLIP_NoSlip) TMdbc2=(NoPenetration? MDBC2_NoPen: MDBC2_Std);
     
   if(cfg->TStep)TStep=cfg->TStep;
   if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
@@ -1522,6 +1530,7 @@ void JSph::VisuConfig(){
   if(TBoundary==BC_MDBC){
     Log->Print(fun::VarStr("  SlipMode",GetSlipName(SlipMode)));
     Log->Print(fun::VarStr("  mDBC-Corrector",MdbcCorrector));
+    Log->Print(fun::VarStr("  No Penetration",NoPenetration));
     ConfigInfo=ConfigInfo+"("+GetSlipName(SlipMode);
     if(MdbcCorrector)ConfigInfo=ConfigInfo+" - Corrector";
     ConfigInfo=ConfigInfo+")";

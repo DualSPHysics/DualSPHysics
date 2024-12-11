@@ -518,7 +518,7 @@ template<TpKernel tker,TpFtMode ftmode>
 /// Realiza la interaccion de una particula con un conjunto de ellas. (Fluid/Float-Fluid/Float/Bound)
 //------------------------------------------------------------------------------
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
-  ,bool shift,bool mdbc2
+  ,bool shift,TpMdbc2Mode mdbc2
   ,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>
   __device__ void KerInteractionForcesFluidBox
   (bool boundp2,unsigned p1,const unsigned& pini,const unsigned& pfin,float visco
@@ -563,7 +563,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
         compute=!(USE_FTEXTERNAL && ftp1 && (boundp2 || ftp2)); //-Deactivated when DEM or Chrono is used and is float-float or float-bound. | Se desactiva cuando se usa DEM o Chrono y es float-float o float-bound.
       }
       //-Changing the mass of boundary particle with boundmode. //<vs_m2dbc_ini>
-      if(mdbc2 && boundp2 && !ftp2){
+      if(mdbc2>=MDBC2_Std && boundp2 && !ftp2){
         if(boundmode[p2]==BMODE_MDBC2OFF)massp2=0;
       } //<vs_m2dbc_end>
 
@@ -591,7 +591,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       //-Density derivative (Continuity equation).
       float dvx=velrhop1.x-velrhop2.x, dvy=velrhop1.y-velrhop2.y, dvz=velrhop1.z-velrhop2.z;
       #ifndef MDBC2_KEEPVEL
-      if(mdbc2 && boundp2 && !ftp2){ //<vs_m2dbc_ini>
+      if(mdbc2>=MDBC2_Std && boundp2 && !ftp2){ //<vs_m2dbc_ini>
         const float3 movvelp2=motionvel[p2];
         dvx=velrhop1.x-movvelp2.x; //-mDBC2 no slip.
         dvy=velrhop1.y-movvelp2.y;
@@ -654,7 +654,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       }
 
       //-No-Penetration correction SHABA
-      if (boundp2 && mdbc2 && !ftp2) {//<vs_m2dbcNP_ini>
+      if (boundp2 && mdbc2==MDBC2_NoPen && !ftp2) {//<vs_m2dbcNP_ini>
           float rrmag=sqrt(rr2);
           if (rrmag<1.25f*CTE.dp) { //-if fluid particle is less than 1.25dp from a boundary particle
               float norm=sqrt(boundnorm[p2].x*boundnorm[p2].x+boundnorm[p2].y*boundnorm[p2].y+boundnorm[p2].z*boundnorm[p2].z);
@@ -698,7 +698,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 
       //===== Viscosity ===== 
       if(compute){
-        if(mdbc2 && boundp2 && !ftp2){ //<vs_m2dbc_ini>
+        if(mdbc2>=MDBC2_Std && boundp2 && !ftp2){ //<vs_m2dbc_ini>
           const float3 tangentvelp2=tangenvel[p2];
           dvx=velrhop1.x-tangentvelp2.x;
           dvy=velrhop1.y-tangentvelp2.y;
@@ -760,7 +760,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 /// Incluye visco artificial/laminar y floatings normales/dem.
 //------------------------------------------------------------------------------
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
-  ,bool shift,bool mdbc2
+  ,bool shift,TpMdbc2Mode mdbc2
   ,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>
   __global__ void KerInteractionForcesFluid
   (unsigned n,unsigned pinit,float viscob,float viscof
@@ -923,7 +923,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       if(shift)shiftposfs[p1]=shiftposfsp1;
     }
     //-No-Penetration correction SHABA
-    if (mdbc2){ //<vs_m2dbcNP_end>
+    if (mdbc2==MDBC2_NoPen){ //<vs_m2dbcNP_end>
       if (nopenshiftp1.w>0.f){//-if correction required
         //-Average correction velocity over number of boundary particles
         nopenshift[p1].x=nopenshiftp1.x/nopenshiftp1.w;
@@ -943,7 +943,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 /// Collects kernel information.
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
-  ,bool shift,bool mdbc2,bool shiftadv,bool aleform,bool ncpress> 
+  ,bool shift,TpMdbc2Mode mdbc2,bool shiftadv,bool aleform,bool ncpress> 
   void Interaction_ForcesT_KerInfo(StKerInfo* kerinfo)
 {
  #if CUDART_VERSION >= 6050
@@ -989,7 +989,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
-  ,bool shift,bool mdbc2,bool shiftadv,bool aleform,bool ncpress> 
+  ,bool shift,TpMdbc2Mode mdbc2,bool shiftadv,bool aleform,bool ncpress> 
   void Interaction_ForcesGpuT(const StInterParmsg& t)
 {
   //-Collects kernel information.
@@ -1024,7 +1024,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 
 #define FAST_COMPILATION
 //==============================================================================
-template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,bool mdbc2>
+template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,TpMdbc2Mode mdbc2>
   void Interaction_Forces_gt4(const StInterParmsg& t)
 {
   if(t.shiftadv){ //<vs_advshift_ini>
@@ -1044,8 +1044,9 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift>
   void Interaction_Forces_gt3(const StInterParmsg& t)
 {
-  if(t.mdbc2)Interaction_Forces_gt4<tker,ftmode,tvisco,tdensity,shift,true > (t); //<vs_m2dbc>
-  else       Interaction_Forces_gt4<tker,ftmode,tvisco,tdensity,shift,false> (t);
+  if(t.mdbc2==MDBC2_None) Interaction_Forces_gt4<tker,ftmode,tvisco,tdensity,shift,MDBC2_None>   (t); //<vs_m2dbcNp>
+  if(t.mdbc2==MDBC2_Std)  Interaction_Forces_gt4<tker,ftmode,tvisco,tdensity,shift,MDBC2_Std>    (t); //<vs_m2dbcNp>
+  if(t.mdbc2==MDBC2_NoPen)Interaction_Forces_gt4<tker,ftmode,tvisco,tdensity,shift,MDBC2_NoPen>  (t); //<vs_m2dbcNp>
 }
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco>

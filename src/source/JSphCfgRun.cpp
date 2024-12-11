@@ -54,6 +54,7 @@ void JSphCfgRun::Reset(){
   CellDomFixed=false;
   TBoundary=-1;
   SlipMode=-1;
+  NoPenetration=false;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
   TStep=STEP_None;
@@ -146,10 +147,10 @@ void JSphCfgRun::VisuInfo()const{
   printf("\n");
 
   printf("  Formulation options:\n");
-  printf("    -dbc           Dynamic Boundary Condition DBC (by default)\n");
-  printf("    -mdbc          Modified Dynamic Boundary Condition mDBC (vel=0 mode)\n");
-  printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (no-slip mode)\n");
-  //printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (free-slip mode)\n");
+  printf("    -dbc                    Dynamic Boundary Condition DBC (by default)\n");
+  printf("    -mdbc                   Modified Dynamic Boundary Condition mDBC (vel=0 mode)\n");
+  printf("    -mdbc_noslip[:nopen]    Modified Dynamic Boundary Condition mDBC (no-slip mode)\n");
+  printf("    -mdbc_freeslip[:nopen]  Modified Dynamic Boundary Condition mDBC (free-slip mode)\n");
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
   printf("\n");
   printf("    -initnorpla:<inlinecfg>  Initialize definition for <boundnormal_plane>\n");
@@ -354,10 +355,12 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
       else if(txword=="MDBC_NOSLIP"){
         TBoundary=int(BC_MDBC);
         SlipMode=int(SLIP_NoSlip);
+       if(txoptfull!="")NoPenetration=OptIsEnabled(txoptfull);
       }
       else if(txword=="MDBC_FREESLIP"){
         TBoundary=int(BC_MDBC);
         SlipMode=int(SLIP_FreeSlip);
+        if(txoptfull!="")NoPenetration=OptIsEnabled(txoptfull);
       }
       else if(txword=="SYMPLECTIC")TStep=STEP_Symplectic;
       else if(txword=="VERLET"){

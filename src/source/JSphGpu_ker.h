@@ -59,7 +59,7 @@ typedef struct StrInterParmsg{
   TpVisco tvisco;
   TpDensity tdensity;
   TpShifting shiftmode;
-  bool mdbc2;      //<vs_m2dbc>
+  TpMdbc2Mode mdbc2;      //<vs_m2dbcNP>
   bool shiftadv;   //<vs_advshift>
   bool corrector;  //<vs_advshift>
   bool aleform;    //<vs_advshift>
@@ -86,7 +86,8 @@ typedef struct StrInterParmsg{
   const byte*      boundmode;    //<vs_m2dbc>
   const float3*    tangenvel;    //<vs_m2dbc>
   const float3*    motionvel;    //<vs_m2dbc>
-  const float3*    boundnormal;  //<vs_m2dbcNP> // SHABA
+  const float3*    boundnormal;  //<vs_m2dbcNP> 
+  float4* nopenshift;            //<vs_m2dbcNP>  
   const float*     ftomassp;
   const tsymatrix3f* spstaurho2;
   const float3*    dengradcorr;
@@ -97,7 +98,6 @@ typedef struct StrInterParmsg{
   float*  delta;
   tsymatrix3f*  sps2strain;
   float4*       shiftposfs;
-  float4* nopenshift; //<vs_m2dbc> // SHABA
   unsigned*     fstype;          //<vs_advshift>
   const float4* shiftvel;        //<vs_advshift>
   //-Other values and objects.
@@ -112,7 +112,7 @@ typedef struct StrInterParmsg{
     ,TpVisco tvisco
     ,TpDensity tdensity
     ,TpShifting shiftmode
-    ,bool mdbc2         //<vs_m2dbc>
+    ,TpMdbc2Mode mdbc2      //<vs_m2dbcNP>
     ,bool shiftadv      //<vs_advshift>
     ,bool corrector     //<vs_advshift>
     ,bool aleform       //<vs_advshift>
@@ -129,7 +129,7 @@ typedef struct StrInterParmsg{
     ,const byte*   boundmode    //<vs_m2dbc>
     ,const float3* tangenvel    //<vs_m2dbc>
     ,const float3* motionvel    //<vs_m2dbc>
-    ,const float3* boundnormal  //<vs_m2dbc> // SHABA
+    ,const float3* boundnormal,float4* nopenshift  //<vs_m2dbcNP> 
     ,const float* ftomassp
     ,const tsymatrix3f* spstaurho2
     ,const float3* dengradcorr
@@ -139,7 +139,6 @@ typedef struct StrInterParmsg{
     ,float* delta
     ,tsymatrix3f* sps2strain
     ,float4* shiftposfs
-    ,float4* nopenshift // SHABA
     ,unsigned* fstype           //<vs_advshift>
     ,const float4* shiftvel     //<vs_advshift>
     ,cudaStream_t stm
@@ -152,7 +151,7 @@ typedef struct StrInterParmsg{
     this->tvisco=tvisco;
     this->tdensity=tdensity;
     this->shiftmode=shiftmode;
-    this->mdbc2=mdbc2;         //<vs_m2dbc>
+    this->mdbc2=mdbc2;         //<vs_m2dbcNP>
     this->shiftadv=shiftadv;   //<vs_advshift>
     this->corrector=corrector; //<vs_advshift>
     this->aleform=aleform;     //<vs_advshift>
@@ -173,7 +172,7 @@ typedef struct StrInterParmsg{
     this->boundmode=boundmode;    //<vs_m2dbc>
     this->tangenvel=tangenvel;    //<vs_m2dbc>
     this->motionvel=motionvel;    //<vs_m2dbc>
-    this->boundnormal=boundnormal;//<vs_m2dbc> //SHABA
+    this->boundnormal=boundnormal; this->nopenshift=nopenshift; //<vs_m2dbcNP> 
     this->ftomassp=ftomassp;
     this->spstaurho2=spstaurho2;
     this->dengradcorr=dengradcorr;
@@ -184,7 +183,6 @@ typedef struct StrInterParmsg{
     this->delta=delta;
     this->sps2strain=sps2strain;
     this->shiftposfs=shiftposfs;
-    this->nopenshift=nopenshift; // SHABA
     this->fstype=fstype;      //<vs_advshift>
     this->shiftvel=shiftvel;  //<vs_advshift>
     //-Other values and objects.
