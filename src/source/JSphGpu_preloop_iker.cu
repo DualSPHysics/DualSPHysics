@@ -409,7 +409,7 @@ void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d
 }
 
 //==============================================================================
-/// FR-CHECK comment missing...
+/// Interaction of a particle with a set of particles. (Fluid/Float-Fluid/Float/Bound)
 //==============================================================================
 template<TpKernel tker,bool simulate2d,bool shiftadv>
 __device__ void KerPreLoopInteractionBox(bool boundp2,unsigned p1
@@ -470,7 +470,8 @@ __device__ void KerPreLoopInteractionBox(bool boundp2,unsigned p1
 }
 
 //==============================================================================
-/// FR-CHECK comment missing...
+/// Interaction of Fluid-Fluid/Bound & Bound-Fluid for models before
+/// InteractionForces
 //==============================================================================
 template<TpKernel tker,bool simulate2d,bool shiftadv>
 __global__ void KerPreLoopInteraction(unsigned n,unsigned pinit,int scelldiv
@@ -544,7 +545,8 @@ __global__ void KerPreLoopInteraction(unsigned n,unsigned pinit,int scelldiv
 }
   
 //==============================================================================
-/// FR-CHECK comment missing...
+/// Interaction of Fluid-Fluid/Bound & Bound-Fluid for models before
+/// InteractionForces
 //==============================================================================
 template<TpKernel tker,bool simulate2d,bool shiftadv> void PreLoopInteractionT3
   (unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd
@@ -621,7 +623,7 @@ void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv
 }
 
 //------------------------------------------------------------------------------
-/// FR-CHECK comment missing...
+/// Compute shifting velocity for advanced shifting model.
 //------------------------------------------------------------------------------
 __global__ void KerComputeShiftingVel(unsigned n,unsigned pinit,bool sim2d
   ,float shiftcoef,bool ale,float dt,const unsigned* fstype
@@ -675,7 +677,7 @@ __global__ void KerComputeShiftingVel(unsigned n,unsigned pinit,bool sim2d
 }
 
 //==============================================================================
-/// FR-CHECK comment missing...
+/// Compute shifting velocity for advanced shifting model.
 //==============================================================================
 void ComputeShiftingVel(unsigned bsfluid,unsigned fluidnum,unsigned fluidini
   ,bool sim2d,float shiftcoef,bool ale,float dt,const unsigned* fstype

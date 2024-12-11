@@ -290,7 +290,8 @@ void JSphCpu::CallScanUmbrellaRegion(const StDivDataCpu& divdata
 }
 
 //==============================================================================
-/// FR-CHECK comment missing...
+/// Interaction of Fluid-Fluid/Bound & Bound-Fluid for models before
+/// InteractionForces
 //==============================================================================
 template<TpKernel tker,bool sim2d,bool shiftadv> void JSphCpu::PreLoopInteraction
   (unsigned n,unsigned pinit ,StDivDataCpu divdata,const unsigned* dcell
@@ -442,9 +443,7 @@ void JSphCpu::PreLoopInteraction_ct(const StDivDataCpu& divdata
 }
 
 //==============================================================================
-/// FR-CHECK comment is wrong...
-/// Computes sub-particle stress tensor divided by rho^2 (tau/rho^2) for SPS 
-/// turbulence model.   
+/// Compute shifting velocity for advanced shifting model.
 //==============================================================================
 void JSphCpu::ComputeShiftingVel(bool sim2d,float shiftcoef,bool ale,double dt
   ,const unsigned* fstype,const tfloat3* fsnormal,const float* fsmindist
