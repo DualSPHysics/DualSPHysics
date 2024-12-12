@@ -130,7 +130,11 @@ void JSphCpuSingle::ConfigDomain(){
   Velrho_c->CopyFrom(PartsLoaded->GetVelRho(),Np);
   if(UseNormals){
     BoundNor_c->Memset(0,Np);
-    BoundNor_c->CopyFrom(PartsLoaded->GetBoundNor(),CaseNbound);
+    if(PartsLoaded->GetBoundNor())BoundNor_c->CopyFrom(PartsLoaded->GetBoundNor(),CaseNbound);
+    else if(AbortNoNormals)Run_ExceptioonFile(
+      "No normal data for mDBC in the input file.",PartsLoaded->GetFileLoaded());
+    else Log->PrintWarning(fun::PrintStr("No normal data for mDBC in the input file (%s)."
+      ,PartsLoaded->GetFileLoaded().c_str()));
   }
 
   //-Computes radius of floating bodies.
@@ -679,6 +683,7 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     ,DivData,Dcell_c->cptr()
     ,Pos_c->cptr(),Velrho_c->cptr(),Idp_c->cptr(),Code_c->cptr(),Press_c->cptr()
     ,AC_CPTR(BoundMode_c),AC_CPTR(TangenVel_c),AC_CPTR(MotionVel_c) //<vs_m2dbc>
+    ,AC_CPTR(BoundNor_c),AC_PTR(NoPenShift_c) //<vs_m2dbcNP>
     ,dengradcorr
     ,Ar_c->ptr(),Ace_c->ptr(),AC_PTR(Delta_c)
     ,ShiftingMode,AC_PTR(ShiftPosfs_c)
@@ -733,7 +738,7 @@ void JSphCpuSingle::MdbcBoundCorrection(TpInterStep interstep){
       Interaction_MdbcCorrection(DivData,Pos_c->cptr(),Code_c->cptr()
         ,Idp_c->cptr(),BoundNor_c->cptr(),Velrho_c->ptr());
     }
-    else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
+    else{ //if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
       const unsigned nmode=(UseNormalsFt? Np: Npb);
       BoundMode_c->Reserve();       //-BoundMode_c is freed in PosInteraction_Forces().
       BoundMode_c->Memset(0,nmode); //-BoundMode_c[]=0=BMODE_DBC
@@ -742,7 +747,7 @@ void JSphCpuSingle::MdbcBoundCorrection(TpInterStep interstep){
         ,Idp_c->cptr(),BoundNor_c->cptr(),MotionVel_c->cptr(),MotionAce_c->cptr()
         ,Velrho_c->ptr(),BoundMode_c->ptr(),TangenVel_c->ptr());
     } //<vs_m2dbc_end>
-    else Run_Exceptioon("Error: SlipMode is invalid.");
+   // else Run_Exceptioon("Error: SlipMode is invalid.");
     Timersc->TmStop(TMC_CfPreMDBC);
   }
 }
@@ -1019,7 +1024,6 @@ void JSphCpuSingle::FtPartsUpdate(double dt,bool updatenormals
   ,tdouble3* posc,tfloat4* velrhoc,unsigned* dcellc,typecode* codec
   ,tfloat3* boundnorc,tfloat3* motionvelc,tfloat3* motionacec)const
 {
-  const bool mdbc2=(updatenormals && (SlipMode>=SLIP_NoSlip)); //<vs_m2dbc>
   const int ftcount=int(FtCount);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
@@ -1059,7 +1063,7 @@ void JSphCpuSingle::FtPartsUpdate(double dt,bool updatenormals
         vr.z=fvel.z+(fomega.x*dist.y - fomega.y*dist.x);
         velrhoc[p]=vr;
         //-Updates motionvel and motionace for mDBC no-slip.
-        if(mdbc2){ //<vs_m2dbc_ini>
+        if(TMdbc2>=MDBC2_Std){ //<vs_m2dbc_ini>
           const tfloat3 mvel0=motionvelc[p];
           motionacec[p]=TFloat3(float((double(vr.x)-mvel0.x)/dt),
                                 float((double(vr.y)-mvel0.y)/dt),

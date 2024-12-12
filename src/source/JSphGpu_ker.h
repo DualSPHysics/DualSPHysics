@@ -60,7 +60,7 @@ typedef struct StrInterParmsg{
   TpVisco tvisco;
   TpDensity tdensity;
   TpShifting shiftmode;
-  bool mdbc2;      //<vs_m2dbc>
+  TpMdbc2Mode mdbc2;      //<vs_m2dbcNP>
   bool shiftadv;   //<vs_advshift>
   bool corrector;  //<vs_advshift>
   bool aleform;    //<vs_advshift>
@@ -87,6 +87,8 @@ typedef struct StrInterParmsg{
   const byte*      boundmode;    //<vs_m2dbc>
   const float3*    tangenvel;    //<vs_m2dbc>
   const float3*    motionvel;    //<vs_m2dbc>
+  const float3*    boundnormal;  //<vs_m2dbcNP> 
+  float4* nopenshift;            //<vs_m2dbcNP>  
   const float*     ftomassp;
   const tsymatrix3f* spstaurho2;
   const float3*    dengradcorr;
@@ -111,7 +113,7 @@ typedef struct StrInterParmsg{
     ,TpVisco tvisco
     ,TpDensity tdensity
     ,TpShifting shiftmode
-    ,bool mdbc2         //<vs_m2dbc>
+    ,TpMdbc2Mode mdbc2      //<vs_m2dbcNP>
     ,bool shiftadv      //<vs_advshift>
     ,bool corrector     //<vs_advshift>
     ,bool aleform       //<vs_advshift>
@@ -128,6 +130,7 @@ typedef struct StrInterParmsg{
     ,const byte*   boundmode    //<vs_m2dbc>
     ,const float3* tangenvel    //<vs_m2dbc>
     ,const float3* motionvel    //<vs_m2dbc>
+    ,const float3* boundnormal,float4* nopenshift  //<vs_m2dbcNP> 
     ,const float* ftomassp
     ,const tsymatrix3f* spstaurho2
     ,const float3* dengradcorr
@@ -149,7 +152,7 @@ typedef struct StrInterParmsg{
     this->tvisco=tvisco;
     this->tdensity=tdensity;
     this->shiftmode=shiftmode;
-    this->mdbc2=mdbc2;         //<vs_m2dbc>
+    this->mdbc2=mdbc2;         //<vs_m2dbcNP>
     this->shiftadv=shiftadv;   //<vs_advshift>
     this->corrector=corrector; //<vs_advshift>
     this->aleform=aleform;     //<vs_advshift>
@@ -167,9 +170,10 @@ typedef struct StrInterParmsg{
     this->dcell=dcell;
     this->posxy=posxy; this->posz=posz; this->poscell=poscell;
     this->velrho=velrho; this->idp=idp; this->code=code;
-    this->boundmode=boundmode;   //<vs_m2dbc>
-    this->tangenvel=tangenvel;   //<vs_m2dbc>
-    this->motionvel=motionvel;   //<vs_m2dbc>
+    this->boundmode=boundmode;    //<vs_m2dbc>
+    this->tangenvel=tangenvel;    //<vs_m2dbc>
+    this->motionvel=motionvel;    //<vs_m2dbc>
+    this->boundnormal=boundnormal; this->nopenshift=nopenshift; //<vs_m2dbcNP> 
     this->ftomassp=ftomassp;
     this->spstaurho2=spstaurho2;
     this->dengradcorr=dengradcorr;

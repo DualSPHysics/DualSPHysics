@@ -57,6 +57,7 @@ class JPartsLoad4 : protected JObject
 protected:
   const bool UseOmp;
 
+  std::string FileLoaded;  ///<Path and filename of loaded file.
   unsigned Npiece;
   bool Simulate2D;         ///<Indicates 2D simulation.
   double Simulate2DPosY;   ///<Y value in 2D simulations.
@@ -122,6 +123,7 @@ public:
   void CalculeLimitsPos(tdouble3 posmin,tdouble3 posmax,double border,double borderperi
     ,bool perix,bool periy,bool periz,tdouble3& mapmin,tdouble3& mapmax)const;
 
+  std::string GetFileLoaded()const{ return(FileLoaded); }
   bool GetSimulate2D()const{ return(Simulate2D); }
   double GetSimulate2DPosY()const{ return(Simulate2DPosY); }
   bool GetPosSingle()const{ return(PosSingle); }

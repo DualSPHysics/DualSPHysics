@@ -53,6 +53,8 @@ typedef struct{
   const byte*     boundmode;    //<vs_m2dbc>
   const tfloat3*  tangenvel;    //<vs_m2dbc>
   const tfloat3*  motionvel;    //<vs_m2dbc>
+  const tfloat3*  boundnormal;  //<vs_m2dbcNP> 
+  tfloat4*   nopenshift;        //<vs_m2dbcNP> 
   const tfloat3*  dengradcorr;
   float*        ar;
   tfloat3*      ace;
@@ -77,6 +79,8 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
   ,const byte*    boundmode    //<vs_m2dbc>
   ,const tfloat3* tangenvel    //<vs_m2dbc>
   ,const tfloat3* motionvel    //<vs_m2dbc>
+  ,const tfloat3* boundnormal  //<vs_m2dbcNP> 
+  ,tfloat4* nopenshift         //<vs_m2dbcNP> 
   ,const tfloat3* dengradcorr
   ,float* ar,tfloat3* ace,float* delta
   ,TpShifting shiftmode,tfloat4* shiftposfs
@@ -90,6 +94,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
     ,pos,velrho,idp
     ,code,press
     ,boundmode,tangenvel,motionvel //<vs_m2dbc>
+    ,boundnormal,nopenshift       //<vs_m2dbcNP> 
     ,dengradcorr
     ,ar,ace,delta
     ,shiftmode,shiftposfs
@@ -177,6 +182,8 @@ protected:
   acfloat*    Press_c;      ///<Pressure computed starting from density for interaction (Null). Press[]=fsph::ComputePress(Rho,CSP)
   acfloat*    Delta_c;      ///<Sum of Delta-SPH value when DELTA_DynamicExt (Null).
   acfloat4*   ShiftPosfs_c; ///<Particle displacement and free surface detection for Shifting (Null).
+  acfloat4*   NoPenShift_c; ///<Particle Velocity correction to prevent particle penetrating boundary (Null). // SHABA
+
 
   //<vs_advshift_ini>
   //-Variable for advanced shifting formulation. 
@@ -236,7 +243,7 @@ protected:
     ,float& viscdt,float* ar)const;
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
-    ,bool shift,bool mdbc2
+    ,bool shift,TpMdbc2Mode mdbc2
     ,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>
     void InteractionForcesFluid
     (unsigned n,unsigned pinit,bool boundp2,float visco
@@ -245,20 +252,22 @@ protected:
     ,const tdouble3* pos,const tfloat4* velrho,const typecode* code
     ,const unsigned* idp,const float* press,const tfloat3* dengradcorr
     ,const byte* boundmode,const tfloat3* tangenvel,const tfloat3* motionvel //<vs_m2dbc>
+    ,const tfloat3* boundnormal //<vs_m2dbcNP> SHABA
     ,float& viscdt,float* ar,tfloat3* ace,float* delta
     ,TpShifting shiftmode,tfloat4* shiftposfs
+    ,tfloat4* nopenshift
     ,unsigned* fstype,tfloat4* shiftvel,tmatrix3d* lcorr        //<vs_advshift>
-    ,float* fstresh,tfloat3* presssym,tfloat3* pressasym)const; //<vs_advshift>
+    ,float* fstresh,tfloat3* presssym,tfloat3* pressasym)const; //<vs_m2dbcNP> SHABA //<vs_advshift>
 
   void InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned* dcell
     ,const unsigned* ftridp,const StDemData* demobjs
     ,const tdouble3* pos,const tfloat4* velrho,const typecode* code
     ,const unsigned* idp,float& viscdt,tfloat3* ace)const;
 
-  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,bool mdbc2
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,TpMdbc2Mode mdbc2
     ,bool shiftadv,bool aleform,bool ncpress>  //<vs_advshift>
     void Interaction_ForcesCpuT(const stinterparmsc& t,StInterResultc& res)const;
-  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,bool mdbc2>
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,TpMdbc2Mode mdbc2>
     void Interaction_Forces_ct6(const stinterparmsc& t,StInterResultc& res)const;
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> 
     void Interaction_Forces_ct5(const stinterparmsc& t,StInterResultc& res)const;
@@ -362,7 +371,7 @@ protected:
   void ComputeVerletVarsFluid(bool shift,const tfloat3* indirvel
     ,const tfloat4* velrho1,const tfloat4* velrho2,const byte* boundmode
     ,double dt,double dt2,const float* ar,const tfloat3* ace,const tfloat4* shiftposfs
-    ,tdouble3* pos,unsigned* cell,typecode* code,tfloat4* velrhonew)const;
+    ,tdouble3* pos,unsigned* cell,typecode* code,tfloat4* velrhonew,const tfloat4* nopenshift)const;
   void ComputeVelrhoBound(const tfloat4* velrhoold,const byte* boundmode
     ,const float* ar,double armul,tfloat4* velrhonew)const;
   void ComputeVerlet(double dt);

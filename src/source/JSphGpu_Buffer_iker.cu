@@ -545,15 +545,15 @@ void Interaction_BufferExtrap_gt0(unsigned bufferpartcount,const int *bufferpart
 {
   if(t.simulate2d){
     switch(vrorder){
-      // case VrOrder_0th: Interaction_BufferExtrapT<tker,true,VrOrder_0th>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
-      // case VrOrder_1st: Interaction_BufferExtrapT<tker,true,VrOrder_1st>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
+      case VrOrder_0th: Interaction_BufferExtrapT<tker,true,VrOrder_0th>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
+      case VrOrder_1st: Interaction_BufferExtrapT<tker,true,VrOrder_1st>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
       case VrOrder_2nd: Interaction_BufferExtrapT<tker,true,VrOrder_2nd>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
     }
   }else{
       switch(vrorder){
-      // case VrOrder_0th: Interaction_BufferExtrapT<tker,false,VrOrder_0th>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
-      // case VrOrder_1st: Interaction_BufferExtrapT<tker,false,VrOrder_1st>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
-      // case VrOrder_2nd: Interaction_BufferExtrapT<tker,false,VrOrder_2nd>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
+      case VrOrder_0th: Interaction_BufferExtrapT<tker,false,VrOrder_0th>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
+      case VrOrder_1st: Interaction_BufferExtrapT<tker,false,VrOrder_1st>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
+      case VrOrder_2nd: Interaction_BufferExtrapT<tker,false,VrOrder_2nd>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
     }
   } 
 }
@@ -836,9 +836,9 @@ void Interaction_BufferExtrapFlux_gt0(const StInterParmsbg &t,StrDataVresGpu &vr
     }
   }else{
       switch(vrorder){
-      // case VrOrder_0th: Interaction_BufferExtrapFluxT<tker,false,VrOrder_0th>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,mrthreshold); break;
-      // case VrOrder_1st: Interaction_BufferExtrapFluxT<tker,false,VrOrder_1st>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,mrthreshold); break;
-      // case VrOrder_2nd: Interaction_BufferExtrapFluxT<tker,false,VrOrder_2nd>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,mrthreshold); break;
+      case VrOrder_0th: Interaction_BufferExtrapFluxT<tker,false,VrOrder_0th>(t,vres,dp,dt,fastsingle,mrthreshold); break;
+      case VrOrder_1st: Interaction_BufferExtrapFluxT<tker,false,VrOrder_1st>(t,vres,dp,dt,fastsingle,mrthreshold); break;
+      case VrOrder_2nd: Interaction_BufferExtrapFluxT<tker,false,VrOrder_2nd>(t,vres,dp,dt,fastsingle,mrthreshold); break;
     }
   } 
 }

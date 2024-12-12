@@ -167,6 +167,7 @@ protected:
   agfloat*  Ar_g;         ///<Sum of density variation (Null). 
   agfloat*  Delta_g;      ///<Sum of Delta-SPH value when DELTA_DynamicExt (Null).
   agfloat4* ShiftPosfs_g; ///<Particle displacement and free surface detection for Shifting (Null).
+  agfloat4* NoPenShift_g; ///<Particle velocity correction to prevent particle penetrating boundary (Null). //<vs_m2dbcNP>
 
   //<vs_advshift_ini>
   //-Variable for advanced shifting formulation.

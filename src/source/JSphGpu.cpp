@@ -175,6 +175,7 @@ void JSphGpu::InitVars(){
   Ace_g=NULL;
   Ar_g=NULL;
   Delta_g=NULL;
+  NoPenShift_g = NULL; //<vs_m2dbcNP>
 
   SpsTauRho2_g=NULL;   //-Laminar+SPS.
   Sps2Strain_g=NULL;   //-Laminar+SPS.
@@ -358,6 +359,7 @@ void JSphGpu::FreeGpuMemoryParticles(){
   delete Ace_g;         Ace_g=NULL;
   delete Ar_g;          Ar_g=NULL;
   delete Delta_g;       Delta_g=NULL;
+  delete NoPenShift_g;  NoPenShift_g=NULL;  //-NoPenetration //<vs_m2dbcNP>
 
   delete SpsTauRho2_g;  SpsTauRho2_g=NULL;  //-Laminar+SPS.
   delete Sps2Strain_g;  Sps2Strain_g=NULL;  //-Laminar+SPS.
@@ -420,6 +422,10 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   Ace_g       =new agfloat3("Aceg"   ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
   Ar_g        =new agfloat ("Arg"    ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
   Delta_g     =new agfloat ("Deltag" ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
+  //-Arrays for No Pentration.
+  if(TMdbc2==MDBC2_NoPen){
+    NoPenShift_g = new agfloat4("NoPenShiftg", Arrays_Gpu, false); //-NO INITIAL MEMORY.
+  }
   //-Arrays for Laminar+SPS.
   if(TVisco==VISCO_LaminarSPS){
     SpsTauRho2_g=new agsymatrix3f("SpsTauRho2g",Arrays_Gpu,true);
@@ -662,20 +668,21 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
     StDivDataGpu divdatag;
     memset(&divdatag,0,sizeof(StDivDataGpu));
     #ifndef DISABLE_BSMODES
-      const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
       const StInterParmsg parms=StrInterParmsg(Simulate2D
         ,TKernel,FtMode
-        ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
+        ,TVisco,TDensity,ShiftingMode,TMdbc2 //<vs_m2dbc>
         ,false,false,false,false //<vs_advshift>
         ,0,0,0,0,100,0,0
         ,0,0,divdatag,NULL
         ,NULL,NULL,NULL
         ,NULL,NULL,NULL
         ,NULL,NULL,NULL //<vs_m2dbc>
+        ,NULL //<vs_m2dbc> //SHABA4
         ,NULL,NULL,NULL
         ,NULL,NULL,NULL,NULL
         ,NULL
         ,NULL
+        ,NULL // SHABA
         ,NULL,NULL     //<vs_advshift>
         ,NULL,&kerinfo);
       cusph::Interaction_Forces(parms);
@@ -797,6 +804,7 @@ void JSphGpu::PreInteraction_Forces(TpInterStep interstep){
   if(DDTArray)Delta_g->Reserve();
   if(Shifting)ShiftPosfs_g->Reserve();
   if(TVisco==VISCO_LaminarSPS)Sps2Strain_g->Reserve();
+  if(TMdbc2==MDBC2_NoPen)NoPenShift_g->Reserve(); // SHABA
   if(ShiftingAdv){ //<vs_advshift_ini>
     FSMinDist_g->Reserve();
     FSNormal_g->Reserve();
@@ -809,6 +817,7 @@ void JSphGpu::PreInteraction_Forces(TpInterStep interstep){
   Ace_g->CuMemset(0,Np);                                            //Aceg[]=(0)
   if(AG_CPTR(Delta_g))Delta_g->CuMemset(0,Np);                      //Deltag[]=0
   if(AG_CPTR(Sps2Strain_g))Sps2Strain_g->CuMemsetOffset(Npb,0,npf); //Sps2Straing[]=(0)
+  if(AG_CPTR(NoPenShift_g))NoPenShift_g->CuMemset(0,Np);            //NoPenShiftg[]=(0) //<vs_m2dbcNP
   
   //-Select particles for shifting.
   if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
@@ -852,6 +861,7 @@ void JSphGpu::PosInteraction_Forces(){
   if(Sps2Strain_g)Sps2Strain_g->Free();
   if(BoundMode_g)BoundMode_g->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
   if(TangenVel_g)TangenVel_g->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
+  if(NoPenShift_g)NoPenShift_g->Free(); //<vs_m2dbcNP>
   if(FSMinDist_g)FSMinDist_g->Free(); //<vs_advshift>
   if(FSNormal_g)FSNormal_g->Free();   //<vs_advshift>
 }
@@ -862,7 +872,6 @@ void JSphGpu::PosInteraction_Forces(){
 //==============================================================================
 void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   Timersg->TmStart(TMG_SuComputeStep,false);
-  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=(ShiftingMode!=SHIFT_None);
   const bool inout=(InOut!=NULL);
   const float3* indirvel=(inout? InOut->GetDirVelg(): NULL);
@@ -874,16 +883,16 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   //-Computes displacement, velocity and density.
   if(VerletStep<VerletSteps){
     const double twodt=dt+dt;
-    cusphs::ComputeStepVerlet(WithFloating,shift,inout,mdbc2,Np,Npb
+    cusphs::ComputeStepVerlet(WithFloating,shift,inout,TMdbc2,Np,Npb
       ,Velrho_g->cptr(),VelrhoM1_g->cptr(),boundmode,Ar_g->cptr()
-      ,Ace_g->cptr(),ShiftPosfs_g->cptr(),indirvel,dt,twodt
+      ,Ace_g->cptr(),ShiftPosfs_g->cptr(),indirvel,AG_CPTR(NoPenShift_g),dt,twodt
       ,RhopZero,RhopOutMin,RhopOutMax,Gravity,Code_g->ptr()
       ,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
   }
   else{
-    cusphs::ComputeStepVerlet(WithFloating,shift,inout,mdbc2,Np,Npb
+    cusphs::ComputeStepVerlet(WithFloating,shift,inout,TMdbc2,Np,Npb
       ,Velrho_g->cptr(),Velrho_g->cptr(),boundmode,Ar_g->cptr()
-      ,Ace_g->cptr(),ShiftPosfs_g->cptr(),indirvel,dt,dt
+      ,Ace_g->cptr(),ShiftPosfs_g->cptr(),indirvel,AG_CPTR(NoPenShift_g),dt,dt
       ,RhopZero,RhopOutMin,RhopOutMax,Gravity,Code_g->ptr()
       ,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
     VerletStep=0;
@@ -902,7 +911,6 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
 //==============================================================================
 void JSphGpu::ComputeSymplecticPre(double dt){
   Timersg->TmStart(TMG_SuComputeStep,false);
-  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=false; //(ShiftingMode!=SHIFT_None); //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
   const bool inout=(InOut!=NULL);
   //-Assign memory to PRE variables.
@@ -920,7 +928,7 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   const double dt05=dt*.5;
   const float3* indirvel=(InOut? InOut->GetDirVelg(): NULL);
   const byte* boundmode=AG_CPTR(BoundMode_g); //<vs_m2dbc>
-  cusphs::ComputeStepSymplecticPre(WithFloating,shift,inout,mdbc2,Np,Npb
+  cusphs::ComputeStepSymplecticPre(WithFloating,shift,inout,TMdbc2,Np,Npb
     ,VelrhoPre_g->cptr(),boundmode,Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
     ,indirvel,dt05,RhopZero,RhopOutMin,RhopOutMax,Gravity
     ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
@@ -941,7 +949,6 @@ void JSphGpu::ComputeSymplecticPre(double dt){
 //==============================================================================
 void JSphGpu::ComputeSymplecticCorr(double dt){
   Timersg->TmStart(TMG_SuComputeStep,false);
-  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=(ShiftingMode!=SHIFT_None);
   const bool inout=(InOut!=NULL);
   const bool shiftadv=(ShiftingAdv!=NULL); //<vs_advshift>
@@ -953,9 +960,9 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   const float3* indirvel=(InOut? InOut->GetDirVelg(): NULL);
   const byte*   boundmode=AG_CPTR(BoundMode_g); //<vs_m2dbc>
   const float4* shiftvel=AG_CPTR(ShiftVel_g); //<vs_advshift>
-  cusphs::ComputeStepSymplecticCor(WithFloating,shift,shiftadv,inout,mdbc2,Np,Npb
+  cusphs::ComputeStepSymplecticCor(WithFloating,shift,shiftadv,inout,TMdbc2,Np,Npb
     ,VelrhoPre_g->cptr(),boundmode,Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
-    ,indirvel,shiftvel,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity
+    ,indirvel,AG_CPTR(NoPenShift_g),shiftvel,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity // SHABA
     ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
 
   //-Applies displacement to non-periodic fluid particles.

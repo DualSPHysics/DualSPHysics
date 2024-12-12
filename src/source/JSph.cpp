@@ -195,6 +195,9 @@ void JSph::InitVars(){
   UseNormals=false;
   UseNormalsFt=false;
   SvNormals=false;
+  AbortNoNormals=true;
+  NoPenetration=false;                //<vs_m2dbcNP>
+  TMdbc2=MDBC2_None;                  //<vs_m2dbcNP>  
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
   UseChrono=false;
@@ -690,13 +693,17 @@ void JSph::LoadConfigParameters(const JXml* cxml){
     default: Run_Exceptioon("Boundary Condition method is not valid.");
   }
   if(TBoundary==BC_MDBC){
-    UseNormals=true;
+    UseNormals=true;    
     switch(eparms.GetValueInt("SlipMode",true,1)){
       case 1:  SlipMode=SLIP_Vel0;      break;
       case 2:  SlipMode=SLIP_NoSlip;    break;
       case 3:  SlipMode=SLIP_FreeSlip;  break;
       default: Run_Exceptioon("Slip mode is not valid.");
     }
+    //<vs_m2dbcNP_ini>
+    if(SlipMode>=SLIP_NoSlip) NoPenetration=eparms.GetValueBool("NoPenetration",true,false);   
+    if(SlipMode>=SLIP_NoSlip) TMdbc2=(NoPenetration? MDBC2_NoPen: MDBC2_Std);
+    //<vs_m2dbcNP_end>
   } 
 
   //-Density Diffusion Term configuration.
@@ -859,12 +866,14 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
       default: Run_Exceptioon("Slip mode for mDBC is not valid.");
     }
   }
-  if(TBoundary==BC_MDBC){
-    if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip)Run_Exceptioon(
-      "Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
-  }
+ // if(TBoundary==BC_MDBC){
+  //  if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip && SlipMode != SLIP_FreeSlip)Run_Exceptioon(
+  //    "Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
+  //}
   MdbcCorrector=(SlipMode>=SLIP_NoSlip);
   UseNormals=(TBoundary==BC_MDBC);
+  if(SlipMode>=SLIP_NoSlip)NoPenetration=cfg->NoPenetration;
+  if(SlipMode>=SLIP_NoSlip) TMdbc2=(NoPenetration? MDBC2_NoPen: MDBC2_Std);
     
   if(cfg->TStep)TStep=cfg->TStep;
   if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
@@ -1366,7 +1375,10 @@ void JSph::ConfigBoundNormals(unsigned np,unsigned npb,const tdouble3* pos
   SaveVtkNormals(file2,-1,np,npb,pos,idp,boundnor,1.f);
   if(nerr  >0)Log->PrintfWarning("There are %u of %u fixed or moving boundary particles without normal data.",nerr,npb);
   if(nerrft>0)Log->PrintfWarning("There are %u of %u floating particles without normal data.",nerrft,CaseNfloat);
-  // if(TBoundary==BC_MDBC && nerr==npb && nerrft==CaseNfloat)Run_Exceptioon("No valid normal vectors for using mDBC.");  //This exception must be eliminated for vres //<vs_vrres>
+  if(TBoundary==BC_MDBC && nerr==npb && nerrft==CaseNfloat){
+    if(AbortNoNormals)Run_Exceptioon("No valid normal vectors for using mDBC.");
+    else Log->PrintfWarning("No valid normal vectors for using mDBC.");
+  }
   if(UseNormalsFt && (!UseChrono || !ChronoObjects->GetUseCollision()))
     Log->PrintWarning("When mDBC is applied to floating bodies, their collisions should be solved using Chrono (RigidAlgorithm=3).");
 }
@@ -1518,6 +1530,7 @@ void JSph::VisuConfig(){
   if(TBoundary==BC_MDBC){
     Log->Print(fun::VarStr("  SlipMode",GetSlipName(SlipMode)));
     Log->Print(fun::VarStr("  mDBC-Corrector",MdbcCorrector));
+    Log->Print(fun::VarStr("  No Penetration",NoPenetration));
     ConfigInfo=ConfigInfo+"("+GetSlipName(SlipMode);
     if(MdbcCorrector)ConfigInfo=ConfigInfo+" - Corrector";
     ConfigInfo=ConfigInfo+")";
