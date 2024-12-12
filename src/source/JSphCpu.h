@@ -65,10 +65,6 @@ typedef struct{
   tsymatrix3f*  sps2strain;
   unsigned*     fstype;        //<vs_advshift>
   tfloat4*      shiftvel;      //<vs_advshift>
-  tmatrix3d*    lcorr;         //<vs_advshift>
-  float*        fstresh;       //<vs_advshift>
-  tfloat3*      presssym;      //<vs_advshift>
-  tfloat3*      pressasym;     //<vs_advshift>
 }stinterparmsc;
 
 ///Collects parameters for particle interaction on CPU.
@@ -85,8 +81,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
   ,float* ar,tfloat3* ace,float* delta
   ,TpShifting shiftmode,tfloat4* shiftposfs
   ,tsymatrix3f* spstaurho2,tsymatrix3f* sps2strain
-  ,unsigned* fstype,tfloat4* shiftvel,tmatrix3d* lcorr  //<vs_advshift>
-  ,float* fstresh,tfloat3* presssym,tfloat3* pressasym  //<vs_advshift>
+  ,unsigned* fstype,tfloat4* shiftvel  //<vs_advshift>
 )
 {
   stinterparmsc d={np,npb,npbok,(np-npb)
@@ -99,8 +94,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
     ,ar,ace,delta
     ,shiftmode,shiftposfs
     ,spstaurho2,sps2strain
-    ,fstype,shiftvel,lcorr         //<vs_advshift>
-    ,fstresh,presssym,pressasym    //<vs_advshift>
+    ,fstype,shiftvel    //<vs_advshift>
   };
   return(d);
 }
@@ -191,10 +185,6 @@ protected:
   acuint*     FSType_c;     ///<Free-surface identification.
   acfloat*    FSMinDist_c;  ///<Distance from the Free-Surface (needed for advanced shifting).
   acfloat3*   FSNormal_c;   ///<Normals of Free-Surface particles (needed for advanced shifting).
-  acfloat*    FSTresh_c;    ///<Divergence of position needed to identify probably free-surface particles).
-  acmatrix3d* LCorr_c;      ///<Correction matrix needed for non-conservative pressure formulation (only in Cpu).
-  acfloat3*   PressSym_c;   ///<Array to store symmetric part of the pressure gradient;
-  acfloat3*   PressAsym_c;  ///<Array to store asymmetric part of the pressure gradient;
   //<vs_advshift_end>
 
   double VelMax;        ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
@@ -256,8 +246,8 @@ protected:
     ,float& viscdt,float* ar,tfloat3* ace,float* delta
     ,TpShifting shiftmode,tfloat4* shiftposfs
     ,tfloat4* nopenshift
-    ,unsigned* fstype,tfloat4* shiftvel,tmatrix3d* lcorr        //<vs_advshift>
-    ,float* fstresh,tfloat3* presssym,tfloat3* pressasym)const; //<vs_m2dbcNP> SHABA //<vs_advshift>
+    ,unsigned* fstype,tfloat4* shiftvel,tmatrix3d* lcorr                      //<vs_advshift>
+    ,float* fstresh,tfloat3* presssym,tfloat3* pressasym,float* pou)const; //<vs_m2dbcNP> SHABA //<vs_advshift>
 
   void InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned* dcell
     ,const unsigned* ftridp,const StDemData* demobjs
