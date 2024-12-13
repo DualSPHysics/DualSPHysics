@@ -2949,5 +2949,5 @@ void ComputeOutputPartsMk(byte resmask,bool cmband,bool inverse
 //# Kernels para variable resolution (JSphVRes).
 //##############################################################################
 
-#include "JSphGpu_Buffer_iker.cu"
+#include "JSphGpu_VRes_iker.cu"
 

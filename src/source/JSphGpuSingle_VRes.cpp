@@ -1,7 +1,7 @@
 #include "JSphGpuSingle_VRes.h"
 #include "JSphGpuSingle.h"
 #include "JSphVRes.h"
-#include "JSphGpu_Buffer_iker.h"
+#include "JSphGpu_VRes_iker.h"
 #include "JTimeControl.h"
 #include "JDsOutputTime.h"
 #include "JCellDivGpuSingle.h"
@@ -262,7 +262,7 @@ void JSphGpuSingle_VRes::BufferExtrapolateData(StInterParmsbg *parms){
     //-Update constant memory and perform interpolation.  
 		unsigned id=Multires->GetZone(i)->getZone()-1;
 		cusph::CteInteractionUp(&parms[id].cte);
-		cusphbuffer::Interaction_BufferExtrap(buffercountpre,bufferpartg.ptr(),parms[id]
+		cusphvres::Interaction_BufferExtrap(buffercountpre,bufferpartg.ptr(),parms[id]
       ,Posxy_g->cptr(),Posz_g->cptr(),Velrho_g->ptr(),Code_g->ptr(),true,VrOrder_1st,100);
 	}
 }
@@ -299,7 +299,7 @@ void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
     StrDataVresGpu vresdata=Multires->GetZoneFluxInfoGpu(i);  //-Retrieve buffer parameters.			
 
 		
-    cusphbuffer::Interaction_BufferExtrapFlux(parms[id]
+    cusphvres::Interaction_BufferExtrapFlux(parms[id]
       ,vresdata,CTE.dp,dt,true,VrOrder_1st,100);
 
 		
@@ -314,12 +314,12 @@ void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
 		cudaMemset(newpart,0,vresdata.ntot*sizeof(int));
 
 		
-    cusphbuffer::CheckMassFlux(vresdata.ntot,vresdata.nini,DivData,Map_PosMin
+    cusphvres::CheckMassFlux(vresdata.ntot,vresdata.nini,DivData,Map_PosMin
       ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),PosCell_g->cptr()
       ,vresdata.ptposxy,vresdata.ptposz,vresdata.normals,vresdata.mass);
 		
     
-    unsigned newnp=cusphbuffer::BufferListCreate(false,vresdata.ntot,vresdata.nini
+    unsigned newnp=cusphvres::BufferListCreate(false,vresdata.ntot,vresdata.nini
       ,vresdata.ntot, vresdata.mass, newpart, CTE.massf);
 		
     if(newnp){			
@@ -328,7 +328,7 @@ void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
         ResizeParticlesSizeData(ndatacpu,ndatagpu,Np+newnp,Np+newnp, 0.2,true);
         CellDivSingle->SetIncreaseNp(newnp);
 			}  
-      cusphbuffer::BufferCreateNewPart(PeriActive,newnp,vresdata.nini,newpart,Np,IdMax+1,vresdata.normals,CTE.dp,Posxy_g->ptr(),Posz_g->ptr()
+      cusphvres::BufferCreateNewPart(PeriActive,newnp,vresdata.nini,newpart,Np,IdMax+1,vresdata.normals,CTE.dp,Posxy_g->ptr(),Posz_g->ptr()
         ,vresdata.ptposxy,vresdata.ptposz,Dcell_g->ptr(),Code_g->ptr(),Idp_g->ptr(),Velrho_g->ptr(),i);
       
       //-Updates basic arrays.
@@ -345,8 +345,8 @@ void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
 }
 
 void JSphGpuSingle_VRes::BufferShifting(){
-  StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
-	cusphbuffer::BufferShiftingGpu(Np,Npb,Posxy_g->ptr(),Posz_g->ptr(),ShiftVel_g->ptr(),Code_g->ptr(),vresgdata,NULL);
+  StrGeomVresGpu vresgdata=Multires->GetGeomInfoVres();
+	cusphvres::BufferShiftingGpu(Np,Npb,Posxy_g->ptr(),Posz_g->ptr(),ShiftVel_g->ptr(),Code_g->ptr(),vresgdata,NULL);
 }
 
 
@@ -372,9 +372,9 @@ void JSphGpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
     ComputeFSParticlesVRes();
     ComputeUmbrellaRegionVRes();
     const unsigned bsfluid=BlockSizes.forcesfluid;
-     StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
+     StrGeomVresGpu vresgdata=Multires->GetGeomInfoVres();
 
-  if(runshift)cusphbuffer::PreLoopInteraction(TKernel,Simulate2D,runshift,bsfluid,Np-Npb,Npb,DivData
+  if(runshift)cusphvres::PreLoopInteraction(TKernel,Simulate2D,runshift,bsfluid,Np-Npb,Npb,DivData
     ,Posxy_g->cptr(),Posz_g->cptr(),Dcell_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr()
     ,FSType_g->ptr(),FSNormal_g->ptr(),FSMinDist_g->ptr(),vresgdata,NULL);
 
@@ -405,10 +405,10 @@ void JSphGpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
 //==============================================================================
 void JSphGpuSingle_VRes::ComputeFSParticlesVRes(){
   unsigned bsfluid=BlockSizes.forcesfluid;
-  StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
+  StrGeomVresGpu vresgdata=Multires->GetGeomInfoVres();
 
   aguint    inoutpartg("-",Arrays_Gpu,true);
-  cusphbuffer::ComputeFSNormals(TKernel,Simulate2D,bsfluid,Npb,Np-Npb,DivData
+  cusphvres::ComputeFSNormals(TKernel,Simulate2D,bsfluid,Npb,Np-Npb,DivData
     ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
     ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
     ,inoutpartg.ptr(),vresgdata,NULL);
@@ -421,10 +421,10 @@ void JSphGpuSingle_VRes::ComputeFSParticlesVRes(){
 //==============================================================================
 void JSphGpuSingle_VRes::ComputeUmbrellaRegionVRes(){
   unsigned bsfluid=BlockSizes.forcesfluid;
-  StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
+  StrGeomVresGpu vresgdata=Multires->GetGeomInfoVres();
 
   aguint    inoutpartg("-",Arrays_Gpu,true);
-  cusphbuffer::ComputeUmbrellaRegion(TKernel,Simulate2D,bsfluid,Npb,Np-Npb,DivData
+  cusphvres::ComputeUmbrellaRegion(TKernel,Simulate2D,bsfluid,Npb,Np-Npb,DivData
     ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
     ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
     ,inoutpartg.ptr(),vresgdata,NULL);

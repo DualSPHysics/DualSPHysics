@@ -14,6 +14,8 @@
 #include "FunctionsMath.h"
 #include "FunGeo3d.h"
 #include "JSphCpuSingle_VRes.h"
+#include "JSphCpu_VRes.h"
+#include "RunExceptionDef.h"
 #include <climits>
 #include <cstring>
 #include <algorithm>
@@ -21,6 +23,8 @@
 
 
 // using namespace std;
+
+namespace fvres{
 
 template<const int n,const int n1> bool LUdecomp(double *a,int *p,double *b,double *sol,double& treshold){
 
@@ -127,7 +131,7 @@ template<const int n,const int n1> bool LUdecomp(double *a,int *p,double *b,doub
 
 }
 
-template<bool sim2d,TpKernel tker,unsigned order> void JSphCpu::InteractionBufferExtrap(unsigned bufferpartcount,const int *bufferpart,
+template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrap(unsigned bufferpartcount,const int *bufferpart,
 		StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos,
 		const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const StCteSph csp,tdouble3*posb,tfloat4 *velrhopb,typecode *codeb)
 {
@@ -280,7 +284,7 @@ template<bool sim2d,TpKernel tker,unsigned order> void JSphCpu::InteractionBuffe
 
 
         LUdecomp<nmatrix, nrhs>(A, P, B, sol, treshold);
-        cond=(1.0f/treshold)*CSP.kernelh*CSP.kernelh;
+        cond=(1.0f/treshold)*csp.kernelh*csp.kernelh;
 
 
       }
@@ -314,10 +318,10 @@ template<bool sim2d,TpKernel tker,unsigned order> void JSphCpu::InteractionBuffe
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-template<TpKernel tker> void JSphCpu::Interaction_BufferExtrapT(unsigned bufferpartcount,const int *bufferpart
+template<TpKernel tker> void Interaction_BufferExtrapT(unsigned bufferpartcount,const int *bufferpart
         ,const stinterparmscb &t,tdouble3*posb,tfloat4 *velrhopb,typecode *codeb,unsigned order)
 {
-	if(Simulate2D){const bool sim2d=true;
+	if(t.csp.simulate2d){const bool sim2d=true;
     if(order==0) InteractionBufferExtrap<sim2d ,tker,0> (bufferpartcount,bufferpart,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,posb,velrhopb,codeb);
     if(order==1) InteractionBufferExtrap<sim2d ,tker,1> (bufferpartcount,bufferpart,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,posb,velrhopb,codeb);
     if(order==2) InteractionBufferExtrap<sim2d ,tker,2> (bufferpartcount,bufferpart,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,posb,velrhopb,codeb);
@@ -336,19 +340,19 @@ template<TpKernel tker> void JSphCpu::Interaction_BufferExtrapT(unsigned bufferp
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-void JSphCpu::Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart
+void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart
                                        ,const stinterparmscb &t,tdouble3 *posb,tfloat4 *velrhopb,typecode *codeb,unsigned order)
 {
-  switch(TKernel){
+  switch(t.csp.tkernel){
     // case KERNEL_Cubic:       Interaction_BufferExtrapT<KERNEL_Cubic>     (bufferpartcount,bufferpart,t,posb,velrhopb,order);  break;
     case KERNEL_Wendland:    Interaction_BufferExtrapT<KERNEL_Wendland>  (bufferpartcount,bufferpart,t,posb,velrhopb,codeb,order);  break;
-    default: Run_Exceptioon("Kernel unknown.");
+    default: fun::Run_ExceptioonFun("Kernel unknown.");
   }
 }
 
 
 
-template<bool sim2d,TpKernel tker,unsigned order> void JSphCpu::InteractionBufferExtrapFlux(const unsigned n,const int pini,
+template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrapFlux(const unsigned n,const int pini,
 		StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos,
 		const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const StCteSph csp,tdouble3 *ptpoints,tfloat3 *normals,tfloat3* velflux,float *fluxes
   ,unsigned mrorder,double dp,double dt,float mrthreshold)
@@ -509,7 +513,7 @@ template<bool sim2d,TpKernel tker,unsigned order> void JSphCpu::InteractionBuffe
 
 
         LUdecomp<nmatrix, nrhs>(A, P, B, sol, treshold);
-        cond=(1.0f/treshold)*CSP.kernelh*CSP.kernelh;
+        cond=(1.0f/treshold)*csp.kernelh*csp.kernelh;
 
 
       }
@@ -539,11 +543,11 @@ template<bool sim2d,TpKernel tker,unsigned order> void JSphCpu::InteractionBuffe
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-template<TpKernel tker> void JSphCpu::Interaction_BufferExtrapFluxT(const unsigned n,const int pini
+template<TpKernel tker> void Interaction_BufferExtrapFluxT(const unsigned n,const int pini
   ,const stinterparmscb &t,tdouble3 *ptpoints,tfloat3 *normals,tfloat3* velmot,float *fluxes
   ,unsigned mrorder,double dp,double dt,float mrthreshold)
 {
-	if(Simulate2D){const bool sim2d=true;
+	if(t.csp.simulate2d){const bool sim2d=true;
     if(mrorder==0) InteractionBufferExtrapFlux<sim2d ,tker,0> (n,pini,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);
     if(mrorder==1) InteractionBufferExtrapFlux<sim2d ,tker,1> (n,pini,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);
     if(mrorder==2) InteractionBufferExtrapFlux<sim2d ,tker,2> (n,pini,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);
@@ -562,13 +566,14 @@ template<TpKernel tker> void JSphCpu::Interaction_BufferExtrapFluxT(const unsign
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-void JSphCpu::Interaction_BufferExtrapFlux(const unsigned n,const int pini
+void Interaction_BufferExtrapFlux(const unsigned n,const int pini
   ,const stinterparmscb &t,tdouble3 *ptpoints,tfloat3 *normals,tfloat3* velmot,float *fluxes
   ,unsigned mrorder,double dp,double dt,float mrthreshold)
 {
-  switch(TKernel){
+  switch(t.csp.tkernel){
     // case KERNEL_Cubic:       Interaction_BufferExtrapT<KERNEL_Cubic>  (n,pini,t,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);  break;
     case KERNEL_Wendland:    Interaction_BufferExtrapFluxT<KERNEL_Wendland>  (n,pini,t,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);  break;
-    default: Run_Exceptioon("Kernel unknown.");
+    default: fun::Run_ExceptioonFun("Kernel unknown.");
   }
+}
 }

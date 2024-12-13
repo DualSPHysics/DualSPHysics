@@ -5,8 +5,8 @@
  *      Author: francesco
  */
 
-#ifndef JSPHGPU_BUFFER_IKER_H_
-#define JSPHGPU_BUFFER_IKER_H_
+#ifndef _JSphGpu_VRes_iker_
+#define _JSphGpu_VRes_iker_
 #include "DualSphDef.h"
 #include "JCellDivDataGpu.h"
 #include "JSphGpu_ker.h"
@@ -61,7 +61,7 @@ typedef struct StrInterParmsbg{
 
 }StInterParmsbg;
 
-namespace cusphbuffer{
+namespace cusphvres{
 
 unsigned BufferCreateList(bool stable,unsigned n,unsigned pini,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner
   ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const bool inner,const double2 *posxy,const double *posz
@@ -107,25 +107,25 @@ unsigned BufferListCreate(bool stable,unsigned n,unsigned pini,unsigned nmax, fl
 void MoveBufferZone(unsigned pini,unsigned ntot, double2 *posxy,double *posz,float3* normals,float3* velflux,double dt,tmatrix4d mat,int zone);
 
 void BufferShiftingGpu(unsigned np,unsigned npb,const double2 *posxy,const double *posz
-  ,float4 *shiftpos,typecode *code,StrGeomVresGpu* data,cudaStream_t stm);
+  ,float4 *shiftpos,typecode *code,StrGeomVresGpu& vresgdata,cudaStream_t stm);
 
 
 
 void ComputeFSNormals(TpKernel tkernel,bool simulate2d,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
     ,StDivDataGpu& dvd,const unsigned* dcell,const double2* posxy,const double* posz
     ,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp,float4* shiftposfs
-    ,unsigned* fstype,float3* fsnormal,unsigned* listp,StrGeomVresGpu* vresgdata,cudaStream_t stm);
+    ,unsigned* fstype,float3* fsnormal,unsigned* listp,StrGeomVresGpu& vresgdata,cudaStream_t stm);
     
 void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
     ,StDivDataGpu& dvd,const unsigned* dcell,const double2* posxy,const double* posz
     ,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp,float4* shiftposfs
-    ,unsigned* fstype,float3* fsnormal,unsigned* listp,StrGeomVresGpu* vresgdata,cudaStream_t stm);
+    ,unsigned* fstype,float3* fsnormal,unsigned* listp,StrGeomVresGpu& vresgdata,cudaStream_t stm);
 
 
 void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu* vresgdata,cudaStream_t stm);
+    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu& vresgdata,cudaStream_t stm);
 
 }
 
@@ -135,4 +135,4 @@ void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv
 
 
 
-#endif /* JSPHGPU_BUFFER_IKER_H_ */
+#endif 

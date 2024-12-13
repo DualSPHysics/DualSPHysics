@@ -5,7 +5,7 @@
  *      Author: francesco
  */
 
-#include "JSphGpu_Buffer_iker.h"
+#include "JSphGpu_VRes_iker.h"
 #include "Functions.h"
 #include "FunctionsCuda.h"
 #include <cfloat>
@@ -13,7 +13,7 @@
 #include "DualSphDef.h"
 #include "JSphGpu_ker.h"
 #include "JSphVRes.h"
-namespace cusphbuffer{
+namespace cusphvres{
 
 #include "FunctionsBasic_iker.h"
 #include "FunctionsMath_iker.h"
@@ -1117,12 +1117,14 @@ __global__ void KerBufferShiftingGpu(unsigned n,unsigned pini,const double2 *pos
 /// Computes sub-particle stress tensor (Tau) for SPS turbulence model.
 //==============================================================================
 void BufferShiftingGpu(unsigned np,unsigned npb,const double2 *posxy,const double *posz
-  ,float4 *shiftpos,typecode *code,StrGeomVresGpu* data,cudaStream_t stm)
+  ,float4 *shiftpos,typecode *code,StrGeomVresGpu& vresgdata,cudaStream_t stm)
 {
   const unsigned npf=np-npb;
   if(npf){
     dim3 sgridf=GetSimpleGridSize(npf,SPHBSIZE);
-    KerBufferShiftingGpu <<<sgridf,SPHBSIZE>>> (npf,npb,posxy,posz,shiftpos,code,data->boxlimitmin,data->boxlimitmax,data->tracking,data->matmov,data->inner);
+    KerBufferShiftingGpu <<<sgridf,SPHBSIZE>>> (npf,npb,posxy,posz,shiftpos,code
+      ,vresgdata.boxlimitmin,vresgdata.boxlimitmax,vresgdata.tracking
+      ,vresgdata.matmov,vresgdata.inner);
   }
 }
 
@@ -1369,7 +1371,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
   void ComputeFSNormals(TpKernel tkernel,bool simulate2d,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
     ,StDivDataGpu& dvd,const unsigned* dcell,const double2* posxy,const double* posz
     ,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp,float4* shiftposfs
-    ,unsigned* fstype,float3* fsnormal,unsigned* listp,StrGeomVresGpu* vresgdata,cudaStream_t stm)
+    ,unsigned* fstype,float3* fsnormal,unsigned* listp,StrGeomVresGpu& vresgdata,cudaStream_t stm)
   {
     unsigned count=0;
 
@@ -1389,7 +1391,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
         (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
             ,poscell,velrho,code,fstype,fsnormal,simulate2d,shiftposfs
             ,ftomassp,listp
-            ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
+            ,posxy,posz,vresgdata.boxdommin,vresgdata.boxdommax,vresgdata.inner,vresgdata.matmov,vresgdata.tracking);
     }
     
     cudaDeviceSynchronize();
@@ -1564,7 +1566,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
   void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
     ,StDivDataGpu& dvd,const unsigned* dcell,const double2* posxy,const double* posz
     ,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp,float4* shiftposfs
-    ,unsigned* fstype,float3* fsnormal,unsigned* listp,StrGeomVresGpu* vresgdata,cudaStream_t stm)
+    ,unsigned* fstype,float3* fsnormal,unsigned* listp,StrGeomVresGpu& vresgdata,cudaStream_t stm)
   {
     unsigned count=0;
 
@@ -1583,7 +1585,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
       KerScanUmbrellaRegion<<<sgridf,bsfluid,0,stm>>> 
         (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
             ,poscell,code,fstype,fsnormal,simulate2d,listp
-            ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking);
+            ,posxy,posz,vresgdata.boxdommin,vresgdata.boxdommax,vresgdata.inner,vresgdata.matmov,vresgdata.tracking);
     }
     
     cudaDeviceSynchronize();
@@ -1801,7 +1803,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
   template<TpKernel tker,bool simulate2d,bool shiftadv> void PreLoopInteractionT3(unsigned bsfluid
     ,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu* vresgdata,cudaStream_t stm)
+    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu& vresgdata,cudaStream_t stm)
 {
 
   if(fluidnum){
@@ -1809,7 +1811,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
     KerPreLoopInteraction <tker,simulate2d,shiftadv> <<<sgridf,bsfluid,0,stm>>> 
       (fluidnum,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid
       ,dcell,poscell,velrho,code,ftomassp,shiftvel,fstype,fsnormal,fsmindist
-      ,posxy,posz,vresgdata->boxdommin,vresgdata->boxdommax,vresgdata->inner,vresgdata->matmov,vresgdata->tracking); 
+      ,posxy,posz,vresgdata.boxdommin,vresgdata.boxdommax,vresgdata.inner,vresgdata.matmov,vresgdata.tracking); 
 
   }
 }
@@ -1817,7 +1819,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
   template<TpKernel tker,bool simulate2d> void PreLoopInteractionT2(bool shiftadv
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu* vresgdata,cudaStream_t stm)
+    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu& vresgdata,cudaStream_t stm)
 {
   if(shiftadv){
     PreLoopInteractionT3 <tker,simulate2d,true > (bsfluid
@@ -1834,7 +1836,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
   template<TpKernel tker> void PreLoopInteractionT(bool simulate2d,bool shiftadv
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu* vresgdata,cudaStream_t stm)
+    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu& vresgdata,cudaStream_t stm)
 {
   if(simulate2d){
     PreLoopInteractionT2 <tker,true > (shiftadv,bsfluid
@@ -1852,7 +1854,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
    void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
-    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu* vresgdata,cudaStream_t stm)
+    ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu& vresgdata,cudaStream_t stm)
   {
     switch(tkernel){
     case KERNEL_Wendland:{ const TpKernel tker=KERNEL_Wendland;

@@ -55,7 +55,7 @@ class JDsVResDataLoad;
   }StrDataVresCpu;
   
 
-// #ifdef _WITHGPU
+#ifdef _WITHGPU
 
   	typedef struct StrDataVresGpu{
     //-Info Vres zone data.
@@ -101,7 +101,7 @@ class JDsVResDataLoad;
   }StrGeomVresGpu;
 
 	
-// #endif
+#endif
 
 class JSphVRes : protected JObject {
   
@@ -123,8 +123,10 @@ private:
   unsigned ListSize;                    ///<Number of buffer zones.
   unsigned ZoneId;
 
-  StrGeomVresGpu* GeomInfo;
-    
+#ifdef _WITHGPU
+
+  // StrGeomVresGpu& GeomInfo;
+   #endif 
 
   std::vector<unsigned> ListNum;
   // const std::string Datafile;
@@ -217,9 +219,12 @@ public:
   ~JSphVRes();
   void Reset();
   void Config();
-  StrDataVresGpu GetZoneFluxInfoGpu(unsigned nzone);
   StrDataVresCpu GetZoneFluxInfoCpu(unsigned nzone);
-  StrGeomVresGpu* GetGeomInfoVres(){return GeomInfo;};
+#ifdef _WITHGPU
+  StrDataVresGpu GetZoneFluxInfoGpu(unsigned nzone);
+  StrGeomVresGpu GetGeomInfoVres();
+
+#endif
   void SaveVResData(int part,double timestep,int nstep);
   void LoadVResData();
 

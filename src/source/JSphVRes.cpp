@@ -15,7 +15,6 @@
 #include "JSimpleNeigs.h"
 #include "JTimeControl.h"
 #include "JDsGaugeSystem.h"
-#include "JSphGpu_Buffer_iker.h"
 #include "JCaseVRes.h"
 #include "JSpVtkData.h"
 #include "JSpVtkShape.h"
@@ -24,7 +23,7 @@
 #include "JBoxDef.h"
 #ifdef _WITHGPU
 #include "FunctionsCuda.h"
-#include "JSphGpu_Buffer_iker.h"
+#include "JSphGpu_VRes_iker.h"
 #include "JDebugSphGpu.h"
 
 
@@ -77,7 +76,9 @@ void JSphVRes::Reset()
 
   // ZoneId=0;
   SvVResDataBi4=NULL;
-  GeomInfo=NULL;
+  #ifdef _WITHGPU
+  // GeomInfo=NULL;
+  #endif
   ListSize=0;
   PtCount=0;
   for(int c=0;c<List.size();c++)delete List[c];
@@ -333,9 +334,10 @@ void JSphVRes::Config()
   cudaMemcpy(Matmovg,matc,sizeof(tmatrix4f)*ListSize,cudaMemcpyHostToDevice);
   delete[] matc;  matc=NULL;
   }
-#endif
   //-Create object for retrieving vres zone configurations.
-  GeomInfo=new StrGeomVresGpu(BoxLimitMing,BoxLimitMaxg,BoxDomMing,BoxDomMaxg,Trackingg,Innerg,Matmovg);
+  // GeomInfo=new StrGeomVresGpu(BoxLimitMing,BoxLimitMaxg,BoxDomMing,BoxDomMaxg,Trackingg,Innerg,Matmovg);
+#endif
+  
 
   //-Allocate memory on the cpu for interface points.
   AllocatePtMemory(npt);
@@ -376,7 +378,7 @@ void JSphVRes::Config()
   
 }
 
-
+#ifdef _WITHGPU
 StrDataVresGpu JSphVRes::GetZoneFluxInfoGpu(unsigned nzone){
   unsigned nini=NIni[nzone];
   unsigned npoints=NPoints[nzone];
@@ -388,6 +390,11 @@ StrDataVresGpu JSphVRes::GetZoneFluxInfoGpu(unsigned nzone){
   float*    mass    =PtMassg    ;
   return(StrDataVresGpu(npoints,nini,posxyg,poszg,normals,velmot,mass));
 }
+
+  StrGeomVresGpu JSphVRes:: GetGeomInfoVres(){
+    return(StrGeomVresGpu(BoxLimitMing,BoxLimitMaxg,BoxDomMing,BoxDomMaxg,Trackingg,Innerg,Matmovg));
+  };
+#endif
 
 
 StrDataVresCpu JSphVRes::GetZoneFluxInfoCpu(unsigned nzone){
@@ -452,16 +459,15 @@ void JSphVRes::SaveVResData(int part,double timestep,int nstep){
       }
   }
 
-  tfloat3*  velmot = new tfloat3[PtCount];
-  float*    mass   = new float  [PtCount];
-  cudaMemcpy(velmot     ,PtVelMotg     ,sizeof(float3)   *PtCount ,cudaMemcpyDeviceToHost);
-  cudaMemcpy(mass       ,PtMassg       ,sizeof(float)    *PtCount ,cudaMemcpyDeviceToHost);
+  #ifdef _WITHGPU
+  if(!Cpu){
+    cudaMemcpy(PtVelMot   ,PtVelMotg     ,sizeof(float3)   *PtCount ,cudaMemcpyDeviceToHost);
+    cudaMemcpy(PtMass     ,PtMassg       ,sizeof(float)    *PtCount ,cudaMemcpyDeviceToHost);
+  }
+  #endif
 
-  SvVResDataBi4->AddArray(PtCount,msize,PtPointsIni,PtNormalsIni,velmot,mass,matarray);
+  SvVResDataBi4->AddArray(PtCount,msize,PtPointsIni,PtNormalsIni,PtVelMot,PtMass,matarray);
   SvVResDataBi4->SavePartData();
-
-  delete  []  velmot  ;   velmot  =NULL;
-  delete  []  mass    ;   mass    =NULL;
   delete  []  matarray;   matarray=NULL;
 }
 
@@ -564,7 +570,7 @@ unsigned JSphVRes::CreateListGpuInit(unsigned npf, unsigned pini, const double2 
 
   // bool inner=List[nzone]->Inner;
   bool Stable = false;
-  count = cusphbuffer::BufferCreateListInit(Stable,npf,pini,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner,List[nzone]->BoxLimitMinOuter
+  count = cusphvres::BufferCreateListInit(Stable,npf,pini,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner,List[nzone]->BoxLimitMinOuter
     ,List[nzone]->BoxLimitMaxOuter,List[nzone]->BoxLimitMinMid,List[nzone]->BoxLimitMaxMid,List[nzone]->Inner,posxyg,poszg,codeg,(unsigned *)inoutpartg
     ,matc,Tracking[nzone],nzone);
 
@@ -582,7 +588,7 @@ unsigned JSphVRes::CreateListGpu(unsigned npf, unsigned pini, const double2 *pos
 
   // bool inner=List[nzone]->Inner;
   bool Stable = false;
-  count = cusphbuffer::BufferCreateList(Stable,npf,pini,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner,List[nzone]->BoxLimitMinOuter
+  count = cusphvres::BufferCreateList(Stable,npf,pini,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner,List[nzone]->BoxLimitMinOuter
   ,List[nzone]->BoxLimitMaxOuter, List[nzone]->Inner,posxyg,poszg,codeg,(unsigned *)inoutpartg,Matmovg,Tracking[nzone],nzone);
 
   // Log->Printf("%u> -------->CreateListXXX>> InOutcount:%u",nstep,count);
@@ -690,7 +696,7 @@ void JSphVRes::ComputeStepGpu(unsigned bufferpartcount,int *bufferpart,unsigned 
   // matc.a34=-(mat.a14*mat.a13+mat.a24*mat.a23+mat.a34*mat.a33);
 
   //-Checks particle position.
-  cusphbuffer::BufferComputeStep(bufferpartcount,bufferpart,posxyg,poszg,codeg,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner
+  cusphvres::BufferComputeStep(bufferpartcount,bufferpart,posxyg,poszg,codeg,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner
       ,List[nzone]->BoxLimitMinOuter,List[nzone]->BoxLimitMaxOuter,List[nzone]->Inner,Matmovg,Tracking[nzone],nzone);
   //-Create list for new inlet particles to create.
   //  const unsigned newnp=cusphinout::InOutListCreate(Stable,inoutcount,sizenp-1,newizoneg,inoutpartg);
@@ -721,7 +727,9 @@ void JSphVRes::MoveBufferZone(double dt,std::vector<JMatrix4d> mat){
           PtNormals[p]=normalpnew;
         }
       }else{
-        cusphbuffer::MoveBufferZone(NIni[i],ntot,PtPosxyg,PtPoszg,PtNormalsg,PtVelMotg,dt,mat_i,i );
+        #ifdef _WITHGPU
+        cusphvres::MoveBufferZone(NIni[i],ntot,PtPosxyg,PtPoszg,PtNormalsg,PtVelMotg,dt,mat_i,i );
+        #endif
       }
     }
   }
@@ -731,24 +739,22 @@ void JSphVRes::MoveBufferZone(double dt,std::vector<JMatrix4d> mat){
 void JSphVRes::SaveNormals(std::string filename,int numfile){
 
   
-  tfloat3 *normals = new tfloat3[PtCount];
-  tfloat3 *velflux = new tfloat3[PtCount];
-  float   *mass    = new float[PtCount];
-  tdouble3 *posh=fcuda::ToHostPosd3(0,PtCount,PtPosxyg,PtPoszg);
-
-  cudaMemcpy(normals, PtNormalsg, sizeof(float3) * PtCount, cudaMemcpyDeviceToHost);
-  cudaMemcpy(velflux, PtVelMotg,  sizeof(float3) * PtCount, cudaMemcpyDeviceToHost);
-  cudaMemcpy(mass,    PtMassg,    sizeof(float)  * PtCount, cudaMemcpyDeviceToHost);
-    // TransMat.MulArray(ntot,posh);
-
-  SaveVtkNormals(filename,numfile,PtCount,posh,normals,velflux,mass);
-
-  delete[] normals;
-  delete[] posh;
-  delete[] velflux;
-  delete[] mass;
 
 
+  #ifdef _WITHGPU
+  if(!Cpu){
+
+    tdouble3 *posh=fcuda::ToHostPosd3(0,PtCount,PtPosxyg,PtPoszg);
+    memcpy(PtPoints,posh,sizeof(tdouble3)*PtCount);
+    delete[] posh;
+
+    cudaMemcpy(PtNormals, PtNormalsg, sizeof(float3) * PtCount, cudaMemcpyDeviceToHost);
+    cudaMemcpy(PtVelMot,  PtVelMotg,  sizeof(float3) * PtCount, cudaMemcpyDeviceToHost);
+    cudaMemcpy(PtMass,    PtMassg,    sizeof(float)  * PtCount, cudaMemcpyDeviceToHost);
+  }
+  #endif
+
+  SaveVtkNormals(filename,numfile,PtCount,PtPoints,PtNormals,PtVelMot,PtMass);
 }
 
 void JSphVRes::SaveVtkNormals(std::string filename,int numfile,unsigned np

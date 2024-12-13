@@ -10,6 +10,8 @@
 #include "JSphVRes.h"
 #include "JCaseVRes.h"
 #include "JSphCpu.h"
+#include "JSphCpu_VRes.h"
+
 
 
 

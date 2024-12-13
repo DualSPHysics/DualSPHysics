@@ -59,8 +59,10 @@ Please download source files and documentation from <a href="http://dual.sphysic
 #endif
 #ifdef _WITHMR
   #include "JSphVResDriver.h"
-  #include "JSphGpuSingle_VRes.h"
   #include "JSphCpuSingle_VRes.h"
+  #ifdef _WITHGPU
+    #include "JSphGpuSingle_VRes.h"
+  #endif
 #endif
 
 #pragma warning(disable : 4996) //Cancels sprintf() deprecated.

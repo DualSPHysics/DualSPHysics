@@ -220,7 +220,7 @@ void JSphCpuSingle_VRes::BufferExtrapolateData(stinterparmscb *parms){
 		unsigned id=Multires->GetZone(i)->getZone()-1;
 
 
-	 Interaction_BufferExtrap(buffercountpre,bufferpartc.ptr(),parms[id],Pos_c->ptr(),Velrho_c->ptr(),Code_c->ptr(),0);
+	 fvres::Interaction_BufferExtrap(buffercountpre,bufferpartc.ptr(),parms[id],Pos_c->ptr(),Velrho_c->ptr(),Code_c->ptr(),0);
     // DgSaveVtkParticlesCpuMRBuffer("Debug_Buffer_CpuInit.vtk",Nstep,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL);
 	  // DgSaveVtkParticlesCpuMR("Debug_Multi_CpuInit.vtk",Nstep,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL,NULL);
 		
@@ -246,12 +246,12 @@ void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
 
     StrDataVresCpu vresdata=Multires->GetZoneFluxInfoCpu(i);
 			
-  //   // cusphbuffer::MoveBufferZone(nini,ntot,posxy,posz,dt,velmot[i]);
+  //   // cusphvres::MoveBufferZone(nini,ntot,posxy,posz,dt,velmot[i]);
 
 
 		unsigned id=Multires->GetZone(i)->getZone()-1;
 		
-    Interaction_BufferExtrapFlux(vresdata.ntot,vresdata.nini,parms[id],vresdata.points,vresdata.normals,vresdata.velmot,vresdata.mass,0,Dp,dt,100);
+    fvres::Interaction_BufferExtrapFlux(vresdata.ntot,vresdata.nini,parms[id],vresdata.points,vresdata.normals,vresdata.velmot,vresdata.mass,0,Dp,dt,100);
 
 		unsigned newnp=Multires->ComputeStepCpu(buffercountpre,bufferpartc.ptr(),Code_c->ptr(),Pos_c->cptr(),i);
 
@@ -279,8 +279,8 @@ void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
 }
 
 void JSphCpuSingle_VRes::BufferShifting(){
-  // StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
-	// cusphbuffer::BufferShiftingGpu(Np,Npb,Posxy_g->ptr(),Posz_g->ptr(),ShiftVel_g->ptr(),Code_g->ptr(),vresgdata,NULL);
+  // StrGeomVresGpu& vresgdata=Multires->GetGeomInfoVres();
+	// cusphvres::BufferShiftingGpu(Np,Npb,Posxy_g->ptr(),Posz_g->ptr(),ShiftVel_g->ptr(),Code_g->ptr(),vresgdata,NULL);
 }
 
 
@@ -302,9 +302,9 @@ void JSphCpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
   // }
   
   // unsigned bsfluid=BlockSizes.forcesfluid;
-  // StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
+  // StrGeomVresGpu& vresgdata=Multires->GetGeomInfoVres();
 
-  // if(runshift)cusphbuffer::PreLoopInteraction(TKernel,Simulate2D,runshift,false,bsfluid,Np-Npb,Npb,DivData
+  // if(runshift)cusphvres::PreLoopInteraction(TKernel,Simulate2D,runshift,false,bsfluid,Np-Npb,Npb,DivData
   //   ,Posxy_g->cptr(),Posz_g->cptr(),Dcell_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr()
   //   ,FSType_g->ptr(),FSNormal_g->ptr(),FSMinDist_g->ptr(),vresgdata,NULL);
   
@@ -335,10 +335,10 @@ void JSphCpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
 //==============================================================================
 void JSphCpuSingle_VRes::ComputeFSParticlesVRes(){
   // unsigned bsfluid=BlockSizes.forcesfluid;
-  // StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
+  // StrGeomVresGpu& vresgdata=Multires->GetGeomInfoVres();
 
   // aguint    inoutpartg("-",Arrays_Gpu,true);
-  // cusphbuffer::ComputeFSNormals(TKernel,Simulate2D,Symmetry,bsfluid,Npb,Np-Npb,DivData
+  // cusphvres::ComputeFSNormals(TKernel,Simulate2D,Symmetry,bsfluid,Npb,Np-Npb,DivData
   //   ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
   //   ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
   //   ,inoutpartg.ptr(),vresgdata,NULL);
@@ -351,10 +351,10 @@ void JSphCpuSingle_VRes::ComputeFSParticlesVRes(){
 //==============================================================================
 void JSphCpuSingle_VRes::ComputeUmbrellaRegionVRes(){
   // unsigned bsfluid=BlockSizes.forcesfluid;
-  // StrGeomVresGpu* vresgdata=Multires->GetGeomInfoVres();
+  // StrGeomVresGpu& vresgdata=Multires->GetGeomInfoVres();
 
   // aguint    inoutpartg("-",Arrays_Gpu,true);
-  // cusphbuffer::ComputeUmbrellaRegion(TKernel,Simulate2D,Symmetry,bsfluid,Npb,Np-Npb,DivData
+  // cusphvres::ComputeUmbrellaRegion(TKernel,Simulate2D,Symmetry,bsfluid,Npb,Np-Npb,DivData
   //   ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
   //   ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
   //   ,inoutpartg.ptr(),vresgdata,NULL);
@@ -386,8 +386,7 @@ void JSphCpuSingle_VRes::Interaction_ForcesB(TpInterStep interstep){
     ,Ar_c->ptr(),Ace_c->ptr(),AC_PTR(Delta_c)
     ,ShiftingMode,AC_PTR(ShiftPosfs_c)
     ,AC_PTR(SpsTauRho2_c),AC_PTR(Sps2Strain_c)
-    ,AC_PTR(FSType_c),AC_PTR(ShiftVel_c),AC_PTR(LCorr_c)      //<vs_advshift>
-    ,AC_PTR(FSTresh_c),AC_PTR(PressSym_c),AC_PTR(PressAsym_c) //<vs_advshift>
+    ,AC_PTR(FSType_c),AC_PTR(ShiftVel_c) //<vs_advshift>
   );
   StInterResultc res;
   res.viscdt=0;
