@@ -53,6 +53,29 @@ class JDsVResDataLoad;
 			this->points=points;	this->normals=normals;	this->velmot=velmot; this->mass=mass;
     }
   }StrDataVresCpu;
+
+
+  	typedef struct StrGeomVresCpu{
+    //-Info Vres zone data.
+    tdouble3*    boxlimitmin;
+    tdouble3*    boxlimitmax;
+    tdouble3*    boxdommin;
+    tdouble3*    boxdommax;
+    bool*       tracking;
+    bool*       inner;
+    JMatrix4d*  matmov; 
+
+    //-Methods.
+    StrGeomVresCpu(tdouble3* boxlimitmin,tdouble3* boxlimitmax
+      ,tdouble3* boxdommin,tdouble3* boxdommax
+      ,bool* tracking,bool* inner,JMatrix4d* matmov){ 
+
+    	this->boxlimitmin=boxlimitmin;  this->boxlimitmax=boxlimitmax;  
+      this->boxdommin=boxdommin;  this->boxdommax=boxdommax;
+      this->tracking=tracking;   this->inner=inner;	
+      this->matmov=matmov;
+    }
+  }StrGeomVresCpu;
   
 
 #ifdef _WITHGPU
@@ -80,7 +103,7 @@ class JDsVResDataLoad;
 
 
 
-  	typedef struct StrGeomVresGpu{
+  typedef struct StrGeomVresGpu{
     //-Info Vres zone data.
     double3*    boxlimitmin;
     double3*    boxlimitmax;
@@ -188,21 +211,7 @@ private:
   void FreeMemoryGpu();
 #endif
 
-#ifdef _WITHGPU
-    double3 *BoxLimitMinInnerg = NULL;
-    double3 *BoxLimitMaxInnerg = NULL;
-    double3 *BoxLimitMinOuterg = NULL;
-    double3 *BoxLimitMaxOuterg = NULL;
-    double3 *BoxLimitMinMidg = NULL;
-    double3 *BoxLimitMaxMidg = NULL;
-    // bool *Innerg = NULL;
-    double2 *Posxyg = NULL;
-    double *Poszg = NULL;
-    double3 *Normalsg = NULL;
-    double *Fluxesg = NULL;
-    double3 *Origing = NULL;
-    double3 *BoxSizeg = NULL;
-#endif
+
 
 void CreateZones();
 void GetQuadPoints2d(tdouble3 pmin,tdouble3 pmax,tdouble3* vpt)const;
@@ -220,9 +229,11 @@ public:
   void Reset();
   void Config();
   StrDataVresCpu GetZoneFluxInfoCpu(unsigned nzone);
+  StrGeomVresCpu GetGeomInfoVresCpu();
+
 #ifdef _WITHGPU
   StrDataVresGpu GetZoneFluxInfoGpu(unsigned nzone);
-  StrGeomVresGpu GetGeomInfoVres();
+  StrGeomVresGpu GetGeomInfoVresGpu();
 
 #endif
   void SaveVResData(int part,double timestep,int nstep);
@@ -260,13 +271,6 @@ public:
   unsigned CreateListGpu(unsigned npf, unsigned pini, const double2 *posxyg, const double *poszg, typecode *codeg, unsigned size, int *inoutpartg, unsigned nzone);
   void ComputeStepGpu(unsigned bufferpartcount, int *bufferpart, unsigned idnext, double2 *posxyg, double *poszg, unsigned *dcellg, typecode *codeg, unsigned *idpg, float4 *velrhopg, byte *newizoneg, const JSphGpuSingle *gp, unsigned nzone);
 
-  double2 *getPosxy() { return Posxyg; };
-  double *getPosz() { return Poszg; };
-  double3 *getNormals() { return Normalsg; };
-  double *getFluxes() { return Fluxesg; };
-  double3 *getOrigin() { return Origing; };
-  double3 *getBoxSize() { return BoxSizeg; };
-  bool *getInner(){ return Innerg;};
 #endif
 
 

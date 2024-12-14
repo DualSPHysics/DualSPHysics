@@ -69,6 +69,41 @@ namespace fvres{
   ,const stinterparmscb &t,tdouble3 *ptpoints,tfloat3 *normals,tfloat3* velmot,float *fluxes
   ,unsigned mrorder,double dp,double dt,float mrthreshold);
 
+  inline bool InZone(const tdouble3 &ps,const tdouble3 &boxlimitmin,tdouble3 &boxlimitmax){
+    return (boxlimitmin.x <= ps.x && ps.x <= boxlimitmax.x && boxlimitmin.y <= ps.y 
+    && ps.y <= boxlimitmax.y && boxlimitmin.z <= ps.z && ps.z <= boxlimitmax.z);
+  }
+
+  unsigned CountFreeSurfaceParticles(unsigned npf,unsigned pini
+    ,const unsigned* fstype,unsigned* listp);
+  
+  template<TpKernel tker,bool sim2d> void InteractionComputeFSNormals
+    (unsigned np,unsigned pinit,const StCteSph csp
+    ,StDivDataCpu divdata,const unsigned* dcell
+    ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
+    ,const unsigned* listp,unsigned* fstype,tfloat3* fsnormal,StrGeomVresCpu& vresdata);
+  void CallComputeFSNormals(const unsigned np,const unsigned npb
+    ,const StCteSph csp,const StDivDataCpu& divdata,const unsigned* dcell
+    ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
+    ,unsigned* fstype,tfloat3* fsnormal,unsigned* listp,StrGeomVresCpu& vresdata);
+
+  void InteractionCallScanUmbrellaRegion(unsigned n,unsigned pinit,const StCteSph csp
+    ,StDivDataCpu divdata,const unsigned* dcell,const tdouble3* pos
+    ,const typecode* code,const tfloat3* fsnormal,const unsigned* listp
+    ,unsigned* fstype,StrGeomVresCpu& vresdata);
+  void CallScanUmbrellaRegion(const unsigned np,const unsigned npb
+    ,const StCteSph csp,const StDivDataCpu& divdata
+    ,const unsigned* dcell,const tdouble3* pos,const typecode* code
+    ,const tfloat3* fsnormal,unsigned* listp,unsigned* fstype,StrGeomVresCpu& vresdata);
+
+  template<TpKernel tker,bool sim2d> void CorrectShiftBuff
+    (const unsigned n,const unsigned pinit  ,const StCteSph csp
+    ,const unsigned* dcell,const tdouble3* pos,const typecode* code
+    ,tfloat4* shiftvel,unsigned* fstype,StrGeomVresCpu& vresdata);
+
+  void CallCorrectShiftBuff(const unsigned np,const unsigned npb
+    ,const StCteSph csp,const unsigned* dcell,const tdouble3* pos,const typecode* code
+    ,tfloat4* shiftvel,unsigned* fstype,StrGeomVresCpu& vresdata);
 }
 
   #endif

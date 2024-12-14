@@ -1059,12 +1059,14 @@ __global__ void KerBufferShiftingGpu(unsigned n,unsigned pini,const double2 *pos
       double3 boxmax=boxlimitmax[izone];
       double3 origin  =make_double3((boxmax.x+boxmin.x)*0.5f,(boxmax.y+boxmin.y)*0.5f,(boxmax.z+boxmin.z)*0.5f);
       double3 boxsize =make_double3(boxmax.x-boxmin.x,boxmax.y-boxmin.y,boxmax.z-boxmin.z);
+      
       if(tracking[izone]){
-          double2 rxy_t=make_double2(0,0);
-          double rz_t=0.0;
-          MovePoint(rxy,rz,rxy_t,rz_t,mat[izone]);
-          rxy=rxy_t; rz=rz_t;
-        }
+        double2 rxy_t=make_double2(0,0);
+        double rz_t=0.0;
+        MovePoint(rxy,rz,rxy_t,rz_t,mat[izone]);
+        rxy=rxy_t; rz=rz_t;
+      }
+      
 		  double disx =rxy.x  -origin.x;
       double disy =rxy.y  -origin.y;
 		  double disz =rz     -origin.z;
@@ -1135,13 +1137,13 @@ __device__ void KerComputeNormalsBufferBox(unsigned p1,const double3 posp1
 {    
       
   float3 minpos=make_float3(0,0,0);
-    minpos.x=posp1.x-CTE.kernelsize;
-    minpos.y=(sim2d? 0.0f: posp1.y-CTE.kernelsize);
-    minpos.z=posp1.z-CTE.kernelsize;
-    float3 maxpos=make_float3(0,0,0);
-    maxpos.x=posp1.x+CTE.kernelsize;
-    maxpos.y=(sim2d? 0.0f: posp1.y+CTE.kernelsize);
-    maxpos.z=posp1.z+CTE.kernelsize;
+  minpos.x=posp1.x-CTE.kernelsize;
+  minpos.y=(sim2d? posp1.y: posp1.y-CTE.kernelsize);
+  minpos.z=posp1.z-CTE.kernelsize;
+  float3 maxpos=make_float3(0,0,0);
+  maxpos.x=posp1.x+CTE.kernelsize;
+  maxpos.y=(sim2d?posp1.y: posp1.y+CTE.kernelsize);
+  maxpos.z=posp1.z+CTE.kernelsize;
 
   float dp=CTE.dp;
   for (float rx=minpos.x; rx<=maxpos.x; rx+=dp) for (float ry=minpos.y; ry<=maxpos.y; ry+=dp)
@@ -1235,9 +1237,10 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
 
     __global__ void KerComputeNormals(unsigned n,unsigned pinit
     ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
-    ,const float4 *poscell,const float4 *velrhop,const typecode *code
-    ,unsigned* fstype,float3* fsnormal,bool simulate2d,float4* shiftposfs,const float* ftomassp,const unsigned* listp
-    ,const double2* posxy,const double* posz,const double3* boxlimitmin,const double3* boxlimitmax,const bool* inner,const tmatrix4f* mat,const bool* tracking)
+    ,const float4 *poscell,const float4 *velrhop,const typecode *code,unsigned* fstype,float3* fsnormal
+    ,bool simulate2d,float4* shiftposfs,const float* ftomassp,const unsigned* listp,const double2* posxy
+    ,const double* posz,const double3* boxlimitmin,const double3* boxlimitmax,const bool* inner
+    ,const tmatrix4f* mat,const bool* tracking)
   {
     const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
     if(p<n){
@@ -1406,11 +1409,11 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
     
     float3 minpos=make_float3(0,0,0);
     minpos.x=posp1.x-CTE.kernelsize;
-    minpos.y=(sim2d? 0.0f: posp1.y-CTE.kernelsize);
+    minpos.y=(sim2d? posp1.y: posp1.y-CTE.kernelsize);
     minpos.z=posp1.z-CTE.kernelsize;
     float3 maxpos=make_float3(0,0,0);
     maxpos.x=posp1.x+CTE.kernelsize;
-    maxpos.y=(sim2d? 0.0f: posp1.y+CTE.kernelsize);
+    maxpos.y=(sim2d?posp1.y: posp1.y+CTE.kernelsize);
     maxpos.z=posp1.z+CTE.kernelsize;
 
     float dp=CTE.dp;
@@ -1597,14 +1600,14 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
     ,const bool inner,const tmatrix4f mat,const bool tracking,const bool sim2d)
   {    
       
-      float3 minpos=make_float3(0,0,0);
-      minpos.x=posp1.x-CTE.kernelsize;
-      minpos.y=(sim2d? 0.0f: posp1.y-CTE.kernelsize);
-      minpos.z=posp1.z-CTE.kernelsize;
-      float3 maxpos=make_float3(0,0,0);
-      maxpos.x=posp1.x+CTE.kernelsize;
-      maxpos.y=(sim2d? 0.0f: posp1.y+CTE.kernelsize);
-      maxpos.z=posp1.z+CTE.kernelsize;
+    float3 minpos=make_float3(0,0,0);
+    minpos.x=posp1.x-CTE.kernelsize;
+    minpos.y=(sim2d? posp1.y: posp1.y-CTE.kernelsize);
+    minpos.z=posp1.z-CTE.kernelsize;
+    float3 maxpos=make_float3(0,0,0);
+    maxpos.x=posp1.x+CTE.kernelsize;
+    maxpos.y=(sim2d?posp1.y: posp1.y+CTE.kernelsize);
+    maxpos.z=posp1.z+CTE.kernelsize;
 
       float dp=CTE.dp;
       for (float rx=minpos.x; rx<=maxpos.x; rx+=dp) for (float ry=minpos.y; ry<=maxpos.y; ry+=dp)

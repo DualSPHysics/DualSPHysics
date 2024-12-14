@@ -99,10 +99,11 @@ double JSphCpuSingle_VRes::ComputeStep_SymB(){
   if(CaseNmoving)CalcMotion(dt);               //-Calculate motion for moving bodies.
   //-Predictor
   //-----------
+  InterStep=INTERSTEP_SymPredictor;
   DemDtForce=dt*0.5f;
   MdbcBoundCorrection(INTERSTEP_SymPredictor);  //-Mdbc correction
   PreInteraction_Forces(INTERSTEP_SymPredictor);//-Allocating temporary arrays.
-  PreLoopProcedure(INTERSTEP_SymPredictor);     //-Calculate variables for interaction forces (Shifting,DDT,etc...).                          //-For DEM interaction.
+  PreLoopProcedureVRes(INTERSTEP_SymPredictor);     //-Calculate variables for interaction forces (Shifting,DDT,etc...).                          //-For DEM interaction.
   Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
   const double dt_p=DtVariable(false);         //-Calculate dt of predictor step.
   if(Shifting)RunShifting(dt*.5);              //-Shifting.
@@ -111,11 +112,12 @@ double JSphCpuSingle_VRes::ComputeStep_SymB(){
   PosInteraction_Forces();                     //-Free memory used for interaction.
   //-Corrector
   //-----------
+  InterStep=INTERSTEP_SymCorrector;
   DemDtForce=dt;                               //-For DEM interaction.
   RunCellDivide(true);
   MdbcBoundCorrection(INTERSTEP_SymCorrector);  //-Mdbc correction
   PreInteraction_Forces(INTERSTEP_SymCorrector);//-Allocating temporary arrays.
-  PreLoopProcedure(INTERSTEP_SymCorrector);     //-Calculate variables for interaction forces (Shifting,DDT,etc...).
+  PreLoopProcedureVRes(INTERSTEP_SymCorrector);     //-Calculate variables for interaction forces (Shifting,DDT,etc...).
   Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
   const double dt_c=DtVariable(true);          //-Calculate dt of corrector step.
   if(Shifting)RunShifting(dt);                 //-Shifting.
@@ -150,9 +152,9 @@ void JSphCpuSingle_VRes::Finish(double dt1){
           DgSaveVtkParticlesCpuMRBuffer("Compute_Debug_Buffer.vtk",Part,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL);
 	        DgSaveVtkParticlesCpuMR("Compute_Debug_Fluid.vtk",Part,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL,NULL);
         }
-        // if(VRES_DG_SAVEVTK)Multires->SaveNormals(DirDataOut+"NormalsBuffer_",Part);
-        // if(VRES_DG_SAVEVTK)Multires->SaveVtkDomains(DirDataOut+"Domains",Part,Simulate2D);
-        // if(VRES_DG_SAVEVTK)Multires->SaveVResData(Part,TimeStep,Nstep);
+        if(VRES_DG_SAVEVTK)Multires->SaveNormals(DirDataOut+"NormalsBuffer_",Part);
+        if(VRES_DG_SAVEVTK)Multires->SaveVtkDomains(DirDataOut+"Domains",Part,Simulate2D);
+        if(VRES_DG_SAVEVTK)Multires->SaveVResData(Part,TimeStep,Nstep);
 
 	      SaveData();
 	      Part++;
@@ -220,7 +222,7 @@ void JSphCpuSingle_VRes::BufferExtrapolateData(stinterparmscb *parms){
 		unsigned id=Multires->GetZone(i)->getZone()-1;
 
 
-	 fvres::Interaction_BufferExtrap(buffercountpre,bufferpartc.ptr(),parms[id],Pos_c->ptr(),Velrho_c->ptr(),Code_c->ptr(),0);
+	 fvres::Interaction_BufferExtrap(buffercountpre,bufferpartc.ptr(),parms[id],Pos_c->ptr(),Velrho_c->ptr(),Code_c->ptr(),2);
     // DgSaveVtkParticlesCpuMRBuffer("Debug_Buffer_CpuInit.vtk",Nstep,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL);
 	  // DgSaveVtkParticlesCpuMR("Debug_Multi_CpuInit.vtk",Nstep,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL,NULL);
 		
@@ -251,7 +253,7 @@ void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
 
 		unsigned id=Multires->GetZone(i)->getZone()-1;
 		
-    fvres::Interaction_BufferExtrapFlux(vresdata.ntot,vresdata.nini,parms[id],vresdata.points,vresdata.normals,vresdata.velmot,vresdata.mass,0,Dp,dt,100);
+    fvres::Interaction_BufferExtrapFlux(vresdata.ntot,vresdata.nini,parms[id],vresdata.points,vresdata.normals,vresdata.velmot,vresdata.mass,2,Dp,dt,100);
 
 		unsigned newnp=Multires->ComputeStepCpu(buffercountpre,bufferpartc.ptr(),Code_c->ptr(),Pos_c->cptr(),i);
 
@@ -295,70 +297,61 @@ void JSphCpuSingle_VRes::CallRunCellDivide(){
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void JSphCpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
-  // bool runshift=(interstep==INTERSTEP_SymPredictor && Nstep!=0 && ShiftingAdv!=NULL);
-  // if(runshift){
-  //   ComputeFSParticlesVRes();
-  //   ComputeUmbrellaRegionVRes();
-  // }
-  
-  // unsigned bsfluid=BlockSizes.forcesfluid;
-  // StrGeomVresGpu& vresgdata=Multires->GetGeomInfoVres();
+  const bool runshift=(ShiftingAdv && interstep==INTERSTEP_SymPredictor && Nstep!=0);
+  if(runshift){
+    Timersc->TmStart(TMC_SuShifting);
+    ComputeFSParticlesVRes();
+    ComputeUmbrellaRegionVRes();
 
-  // if(runshift)cusphvres::PreLoopInteraction(TKernel,Simulate2D,runshift,false,bsfluid,Np-Npb,Npb,DivData
-  //   ,Posxy_g->cptr(),Posz_g->cptr(),Dcell_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr()
-  //   ,FSType_g->ptr(),FSNormal_g->ptr(),FSMinDist_g->ptr(),vresgdata,NULL);
-  
-  // if(runshift)cusph::ComputeShiftingVel(bsfluid,Np-Npb,Npb,Simulate2D,ShiftVel_g->ptr(),FSType_g->cptr(),FSNormal_g->cptr()
-  //   ,FSMinDist_g->cptr(),SymplecticDtPre,ShiftingAdv->GetShiftCoef(),ShiftingAdv->GetAleActive(),NULL);
+    // StrGeomVresCpu vresdata=Multires->GetGeomInfoVresCpu();
+    // fvres::CallCorrectShiftBuff(Np,Npb,CSP,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
+    // ,ShiftVel_c->ptr(),FSType_c->ptr(),vresdata);
 
-  // if(runshift )BufferShifting();
-  // //-Updates preloop variables in periodic particles.
-  // if(PeriParent_g){
-  //   cusph::PeriPreLoopCorr(Np,0,PeriParent_g->cptr(),FSType_g->ptr(),ShiftVel_g->ptr());
-  // }
-
-  // double t1=TimeStep+LastDt;
-	// double t2=TimePartNext;
-  // if(t1>=t2 ){
-	// 	if(interstep==INTERSTEP_SymPredictor && ShiftingAdv!=NULL)DgSaveVtkParticlesGpu("Compute_FreeSurface_",Part,0,Np,Posxy_g->cptr()
-  //       ,Posz_g->cptr(),Code_g->cptr(),FSType_g->cptr(),ShiftVel_g->cptr(),FSNormal_g->cptr());
-	// }
-
-  
-  
+    PreLoopInteraction_ct(DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
+      ,Velrho_c->cptr(),FSType_c->ptr(),ShiftVel_c->ptr(),FSNormal_c->ptr()
+      ,FSMinDist_c->ptr());
+    ComputeShiftingVel(Simulate2D,ShiftingAdv->GetShiftCoef()
+      ,ShiftingAdv->GetAleActive(),SymplecticDtPre,FSType_c->ptr()
+      ,FSNormal_c->ptr(),FSMinDist_c->ptr(),ShiftVel_c->ptr());
+    //-Updates pre-loop variables in periodic particles.
+    if(PeriParent_c){
+      const unsigned* periparent=PeriParent_c->ptr();
+      unsigned* fstype  =FSType_c->ptr();
+      tfloat4*  shiftvel=ShiftVel_c->ptr();
+      for(unsigned p=Npb;p<Np;p++)if(periparent[p]!=UINT_MAX){
+        fstype[p]  =fstype[periparent[p]];
+        shiftvel[p]=shiftvel[periparent[p]];
+      }
+    }
+    //-Saves VTK for debug.
+    if(1 && runshift && TimeStep+LastDt>=TimePartNext)DgSaveVtkParticlesCpu("Compute_FreeSurface_",Part,0,Np,Pos_c->cptr()
+      ,Code_c->cptr(),FSType_c->cptr(),ShiftVel_c->cptr(),FSNormal_c->cptr());
+    Timersc->TmStop(TMC_SuShifting);
+  }
 }
 
 
 //==============================================================================
 /// Compute free-surface particles and their normals.
-/// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void JSphCpuSingle_VRes::ComputeFSParticlesVRes(){
-  // unsigned bsfluid=BlockSizes.forcesfluid;
-  // StrGeomVresGpu& vresgdata=Multires->GetGeomInfoVres();
+  StrGeomVresCpu vresdata=Multires->GetGeomInfoVresCpu();
 
-  // aguint    inoutpartg("-",Arrays_Gpu,true);
-  // cusphvres::ComputeFSNormals(TKernel,Simulate2D,Symmetry,bsfluid,Npb,Np-Npb,DivData
-  //   ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
-  //   ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
-  //   ,inoutpartg.ptr(),vresgdata,NULL);
+  acuint fspart("-",Arrays_Cpu,true);
+  fvres::CallComputeFSNormals(Np,Npb,CSP,DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
+    ,Velrho_c->cptr(),FSType_c->ptr(),FSNormal_c->ptr(),fspart.ptr(),vresdata);
 
 }
 
 //==============================================================================
 /// Scan Umbrella region to identify free-surface particle.
-/// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void JSphCpuSingle_VRes::ComputeUmbrellaRegionVRes(){
-  // unsigned bsfluid=BlockSizes.forcesfluid;
-  // StrGeomVresGpu& vresgdata=Multires->GetGeomInfoVres();
+  StrGeomVresCpu vresdata=Multires->GetGeomInfoVresCpu();
 
-  // aguint    inoutpartg("-",Arrays_Gpu,true);
-  // cusphvres::ComputeUmbrellaRegion(TKernel,Simulate2D,Symmetry,bsfluid,Npb,Np-Npb,DivData
-  //   ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
-  //   ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
-  //   ,inoutpartg.ptr(),vresgdata,NULL);
-
+  acuint fspart("-",Arrays_Cpu,true);
+  fvres::CallScanUmbrellaRegion(Np,Npb,CSP,DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
+    ,FSNormal_c->cptr(),fspart.ptr(),FSType_c->ptr(),vresdata);
 }
 
 
@@ -371,7 +364,6 @@ void JSphCpuSingle_VRes::Interaction_ForcesB(TpInterStep interstep){
   const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
   const bool mdbc2=(runmdbc && SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   
-  InterStep=interstep;
 
   tfloat3* dengradcorr=NULL;
 

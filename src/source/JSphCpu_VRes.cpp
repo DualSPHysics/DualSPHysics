@@ -16,6 +16,7 @@
 #include "JSphCpuSingle_VRes.h"
 #include "JSphCpu_VRes.h"
 #include "RunExceptionDef.h"
+#include "JMatrix4.h"
 #include <climits>
 #include <cstring>
 #include <algorithm>
@@ -574,6 +575,496 @@ void Interaction_BufferExtrapFlux(const unsigned n,const int pini
     // case KERNEL_Cubic:       Interaction_BufferExtrapT<KERNEL_Cubic>  (n,pini,t,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);  break;
     case KERNEL_Wendland:    Interaction_BufferExtrapFluxT<KERNEL_Wendland>  (n,pini,t,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);  break;
     default: fun::Run_ExceptioonFun("Kernel unknown.");
+  }
+}
+
+//HEAD_DSPH
+/*
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+
+ EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
+ School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
+
+ This file is part of DualSPHysics. 
+
+ DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License 
+ as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.
+ 
+ DualSPHysics is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details. 
+
+ You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
+*/
+
+/// \file JSphCpu.cpp \brief Implements the class \ref JSphCpu.
+
+#include "JSphCpu.h"
+#include "JCellSearch_inline.h"
+#include "FunSphKernel.h"
+#include "FunctionsMath.h"
+
+#include <climits>
+#include <cmath>
+
+using namespace std;
+
+//==============================================================================
+/// Creates list with free-surface particle (normal and periodic).
+//==============================================================================
+unsigned CountFreeSurfaceParticles(unsigned npf,unsigned pini
+  ,const unsigned* fstype,unsigned* listp)
+{
+  unsigned count=0;
+  const unsigned pfin=pini+npf;
+  for(unsigned p=pini;p<pfin;p++){
+    const unsigned fstypep=fstype[p];
+    if(fstypep){//-It includes normal and periodic particles.
+      listp[count]=p; count++;
+    }
+  }
+  return(count);
+}
+
+
+
+//==============================================================================
+/// Perform interaction between particles: Fluid/Float-Fluid/Float or Fluid/Float-Bound
+/// Realiza interaccion entre particulas: Fluid/Float-Fluid/Float or Fluid/Float-Bound
+//==============================================================================
+template<TpKernel tker,bool sim2d> void InteractionComputeFSNormals
+  (unsigned np,unsigned pinit,const StCteSph csp
+  ,StDivDataCpu divdata,const unsigned* dcell
+  ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
+  ,const unsigned* listp,unsigned* fstype,tfloat3* fsnormal,StrGeomVresCpu& vresdata)
+{
+  //-Initialise execution with OpenMP. | Inicia ejecucion con OpenMP.
+  const int n=int(np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(int p=0;p<n;p++){
+    const unsigned p1=listp[p];
+
+    float fs_treshold=0;                                //-Divergence of the position.
+    tfloat3 gradc=TFloat3(0);                           //-Gradient of the concentration
+    unsigned neigh=0;                                   //-Number of neighbours.
+      
+    tmatrix3f lcorr;        lcorr=TMatrix3f(0);         //-Correction matrix.
+    tmatrix3f lcorr_inv;    lcorr_inv=TMatrix3f(0);     //-Inverse of the correction matrix.
+
+    float Nzero=0;
+    float ks2=csp.kernelsize2;
+    double dp=csp.dp;
+    if(sim2d)Nzero=float((3.141592)*ks2/(dp*dp));
+    else     Nzero=float((4.f/3.f)*(3.141592)*ks2*ks2/(dp*dp*dp));
+    //-Obtain data of particle p1.
+    const tdouble3 posp1=pos[p1];
+
+    bool boundp2=false;
+
+    for(int b2=0;b2<2;b2++){
+      if(b2==1)boundp2=true;
+
+      //-Search for neighbours in adjacent cells.
+      const StNgSearch ngs=nsearch::Init(dcell[p1],boundp2,divdata);
+      for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+        const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
+
+        //-Interaction of Fluid with type Fluid or Bound.
+        //-----------------------------------------------
+        for(unsigned p2=pif.x;p2<pif.y;p2++){
+          const float drx=float(posp1.x-pos[p2].x);
+          const float dry=float(posp1.y-pos[p2].y);
+          const float drz=float(posp1.z-pos[p2].z);
+          const float rr2=drx*drx+dry*dry+drz*drz;
+          if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO){
+          //-Computes kernel.
+            const float fac=fsph::GetKernel_Fac<tker>(csp,rr2);
+            const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
+            const float rhopp2= float(velrho[p2].w);
+
+            //===== Get mass of particle p2 ===== 
+            float massp2=(boundp2? csp.massbound: csp.massfluid); //-Contiene masa de particula segun sea bound o fluid.
+
+            // bool ftp2;
+            // float ftmassp2;    //-Contains mass of floating body or massf if fluid. | Contiene masa de particula floating o massp2 si es bound o fluid.
+            // const typecode cod=code[p2];
+            // ftp2=CODE_IsFloating(cod);
+            // ftmassp2=(ftp2? ftomassp[CODE_GetTypeValue(cod)]: massp2);
+
+            const float vol2=(float(massp2/rhopp2));
+            neigh++;
+
+            const float dot3=drx*frx+dry*fry+drz*frz;
+            gradc.x+=vol2*frx;
+            gradc.y+=vol2*fry;
+            gradc.z+=vol2*frz;
+
+            fs_treshold-=vol2*dot3;
+            lcorr.a11+=-drx*frx*vol2; lcorr.a12+=-drx*fry*vol2; lcorr.a13+=-drx*frz*vol2;
+            lcorr.a21+=-dry*frx*vol2; lcorr.a22+=-dry*fry*vol2; lcorr.a23+=-dry*frz*vol2;
+            lcorr.a31+=-drz*frx*vol2; lcorr.a32+=-drz*fry*vol2; lcorr.a33+=-drz*frz*vol2;
+
+            // const float wab=cufsph::GetKernel_Wab<KERNEL_Wendland>(rr2);
+            // pou+=wab*vol2;  
+          }
+        }
+      }
+    }
+
+    if(CODE_IsFluidBuffer(code[p1])){
+    //-Loop trough the local virtual stencil.
+      double ks=csp.kernelsize;
+      double dp=csp.dp;
+      const byte izone0=byte(CODE_GetIzoneFluidBuffer(code[p1]));
+      const byte izone=(izone0&CODE_TYPE_FLUID_INOUT015MASK);
+      tdouble3 minpos=posp1-TDouble3(ks,sim2d? 0: ks,ks);
+      tdouble3 maxpos=posp1+TDouble3(ks,sim2d? 0: ks,ks);
+      for(double rx=minpos.x;rx<=maxpos.x; rx+=dp) for(double ry=minpos.y; ry<=maxpos.y; ry+=dp)
+      for(double rz=minpos.z;rz<=maxpos.z; rz+=dp){
+        const float drx=float(posp1.x-rx);
+        const float dry=float(posp1.y-ry);
+        const float drz=float(posp1.z-rz);
+        const float rr2=drx*drx+dry*dry+drz*drz;          
+        float rx1=rx; float ry1=ry; float rz1=rz;
+        if(vresdata.tracking[izone]){
+          tmatrix4d mat=vresdata.matmov[izone].GetMatrix4d();
+          rx1=(rx-mat.a14)*mat.a11+(ry-mat.a24)*mat.a21+(rz-mat.a34)*mat.a31;
+          ry1=(rx-mat.a14)*mat.a12+(ry-mat.a24)*mat.a22+(rz-mat.a34)*mat.a32;
+          rz1=(rx-mat.a14)*mat.a13+(ry-mat.a24)*mat.a23+(rz-mat.a34)*mat.a33;     
+        }
+        tdouble3 posp2=TDouble3(rx1,ry1,rz1);
+        tdouble3 boxmin=vresdata.boxdommin[izone];
+        tdouble3 boxmax=vresdata.boxdommax[izone];
+        bool outside=(vresdata.inner[izone] ?!InZone(posp2,boxmin,boxmax): InZone(posp2,boxmin,boxmax));
+        if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO && outside){
+          //-Computes kernel.
+          const float fac=fsph::GetKernel_Fac<tker>(csp,rr2);
+          const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
+
+          //===== Get mass of particle p2 ===== 
+          float massp2=(boundp2? csp.massbound: csp.massfluid); //-Contiene masa de particula segun sea bound o fluid.
+          const float vol2=(float(massp2/csp.rhopzero));
+          neigh++;
+
+          const float dot3=drx*frx+dry*fry+drz*frz;
+          gradc.x+=vol2*frx;
+          gradc.y+=vol2*fry;
+          gradc.z+=vol2*frz;
+
+          fs_treshold-=vol2*dot3;
+          lcorr.a11+=-drx*frx*vol2; lcorr.a12+=-drx*fry*vol2; lcorr.a13+=-drx*frz*vol2;
+          lcorr.a21+=-dry*frx*vol2; lcorr.a22+=-dry*fry*vol2; lcorr.a23+=-dry*frz*vol2;
+          lcorr.a31+=-drz*frx*vol2; lcorr.a32+=-drz*fry*vol2; lcorr.a33+=-drz*frz*vol2;    
+        }
+      }
+    }
+    
+    //-Find particles that are probably on the free-surface.
+    unsigned fstypep1=0;
+    if(sim2d){
+      if(fs_treshold<1.7)fstypep1=2;
+      if(fs_treshold<1.1 && Nzero/float(neigh)<0.4f)fstypep1=3;
+    }
+    else{
+      if(fs_treshold<2.75)fstypep1=2;
+      if(fs_treshold<1.8 && Nzero/float(neigh)<0.4f)fstypep1=3;
+    }
+    fstype[p1]=fstypep1;
+    
+    //-Calculation of the inverse of the correction matrix (Don't think there is a better way, create function for Determinant2x2 for clarity?).
+    if(sim2d){
+      tmatrix2f lcorr2d;
+      tmatrix2f lcorr2d_inv;
+      lcorr2d.a11=lcorr.a11; lcorr2d.a12=lcorr.a13;
+      lcorr2d.a21=lcorr.a31; lcorr2d.a22=lcorr.a33;
+      float lcorr_det=(lcorr2d.a11*lcorr2d.a22-lcorr2d.a12*lcorr2d.a21);
+      lcorr2d_inv.a11=lcorr2d.a22/lcorr_det; lcorr2d_inv.a12=-lcorr2d.a12/lcorr_det; lcorr2d_inv.a22=lcorr2d.a11/lcorr_det; lcorr2d_inv.a21=-lcorr2d.a21/lcorr_det;
+      lcorr_inv.a11=lcorr2d_inv.a11;  lcorr_inv.a13=lcorr2d_inv.a12;
+      lcorr_inv.a31=lcorr2d_inv.a21;  lcorr_inv.a33=lcorr2d_inv.a22;
+    }
+    else{
+      const float determ=fmath::Determinant3x3(lcorr);
+      lcorr_inv=fmath::InverseMatrix3x3(lcorr,determ);
+    }
+
+    //-Correction of the gradient of concentration.
+    tfloat3 gradc1=TFloat3(0);    
+    gradc1.x=gradc.x*lcorr_inv.a11+gradc.y*lcorr_inv.a12+gradc.z*lcorr_inv.a13;
+    gradc1.y=gradc.x*lcorr_inv.a21+gradc.y*lcorr_inv.a22+gradc.z*lcorr_inv.a23;
+    gradc1.z=gradc.x*lcorr_inv.a31+gradc.y*lcorr_inv.a32+gradc.z*lcorr_inv.a33;    
+    float gradc_norm=sqrt(gradc1.x*gradc1.x+gradc1.y*gradc1.y+gradc1.z*gradc1.z);
+    //-Set normal.
+    fsnormal[p1].x=-gradc1.x/gradc_norm;
+    fsnormal[p1].y=-gradc1.y/gradc_norm;
+    fsnormal[p1].z=-gradc1.z/gradc_norm;
+  }
+}
+
+//==============================================================================
+/// Computes free-surface particles and their normals.
+//==============================================================================
+void CallComputeFSNormals(const unsigned np,const unsigned npb
+  ,const StCteSph csp,const StDivDataCpu& divdata,const unsigned* dcell
+  ,const tdouble3* pos,const typecode* code,const tfloat4* velrho
+  ,unsigned* fstype,tfloat3* fsnormal,unsigned* listp,StrGeomVresCpu& vresdata)
+{
+  const unsigned npf=np-npb;
+  if(npf){
+    //-Creates list with free-surface particle (normal and periodic).
+    const unsigned count=CountFreeSurfaceParticles(npf,npb,fstype,listp);
+    //-Computes normals on selected free-surface particles.
+    if(count){
+      if(csp.simulate2d){ const bool sim2d=true;
+        switch(csp.tkernel){
+          case KERNEL_Wendland:  InteractionComputeFSNormals<KERNEL_Wendland,sim2d>(count,npb,csp,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal,vresdata);  break;
+          case KERNEL_Cubic:     InteractionComputeFSNormals<KERNEL_Cubic   ,sim2d>(count,npb,csp,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal,vresdata);  break;
+          default: fun::Run_ExceptioonFun("Kernel unknown.");
+        }
+      }
+      else{ const bool sim2d=false;
+        switch(csp.tkernel){
+          case KERNEL_Wendland:  InteractionComputeFSNormals<KERNEL_Wendland,sim2d>(count,npb,csp,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal,vresdata);  break;
+          case KERNEL_Cubic:     InteractionComputeFSNormals<KERNEL_Cubic   ,sim2d>(count,npb,csp,divdata,dcell,pos,code,velrho,listp,fstype,fsnormal,vresdata);  break;
+          default: fun::Run_ExceptioonFun("Kernel unknown.");
+        }
+      }
+    }
+  }
+}
+
+//==============================================================================
+/// Interaction of Fluid-Fluid/Bound & Bound-Fluid.
+/// Interaccion Fluid-Fluid/Bound & Bound-Fluid.
+//==============================================================================
+void InteractionCallScanUmbrellaRegion(unsigned np,unsigned pinit,const StCteSph csp
+  ,StDivDataCpu divdata,const unsigned* dcell,const tdouble3* pos
+  ,const typecode* code,const tfloat3* fsnormal,const unsigned* listp
+  ,unsigned* fstype,StrGeomVresCpu& vresdata)
+{
+  //-Initialise execution with OpenMP. | Inicia ejecucion con OpenMP.
+  const int n=int(np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(int p=0;p<n;p++){
+    const unsigned p1=listp[p];
+    bool fs_flag=false;
+    bool boundp2=false;
+
+    //-Obtain data of particle p1.
+    const tdouble3 posp1=pos[p1];
+
+    for(int b2=0; b2<2;b2++){
+      if(b2==1) boundp2=true;
+      //-Search for neighbours in adjacent cells.
+      const StNgSearch ngs=nsearch::Init(dcell[p1],boundp2,divdata);
+      for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+        const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
+
+        //-Interaction of Fluid with type Fluid or Bound. | Interaccion de Fluid con varias Fluid o Bound.
+        //------------------------------------------------------------------------------------------------
+        for(unsigned p2=pif.x;p2<pif.y;p2++){
+          const float drx=float(posp1.x-pos[p2].x);
+          const float dry=float(posp1.y-pos[p2].y);
+          const float drz=float(posp1.z-pos[p2].z);
+          const float rr2=drx*drx+dry*dry+drz*drz;
+          if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO){
+            //-Computes kernel.
+            const tfloat3 posq=fsnormal[p1]*csp.kernelh;
+            if(rr2>2.f*csp.kernelh*csp.kernelh){
+              const float drxq=-drx-posq.x;
+              const float dryq=-dry-posq.y;
+              const float drzq=-drz-posq.z;
+              const float rrq=sqrt(drxq*drxq+dryq*dryq+drzq*drzq);
+              if(rrq<csp.kernelh)fs_flag=true;
+            }
+            else{
+              if(csp.simulate2d){
+                const float drxq=-drx-posq.x;
+                const float drzq=-drz-posq.z;
+                const tfloat3 normalq=TFloat3(drxq*fsnormal[p1].x,0,drzq*fsnormal[p1].z);
+                const tfloat3 tangq=TFloat3(-drxq*fsnormal[p1].z,0,drzq*fsnormal[p1].x);
+                const float normalqnorm=sqrt(normalq.x*normalq.x+normalq.z*normalq.z);
+                const float tangqnorm=sqrt(tangq.x*tangq.x+tangq.z*tangq.z);
+                if(normalqnorm+tangqnorm<csp.kernelh)fs_flag=true;
+              }
+              else{
+                float rrr=1.f/sqrt(rr2);
+                const float arccosin=acos((-drx*fsnormal[p1].x*rrr-dry*fsnormal[p1].y*rrr-drz*fsnormal[p1].z*rrr));
+                if(arccosin<0.785398f)fs_flag=true;
+              }
+            }
+          }
+        }
+      }
+    }
+
+
+    if(CODE_IsFluidBuffer(code[p1])){
+    //-Loop trough the local virtual stencil.
+      double ks=csp.kernelsize;
+      double dp=csp.dp;
+      const byte izone0=byte(CODE_GetIzoneFluidBuffer(code[p1]));
+      const byte izone=(izone0&CODE_TYPE_FLUID_INOUT015MASK);
+      tdouble3 minpos=posp1-TDouble3(ks,csp.simulate2d? 0: ks,ks);
+      tdouble3 maxpos=posp1+TDouble3(ks,csp.simulate2d? 0: ks,ks);
+      for(double rx=minpos.x;rx<=maxpos.x; rx+=dp) for(double ry=minpos.y; ry<=maxpos.y; ry+=dp)
+      for(double rz=minpos.z;rz<=maxpos.z; rz+=dp){
+        const float drx=float(posp1.x-rx);
+        const float dry=float(posp1.y-ry);
+        const float drz=float(posp1.z-rz);
+        const float rr2=drx*drx+dry*dry+drz*drz;          
+        float rx1=rx; float ry1=ry; float rz1=rz;
+        if(vresdata.tracking[izone]){
+          tmatrix4d mat=vresdata.matmov[izone].GetMatrix4d();
+          rx1=(rx-mat.a14)*mat.a11+(ry-mat.a24)*mat.a21+(rz-mat.a34)*mat.a31;
+          ry1=(rx-mat.a14)*mat.a12+(ry-mat.a24)*mat.a22+(rz-mat.a34)*mat.a32;
+          rz1=(rx-mat.a14)*mat.a13+(ry-mat.a24)*mat.a23+(rz-mat.a34)*mat.a33;     
+        }
+        tdouble3 posp2=TDouble3(rx1,ry1,rz1);
+        tdouble3 boxmin=vresdata.boxdommin[izone];
+        tdouble3 boxmax=vresdata.boxdommax[izone];
+        bool outside=(vresdata.inner[izone] ?!InZone(posp2,boxmin,boxmax): InZone(posp2,boxmin,boxmax));
+        if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO && outside){
+          const tfloat3 posq=fsnormal[p1]*csp.kernelh;
+          if(rr2>2.f*csp.kernelh*csp.kernelh){
+            const float drxq=-drx-posq.x;
+            const float dryq=-dry-posq.y;
+            const float drzq=-drz-posq.z;
+            const float rrq=sqrt(drxq*drxq+dryq*dryq+drzq*drzq);
+            if(rrq<csp.kernelh)fs_flag=true;
+          }
+          else{
+            if(csp.simulate2d){
+              const float drxq=-drx-posq.x;
+              const float drzq=-drz-posq.z;
+              const tfloat3 normalq=TFloat3(drxq*fsnormal[p1].x,0,drzq*fsnormal[p1].z);
+              const tfloat3 tangq=TFloat3(-drxq*fsnormal[p1].z,0,drzq*fsnormal[p1].x);
+              const float normalqnorm=sqrt(normalq.x*normalq.x+normalq.z*normalq.z);
+              const float tangqnorm=sqrt(tangq.x*tangq.x+tangq.z*tangq.z);
+              if(normalqnorm+tangqnorm<csp.kernelh)fs_flag=true;
+            }else{
+              float rrr=1.f/sqrt(rr2);
+              const float arccosin=acos((-drx*fsnormal[p1].x*rrr-dry*fsnormal[p1].y*rrr-drz*fsnormal[p1].z*rrr));
+              if(arccosin<0.785398f)fs_flag=true;
+            }
+          }    
+        }
+      }
+    }
+    
+    //-If particle was present in umbrella region, change the code of the particle.
+    if(fs_flag && fstype[p1]==2)fstype[p1]=0;
+    //-Periodic particle are internal by default.
+    if(CODE_IsPeriodic(code[p1]))fstype[p1]=0;
+  }
+}
+
+//==============================================================================
+/// Scan Umbrella region to identify free-surface particle.
+//==============================================================================
+void CallScanUmbrellaRegion(const unsigned np,const unsigned npb
+  ,const StCteSph csp,const StDivDataCpu& divdata
+  ,const unsigned* dcell,const tdouble3* pos,const typecode* code
+  ,const tfloat3* fsnormal,unsigned* listp,unsigned* fstype,StrGeomVresCpu& vresdata)
+{
+  const unsigned npf=np-npb;
+  if(npf){
+    //-Obtain the list of particle that are probably on the free-surface (in ComputeUmbrellaRegion maybe is unnecessary).
+    const unsigned count=CountFreeSurfaceParticles(npf,npb,fstype,listp);
+    //-Scan Umbrella region on selected free-surface particles.
+    if(count)InteractionCallScanUmbrellaRegion(count,npb,csp,divdata,dcell,pos,code,fsnormal,listp,fstype,vresdata);
+  }
+}
+
+
+template<TpKernel tker,bool sim2d> void CorrectShiftBuff
+  (const unsigned n,const unsigned pinit  ,const StCteSph csp
+  ,const unsigned* dcell,const tdouble3* pos,const typecode* code
+  ,tfloat4* shiftvel,unsigned* fstype,StrGeomVresCpu& vresdata){
+  
+  const int pfin=int(pinit+n);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(int p1=int(pinit);p1<pfin;p1++){
+    
+    //-Obtain data of particle p1.
+    const tdouble3 posp1=pos[p1];
+    tfloat4 shiftvelp1=shiftvel[p1];
+
+    if(CODE_IsFluidBuffer(code[p1])){
+    //-Loop trough the local virtual stencil.
+      double ks=csp.kernelsize;
+      double dp=csp.dp;
+      const byte izone0=byte(CODE_GetIzoneFluidBuffer(code[p1]));
+      const byte izone=(izone0&CODE_TYPE_FLUID_INOUT015MASK);
+      tdouble3 minpos=posp1-TDouble3(ks,sim2d? 0: ks,ks)-TDouble3(dp/2,sim2d? 0:dp/2,dp/2);
+      tdouble3 maxpos=posp1+TDouble3(ks,sim2d? 0: ks,ks)-TDouble3(dp/2,sim2d? 0:dp/2,dp/2);
+      for(double rx=minpos.x;rx<=maxpos.x; rx+=dp) for(double ry=minpos.y; ry<=maxpos.y; ry+=dp)
+      for(double rz=minpos.z;rz<=maxpos.z; rz+=dp){
+        const float drx=float(posp1.x-rx);
+        const float dry=float(posp1.y-ry);
+        const float drz=float(posp1.z-rz);
+        const float rr2=drx*drx+dry*dry+drz*drz;          
+        float rx1=rx; float ry1=ry; float rz1=rz;
+        if(vresdata.tracking[izone]){
+          tmatrix4d mat=vresdata.matmov[izone].GetMatrix4d();
+          rx1=(rx-mat.a14)*mat.a11+(ry-mat.a24)*mat.a21+(rz-mat.a34)*mat.a31;
+          ry1=(rx-mat.a14)*mat.a12+(ry-mat.a24)*mat.a22+(rz-mat.a34)*mat.a32;
+          rz1=(rx-mat.a14)*mat.a13+(ry-mat.a24)*mat.a23+(rz-mat.a34)*mat.a33;     
+        }
+        tdouble3 posp2=TDouble3(rx1,ry1,rz1);
+        tdouble3 boxmin=vresdata.boxdommin[izone];
+        tdouble3 boxmax=vresdata.boxdommax[izone];
+        bool outside=(vresdata.inner[izone] ?!InZone(posp2,boxmin,boxmax): InZone(posp2,boxmin,boxmax));
+        if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO && outside){
+          //-Computes kernel.
+          const float fac=fsph::GetKernel_Fac<tker>(csp,rr2);
+          const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
+
+          //===== Get mass of particle p2 ===== 
+          float massp2=csp.massfluid; //-Contiene masa de particula segun sea bound o fluid.
+          const float massrho=(float(massp2/csp.rhopzero));
+
+          //-Compute gradient of concentration and partition of unity.                  
+          shiftvelp1.x+=massrho*frx;    
+          shiftvelp1.y+=massrho*fry;
+          shiftvelp1.z+=massrho*frz;          
+          const float wab=fsph::GetKernel_Wab<tker>(csp,rr2);
+          shiftvelp1.w+=wab*massrho;    
+        }
+      }
+      shiftvel[p1]=shiftvelp1;
+    }
+  }
+}
+
+
+//==============================================================================
+/// Computes free-surface particles and their normals.
+//==============================================================================
+void CallCorrectShiftBuff(const unsigned np,const unsigned npb
+  ,const StCteSph csp,const unsigned* dcell,const tdouble3* pos,const typecode* code
+  ,tfloat4* shiftvel,unsigned* fstype,StrGeomVresCpu& vresdata)
+{
+  const unsigned npf=np-npb;
+  if(npf){
+      if(csp.simulate2d){ const bool sim2d=true;
+        switch(csp.tkernel){
+          case KERNEL_Wendland:  CorrectShiftBuff<KERNEL_Wendland,sim2d>(npf,npb,csp,dcell,pos,code,shiftvel,fstype,vresdata);  break;
+          case KERNEL_Cubic:     CorrectShiftBuff<KERNEL_Cubic   ,sim2d>(npf,npb,csp,dcell,pos,code,shiftvel,fstype,vresdata);  break;
+          default: fun::Run_ExceptioonFun("Kernel unknown.");
+        }
+      }
+      else{ const bool sim2d=false;
+        switch(csp.tkernel){
+          case KERNEL_Wendland:  CorrectShiftBuff<KERNEL_Wendland,sim2d>(npf,npb,csp,dcell,pos,code,shiftvel,fstype,vresdata);  break;
+          case KERNEL_Cubic:     CorrectShiftBuff<KERNEL_Cubic   ,sim2d>(npf,npb,csp,dcell,pos,code,shiftvel,fstype,vresdata);  break;
+          default: fun::Run_ExceptioonFun("Kernel unknown.");
+        }
+      }
   }
 }
 }

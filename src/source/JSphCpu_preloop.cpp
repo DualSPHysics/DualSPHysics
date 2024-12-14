@@ -307,7 +307,7 @@ template<TpKernel tker,bool sim2d,bool shiftadv> void JSphCpu::PreLoopInteractio
     float fs_treshold=0.f;                    //-Divergence of the position.
     tfloat3 gradc=TFloat3(0);                 //-Gradient of the concentration
     unsigned neigh=0;                         //-Number of neighbours.
-    tfloat4 shiftvelp1=TFloat4(0);            //-Shifting Velocity vector
+    tfloat4 shiftvelp1=shiftvel[p1];          //-Shifting Velocity vector
     tfloat3 fsnormalp1=TFloat3(0);            //-Free-surface vector
     bool    nearfs=false;                     //-Bool for detecting near free-surface particles.                <ShiftingAdvanced>
     float   pou=false;                        //-Partition of unity for normal correction.                      <ShiftingAdvanced>

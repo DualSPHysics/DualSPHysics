@@ -378,6 +378,22 @@ void JSphVRes::Config()
   
 }
 
+StrDataVresCpu JSphVRes::GetZoneFluxInfoCpu(unsigned nzone){
+  unsigned nini=NIni[nzone];
+  unsigned npoints=NPoints[nzone];
+
+  tdouble3*  points  =PtPoints   ;
+  tfloat3*   normals =PtNormals  ;
+  tfloat3*   velmot  =PtVelMot   ;
+  float*     mass    =PtMass     ;
+  return(StrDataVresCpu(npoints,nini,points,normals,velmot,mass));
+}
+
+StrGeomVresCpu JSphVRes::GetGeomInfoVresCpu(){
+    return(StrGeomVresCpu(BoxLimitMin,BoxLimitMax,BoxDomMin,
+      BoxDomMax,Tracking,Inner,Matmov));
+  };
+
 #ifdef _WITHGPU
 StrDataVresGpu JSphVRes::GetZoneFluxInfoGpu(unsigned nzone){
   unsigned nini=NIni[nzone];
@@ -391,34 +407,11 @@ StrDataVresGpu JSphVRes::GetZoneFluxInfoGpu(unsigned nzone){
   return(StrDataVresGpu(npoints,nini,posxyg,poszg,normals,velmot,mass));
 }
 
-  StrGeomVresGpu JSphVRes:: GetGeomInfoVres(){
-    return(StrGeomVresGpu(BoxLimitMing,BoxLimitMaxg,BoxDomMing,BoxDomMaxg,Trackingg,Innerg,Matmovg));
+  StrGeomVresGpu JSphVRes::GetGeomInfoVresGpu(){
+    return(StrGeomVresGpu(BoxLimitMing,BoxLimitMaxg,BoxDomMing,
+      BoxDomMaxg,Trackingg,Innerg,Matmovg));
   };
 #endif
-
-
-StrDataVresCpu JSphVRes::GetZoneFluxInfoCpu(unsigned nzone){
-  unsigned nini=NIni[nzone];
-  unsigned npoints=NPoints[nzone];
-
-  tdouble3*  points  =PtPoints   ;
-  tfloat3*   normals =PtNormals  ;
-  tfloat3*   velmot  =PtVelMot   ;
-  float*     mass    =PtMass     ;
-  return(StrDataVresCpu(npoints,nini,points,normals,velmot,mass));
-}
-// StrGeomVresGpu JSphBuffer::GetGeomInfoVres(){
-//   double3*    boxlimitmin = BoxLimitMing;
-//   double3*    boxlimitmax = BoxLimitMaxg;
-//   double3*    boxdommin   = BoxDomMing;
-//   double3*    boxdommax   = BoxDomMaxg;
-//   bool*       tracking    = Trackingg;
-//   bool*       inner       = Innerg;
-//   tmatrix4f*  matmov      = Matmovg;
-//   return(StrGeomVresGpu(boxlimitmin,boxlimitmax,boxdommin,boxdommax,tracking,inner,matmov));
-// }
-
-
 
 
 void JSphVRes::UpdateMatMov(std::vector<JMatrix4d> mat){
