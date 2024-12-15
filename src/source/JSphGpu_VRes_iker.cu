@@ -265,9 +265,13 @@ void BufferComputeStep(unsigned n,int *inoutpart,const double2 *posxy,const doub
   }
 }
 
-
+//------------------------------------------------------------------------------
+/// Solve a linear system of m_dim unknown and m_dim2 right hand sides with a LU Decomposition.
+/// Return the reciprocal of the condition number.
+//------------------------------------------------------------------------------
 template<typename T = float,const int m_dim, const int m_dim2>
-__device__ void LUdecomp_Single(T (&A)[m_dim*m_dim], int (&p)[m_dim], T (&b)[m_dim*m_dim2], T (&sol)[m_dim2], T &treshold){
+__device__ void LUdecomp_Single(T (&A)[m_dim*m_dim],int (&p)[m_dim]
+  ,T (&b)[m_dim*m_dim2],T (&sol)[m_dim2],T &treshold){
   //-Compute the norm of matrix A
   T maxs = 0;
   for(int i=0;i<m_dim;i++){
@@ -340,8 +344,7 @@ __device__ void LUdecomp_Single(T (&A)[m_dim*m_dim], int (&p)[m_dim], T (&b)[m_d
         
 }
 //------------------------------------------------------------------------------
-/// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
-/// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
+/// Perform interaction between buffer particles and fluid particles. Buffer-Fluid
 //------------------------------------------------------------------------------
 template <TpKernel tker,bool sim2d,TpVresOrder vrorder, typename T = float>
 __global__ void KerInteractionBufferExtrap_Single(
@@ -514,8 +517,7 @@ __global__ void KerInteractionBufferExtrap_Single(
 }
 
 //==============================================================================
-/// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
-/// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
+/// Perform interaction between buffer particles and fluid particles. Buffer-Fluid
 //==============================================================================
 template<TpKernel tker,bool sim2d,TpVresOrder vrorder>
  void Interaction_BufferExtrapT(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t,
@@ -536,12 +538,12 @@ template<TpKernel tker,bool sim2d,TpVresOrder vrorder>
 
 
 //==============================================================================
-/// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
-/// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
+/// Perform interaction between buffer particles and fluid particles. Buffer-Fluid
 //==============================================================================
 template<TpKernel tker>
-void Interaction_BufferExtrap_gt0(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float4* velrhop,typecode *code1,bool fastsingle,const TpVresOrder vrorder,float mrthreshold)
+void Interaction_BufferExtrap_gt0(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t
+  ,const double2 *posxyb,const double *poszb,float4* velrhop,typecode *code1,bool fastsingle
+  ,const TpVresOrder vrorder,float mrthreshold)
 {
   if(t.simulate2d){
     switch(vrorder){
@@ -559,11 +561,11 @@ void Interaction_BufferExtrap_gt0(unsigned bufferpartcount,const int *bufferpart
 }
 
 //==============================================================================
-/// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
-/// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
+/// Perform interaction between buffer particles and fluid particles. Buffer-Fluid
 //==============================================================================
-void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float4* velrhop,typecode *code1,bool fastsingle,const TpVresOrder order,float mrthreshold)
+void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t
+	,const double2 *posxyb,const double *poszb,float4* velrhop,typecode *code1,bool fastsingle
+  ,const TpVresOrder order,float mrthreshold)
 {
   switch(t.tkernel){
     case KERNEL_Wendland:
@@ -945,30 +947,21 @@ __global__ void KerBufferListCreate(unsigned n,unsigned pini,unsigned nmax,float
 }
 
 //==============================================================================
-/// Create list for new inlet particles to create at end of inoutpart[].
+/// Create list for new buffer particles to create at end of buffer[].
 /// Returns number of new particles to create.
-///
-/// Crea lista de nuevas particulas inlet a crear al final de inoutpart[].
-/// Devuelve el numero de las nuevas particulas para crear.
 //==============================================================================
-unsigned BufferListCreate(bool stable,unsigned n,unsigned pini,unsigned nmax, float *fluxes,int *bufferpart,double massf)
+unsigned BufferListCreate(bool stable,unsigned n,unsigned pini,unsigned nmax
+  ,float *fluxes,int *bufferpart,double massf)
 {
   unsigned count=0;
   if(n){
-    //-inoutpart size list initialized to zero.
-    //-Inicializa tamanho de lista inoutpart a cero.
+    //-bufferpart size list initialized to zero.
     cudaMemset(bufferpart+nmax,0,sizeof(unsigned));
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
-    const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); //-All fluid particles can be in in/out area and one position for counter.
+    const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); 
     KerBufferListCreate <<<sgrid,SPHBSIZE,smem>>> (n,pini,nmax,fluxes,bufferpart,massf);
     cudaMemcpy(&count,bufferpart+nmax,sizeof(unsigned),cudaMemcpyDeviceToHost);
-    //-Reorders list if it is valid and stable has been activated.
-    //-Reordena lista si es valida y stable esta activado.
-//    if(stable && count && count<=nmax){
-//      thrust::device_ptr<unsigned> dev_list((unsigned*)inoutpart);
-//      thrust::sort(dev_list+n,dev_list+n+count);
-    }
-
+  }
   return(count);
 }
 
@@ -1000,7 +993,7 @@ template<bool periactive> __global__ void KerBufferCreateNewPart(unsigned newn,u
 }
 
 //==============================================================================
-/// Creates new vres buffer particles to replace the particles moved to fluid domain.
+/// Creates new buffer particles in VRes simulations.
 //==============================================================================
 void BufferCreateNewPart(byte periactive,unsigned newn,unsigned pini
 		  ,int *bufferpart
@@ -1015,7 +1008,12 @@ void BufferCreateNewPart(byte periactive,unsigned newn,unsigned pini
   }
 }
 
-__global__ void KerMoveBufferZone(unsigned pini,unsigned ntot, double2 *posxy,double *posz,float3* normals,float3* velflux,double dt,tmatrix4d mat)
+//------------------------------------------------------------------------------
+/// Move position and orient normal for accumulation points on the VRes interface.
+//------------------------------------------------------------------------------
+__global__ void KerMoveBufferZone(unsigned pini,unsigned ntot
+  , double2 *posxy,double *posz,float3* normals
+  ,float3* velflux,double dt,tmatrix4d mat)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(cp<ntot){
@@ -1037,14 +1035,21 @@ __global__ void KerMoveBufferZone(unsigned pini,unsigned ntot, double2 *posxy,do
   }
 }
 
-void MoveBufferZone(unsigned pini,unsigned ntot, double2 *posxy,double *posz,float3* normals,float3* velflux,double dt,tmatrix4d mat,int zone)
+//========================================================================================
+/// Move position and orient normal for accumulation points on the VRes interface.
+//=========================================================================================
+void MoveBufferZone(unsigned pini,unsigned ntot,
+  double2 *posxy,double *posz,float3* normals,
+  float3* velflux,double dt,tmatrix4d mat,int zone)
 {
 	dim3 sgrid=GetSimpleGridSize(ntot,SPHBSIZE);
 	KerMoveBufferZone<<<sgrid,SPHBSIZE>>> (pini,ntot,posxy,posz,normals,velflux,dt,mat);
 }
 
 
-//------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------
+/// Remove normal component to the interface of the shifting vector for buffer particles.
+//---------------------------------------------------------------------------------------
 __global__ void KerBufferShiftingGpu(unsigned n,unsigned pini,const double2 *posxy,const double *posz
 		  ,float4 *shiftpos,typecode *code,const double3* boxlimitmin,const double3* boxlimitmax
       ,const bool* tracking,const tmatrix4f* mat,const bool* inner)
@@ -1081,32 +1086,27 @@ __global__ void KerBufferShiftingGpu(unsigned n,unsigned pini,const double2 *pos
         shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
         shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
         shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
-                // shiftpos[p1].x=0.0f;
-
       } 
       if((fabs(disy)>boxsize.y/2.0)){
         float3 normal=make_float3(mat[izone].a12,mat[izone].a22,mat[izone].a32);
         shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
         shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
         shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
-                // shiftpos[p1].y=0.0f;
-
       }
       if((fabs(disz)>boxsize.z/2.0)){
         float3 normal=make_float3(mat[izone].a13,mat[izone].a23,mat[izone].a33);
         shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
         shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
         shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
-                        // shiftpos[p1].z=0.0f;
       }
     }
   }
 }
 
 
-//==============================================================================
-/// Computes sub-particle stress tensor (Tau) for SPS turbulence model.
-//==============================================================================
+//========================================================================================
+/// Remove normal component to the interface of the shifting vector for buffer particles.
+//=========================================================================================
 void BufferShiftingGpu(unsigned np,unsigned npb,const double2 *posxy,const double *posz
   ,float4 *shiftpos,typecode *code,StrGeomVresGpu& vresgdata,cudaStream_t stm)
 {
@@ -1118,7 +1118,10 @@ void BufferShiftingGpu(unsigned np,unsigned npb,const double2 *posxy,const doubl
       ,vresgdata.matmov,vresgdata.inner);
   }
 }
-
+//------------------------------------------------------------------------------
+/// Interaction of a particle with a set of particles. (Fluid/Float-Fluid/Float/Bound)
+/// Realiza la interaccion de una particula con un conjunto de ellas. (Fluid/Float-Fluid/Float/Bound)
+//------------------------------------------------------------------------------
 __device__ void KerComputeNormalsBufferBox(unsigned p1,const double3 posp1
   ,float massp2,float& fs_treshold,float3& gradc,tmatrix3f& lcorr,unsigned& neigh
   ,float& pou,const double3 boxlimitmin,const double3 boxlimitmax,const bool inner
@@ -1223,7 +1226,10 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
 
 
 
-
+//==============================================================================
+/// Perform interaction between particles: Fluid/Float-Fluid/Float or Fluid/Float-Bound
+/// Realiza interaccion entre particulas: Fluid/Float-Fluid/Float or Fluid/Float-Bound
+//==============================================================================
     __global__ void KerComputeNormals(unsigned n,unsigned pinit
     ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
     ,const float4 *poscell,const float4 *velrhop,const typecode *code,unsigned* fstype,float3* fsnormal
@@ -1336,7 +1342,9 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
   }
 
  
-
+//------------------------------------------------------------------------------
+/// Obtain the list of particle that are probably on the free-surface.
+//------------------------------------------------------------------------------
   __global__ void KerCountFreeSurface(unsigned n,unsigned pini
     ,unsigned* fs,unsigned* listp)
   {
@@ -1360,6 +1368,9 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
     }
   }
 
+//==============================================================================
+/// Compute free-surface particles and their normals.
+//==============================================================================
   void ComputeFSNormals(TpKernel tkernel,bool simulate2d,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
     ,StDivDataGpu& dvd,const unsigned* dcell,const double2* posxy,const double* posz
     ,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp,float4* shiftposfs
@@ -1389,6 +1400,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
     cudaDeviceSynchronize();
     
   }
+
 
   __device__ void KerScanUmbrellaRegionBufferBox(unsigned p1
     ,const double3 posp1,bool& fs_flag,const float3* fsnormal
@@ -1451,6 +1463,10 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
   if(fs_flag) return;
   }
 
+//------------------------------------------------------------------------------
+/// Interaction of a particle with a set of particles. (Fluid/Float-Fluid/Float/Bound)
+/// Realiza la interaccion de una particula con un conjunto de ellas. (Fluid/Float-Fluid/Float/Bound)
+//------------------------------------------------------------------------------
  __device__ void KerScanUmbrellaRegionBox(bool boundp2,unsigned p1
     ,const unsigned &pini,const unsigned &pfin,const float4 *poscell,const float4 &pscellp1
     ,bool& fs_flag,const float3* fsnormal,bool simulate2d)
@@ -1491,8 +1507,10 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
     }
     if(fs_flag) return;
   }
-
-
+//==============================================================================
+/// Interaction of Fluid-Fluid/Bound & Bound-Fluid.
+/// Interaccion Fluid-Fluid/Bound & Bound-Fluid.
+//==============================================================================
   __global__ void KerScanUmbrellaRegion(unsigned n,unsigned pinit
     ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
     ,const float4 *poscell,const typecode* code,unsigned* fstype,float3* fsnormal,bool simulate2d,const unsigned* listp
@@ -1538,30 +1556,26 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
         const bool      track     =tracking   [izone]; 
         const double3   posp1     =make_double3(posxy[p1].x,posxy[p1].y,posz[p1]); 
         KerScanUmbrellaRegionBufferBox (p1,posp1,fs_flag,fsnormal,boxlimmin,boxlimmax,inn,rmat,track,simulate2d);
-      }
-
-      
+      }  
       //-If particle was present in umbrella region, change the code of the particle.
       if(fs_flag && fstype[p1]==2) fstype[p1]=0;
       //-Periodic particle are internal by default.
-      if(CODE_IsPeriodic(code[p1])) fstype[p1]=0;
-
-    
+      if(CODE_IsPeriodic(code[p1])) fstype[p1]=0;  
     }
   }
 
 
 
 
-
-
+//==============================================================================
+/// Scan Umbrella region to identify free-surface particle.
+//==============================================================================
   void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
     ,StDivDataGpu& dvd,const unsigned* dcell,const double2* posxy,const double* posz
     ,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp,float4* shiftposfs
     ,unsigned* fstype,float3* fsnormal,unsigned* listp,StrGeomVresGpu& vresgdata,cudaStream_t stm)
   {
     unsigned count=0;
-
     //-Obtain the list of particle that are probably on the free-surface (in ComputeUmbrellaRegion maybe is unnecessary).
     if(fluidnum){
       cudaMemset(listp+fluidnum,0,sizeof(unsigned));
@@ -1575,13 +1589,12 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
     if(count){
       dim3 sgridf=GetSimpleGridSize(count,bsfluid);
       KerScanUmbrellaRegion<<<sgridf,bsfluid,0,stm>>> 
-        (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell,dvd.cellfluid,dcell
-            ,poscell,code,fstype,fsnormal,simulate2d,listp
-            ,posxy,posz,vresgdata.boxdommin,vresgdata.boxdommax,vresgdata.inner,vresgdata.matmov,vresgdata.tracking);
-    }
-    
-    cudaDeviceSynchronize();
-    
+        (count,fluidini,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell
+        ,dvd.cellfluid,dcell,poscell,code,fstype,fsnormal,simulate2d,listp
+        ,posxy,posz,vresgdata.boxdommin,vresgdata.boxdommax,vresgdata.inner
+        ,vresgdata.matmov,vresgdata.tracking);
+    }    
+    cudaDeviceSynchronize();    
   }
 
  __device__ void KerComputeShiftingVelBufferBox(unsigned p1,const double3 posp1
@@ -1628,8 +1641,9 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
     }
   }
 
-
-
+//==============================================================================
+/// Interaction of a particle with a set of particles. (Fluid/Float-Fluid/Float/Bound)
+//==============================================================================
   template<TpKernel tker,bool simulate2d,bool shiftadv>
   __device__ void KerPreLoopInteractionBox(bool boundp2,unsigned p1
     ,const unsigned &pini,const unsigned &pfin,const float4 *poscell,const float4 *velrhop
@@ -1692,6 +1706,10 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
     }
   }
 
+//==============================================================================
+/// Interaction of Fluid-Fluid/Bound & Bound-Fluid for models before
+/// InteractionForces
+//==============================================================================
   template<TpKernel tker,bool simulate2d,bool shiftadv>
   __global__ void KerPreLoopInteraction(unsigned n
     ,unsigned pinit,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid
@@ -1787,10 +1805,11 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
       
     }
   }
-
-  
-  
-  
+ 
+//==============================================================================
+/// Interaction of Fluid-Fluid/Bound & Bound-Fluid for models before
+/// InteractionForces
+//==============================================================================  
   
   template<TpKernel tker,bool simulate2d,bool shiftadv> void PreLoopInteractionT3(unsigned bsfluid
     ,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
@@ -1807,7 +1826,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
 
   }
 }
-
+//==============================================================================
   template<TpKernel tker,bool simulate2d> void PreLoopInteractionT2(bool shiftadv
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
@@ -1824,7 +1843,7 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
         ,shiftvel,fstype,fsnormal,fsmindist,vresgdata,stm);
   }
 }
-
+//==============================================================================
   template<TpKernel tker> void PreLoopInteractionT(bool simulate2d,bool shiftadv
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
@@ -1842,8 +1861,8 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
   }
 }
 
-
-   void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv
+//==============================================================================
+  void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz
     ,const unsigned* dcell,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp
     ,float4* shiftvel,unsigned* fstype,float3* fsnormal,float* fsmindist,StrGeomVresGpu& vresgdata,cudaStream_t stm)

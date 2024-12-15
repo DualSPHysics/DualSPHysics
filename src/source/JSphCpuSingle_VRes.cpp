@@ -22,7 +22,7 @@ JSphCpuSingle_VRes::JSphCpuSingle_VRes():JSphCpuSingle(){
   MRfastsingle=true;
   MROrder=0;
   MRThreshold=100;
-  Multires=NULL;
+  VRes=NULL;
 
 
 }
@@ -31,7 +31,7 @@ JSphCpuSingle_VRes::JSphCpuSingle_VRes():JSphCpuSingle(){
 
 JSphCpuSingle_VRes::~JSphCpuSingle_VRes(){
   DestructorActive=true;
-  delete Multires; Multires=NULL;
+  delete VRes; VRes=NULL;
 }
 
 //==============================================================================
@@ -95,39 +95,39 @@ double JSphCpuSingle_VRes::Init2(){
 }
 
 
-double JSphCpuSingle_VRes::ComputeStep_SymB(){
+double JSphCpuSingle_VRes::ComputeStepVRes(){
   const double dt=SymplecticDtPre;
-  if(CaseNmoving)CalcMotion(dt);               //-Calculate motion for moving bodies.
+  if(CaseNmoving)CalcMotion(dt);          //-Calculate motion for moving bodies.
   //-Predictor
   //-----------
   InterStep=INTERSTEP_SymPredictor;
   DemDtForce=dt*0.5f;
-  MdbcBoundCorrection(INTERSTEP_SymPredictor);  //-Mdbc correction
-  PreInteraction_Forces(INTERSTEP_SymPredictor);//-Allocating temporary arrays.
-  PreLoopProcedureVRes(INTERSTEP_SymPredictor);     //-Calculate variables for interaction forces (Shifting,DDT,etc...).                          //-For DEM interaction.
-  Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
-  const double dt_p=DtVariable(false);         //-Calculate dt of predictor step.
-  if(Shifting)RunShifting(dt*.5);              //-Shifting.
-  ComputeSymplecticPre(dt);                    //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
-  if(CaseNfloat)RunFloating(dt*.5,true);       //-Control of floating bodies.
-  PosInteraction_Forces();                     //-Free memory used for interaction.
+  MdbcBoundCorrection(InterStep);         //-Mdbc correction
+  PreInteraction_Forces(InterStep);       //-Allocating temporary arrays.
+  PreLoopProcedureVRes(InterStep);        //-Calculate variables for interaction forces (Shifting,DDT,etc...).                          //-For DEM interaction.
+  Interaction_Forces(InterStep);          //-Interaction.
+  const double dt_p=DtVariable(false);    //-Calculate dt of predictor step.
+  if(Shifting)RunShifting(dt*.5);         //-Shifting.
+  ComputeSymplecticPre(dt);               //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
+  if(CaseNfloat)RunFloating(dt*.5,true);  //-Control of floating bodies.
+  PosInteraction_Forces();                //-Free memory used for interaction.
   //-Corrector
   //-----------
   InterStep=INTERSTEP_SymCorrector;
-  DemDtForce=dt;                               //-For DEM interaction.
+  DemDtForce=dt;                          //-For DEM interaction.
   RunCellDivide(true);
-  MdbcBoundCorrection(INTERSTEP_SymCorrector);  //-Mdbc correction
-  PreInteraction_Forces(INTERSTEP_SymCorrector);//-Allocating temporary arrays.
-  PreLoopProcedureVRes(INTERSTEP_SymCorrector);     //-Calculate variables for interaction forces (Shifting,DDT,etc...).
-  Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
-  const double dt_c=DtVariable(true);          //-Calculate dt of corrector step.
-  if(Shifting)RunShifting(dt);                 //-Shifting.
-  ComputeSymplecticCorr(dt);                   //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
-  if(CaseNfloat)RunFloating(dt,false);         //-Control of floating bodies.
-  PosInteraction_Forces();                     //-Free memory used for interaction.
-  if(Damping)RunDamping(dt);                   //-Applies Damping.
-  if(RelaxZones)RunRelaxZone(dt);              //-Generate waves using RZ.
-  SymplecticDtPre1=min(dt_p,dt_c);              //-Calculate dt for next ComputeStep.
+  MdbcBoundCorrection(InterStep);         //-Mdbc correction
+  PreInteraction_Forces(InterStep);       //-Allocating temporary arrays.
+  PreLoopProcedureVRes(InterStep);        //-Calculate variables for interaction forces (Shifting,DDT,etc...).
+  Interaction_Forces(InterStep);          //-Interaction.
+  const double dt_c=DtVariable(true);     //-Calculate dt of corrector step.
+  if(Shifting)RunShifting(dt);            //-Shifting.
+  ComputeSymplecticCorr(dt);              //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
+  if(CaseNfloat)RunFloating(dt,false);    //-Control of floating bodies.
+  PosInteraction_Forces();                //-Free memory used for interaction.
+  if(Damping)RunDamping(dt);              //-Applies Damping.
+  if(RelaxZones)RunRelaxZone(dt);         //-Generate waves using RZ.
+  SymplecticDtPre1=min(dt_p,dt_c);        //-Calculate dt for next ComputeStep.
   return(dt);
 }
 
@@ -153,9 +153,9 @@ void JSphCpuSingle_VRes::Finish(double dt1){
           DgSaveVtkParticlesCpuMRBuffer("Compute_Debug_Buffer.vtk",Part,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL);
 	        DgSaveVtkParticlesCpuMR("Compute_Debug_Fluid.vtk",Part,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL,NULL);
         }
-        if(VRES_DG_SAVEVTK)Multires->SaveNormals(DirDataOut+"NormalsBuffer_",Part);
-        if(VRES_DG_SAVEVTK)Multires->SaveVtkDomains(DirDataOut+"Domains",Part,Simulate2D);
-        if(VRES_DG_SAVEVTK)Multires->SaveVResData(Part,TimeStep,Nstep);
+        if(VRES_DG_SAVEVTK)VRes->SaveNormals(DirDataOut+"NormalsBuffer_",Part);
+        if(VRES_DG_SAVEVTK)VRes->SaveVtkDomains(DirDataOut+"Domains",Part,Simulate2D);
+        if(VRES_DG_SAVEVTK)VRes->SaveVResData(Part,TimeStep,Nstep);
 
 	      SaveData();
 	      Part++;
@@ -177,8 +177,8 @@ void JSphCpuSingle_VRes::Finish2(){
 }
 
 void JSphCpuSingle_VRes::InitMultires(const JSphCfgRun* cfg, JCaseVRes casemultires, unsigned id){
-   Multires=new JSphVRes(Cpu,CSP,casemultires,id,AppName,DirDataOut,PartBegin,PartBeginDir);
-   Multires->Config();
+   VRes=new JSphVRes(Cpu,CSP,casemultires,id,AppName,DirDataOut,PartBegin,PartBeginDir);
+   VRes->Config();
 }
 
 stinterparmscb JSphCpuSingle_VRes::getParms()
@@ -195,12 +195,12 @@ stinterparmscb JSphCpuSingle_VRes::getParms()
 
 void JSphCpuSingle_VRes::BufferInit(stinterparmscb *parms){
 
-  for(unsigned i=0;i<Multires->GetCount();i++){
+  for(unsigned i=0;i<VRes->GetCount();i++){
       acint bufferpartc("-",Arrays_Cpu,true);
       unsigned buffercountpre;
 
   //		DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-      buffercountpre=Multires->CreateListCpuInit(Np,0,Pos_c->cptr(),Idp_c->cptr(),Code_c->ptr(),bufferpartc.ptr(),i);
+      buffercountpre=VRes->CreateListCpuInit(Np,0,Pos_c->cptr(),Idp_c->cptr(),Code_c->ptr(),bufferpartc.ptr(),i);
       // std::cout << buffercountpre << std::endl;
 
     }
@@ -212,15 +212,15 @@ void JSphCpuSingle_VRes::BufferInit(stinterparmscb *parms){
 
 void JSphCpuSingle_VRes::BufferExtrapolateData(stinterparmscb *parms){
 
-	for(unsigned i=0;i<Multires->GetCount();i++){
+	for(unsigned i=0;i<VRes->GetCount();i++){
 		
    acint bufferpartc("-",Arrays_Cpu,true);
       unsigned buffercountpre;
 
   //		DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-      buffercountpre=Multires->CreateListCpuInit(Np,0,Pos_c->cptr(),Idp_c->cptr(),Code_c->ptr(),bufferpartc.ptr(),i);
+      buffercountpre=VRes->CreateListCpuInit(Np,0,Pos_c->cptr(),Idp_c->cptr(),Code_c->ptr(),bufferpartc.ptr(),i);
 		
-		unsigned id=Multires->GetZone(i)->getZone()-1;
+		unsigned id=VRes->GetZone(i)->getZone()-1;
 
 
 	 fvres::Interaction_BufferExtrap(buffercountpre,bufferpartc.ptr(),parms[id],Pos_c->ptr(),Velrho_c->ptr(),Code_c->ptr(),2);
@@ -234,25 +234,25 @@ void JSphCpuSingle_VRes::BufferExtrapolateData(stinterparmscb *parms){
 
 void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,stinterparmscb *parms){
 	// // TmgStart(Timers,TMG_SuBuffer);
-    Multires->UpdateMatMov(mat);
-	  Multires->MoveBufferZone(dt,mat);
+    VRes->UpdateMatMov(mat);
+	  VRes->MoveBufferZone(dt,mat);
 	// // TmgStart(Timers,TMG_SuBuffer);
 
-	// // Multires->MoveBufferZone(dt,velmot);
+	// // VRes->MoveBufferZone(dt,velmot);
 	
-	for(unsigned i=0;i<Multires->GetCount();i++){
+	for(unsigned i=0;i<VRes->GetCount();i++){
     
     acint bufferpartc("-",Arrays_Cpu,true);
     unsigned buffercountpre;
 
-    buffercountpre=Multires->CreateListCpuInit(Np,0,Pos_c->cptr(),Idp_c->cptr(),Code_c->ptr(),bufferpartc.ptr(),i);
+    buffercountpre=VRes->CreateListCpuInit(Np,0,Pos_c->cptr(),Idp_c->cptr(),Code_c->ptr(),bufferpartc.ptr(),i);
 
-    StrDataVresCpu vresdata=Multires->GetZoneFluxInfoCpu(i);
+    StrDataVresCpu vresdata=VRes->GetZoneFluxInfoCpu(i);
 			
   //   // cusphvres::MoveBufferZone(nini,ntot,posxy,posz,dt,velmot[i]);
 
 
-		unsigned id=Multires->GetZone(i)->getZone()-1;
+		unsigned id=VRes->GetZone(i)->getZone()-1;
 		
     fvres::Interaction_BufferExtrapFlux(vresdata.ntot,vresdata.nini,parms[id],vresdata.points,vresdata.normals,vresdata.velmot,vresdata.mass,2,Dp,dt,100);
 
@@ -260,7 +260,7 @@ void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
       ,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
       ,vresdata.points,vresdata.normals,vresdata.mass);
     
-    unsigned newnp=Multires->ComputeStepCpu(buffercountpre,bufferpartc.ptr(),Code_c->ptr(),Pos_c->cptr(),i);
+    unsigned newnp=VRes->ComputeStepCpu(buffercountpre,bufferpartc.ptr(),Code_c->ptr(),Pos_c->cptr(),i);
 
     if(newnp){
       if(!CheckCpuParticlesSize(Np+newnp)){
@@ -268,7 +268,7 @@ void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
         ResizeParticlesSizeData(ndatacpu,Np+newnp,Np+newnp, 0.2,true);
         CellDivSingle->SetIncreaseNp(newnp);
       }
-      Multires->CreateNewPart(IdMax+1,Dcell_c->ptr(),Code_c->ptr(),Pos_c->ptr(),Idp_c->ptr(),Velrho_c->ptr()
+      VRes->CreateNewPart(IdMax+1,Dcell_c->ptr(),Code_c->ptr(),Pos_c->ptr(),Idp_c->ptr(),Velrho_c->ptr()
         ,this,Np,i);
 
     }
@@ -286,7 +286,7 @@ void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
 }
 
 void JSphCpuSingle_VRes::BufferShifting(){
-  // StrGeomVresGpu& vresgdata=Multires->GetGeomInfoVres();
+  // StrGeomVresGpu& vresgdata=VRes->GetGeomInfoVres();
 	// cusphvres::BufferShiftingGpu(Np,Npb,Posxy_g->ptr(),Posz_g->ptr(),ShiftVel_g->ptr(),Code_g->ptr(),vresgdata,NULL);
 }
 
@@ -308,7 +308,7 @@ void JSphCpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
     ComputeFSParticlesVRes();
     ComputeUmbrellaRegionVRes();
 
-    StrGeomVresCpu vresdata=Multires->GetGeomInfoVresCpu();
+    StrGeomVresCpu vresdata=VRes->GetGeomInfoVresCpu();
     fvres::CallCorrectShiftBuff(Np,Npb,CSP,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
     ,ShiftVel_c->ptr(),FSType_c->ptr(),vresdata);
 
@@ -341,7 +341,7 @@ void JSphCpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
 /// Compute free-surface particles and their normals.
 //==============================================================================
 void JSphCpuSingle_VRes::ComputeFSParticlesVRes(){
-  StrGeomVresCpu vresdata=Multires->GetGeomInfoVresCpu();
+  StrGeomVresCpu vresdata=VRes->GetGeomInfoVresCpu();
 
   acuint fspart("-",Arrays_Cpu,true);
   fvres::CallComputeFSNormals(Np,Npb,CSP,DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
@@ -353,7 +353,7 @@ void JSphCpuSingle_VRes::ComputeFSParticlesVRes(){
 /// Scan Umbrella region to identify free-surface particle.
 //==============================================================================
 void JSphCpuSingle_VRes::ComputeUmbrellaRegionVRes(){
-  StrGeomVresCpu vresdata=Multires->GetGeomInfoVresCpu();
+  StrGeomVresCpu vresdata=VRes->GetGeomInfoVresCpu();
 
   acuint fspart("-",Arrays_Cpu,true);
   fvres::CallScanUmbrellaRegion(Np,Npb,CSP,DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()

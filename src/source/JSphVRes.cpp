@@ -348,9 +348,6 @@ void JSphVRes::Config()
     for(unsigned ci=0; ci<ListSize; ci++){
     tmatrix4f mat_new=Matmov[ci].GetMatrix4f();
     matc[ci]=mat_new;
-    // matc[ci].a14=-(mat_new.a14*mat_new.a11+mat_new.a24*mat_new.a21+mat_new.a34*mat_new.a31);
-    // matc[ci].a24=-(mat_new.a14*mat_new.a12+mat_new.a24*mat_new.a22+mat_new.a34*mat_new.a32);
-    // matc[ci].a34=-(mat_new.a14*mat_new.a13+mat_new.a24*mat_new.a23+mat_new.a34*mat_new.a33);
   }
   cudaMemcpy(Matmovg,matc,sizeof(tmatrix4f)*ListSize,cudaMemcpyHostToDevice);
   delete[] matc;  matc=NULL;
@@ -449,9 +446,6 @@ void JSphVRes::UpdateMatMov(std::vector<JMatrix4d> mat){
     for(unsigned ci=0; ci<ListSize; ci++){
       tmatrix4f mat_1=Matmov[ci].GetMatrix4f();
       matc[ci]=mat_1;
-      // matc[ci].a14=-(mat_1.a14*mat_1.a11+mat_1.a24*mat_1.a21+mat_1.a34*mat_1.a31);
-      // matc[ci].a24=-(mat_1.a14*mat_1.a12+mat_1.a24*mat_1.a22+mat_1.a34*mat_1.a32);
-      // matc[ci].a34=-(mat_1.a14*mat_1.a13+mat_1.a24*mat_1.a23+mat_1.a34*mat_1.a33);
     }
     cudaMemcpy(Matmovg,matc,sizeof(tmatrix4f)*ListSize,cudaMemcpyHostToDevice);
     delete[] matc;  matc=NULL;
@@ -578,34 +572,20 @@ unsigned JSphVRes::CreateListGpuInit(unsigned npf, unsigned pini, const double2 
   unsigned count = 0;
   tmatrix4f mat=Matmov[nzone].GetMatrix4f();
   tmatrix4f matc=mat;
-  // matc.a14=-(mat.a14*mat.a11+mat.a24*mat.a21+mat.a34*mat.a31);
-  // matc.a24=-(mat.a14*mat.a12+mat.a24*mat.a22+mat.a34*mat.a32);
-  // matc.a34=-(mat.a14*mat.a13+mat.a24*mat.a23+mat.a34*mat.a33);
 
-  // bool inner=List[nzone]->Inner;
   bool Stable = false;
   count = cusphvres::BufferCreateListInit(Stable,npf,pini,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner,List[nzone]->BoxLimitMinOuter
     ,List[nzone]->BoxLimitMaxOuter,List[nzone]->BoxLimitMinMid,List[nzone]->BoxLimitMaxMid,List[nzone]->Inner,posxyg,poszg,codeg,(unsigned *)inoutpartg
     ,matc,Tracking[nzone],nzone);
-
-  // Log->Printf("%u> -------->CreateListXXX>> InOutcount:%u",nstep,count);
   return (count);
 }
 unsigned JSphVRes::CreateListGpu(unsigned npf, unsigned pini, const double2 *posxyg, const double *poszg, typecode *codeg, unsigned size, int *inoutpartg, unsigned nzone)
 {
   unsigned count = 0;
-  tmatrix4f mat=Matmov[nzone].GetMatrix4f();
-  tmatrix4f matc=mat;
-  // matc.a14=-(mat.a14*mat.a11+mat.a24*mat.a21+mat.a34*mat.a31);
-  // matc.a24=-(mat.a14*mat.a12+mat.a24*mat.a22+mat.a34*mat.a32);
-  // matc.a34=-(mat.a14*mat.a13+mat.a24*mat.a23+mat.a34*mat.a33);
-
-  // bool inner=List[nzone]->Inner;
   bool Stable = false;
   count = cusphvres::BufferCreateList(Stable,npf,pini,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner,List[nzone]->BoxLimitMinOuter
   ,List[nzone]->BoxLimitMaxOuter, List[nzone]->Inner,posxyg,poszg,codeg,(unsigned *)inoutpartg,Matmovg,Tracking[nzone],nzone);
 
-  // Log->Printf("%u> -------->CreateListXXX>> InOutcount:%u",nstep,count);
   return (count);
 }
 #endif
@@ -621,52 +601,55 @@ tdouble3 JSphVRes::MovePoint(tdouble3 oldpos,const tmatrix4d& mat){
 }
 
 
+//==============================================================================
+/// ComputeStep over buffer regions:
+/// - If buffer particle is moved to fluid zone then it changes to fluid particle.
+/// - If fluid particle is moved to buffer zone then it changes to buffer particle.
+/// - If buffer particle is moved out the domain then it changes to ignore particle.
+/// - Create buffer particle based on eulerian flux on the accumulations points.
+/// - Update position of buffer regions and compute motion velocity.
+//==============================================================================
+unsigned JSphVRes::ComputeStepCpu(unsigned bufferpartcount,int *bufferpart
+	,typecode *code,const tdouble3 *pos,unsigned nzone){
+  //-Updates code according to particle position and define new particles to create.
+	const int ncp=int(bufferpartcount);
+	#ifdef OMP_USE
+	  #pragma omp parallel for schedule (static)
+	#endif
+	for(int cp=0;cp<ncp;cp++){
+		typecode cod=0;
+	  byte newiz=255;
+	  const unsigned p=(unsigned)bufferpart[cp];
+	  const typecode rcode=code[p];
+	  const unsigned izone0=CODE_GetIzoneFluidBuffer(rcode);
+	  const unsigned izone=(izone0&CODE_TYPE_FLUID_BUFFER015MASK); //-Substract 16 to obtain the actual zone (0-15).
+	  tdouble3 ps=pos[p]; 
+    if(Tracking[nzone]) ps=MovePoint(ps,Matmov[nzone].GetMatrix4d());
 
-
-  unsigned JSphVRes::ComputeStepCpu(unsigned bufferpartcount,int *bufferpart
-		,typecode *code,const tdouble3 *pos,unsigned nzone){
-//	/-Updates code according to particle position and define new particles to create.
-	  const int ncp=int(bufferpartcount);
-	  //Log->Printf("%d>==>> ComputeStepCpu  ncp:%d",nstep,ncp);
-	  #ifdef OMP_USE
-	    #pragma omp parallel for schedule (static)
-	  #endif
-	  for(int cp=0;cp<ncp;cp++){
-		  typecode cod=0;
-		  byte newiz=255;
-		  const unsigned p=(unsigned)bufferpart[cp];
-		  const typecode rcode=code[p];
-		  const unsigned izone0=CODE_GetIzoneFluidBuffer(rcode);
-		  const unsigned izone=(izone0&CODE_TYPE_FLUID_BUFFER015MASK); //-Substract 16 to obtain the actual zone (0-15).
-		  tdouble3 ps=pos[p];
-      if(Tracking[nzone]) ps=MovePoint(ps,Matmov[nzone].GetMatrix4d());
-
-		  if(izone0>=16){//-Normal fluid particle in buffer zone.
-			  cod= rcode^0x10 ; //-Converts to buffer particle or not.
+	  if(izone0>=16){//-Normal fluid particle in buffer zone.
+		  cod= rcode^0x10 ; //-Converts to buffer particle or not.
+		  code[p]=cod;
+	  }else{//-Previous inout fluid particle.
+			const bool isnormal=List[nzone]->is_Normal(ps);
+			if(List[nzone]->is_Out(ps)){
+			  cod=CODE_SetOutIgnore(rcode); //-Particle is moved out domain.
+				code[p]=cod;
+			}else if(isnormal){
+				cod=CODE_TYPE_FLUID; //-Particle become normal;
 			  code[p]=cod;
- 		  }
-		  else{//-Previous inout fluid particle.
-			  const bool isnormal=List[nzone]->is_Normal(ps);
-			  if(List[nzone]->is_Out(ps)){
-				  cod=CODE_SetOutIgnore(rcode); //-Particle is moved out domain.
-				  code[p]=cod;
-			  }
-			  else if(isnormal){
-				  cod=CODE_TYPE_FLUID; //-Particle become normal;
-				  code[p]=cod;
-			  }
-		  }
-	  }
+			}
+		}
+	}
 
-	  unsigned newcp=0;
-    const unsigned nini=NIni[nzone];
-    const unsigned npoints=NPoints[nzone];
-	  for(unsigned i=nini;i<npoints;i++){
-		  float mass=PtMass[i];
-      if(mass>CSP.massfluid) newcp++;
-    }
-	  return(newcp);
+	unsigned newcp=0;
+  const unsigned nini=NIni[nzone];
+  const unsigned npoints=NPoints[nzone];
+  for(unsigned i=nini;i<npoints;i++){
+    float mass=PtMass[i];
+    if(mass>CSP.massfluid) newcp++;
   }
+	return(newcp);
+}
 
   void JSphVRes::CreateNewPart(const unsigned idnext,unsigned *dcell,typecode *code,tdouble3 *pos,unsigned *idp,
 		tfloat4 *velrhop,const JSphCpu *sphcpu,unsigned np,unsigned nzone){    
@@ -693,37 +676,29 @@ tdouble3 JSphVRes::MovePoint(tdouble3 oldpos,const tmatrix4d& mat){
     }
   }
 #ifdef _WITHGPU
+
+
 //==============================================================================
-/// ComputeStep over inlet/outlet particles:
-/// - If particle is moved to fluid zone then it changes to fluid particle and
-///   it creates a new in/out particle.
-/// - If particle is moved out the domain then it changes to ignore particle.
+/// ComputeStep over buffer regions:
+/// - If buffer particle is moved to fluid zone then it changes to fluid particle.
+/// - If fluid particle is moved to buffer zone then it changes to buffer particle.
+/// - If buffer particle is moved out the domain then it changes to ignore particle.
+/// - Create buffer particle based on eulerian flux on the accumulations points.
+/// - Update position of buffer regions and compute motion velocity.
 //==============================================================================
 void JSphVRes::ComputeStepGpu(unsigned bufferpartcount,int *bufferpart,unsigned idnext,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg
     ,unsigned *idpg,float4 *velrhopg,byte *newizoneg,const JSphGpuSingle *gp,unsigned nzone)
 {
-
-  tmatrix4f mat=Matmov[nzone].GetMatrix4f();
-  tmatrix4f matc=mat;
-  // matc.a14=-(mat.a14*mat.a11+mat.a24*mat.a21+mat.a34*mat.a31);
-  // matc.a24=-(mat.a14*mat.a12+mat.a24*mat.a22+mat.a34*mat.a32);
-  // matc.a34=-(mat.a14*mat.a13+mat.a24*mat.a23+mat.a34*mat.a33);
-
   //-Checks particle position.
   cusphvres::BufferComputeStep(bufferpartcount,bufferpart,posxyg,poszg,codeg,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner
       ,List[nzone]->BoxLimitMinOuter,List[nzone]->BoxLimitMaxOuter,List[nzone]->Inner,Matmovg,Tracking[nzone],nzone);
-  //-Create list for new inlet particles to create.
-  //  const unsigned newnp=cusphinout::InOutListCreate(Stable,inoutcount,sizenp-1,newizoneg,inoutpartg);
-  //  if(inoutcount+newnp>=sizenp)Run_Exceptioon("Allocated memory is not enough for new particles inlet.");
-  //  //-Creates new inlet particles to replace the particles moved to fluid domain.
-  //  cusphinout::InOutCreateNewInlet(PeriActive,newnp,(unsigned*)inoutpartg,inoutcount,newizoneg,np,idnext
-  //    ,CodeNewPart,DirDatag,Widthg,posxyg,poszg,dcellg,codeg,idpg,velrhopg);
-  //  //-Returns number of new inlet particles.
-  // return(unsigned(newnp));
+
 }
 #endif
 
-
+//========================================================================================
+/// Move position and orient normal for accumulation points on the VRes interface.
+//=========================================================================================
 void JSphVRes::MoveBufferZone(double dt,std::vector<JMatrix4d> mat){
   for(int i=0; i<List.size(); i++){
     unsigned ntot=NPoints[i];
@@ -750,14 +725,12 @@ void JSphVRes::MoveBufferZone(double dt,std::vector<JMatrix4d> mat){
 }
 
 
+//==============================================================================
+// Saves VTK file with accumulation points info.
+//==============================================================================
 void JSphVRes::SaveNormals(std::string filename,int numfile){
-
-  
-
-
   #ifdef _WITHGPU
   if(!Cpu){
-
     tdouble3 *posh=fcuda::ToHostPosd3(0,PtCount,PtPosxyg,PtPoszg);
     memcpy(PtPoints,posh,sizeof(tdouble3)*PtCount);
     delete[] posh;
@@ -771,6 +744,9 @@ void JSphVRes::SaveNormals(std::string filename,int numfile){
   SaveVtkNormals(filename,numfile,PtCount,PtPoints,PtNormals,PtVelMot,PtMass);
 }
 
+//==============================================================================
+// Saves VTK file with accumulation points info.
+//==============================================================================
 void JSphVRes::SaveVtkNormals(std::string filename,int numfile,unsigned np
   ,const tdouble3* pos,const tfloat3* boundnor,const tfloat3* velflux,const float* flux)const
 {

@@ -38,7 +38,7 @@ inline stinterparmscb StInterparmscb(unsigned np,unsigned npb,unsigned npbok
 class JSphCpuSingle_VRes  :  public JSphCpuSingle
 {
 protected:
-	JSphVRes* Multires;
+	JSphVRes* VRes;
 
 //   StCteInteraction CTE;
   double SymplecticDtPre1;
@@ -58,11 +58,13 @@ public:
   void Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
     ,unsigned vrescount,unsigned vresid);
   void InitMultires(const JSphCfgRun *cfg, JCaseVRes casemultires, unsigned id);
+
+
   stinterparmscb getParms();
   void CallRunCellDivide();
   void BufferInit(stinterparmscb *parms);
   double Init2();
-  double ComputeStep_SymB();
+  double ComputeStepVRes();
   double getSymplecticDtPre(){return SymplecticDtPre;};
       double getSymplecticDtPre1(){return SymplecticDtPre1;};
    void setSymplecticDtPre(double dt1){SymplecticDtPre=dt1;};

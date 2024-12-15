@@ -44,19 +44,16 @@ class JXml;
 /// \brief Defines the attributes and functions used only in Single-GPU Variable resolution implementation.
 class JSphGpuSingle_VRes  :  public JSphGpuSingle
 {
-protected:
-	JSphVRes* Multires;
-
-  
-
-
-  void CollectCTEdata();
-
-  
-
 private:
-  TpVresOrder VResOrder;
-  TpVresMethod VResMethod;
+  TpVresOrder   VResOrder;
+  TpVresMethod  VResMethod;
+  JSphVRes* VRes;
+
+  bool  MRfastsingle=true;
+  float MRThreshold;
+
+  StCteInteraction CTE;
+  double SymplecticDtPre1;
 
   void LoadVResConfigParameters(const JSphCfgRun* cfg);
   void ComputeUmbrellaRegionVRes();
@@ -66,13 +63,7 @@ private:
   JMatrix4d CalcMotionMoving(const StMotionData m,double dt);
   JMatrix4d CalcMotionFloating(const StFloatingData m,double dt);
 
-
-  bool MRfastsingle=true;
-  unsigned MROrder=1;
-  float MRThreshold;
-
-  StCteInteraction CTE;
-  double SymplecticDtPre1;
+  
 
 
 public:
@@ -82,27 +73,29 @@ public:
     ,unsigned vrescount,unsigned vresid);
   void InitMultires(const JSphCfgRun *cfg, JCaseVRes casemultires, unsigned id);
   StInterParmsbg getParms();
-  void CallRunCellDivide();
   void BufferInit(StInterParmsbg *parms);
   double Init2();
-  double ComputeStep_SymB();
-  double getSymplecticDtPre(){return SymplecticDtPre;};
-      double getSymplecticDtPre1(){return SymplecticDtPre1;};
-   void setSymplecticDtPre(double dt1){SymplecticDtPre=dt1;};
+
+  double ComputeStepVRes();
+  
     void Finish(double dt1);
-    void Finish2();
-    void BufferShifting();
+  void Finish2();
+  void BufferShifting();
+  
+  double getSymplecticDtPre(){return SymplecticDtPre;};
+  double getSymplecticDtPre1(){return SymplecticDtPre1;};
+  void setSymplecticDtPre(double dt1){SymplecticDtPre=dt1;};
+  
   int getNStep(){return Nstep;};
   int getNStepsBreak(){return NstepsBreak;};
 
 
   void BufferExtrapolateData(StInterParmsbg *parms);
   void ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,StInterParmsbg *parms);
-  
+  void CallRunCellDivide();
 
 
   double GetTimeStep(){return TimeStep;};
-  void Interaction_ForcesB(TpInterStep interstep);
 
   JMatrix4d CalcVelMotion(unsigned trackingmk,double dt);
 

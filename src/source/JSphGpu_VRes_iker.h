@@ -63,20 +63,22 @@ typedef struct StrInterParmsbg{
 
 namespace cusphvres{
 
-unsigned BufferCreateList(bool stable,unsigned n,unsigned pini,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner
-  ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const bool inner,const double2 *posxy,const double *posz
-  ,typecode *code,unsigned *listp,tmatrix4f* mat,bool tracking,unsigned nzone);
+unsigned BufferCreateList(bool stable,unsigned n,unsigned pini
+  ,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner
+  ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter
+  ,const bool inner,const double2 *posxy,const double *posz,typecode *code
+  ,unsigned *listp,tmatrix4f* mat,bool tracking,unsigned nzone);
 
-unsigned BufferCreateList1(bool stable,unsigned n,unsigned pini,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner
-  ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const bool inner,const double2 *posxy,const double *posz
-  ,typecode *code,unsigned *listp,unsigned nzone);
+unsigned BufferCreateListInit(bool stable,unsigned n,unsigned pini
+  ,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner
+  ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter
+  ,const tdouble3 boxlimitminmid,const tdouble3 boxlimitmaxmid
+  ,const bool inner,const double2 *posxy,const double *posz
+  ,typecode *code,unsigned *listp,tmatrix4f mat,bool tracking,unsigned nzone);
 
-unsigned BufferCreateListInit(bool stable,unsigned n,unsigned pini,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner
-  ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const tdouble3 boxlimitminmid,const tdouble3 boxlimitmaxmid
-  ,const bool inner,const double2 *posxy,const double *posz,typecode *code,unsigned *listp,tmatrix4f mat,bool tracking,unsigned nzone);
-
-void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float4* velrhop,typecode *code1,bool fastsingle,const TpVresOrder order,float mrthreshold);
+void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart
+  ,const StInterParmsbg &t,const double2 *posxyb,const double *poszb,float4* velrhop
+  ,typecode *code1,bool fastsingle,const TpVresOrder order,float mrthreshold);
 
 
 void Interaction_BufferExtrapFlux(const StInterParmsbg &t,StrDataVresGpu &vres
@@ -96,9 +98,10 @@ void ComputeFluxesBuffer(unsigned n,double3 *normals,double *fluxes,double* rhs,
 
 void CopySolutionBuffer(unsigned n,int *bufferpart,float4 *velrhop,double* rhs,bool simulate2d);
 
-void BufferCreateNewPart(byte periactive,unsigned newn,unsigned pini,int *bufferpart,unsigned np,unsigned idnext
-    ,const float3 *normals,const float dp,double2 *posxy,double *posz,double2 *posxyb,double *poszb,unsigned *dcell
-    ,typecode *code,unsigned *idp,float4 *velrhop,unsigned nzone);
+void BufferCreateNewPart(byte periactive,unsigned newnp
+  ,unsigned pini,int *bufferpart,unsigned np,unsigned idnext
+  ,const float3 *normals,const float dp,double2 *posxy,double *posz,double2 *posxyb,double *poszb,unsigned *dcell
+  ,typecode *code,unsigned *idp,float4 *velrhop,unsigned nzone);
 
 unsigned BufferListCreate(bool stable,unsigned n,unsigned pini,unsigned nmax, float *fluxes,int *bufferpart,double massf);
 
