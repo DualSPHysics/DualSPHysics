@@ -1,5 +1,6 @@
 #include "JSphCpuSingle_VRes.h"
 #include "JSphCpuSingle.h"
+#include "JSphCpu_VRes.h"
 #include "JSphVRes.h"
 #include "JTimeControl.h"
 #include "JDsOutputTime.h"
@@ -255,7 +256,11 @@ void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
 		
     fvres::Interaction_BufferExtrapFlux(vresdata.ntot,vresdata.nini,parms[id],vresdata.points,vresdata.normals,vresdata.velmot,vresdata.mass,2,Dp,dt,100);
 
-		unsigned newnp=Multires->ComputeStepCpu(buffercountpre,bufferpartc.ptr(),Code_c->ptr(),Pos_c->cptr(),i);
+		fvres::CheckMassFlux(vresdata.ntot,vresdata.nini,CSP,DivData
+      ,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
+      ,vresdata.points,vresdata.normals,vresdata.mass);
+    
+    unsigned newnp=Multires->ComputeStepCpu(buffercountpre,bufferpartc.ptr(),Code_c->ptr(),Pos_c->cptr(),i);
 
     if(newnp){
       if(!CheckCpuParticlesSize(Np+newnp)){
@@ -303,9 +308,9 @@ void JSphCpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
     ComputeFSParticlesVRes();
     ComputeUmbrellaRegionVRes();
 
-    // StrGeomVresCpu vresdata=Multires->GetGeomInfoVresCpu();
-    // fvres::CallCorrectShiftBuff(Np,Npb,CSP,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
-    // ,ShiftVel_c->ptr(),FSType_c->ptr(),vresdata);
+    StrGeomVresCpu vresdata=Multires->GetGeomInfoVresCpu();
+    fvres::CallCorrectShiftBuff(Np,Npb,CSP,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
+    ,ShiftVel_c->ptr(),FSType_c->ptr(),vresdata);
 
     PreLoopInteraction_ct(DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
       ,Velrho_c->cptr(),FSType_c->ptr(),ShiftVel_c->ptr(),FSNormal_c->ptr()
@@ -313,6 +318,7 @@ void JSphCpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
     ComputeShiftingVel(Simulate2D,ShiftingAdv->GetShiftCoef()
       ,ShiftingAdv->GetAleActive(),SymplecticDtPre,FSType_c->ptr()
       ,FSNormal_c->ptr(),FSMinDist_c->ptr(),ShiftVel_c->ptr());
+    fvres::BufferShiftingCpu(Np,Npb,Pos_c->cptr(),ShiftVel_c->ptr(),Code_c->ptr(),vresdata);
     //-Updates pre-loop variables in periodic particles.
     if(PeriParent_c){
       const unsigned* periparent=PeriParent_c->ptr();

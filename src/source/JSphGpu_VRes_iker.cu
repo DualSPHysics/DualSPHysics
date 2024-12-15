@@ -863,7 +863,9 @@ void Interaction_BufferExtrapFlux(const StInterParmsbg &t,StrDataVresGpu &vres
   }
 }
 
-
+//------------------------------------------------------------------------------
+/// Correct mass accumulated and avoid generation inside boundaries.
+//------------------------------------------------------------------------------
 __global__ void KerCheckMassFlux(unsigned n,unsigned pini2,double3 mapposmin,float poscellsize
   ,const float4* poscell,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid
   ,unsigned cellfluid,const double2* posxy,const double* posz,const typecode *code,const double2 *posxyb
@@ -900,7 +902,9 @@ __global__ void KerCheckMassFlux(unsigned n,unsigned pini2,double3 mapposmin,flo
   }
 }
 
-
+//==============================================================================
+/// Correct mass accumulated and avoid generation inside boundaries.
+//==============================================================================
 void CheckMassFlux(unsigned n,unsigned pini
   ,const StDivDataGpu& dvd,const tdouble3& mapposmin,const double2* posxy
   ,const double* posz,const typecode *code,const float4* poscell,const double2 *posxyb
@@ -1071,12 +1075,7 @@ __global__ void KerBufferShiftingGpu(unsigned n,unsigned pini,const double2 *pos
       double disy =rxy.y  -origin.y;
 		  double disz =rz     -origin.z;
       float3 shiftp1=make_float3(shiftpos[p1].x,shiftpos[p1].y,shiftpos[p1].z);
-      // if(fabs(disx)>boxsize.x/2.0 && fabs(disz)>boxsize.z/2.0 && fabs(disy)>boxsize.y/2.0){
-      //   shiftpos[p1].x=0.0f;
-      //   shiftpos[p1].y=0.0f;
-      //   shiftpos[p1].z=0.0f;
-      // }
-      bool inn=inner[izone];
+
       if((fabs(disx)>boxsize.x/2.0 )){
         float3 normal=make_float3(mat[izone].a11,mat[izone].a21,mat[izone].a31);
         shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
@@ -1099,19 +1098,9 @@ __global__ void KerBufferShiftingGpu(unsigned n,unsigned pini,const double2 *pos
         shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
         shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
                         // shiftpos[p1].z=0.0f;
-
       }
-      if((fabs(disx)>boxsize.x/2.0) && (fabs(disz)>boxsize.z/2.0)){
-        shiftpos[p1].x=0.0f;
-        shiftpos[p1].z=0.0f;
-
-      }
-
-		  
-
+    }
   }
-
-}
 }
 
 

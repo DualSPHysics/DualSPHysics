@@ -388,6 +388,30 @@ template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrapFl
     double mindist=1000000.0;
     float mindp=std::min(dp,csp.dp);
 
+    const StNgSearch ngsb=nsearch::Init(pos_p1,true,dvd);
+    for(int z=ngsb.zini;z<ngsb.zfin;z++)for(int y=ngsb.yini;y<ngsb.yfin;y++){
+    	const tuint2 pif=nsearch::ParticleRange(y,z,ngsb,dvd);
+    	//-Interaction of boundary with type Fluid/Float | Interaccion de Bound con varias Fluid/Float.
+    	//---------------------------------------------------------------------------------------------
+    	for(unsigned p2=pif.x;p2<pif.y;p2++){
+    		const double drx=-double(pos_p1.x-pos[p2].x);
+    		const double dry=-double(pos_p1.y-pos[p2].y);
+    		const double drz=-double(pos_p1.z-pos[p2].z);
+    		const double rr2=drx*drx+dry*dry+drz*drz;
+        if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO){//-Only with fluid particles but not inout particles.
+    			//-Computes kernel.
+    			float fac;
+    			float facc;
+    			const double wab=fsph::GetKernel_WabFac<tker>(csp,(rr2),fac);
+    			double frx=drx*fac,fry=dry*fac,frz=drz*fac; //-Gradients.
+
+          double massp2=csp.massbound;
+    			double volp2=massp2/csp.rhopzero;
+          ShiftTFS-=volp2*(drx*frx+dry*fry+drz*frz);
+        }
+      }
+    }
+
     //-Search for neighbours in adjacent cells.
     const StNgSearch ngs=nsearch::Init(pos_p1,false,dvd);
     for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
@@ -578,35 +602,66 @@ void Interaction_BufferExtrapFlux(const unsigned n,const int pini
   }
 }
 
-//HEAD_DSPH
-/*
- <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+tdouble3 MovePoint(tdouble3 oldpos,const tmatrix4d& mat){
+  tdouble3 newpos=TDouble3(0);
+  oldpos.x-=mat.a14;  oldpos.y-=mat.a24;  oldpos.z-=mat.a34;
+  newpos.x=oldpos.x*mat.a11+oldpos.y*mat.a21+oldpos.z*mat.a31;
+  newpos.y=oldpos.x*mat.a12+oldpos.y*mat.a22+oldpos.z*mat.a32;
+  newpos.z=oldpos.x*mat.a13+oldpos.y*mat.a23+oldpos.z*mat.a33;
+  return(newpos);
+}
 
- EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
- School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
+void BufferShiftingCpu(unsigned n,unsigned pinit,const tdouble3 *pos
+  ,tfloat4 *shiftpos,const typecode *code,StrGeomVresCpu& vresdata)
+{
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(int p1=int(pinit);p1<n;p1++){
+    typecode rcode=code[p1];
+	  if(CODE_IsFluidBuffer(rcode)){
 
- This file is part of DualSPHysics. 
+		  const byte izone0=byte(CODE_GetIzoneFluidBuffer(rcode));
+		  const byte izone=(izone0&CODE_TYPE_FLUID_INOUT015MASK);
+      tdouble3 boxmin=vresdata.boxlimitmin[izone];
+      tdouble3 boxmax=vresdata.boxlimitmax[izone];
+      tdouble3 origin=(boxmax+boxmin)*0.5;
+      tdouble3 boxsize=(boxmax-boxmin);
 
- DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License 
- as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.
- 
- DualSPHysics is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details. 
+      bool tracking=vresdata.tracking[izone];
+      tmatrix4d mat=vresdata.matmov[izone].GetMatrix4d();
+      tdouble3 ps=pos[p1];
+      if(tracking)ps=MovePoint(ps,mat);
+      tdouble3 dis=ps-origin;
+      tfloat4 shiftp1=shiftpos[p1];     
 
- You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
-*/
+      if((fabs(dis.x)>boxsize.x/2.0 )){
+        tfloat3 normal=TFloat3(mat.a11,mat.a21,mat.a31);
+        shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+        shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+        shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+                // shiftpos[p1].x=0.0f;
 
-/// \file JSphCpu.cpp \brief Implements the class \ref JSphCpu.
+      } 
+      if((fabs(dis.y)>boxsize.y/2.0)){
+        tfloat3 normal=TFloat3(mat.a12,mat.a22,mat.a32);
+        shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+        shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+        shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+                // shiftpos[p1].y=0.0f;
 
-#include "JSphCpu.h"
-#include "JCellSearch_inline.h"
-#include "FunSphKernel.h"
-#include "FunctionsMath.h"
+      }
+      if((fabs(dis.z)>boxsize.z/2.0)){
+        tfloat3 normal=TFloat3(mat.a13,mat.a23,mat.a33);
+        shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+        shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+        shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
+                        // shiftpos[p1].z=0.0f;
+      }
+    }
+  }
+}
 
-#include <climits>
-#include <cmath>
-
-using namespace std;
 
 //==============================================================================
 /// Creates list with free-surface particle (normal and periodic).
@@ -623,6 +678,39 @@ unsigned CountFreeSurfaceParticles(unsigned npf,unsigned pini
     }
   }
   return(count);
+}
+
+//==============================================================================
+/// Correct mass accumulated and avoid generation inside boundaries.
+//==============================================================================
+void CheckMassFlux(unsigned n,unsigned pinit,const StCteSph csp
+  ,const StDivDataCpu& divdata,const unsigned* dcell,const tdouble3* pos
+  ,const typecode* code,tdouble3* posb,tfloat3 *normals,float *fluxes)
+{
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(int p1=int(pinit);p1<n;p1++){
+
+    tdouble3 posp1=posb[p1];
+
+    //-Search for neighbours in adjacent cells.
+    const StNgSearch ngs=nsearch::Init(dcell[p1],true,divdata);
+    for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
+      const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
+      for(unsigned p2=pif.x;p2<pif.y;p2++){
+        const float drx=float(posp1.x-pos[p2].x);
+        const float dry=float(posp1.y-pos[p2].y);
+        const float drz=float(posp1.z-pos[p2].z);
+        const float rr2=drx*drx+dry*dry+drz*drz;
+        if(rr2<csp.dp*csp.dp){
+          const tfloat3 normalp1=normals[p1];
+          const float norm = (-normalp1.x*drx+-normalp1.y*dry-normalp1.z*drz)/sqrt(rr2);
+          if(acos(norm)>0.785398) fluxes[p1]=0; 
+        }      
+      }
+    }
+  }
 }
 
 

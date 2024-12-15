@@ -49,10 +49,14 @@ JSphVRes::JSphVRes(bool cpu, const StCteSph &csp,const JCaseVRes vreszone,unsign
   BoxLimitMin=NULL;  BoxLimitMax=NULL; BoxDomMin=NULL;  BoxDomMax=NULL; 
   Width=NULL; Inner=NULL;  Tracking=NULL;
   NIni=NULL;  NPoints=NULL; Matmov=NULL;
+  PtPointsIni=NULL;   PtNormalsIni=NULL; PtPoints=NULL; PtNormals=NULL;
+  PtVelMot=NULL;  PtMass=NULL;
 #ifdef _WITHGPU
   BoxLimitMing=NULL;  BoxLimitMaxg=NULL; BoxDomMing=NULL;  BoxDomMaxg=NULL; 
   Widthg=NULL; Innerg=NULL;  Trackingg=NULL;
   NInig=NULL;  NPointsg=NULL;  Matmovg=NULL; 
+  PtPosxyg=NULL; PtPoszg=NULL; PtNormalsg=NULL; PtVelMotg=NULL;
+  PtMassg=NULL;
 #endif
 
   Reset();
@@ -84,6 +88,7 @@ void JSphVRes::Reset()
   for(int c=0;c<List.size();c++)delete List[c];
   List.clear();
   FreeMemory();
+  FreePtMemory();
 }
 
 //==============================================================================
@@ -166,6 +171,22 @@ void JSphVRes::AllocatePtMemory(unsigned ptcount){
   #ifdef _WITHGPU
     if(!Cpu)AllocatePtMemoryGpu(PtCount);
   #endif
+}
+
+//==============================================================================
+/// Frees allocated memory for reference points and auxiliary memory on GPU.
+//==============================================================================
+void JSphVRes::FreePtMemory(){
+  delete[] PtPointsIni;     PtPointsIni=NULL;
+  delete[] PtNormalsIni;    PtNormalsIni=NULL;
+  delete[] PtPoints;        PtPoints=NULL;
+  delete[] PtNormals;       PtNormals=NULL;
+  delete[] PtVelMot;        PtVelMot=NULL;
+  delete[] PtMass;          PtMass=NULL;
+  #ifdef _WITHGPU
+    if(!Cpu) FreePtMemoryGpu();
+  #endif
+
 }
 
 #ifdef _WITHGPU

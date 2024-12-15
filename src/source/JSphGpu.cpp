@@ -75,7 +75,7 @@ JSphGpu::~JSphGpu(){
   delete Arrays_Gpu; Arrays_Gpu=NULL;
   delete GpuInfo;    GpuInfo=NULL;
   delete Timersg;    Timersg=NULL;
-  cudaDeviceReset();
+  // cudaDeviceReset();
 }
 
 //==============================================================================

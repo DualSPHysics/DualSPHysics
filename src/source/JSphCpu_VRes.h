@@ -73,6 +73,14 @@ namespace fvres{
     return (boxlimitmin.x <= ps.x && ps.x <= boxlimitmax.x && boxlimitmin.y <= ps.y 
     && ps.y <= boxlimitmax.y && boxlimitmin.z <= ps.z && ps.z <= boxlimitmax.z);
   }
+  tdouble3 MovePoint(tdouble3 oldpos,const tmatrix4d& mat);
+
+  void BufferShiftingCpu(unsigned n,unsigned pinit,const tdouble3 *pos
+    ,tfloat4 *shiftpos,const typecode *code,StrGeomVresCpu& vresdata);
+
+  void CheckMassFlux(unsigned n,unsigned pinit,const StCteSph csp
+    ,const StDivDataCpu& divdata,const unsigned* dcell,const tdouble3* pos
+    ,const typecode* code,tdouble3* posb,tfloat3 *normals,float *fluxes);
 
   unsigned CountFreeSurfaceParticles(unsigned npf,unsigned pini
     ,const unsigned* fstype,unsigned* listp);
