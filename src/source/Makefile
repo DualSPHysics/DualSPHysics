@@ -163,7 +163,7 @@ endif
 
 compile_libs:
 ifeq ($(COMPILE_MOORDYNPLUS), YES)
-	$(MAKE) -C Source_DSphMoorDynPlus -f Makefile_MoorDynPlus
+	$(MAKE) -C Source_DSphMoorDynPlus -f Makefile_MoorDynPlus $(MAKEFLAGS)
 endif
 
 $(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)
