@@ -20,7 +20,12 @@ _out_CompileLinux
 ## Ignores temporary files.
 bin/windows/*.iobj
 bin/windows/*.ipdb
+bin/windows/*.ilk
+bin/windows/*.pdb
 bin/windows/*.lib
 bin/windows/*.exp
+src/lib/vs2022/*.idb
+src/lib/vs2022/*.pdb
+src/lib/vs2022/LibDSphMoorDynPlus_*.*
 bin/windows/DualSPHysics*.exe
 bin/linux/DualSPHysics*_linux64
