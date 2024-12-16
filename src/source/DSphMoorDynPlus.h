@@ -113,7 +113,6 @@ unsigned MoorDynPlus_GetMooringReference(const unsigned ftid);
 void MoorDynPlus_LogInit(JLog2* log);
 
 #endif
-
 #endif
 
 

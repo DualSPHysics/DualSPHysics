@@ -39,7 +39,6 @@ unsigned MoorDynPlus_MooringsCount(){ return(0); }
 unsigned MoorDynPlus_GetMooringReference(const unsigned ftid){ return(0); }
 void MoorDynPlus_LogInit(JLog2* log){}
 #endif
-
 #endif
 
 
