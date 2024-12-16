@@ -23,7 +23,7 @@
 
 
 
-// using namespace std;
+using namespace std;
 
 namespace fvres{
 
@@ -37,7 +37,7 @@ template<const int n,const int n1> bool LUdecomp(double *a,int *p,double *b,doub
 		double sum=0;
 #pragma unroll
 		for(int j=0;j<n;j++) sum+=fabs(a[n*j+i]);
-		maxs=std::max(maxs,sum);
+		maxs=max(maxs,sum);
 	}
 
 
@@ -113,7 +113,7 @@ template<const int n,const int n1> bool LUdecomp(double *a,int *p,double *b,doub
 		double sum=0;
 #pragma unroll
 		for(int j=0;j<n;j++) sum+=std::abs(ia[n*j+i]);
-		maxs1=std::max(maxs1,sum);
+		maxs1=max(maxs1,sum);
 	}
 	
   treshold=1.0/(maxs*maxs1);
@@ -386,7 +386,7 @@ template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrapFl
 
     float ShiftTFS=0;
     double mindist=1000000.0;
-    float mindp=std::min(dp,csp.dp);
+    float mindp=min(dp,csp.dp);
 
     const StNgSearch ngsb=nsearch::Init(pos_p1,true,dvd);
     for(int z=ngsb.zini;z<ngsb.zfin;z++)for(int y=ngsb.yini;y<ngsb.yfin;y++){
@@ -443,7 +443,7 @@ template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrapFl
     			double massp2=csp.massfluid;
     			double volp2=massp2/velrhopp2.w;
           ShiftTFS-=volp2*(drx*frx+dry*fry+drz*frz);
-          mindist=std::min(mindist,rr2);
+          mindist=min(mindist,rr2);
           if constexpr (order == 0) {
     			  if constexpr (sim2d) {
               double tempC[] = {1.0f, drx, drz, drx * drx * 0.5f, drx * drz, drz * drz * 0.5f};
@@ -550,11 +550,11 @@ template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrapFl
       if (sim2d)
       {
         if ((ShiftTFS > 1.5 || sqrt(mindist) < mindp) && fluxes[p1] < 0.0 )
-        fluxes[p1] += std::max(0.0, -sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt);
+        fluxes[p1] += max(0.0, -sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt);
         else if ((ShiftTFS > 1.5 || sqrt(mindist) < mindp) )
         fluxes[p1] += -sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt;
       } else {
-        if((ShiftTFS>2.75 || sqrt(mindist)<mindp)  && fluxes[p1]<0.0 ) fluxes[p1]+=std::max(0.0,-sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt);
+        if((ShiftTFS>2.75 || sqrt(mindist)<mindp)  && fluxes[p1]<0.0 ) fluxes[p1]+=max(0.0,-sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt);
           else if((ShiftTFS>2.75 || sqrt(mindist)<mindp) )               fluxes[p1]+= -sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt;
           
       }

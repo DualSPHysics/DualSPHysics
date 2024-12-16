@@ -1,6 +1,7 @@
 #include "JSphGpuSingle_VRes.h"
 #include "JSphGpuSingle.h"
 #include "JSphVRes.h"
+#include "JSphGpu.h"
 #include "JSphGpu_VRes_iker.h"
 #include "JTimeControl.h"
 #include "JDsOutputTime.h"
