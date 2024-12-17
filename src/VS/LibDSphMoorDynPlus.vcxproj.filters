@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\IBody.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\IConnection.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\DSphMoorDynPlus.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\IEnvironment.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\ILine.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\MoorDynPlus.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\IOutput.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\IQSlines.cpp" />
+    <ClCompile Include="..\source\Source_DSphMoorDynPlus\FunMoorDynPlus.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\kiss_fft.c">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\Misc.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\source\DSphMoorDynPlus.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\IBody.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\IConnection.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\IEnvironment.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\ILine.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\MoorDynPlus.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\IOutput.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\IQSlines.h" />
+    <ClInclude Include="..\source\Source_DSphMoorDynPlus\IApi.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\TypesMoorDyn.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\Source_DSphMoorDynPlus\FunMoorDynPlus.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\_kiss_fft_guts.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\kiss_fft.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\kissfft.hh">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\Misc.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\DSphMoorDynPlusUndef.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{08443e72-abc7-423b-a731-6e1607fea01e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

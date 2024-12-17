@@ -163,13 +163,18 @@ ifeq ($(CUDAVER),11)
   NCCFLAGS+= -Wno-deprecated-gpu-targets
 endif
 
-all:$(EXECS_DIRECTORY)/$(EXECNAME)
+all:compile_libs $(EXECS_DIRECTORY)/$(EXECNAME)
 	rm -rf *.o
 ifeq ($(USE_DEBUG), NO)
 	@echo "  --- Compiled Release GPU version ---"
 else
 	@echo "  --- Compiled Debug GPU version ---"
 	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECNAME)_debug
+endif
+
+compile_libs:
+ifeq ($(COMPILE_MOORDYNPLUS), YES)
+	$(MAKE) -C Source_DSphMoorDynPlus -f Makefile_MoorDynPlus $(MAKEFLAGS)
 endif
 
 $(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)
@@ -212,5 +217,7 @@ JRelaxZone_ker.o: JRelaxZone_ker.cu
 	$(NCC) $(NCCFLAGS) JRelaxZone_ker.cu
 
 clean:
+ifeq ($(COMPILE_MOORDYNPLUS), YES)
+	$(MAKE) -C Source_DSphMoorDynPlus -f Makefile_MoorDynPlus clean
+endif
 	rm -rf *.o $(EXECNAME) $(EXECNAME)_debug
-
