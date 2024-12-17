@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\source\DSphMoorDynPlus.h" />
+    <ClInclude Include="..\source\DSphMoorDynPlusUndef.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\IBody.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\IConnection.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\IEnvironment.h" />
+    <ClInclude Include="..\source\Source_DSphMoorDynPlus\FunMoorDynPlus.h" />
+    <ClInclude Include="..\source\Source_DSphMoorDynPlus\IApi.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\kissfft.hh" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\kiss_fft.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\ILine.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\Misc.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\MoorDynPlus.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\IOutput.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\IQSlines.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\TypesMoorDyn.h" />
+    <ClInclude Include="..\Source\Source_DSphMoorDynPlus\_kiss_fft_guts.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\IBody.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\IConnection.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\DSphMoorDynPlus.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\IEnvironment.cpp" />
+    <ClCompile Include="..\source\Source_DSphMoorDynPlus\FunMoorDynPlus.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\kiss_fft.c" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\ILine.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\Misc.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\MoorDynPlus.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\IOutput.cpp" />
+    <ClCompile Include="..\Source\Source_DSphMoorDynPlus\IQSlines.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{5D455068-7913-47CD-BC42-4B0DB19FD4A4}</ProjectGuid>
+    <RootNamespace>MotionTest</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectName>LibDSphMoorDynPlus</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../lib/vs2022/</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../lib/vs2022/</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Intermediate/$(ProjectName)_$(Configuration)/</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Intermediate/$(ProjectName)_$(Configuration)/</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkIncremental>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectName)_$(PlatformName)_$(PlatformToolset)_$(Configuration)</TargetName>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectName)_$(PlatformName)_$(PlatformToolset)_$(Configuration)</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.lib</TargetExt>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <IntrinsicFunctions>
+      </IntrinsicFunctions>
+      <FavorSizeOrSpeed>
+      </FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>../Source</AdditionalIncludeDirectories>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(TargetPath)</OutputFile>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>
+      </MultiProcessorCompilation>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
+      <AdditionalIncludeDirectories>../Source</AdditionalIncludeDirectories>
+      <Optimization>Disabled</Optimization>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(TargetPath)</OutputFile>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
