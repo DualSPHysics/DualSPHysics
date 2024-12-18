@@ -40,6 +40,7 @@
 #include "JSphGpuSimple_ker.h"
 #include "JDsGaugeSystem.h"
 #include "JSphInOut.h"
+#include "JSphFlexStruc.h"  //<vs_flexstruc>
 #include "JDsPartMotionSave.h"
 #include "JDsPartFloatSave.h"
 #include "JLinearValue.h"
@@ -456,6 +457,7 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
     CellDivSingle->SortArrayPeriParent(auxg.ptr(),PeriParent_g->cptr(),periparentg.ptr());
     PeriParent_g->SwapPtr(&periparentg);
   }
+  if(FlexStruc&&FlexStrucRidpg)CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpg); //<vs_flexstruc>
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
@@ -617,6 +619,19 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,float(DemDtForce),PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr()
     ,Idp_g->cptr(),ViscDt_g->ptr(),Ace_g->ptr(),NULL);
 
+  //<vs_flexstruc_ini>
+  //-Interaction flexible structure-flexible structure.
+  if(FlexStruc){
+    Timersg->TmStart(TMG_SuFlexStruc,false);
+    const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,TVisco,UseNormals
+      ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcell_g->cptr()
+      ,PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr()
+      ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,BoundNor0g,DefGradg,AG_PTR(BoundNor_g),FlexStrucDtg,Ace_g->ptr(),NULL);
+    cusph::Interaction_ForcesFlexStruc(parmsfs);
+    Timersg->TmStop(TMG_SuFlexStruc,false);
+  }
+  //<vs_flexstruc_end>
+
   //-For 2-D simulations zero the 2nd component.
   if(Simulate2D)cusph::Resety(Np-Npb,Npb,Ace_g->ptr());
 
@@ -633,7 +648,16 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Calculates maximum value of ViscDt.
   if(Np)ViscDtMax=cusph::ReduMaxFloat(Np,0,ViscDt_g->ptr(),CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(Np)));
   //-Calculates maximum value of Ace (periodic particles are ignored). ViscDtg is used like auxiliary memory.
-  AceMax=ComputeAceMax(ViscDt_g->ptr()); 
+  AceMax=ComputeAceMax(ViscDt_g->ptr());
+
+  //<vs_flexstruc_ini>
+  //-Calculates maximum value of FlexStrucDt.
+  if(CaseNflexstruc){
+    Timersg->TmStart(TMG_SuFlexStruc,false);
+    FlexStrucDtMax=cusph::ReduMaxFloat(CaseNflexstruc,0,FlexStrucDtg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(CaseNflexstruc)));
+    Timersg->TmStop(TMG_SuFlexStruc,false);
+  }
+  //<vs_flexstruc_end> 
 
   InterNum++;
   Timersg->TmStop(TMG_CfForces,true);
@@ -679,11 +703,11 @@ void JSphGpuSingle::MdbcBoundCorrection(TpInterStep interstep){
 //==============================================================================
 double JSphGpuSingle::ComputeAceMax(float* auxmemg){
   const bool check=(PeriActive!=0 || InOut!=NULL);
-  const unsigned npf=Np-Npb;
+  const unsigned pini=(CaseNflexstruc? 0: Npb);
   float acemax=0;
-  if(check)cusph::ComputeAceMod(npf,Code_g->cptr()+Npb,Ace_g->cptr()+Npb,auxmemg);
-  else     cusph::ComputeAceMod(npf,Ace_g->cptr()+Npb,auxmemg);      
-  if(npf)acemax=cusph::ReduMaxFloat(npf,0,auxmemg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(npf)));
+  if(check)cusph::ComputeAceMod(Np-pini,Code_g->cptr()+pini,Ace_g->cptr()+pini,auxmemg);
+  else     cusph::ComputeAceMod(Np-pini,Ace_g->cptr()+pini,auxmemg);      
+  if(Np-pini)acemax=cusph::ReduMaxFloat(Np-pini,0,auxmemg,CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(Np-pini)));
   return(sqrt(double(acemax)));
 }
 
@@ -764,6 +788,7 @@ double JSphGpuSingle::ComputeStep_Sym(){
   InterStep=INTERSTEP_SymCorrector;
   DemDtForce=dt;                          //-For DEM interaction.
   RunCellDivide(true);                    //-Rearrange particles in cells.
+  if(FlexStruc)UpdateFlexStrucGeometry(); //-Update the geometric information for each flexible structure particle.
   MdbcBoundCorrection(InterStep);         //-mDBC correction.
   PreInteraction_Forces(InterStep);       //-Allocating temporary arrays.
   PreLoopProcedure(InterStep);            //-Pre-calculation for advanced shifting and other formulations. //<vs_advshift>
@@ -934,6 +959,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
   InitRunGpu();
   RunFirstGaugeSystem(TimeStep);
   if(InOut)InOutInit(TimeStepIni);
+  if(FlexStruc)FlexStrucInit(); //<vs_flexstruc>
   FreePartsInit();
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
   UpdateMaxValues();
@@ -963,6 +989,7 @@ void JSphGpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
     if(CaseNmoving)RunMotion(stepdt);
     if(InOut)InOutComputeStep(stepdt);
     else RunCellDivide(true);
+    if(FlexStruc)UpdateFlexStrucGeometry();
     TimeStep+=stepdt;
     LastDt=stepdt;
     Nstep++;
@@ -1115,4 +1142,103 @@ void JSphGpuSingle::FinishRun(bool stop){
   Log->PrintWarningList();
   VisuRefs();
 }
+
+//<vs_flexstruc_ini>
+//==============================================================================
+/// Initialises the associated arrays for the flexible structures.
+/// Inicializa las matrices asociadas para las estructuras flexibles.
+//==============================================================================
+void JSphGpuSingle::FlexStrucInit(){
+  //-Start timer and print info.
+  Timersg->TmStart(TMG_SuFlexStruc,false);
+  Log->Print("\nInitialising Flexible Structures...");
+  //-Allocate array.
+  size_t m=0;
+  m=sizeof(StFlexStrucData)*FlexStrucCount; cudaMalloc((void**)&FlexStrucDatag,m); MemGpuFixed+=m;
+  //-Get flexible structure data for each body and copy to GPU
+  vector<StFlexStrucData> flexstrucdata(FlexStrucCount);
+  for(unsigned c=0;c<FlexStrucCount;c++){
+    std::vector<typecode> clampcode=FlexStruc->GetBody(c)->GetClampCode();
+    flexstrucdata[c].nc=unsigned(clampcode.size());
+    std::copy(clampcode.begin(),clampcode.end(),flexstrucdata[c].clampcode);
+    flexstrucdata[c].vol0=FlexStruc->GetBody(c)->GetParticleVolume();
+    flexstrucdata[c].rho0=FlexStruc->GetBody(c)->GetDensity();
+    flexstrucdata[c].youngmod=FlexStruc->GetBody(c)->GetYoungMod();
+    flexstrucdata[c].poissratio=FlexStruc->GetBody(c)->GetPoissRatio();
+    flexstrucdata[c].hgfactor=FlexStruc->GetBody(c)->GetHgFactor();
+    flexstrucdata[c].cmat=FlexStruc->GetBody(c)->GetConstitMatrix();
+  }
+  cudaMemcpy(FlexStrucDatag,flexstrucdata.data(),sizeof(StFlexStrucData)*FlexStrucCount,cudaMemcpyHostToDevice);
+  //-Configure code for flexible structures.
+  cudaMemcpy(Code_c->ptr(),Code_g->ptr(),sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
+  FlexStruc->ConfigCode(Npb,Code_c->ptr());
+  cudaMemcpy(Code_g->ptr(),Code_c->ptr(),sizeof(typecode)*Npb,cudaMemcpyHostToDevice);
+  cusph::SetFlexStrucClampCodes(Npb,PosCell_g->cptr(),FlexStrucDatag,Code_g->ptr());
+  cudaMemcpy(Code_c->ptr(),Code_g->cptr(),sizeof(typecode)*Npb,cudaMemcpyDeviceToHost);
+  //-Check if mDBC is being used on a flexible structure.
+  if(TBoundary==BC_MDBC&&cusph::FlexStrucHasNormals(Npb,Code_g->cptr(),BoundNor_g->cptr())){
+#ifdef DISABLE_FLEXSTRUC_MDBC
+    Run_Exceptioon("mDBC normals are not permitted to be set on a flexible structure (unset DISABLE_FLEXSTRUC_MDBC to override).");
+#else
+    Log->PrintWarning("Using mDBC on a flexible structure is still in development.");
+#endif
+  }
+  //-Count number of flexible structure particles.
+  CaseNflexstruc=cusph::CountFlexStrucParts(Npb,Code_g->cptr());
+  //-Allocate arrays.
+  m=sizeof(unsigned)*CaseNflexstruc;              cudaMalloc((void**)&FlexStrucRidpg,   m);  MemGpuFixed+=m;
+  m=sizeof(float4)*CaseNflexstruc;                cudaMalloc((void**)&PosCell0g,        m);  MemGpuFixed+=m;
+  m=sizeof(unsigned)*CaseNflexstruc;              cudaMalloc((void**)&NumPairsg,        m);  MemGpuFixed+=m;
+  m=sizeof(unsigned*)*CaseNflexstruc;             cudaMalloc((void**)&PairIdxg,         m);  MemGpuFixed+=m;
+  m=sizeof(tmatrix3f)*CaseNflexstruc;             cudaMalloc((void**)&KerCorrg,         m);  MemGpuFixed+=m;
+  m=sizeof(tmatrix3f)*CaseNflexstruc;             cudaMalloc((void**)&DefGradg,         m);  MemGpuFixed+=m;
+  if(UseNormals)m=sizeof(float3)*CaseNflexstruc;  cudaMalloc((void**)&BoundNor0g,       m);  MemGpuFixed+=m;
+  m=sizeof(float)*CaseNflexstruc;                 cudaMalloc((void**)&FlexStrucDtg,     m);  MemGpuFixed+=m;
+  //-Calculate array for indexing into flexible structure particles.
+  cusph::CalcFlexStrucRidp(Npb,Code_g->cptr(),FlexStrucRidpg);
+  //-Copy current position and normals into initial position and normals.
+  cusph::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpg,PosCell_g->cptr(),PosCell0g);
+  if(UseNormals)cusph::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpg,BoundNor_g->cptr(),BoundNor0g);
+  //-Get number of particle pairs for each flexible structure particle.
+  const unsigned numpairstot=cusph::CountFlexStrucPairs(CaseNflexstruc,PosCell0g,NumPairsg);
+  //-Download number of pairs for each particle.
+  vector<unsigned> numpairs(CaseNflexstruc);
+  cudaMemcpy(numpairs.data(),NumPairsg,sizeof(unsigned)*CaseNflexstruc,cudaMemcpyDeviceToHost);
+  //-Allocate memory for raw buffer for storing pair indices and set the pointers to the indices.
+  m=sizeof(unsigned)*numpairstot; cudaMalloc((void**)&PairIdxBufferg,m);  MemGpuFixed+=m;
+  unsigned* offset=PairIdxBufferg;
+  vector<unsigned*> pairidx(CaseNflexstruc);
+  for(unsigned p=0;p<CaseNflexstruc;p++){
+    pairidx[p]=offset;
+    offset+=numpairs[p];
+  }
+  cudaMemcpy(PairIdxg,pairidx.data(),sizeof(unsigned*)*CaseNflexstruc,cudaMemcpyHostToDevice);
+  //-Set the indices for each particle pair.
+  cusph::SetFlexStrucPairs(CaseNflexstruc,PosCell0g,PairIdxg);
+  //-Interaction parameters.
+  const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,TVisco,UseNormals
+    ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcell_g->cptr()
+    ,PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr()
+    ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,BoundNor0g,DefGradg,AG_PTR(BoundNor_g),FlexStrucDtg,Ace_g->ptr(),NULL);
+  //-Calculate kernel correction and update geometry.
+  cusph::CalcFlexStrucKerCorr(parmsfs);
+  cusph::UpdateFlexStrucGeometry(parmsfs);
+  Log->Print("");
+  Timersg->TmStop(TMG_SuFlexStruc,false);
+}
+
+//==============================================================================
+/// Updates the geometric information for each flexible structure particle.
+/// Actualiza la información geométrica de cada partícula de estructura flexible.
+//==============================================================================
+void JSphGpuSingle::UpdateFlexStrucGeometry(){
+  Timersg->TmStart(TMG_SuFlexStruc,false);
+  const StInterParmsFlexStrucg parmsfs=StrInterParmsFlexStrucg(Simulate2D,TKernel,TVisco,UseNormals
+    ,Visco*ViscoBoundFactor,CaseNflexstruc,DivData,Dcell_g->cptr()
+    ,PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr()
+    ,FlexStrucDatag,FlexStrucRidpg,PosCell0g,NumPairsg,PairIdxg,KerCorrg,BoundNor0g,DefGradg,AG_PTR(BoundNor_g),FlexStrucDtg,Ace_g->ptr(),NULL);
+  cusph::UpdateFlexStrucGeometry(parmsfs);
+  Timersg->TmStop(TMG_SuFlexStruc,false);
+}
+//<vs_flexstruc_end>
 

@@ -60,6 +60,19 @@ void ComputeStepSymplecticCor(bool floating,bool shift,bool shiftadv,bool inout,
   ,double dtm,double dt,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
   ,typecode* code,double2* movxy,double* movz,float4* velrho,cudaStream_t stm);
 
+//<vs_flexstruc_ini>
+void CopyMotionVelFlexStruc(unsigned npfs,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* motionvel,float4* velrhop);
+void ComputeStepFlexStrucSemiImplicitEuler(unsigned npfs,const float4* velrhop,const typecode* code,const unsigned* flexstrucridp
+      ,const float3* ace,double dt,tfloat3 gravity
+      ,double2* movxy,double* movz,float4* velrhopnew,cudaStream_t stm);
+void ComputeStepFlexStrucSymplecticPre(unsigned npfs,const float4* velrhoppre,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* ace,double dtm,tfloat3 gravity
+    ,double2* movxy,double* movz,float4* velrhop,cudaStream_t stm);
+void ComputeStepFlexStrucSymplecticCor(unsigned npfs,const float4* velrhoppre,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* ace,double dtm,double dt,tfloat3 gravity
+    ,double2* movxy,double* movz,float4* velrhop,cudaStream_t stm);
+//<vs_flexstruc_end>
 }
 
 

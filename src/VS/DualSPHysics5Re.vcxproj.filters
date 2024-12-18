@@ -44,6 +44,9 @@
     <Filter Include="Source\MeshData">
       <UniqueIdentifier>{14081430-9295-419c-9cb1-a37ac6195e86}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\FlexStruc">
+      <UniqueIdentifier>{28cbd7c1-6f6d-48b8-a805-25a9f8749657}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\JCellDivGpu_ker.h">
@@ -532,6 +535,9 @@
     <ClInclude Include="..\source\JChronoGeoObj.h">
       <Filter>Src_Chrono</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSphFlexStruc.h">
+      <Filter>Source\FlexStruc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -863,6 +869,9 @@
     </ClCompile>
     <ClCompile Include="..\source\JChronoGeoObj.cpp">
       <Filter>Src_Chrono</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphFlexStruc.cpp">
+      <Filter>Source\FlexStruc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

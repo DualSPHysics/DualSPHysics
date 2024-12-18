@@ -85,8 +85,10 @@ private:
   StValue DtFinal[SizeValues];          ///<Resultant minimum Dt [SizeValues]. | Dt minimo resultante [SizeValues].
   StValue Dt1[SizeValues];              ///<Dt1 [SizeValues].
   StValue Dt2[SizeValues];              ///<Dt2 [SizeValues].
+  StValue Dt3[SizeValues];              ///<Dt3 [SizeValues].               //<vs_flexstruc>
   StValue AceMax[SizeValues];           ///<AceMax [SizeValues].
   StValue ViscDtMax[SizeValues];        ///<ViscDtMax [SizeValues].
+  StValue FlexStrucDtMax[SizeValues];   ///<FlexStrucDtMax [SizeValues].    //<vs_flexstruc>
   StValue VelMax[SizeValues];           ///<VelMax [SizeValues].
 
   unsigned GetSizeValues()const{ return(SizeValues); }
@@ -97,7 +99,9 @@ private:
 
   unsigned LastInterval;
   StValue LastDtf,LastDt1,LastDt2;
+  StValue LastDt3;            //<vs_flexstruc>
   StValue LastAceMax,LastViscDtMax,LastVelMax;
+  StValue LastFlexStrucDtMax; //<vs_flexstruc>
 
   void ReadXml(const JXml* sxml,TiXmlElement* ele);
   void LoadXml(const JXml* sxml,const std::string &place);
@@ -113,8 +117,8 @@ public:
   void Reset();
   void Config(const JXml* sxml,const std::string &place,double timemax,double timeout);
   void VisuConfig(std::string txhead,std::string txfoot);
-  void AddValues(double timestep,double dtfinal,double dt1,double dt2,double acemax
-    ,double viscdtmax,double velmax);
+  void AddValues(double timestep,double dtfinal,double dt1,double dt2,double dt3,double acemax
+    ,double viscdtmax,double flexstrucdtmax,double velmax);
   bool GetFullInfo()const{ return(FullInfo); }
   void SaveData();
 };

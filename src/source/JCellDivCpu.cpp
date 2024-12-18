@@ -23,6 +23,7 @@
 #include "Functions.h"
 #include <cfloat>
 #include <climits>
+#include <numeric>
 
 using namespace std;
 
@@ -49,6 +50,7 @@ JCellDivCpu::JCellDivCpu(bool stable,bool floating,byte periactive
   CellPart=NULL;    SortPart=NULL;
   PartsInCell=NULL; BeginCell=NULL;
   VSort=NULL;
+  SortIdx=NULL; //<vs_flexstruc>
   Reset();
 }
 
@@ -104,6 +106,7 @@ void JCellDivCpu::FreeMemoryNp(){
   delete[] CellPart;    CellPart=NULL;
   delete[] SortPart;    SortPart=NULL;
   delete[] VSort;       SetMemoryVSort(NULL);
+  delete[] SortIdx;     SortIdx=NULL;   //<vs_flexstruc>
   MemAllocNp=0;
   BoundDivideOk=false;
 }
@@ -145,6 +148,7 @@ void JCellDivCpu::AllocMemoryNp(ullong np,ullong npmin){
     CellPart=new unsigned[SizeNp];                      MemAllocNp+=sizeof(unsigned)*SizeNp;
     SortPart=new unsigned[SizeNp];                      MemAllocNp+=sizeof(unsigned)*SizeNp;
     SetMemoryVSort(new byte[sizeof(tdouble3)*SizeNp]);  MemAllocNp+=sizeof(tdouble3)*SizeNp;
+    SortIdx=new unsigned[SizeNp];                       MemAllocNp+=sizeof(unsigned)*SizeNp;  //<vs_flexstruc>
     MemAllocNpTimes++;
   }
   catch(const std::bad_alloc){
@@ -520,6 +524,41 @@ StDivDataCpu JCellDivCpu::GetCellDivData()const{
   return(MakeDivDataCpu(ScellDiv,GetNcells(),GetCellDomainMin(),GetBeginCell()
     ,Scell,DomCellCode,DomPosMin));
 }
+
+//<vs_flexstruc_ini>
+//==============================================================================
+/// Sorts and updates the indices of the flexible structure particles.
+/// Ordena y actualiza los índices de las partículas de estructura flexible.
+//==============================================================================
+void JCellDivCpu::UpdateIndices(unsigned n,unsigned* idx){
+  if(DivideFull){
+    SortIndices(SortPart,SortIdx,NpbFinal,Stable);
+    UpdateIndices(n,SortIdx,idx);
+  }
+}
+
+//==============================================================================
+/// Sorts the indices of the flexible structure particles.
+/// Ordena los índices de las partículas de estructura flexible.
+//==============================================================================
+void JCellDivCpu::SortIndices(unsigned* sortpart,unsigned* sortidx,unsigned np,bool stable){
+  iota(sortidx,sortidx+np,0);
+  if(stable)stable_sort(sortidx,sortidx+np,[sortpart](unsigned i1,unsigned i2){return sortpart[i1]<sortpart[i2];});
+  else             sort(sortidx,sortidx+np,[sortpart](unsigned i1,unsigned i2){return sortpart[i1]<sortpart[i2];});
+}
+
+//==============================================================================
+/// Updates the indices of the flexible structure particles.
+/// Actualiza los índices de las partículas de estructura flexible..
+//==============================================================================
+void JCellDivCpu::UpdateIndices(unsigned np,const unsigned* sortidx,unsigned* idx){
+  const int n=int(np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTELIGHT)
+  #endif
+  for(int p=0;p<n;p++)if(p<n)idx[p]=sortidx[idx[p]];
+}
+//<vs_flexstruc_end>
 
 /*:
 ////==============================================================================

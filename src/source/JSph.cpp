@@ -59,6 +59,7 @@
 #include "JDsDamping.h"
 #include "JDsInitialize.h"
 #include "JSphInOut.h"
+#include "JSphFlexStruc.h"  //<vs_flexstruc>
 #include "JDsOutputParts.h" //<vs_outpaarts>
 #include "JDsPips.h"
 #include "JLinearValue.h"
@@ -112,6 +113,7 @@ JSph::JSph(int gpucount,bool withmpi):Cpu(gpucount==0)
   AccInput=NULL;
   PartsLoaded=NULL;
   InOut=NULL;
+  FlexStruc=NULL;   //<vs_flexstruc>
   OutputParts=NULL; //<vs_outpaarts>
   DsPips=NULL;
   //-Auxiliary variables for floating bodies calculations.
@@ -156,6 +158,7 @@ JSph::~JSph(){
   delete AccInput;      AccInput=NULL; 
   delete PartsLoaded;   PartsLoaded=NULL;
   delete InOut;         InOut=NULL;
+  delete FlexStruc;     FlexStruc=NULL;   //<vs_flexstruc>
   delete DsPips;        DsPips=NULL;
   delete OutputParts;   OutputParts=NULL; //<vs_outpaarts>
 }
@@ -240,6 +243,7 @@ void JSph::InitVars(){
 
   CasePosMin=CasePosMax=TDouble3(0);
   CaseNp=CaseNbound=CaseNfixed=CaseNmoving=CaseNfloat=CaseNfluid=CaseNpb=0;
+  CaseNflexstruc=0; //<vs_flexstruc>
 
   PeriActive=0; PeriX=PeriY=PeriZ=false;
   PeriXinc=PeriYinc=PeriZinc=TDouble3(0);
@@ -259,6 +263,9 @@ void JSph::InitVars(){
   FtConstraints=false;
   FtIgnoreRadius=false;
   WithFloating=false;
+
+  FlexStrucCount=0; //<vs_flexstruc>
+  FlexStrucCs0=0;   //<vs_flexstruc>
 
   AllocMemoryFloating(0,false);
 
@@ -524,6 +531,7 @@ std::string JSph::GetFeatureList(){
   if(AVAILABLE_CHRONO     )list=list+", Project Chrono coupling";
   if(AVAILABLE_MOORDYNPLUS)list=list+", MoorDynPlus coupling";
   if(AVAILABLE_WAVEGEN    )list=list+", Wave generation";
+  if(AVAILABLE_FLEXSTRUC  )list=list+", FlexStruc";    //<vs_flexstruc>
                            list=list+", mDBC no-slip"; //<vs_m2dbc>
   #ifdef CODE_SIZE4
                            list=list+", MkWord";
@@ -1199,6 +1207,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
     }
   }
 
+  //<vs_flexstruc_ini>
   //-Configuration of flexible structures.
   if(xml.GetNodeSimple("case.execution.special.flexstrucs",true)){
     #ifndef AVAILABLE_FLEXSTRUC
@@ -1206,7 +1215,15 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
     #else
       if(!AVAILABLE_FLEXSTRUC)Run_Exceptioon("FlexStruc feature is not available in the current compilation.");
     #endif
+    FlexStruc=new JSphFlexStruc(Simulate2D,Dp,&xml,"case.execution.special.flexstrucs",MkInfo);
+    FlexStrucCount=FlexStruc->GetCount();
+    FlexStrucCs0=FlexStruc->GetInitialSoundSpeed();
+    if(!CaseNfluid||FlexStrucCs0>Cs0){
+      DtIni=KernelH/FlexStrucCs0;
+      DtMin=(KernelH/FlexStrucCs0)*CoefDtMin;
+    }
   }
+  //<vs_flexstruc_end>
 
   //-Configuration of Inlet/Outlet.
   if(xml.GetNodeSimple(JSphInOut::XmlPath,true)){
@@ -1254,6 +1271,15 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
     if(TStep==STEP_Verlet)Run_Exceptioon("Advanced shifting is not allowed with Verlet.");
   } //<vs_advshift_end>
   
+  //<vs_flexstruc_ini>
+  //-Checks invalid options for flexible structures.
+  if(FlexStruc){
+    if(PartBegin)   Run_Exceptioon("Simulation restart not allowed when FlexStruc is used.");
+    if(PeriActive)  Run_Exceptioon("Flexible structures is not allowed with periodic conditions.");
+    if(Symmetry)    Run_Exceptioon("Flexible structures is not allowed with symmetry.");
+  }
+  //<vs_flexstruc_end>
+
   //-Defines NpfMinimum according to CaseNfluid. It is updated later to add initial inlet fluid particles.
   NpfMinimum=unsigned(MinFluidStop*CaseNfluid);
 
@@ -1702,6 +1728,7 @@ void JSph::VisuRefs(){
   if(Moorings     )Log->Print("- Coupling with MoorDynPlus (Dominguez et al., 2019  https://doi.org/10.1016/j.coastaleng.2019.103560)");
   if(Shifting     )Log->Print("- Shifting algorithm (Lind et al., 2012  https://doi.org/10.1016/j.jcp.2011.10.027)");
   if(AccInput     )Log->Print("- External imposed forces (Longshaw and Rogers, 2015  https://doi.org/10.1016/j.advengsoft.2015.01.008)");
+  if(FlexStruc    )Log->Print("- Flexible fluid-structure interaction (O'Connor and Rogers, 2021  https://doi.org/10.1016/j.jfluidstructs.2021.103312)"); //<vs_flexstruc>
   //-Wave generation:
   const bool damp=(Damping!=NULL);
   const bool awas=(WaveGen && WaveGen->UseAwas());
@@ -2280,6 +2307,14 @@ void JSph::InitRun(unsigned np,const unsigned* idp,const tdouble3* pos){
     SaveDt->Config(&xml,"case.execution.special.savedt",TimeMax,TimePart);
     SaveDt->VisuConfig("SaveDt configuration:"," ");
   }
+
+  //<vs_flexstruc_ini>
+  //-Prepares flexible structures configuration.
+  if(FlexStruc){
+    Log->Printf("Flexible Structures configuration:");
+    FlexStruc->VisuConfig(""," ");
+  }
+  //<vs_flexstruc_end>
 
   //-Shows configuration of JGaugeSystem.
   if(GaugeSystem->GetCount())GaugeSystem->VisuConfig("GaugeSystem configuration:"," ");
