@@ -872,8 +872,12 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
   //}
   MdbcCorrector=(SlipMode>=SLIP_NoSlip);
   UseNormals=(TBoundary==BC_MDBC);
-  if(SlipMode>=SLIP_NoSlip)NoPenetration=cfg->NoPenetration;
-  if(SlipMode>=SLIP_NoSlip) TMdbc2=(NoPenetration? MDBC2_NoPen: MDBC2_Std);
+  if(cfg->TBoundary>=0){
+    NoPenetration=false;
+    TMdbc2=MDBC2_None;
+    if(SlipMode>=SLIP_NoSlip)NoPenetration=cfg->NoPenetration;
+    if(SlipMode>=SLIP_NoSlip) TMdbc2=(NoPenetration? MDBC2_NoPen: MDBC2_Std);
+  }
     
   if(cfg->TStep)TStep=cfg->TStep;
   if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;

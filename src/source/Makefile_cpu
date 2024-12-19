@@ -79,13 +79,18 @@ ifeq ($(COMPILE_MOORDYNPLUS), YES)
 endif
 
 #=============== CPU Code Compilation ===============
-all:$(EXECS_DIRECTORY)/$(EXECNAME)
+all:compile_libs $(EXECS_DIRECTORY)/$(EXECNAME)
 #	rm -rf *.o
 ifeq ($(USE_DEBUG), NO)
 	@echo "  --- Compiled Release CPU version ---"
 else
 	@echo "  --- Compiled Debug CPU version ---"
 #	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECNAME)_debug
+endif
+
+compile_libs:
+ifeq ($(COMPILE_MOORDYNPLUS), YES)
+	$(MAKE) -C Source_DSphMoorDynPlus -f Makefile_MoorDynPlus $(MAKEFLAGS)
 endif
 
 $(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)
@@ -95,4 +100,7 @@ $(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)
 	$(CC) $(CCFLAGS) $< 
 
 clean:
+ifeq ($(COMPILE_MOORDYNPLUS), YES)
+	$(MAKE) -C Source_DSphMoorDynPlus -f Makefile_MoorDynPlus clean
+endif
 	rm -rf *.o $(EXECNAME) $(EXECNAME)_debug
