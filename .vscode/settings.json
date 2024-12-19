@@ -1,8 +1,0 @@
-{
-  "files.associations": {
-    "system_error": "cpp",
-    "*.ipp": "cpp",
-    "cmath": "cpp",
-    "new": "cpp"
-  }
-}
