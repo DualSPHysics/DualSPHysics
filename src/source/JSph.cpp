@@ -1274,8 +1274,9 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   //<vs_flexstruc_ini>
   //-Checks invalid options for flexible structures.
   if(FlexStruc){
-    if(PartBegin)   Run_Exceptioon("Simulation restart not allowed when FlexStruc is used.");
-    if(PeriActive)  Run_Exceptioon("Flexible structures is not allowed with periodic conditions.");
+    if(PartBegin)   Run_Exceptioon("Simulation restart not allowed when flexible structures are used.");
+    if(PeriActive)  Run_Exceptioon("Flexible structures are not allowed with periodic conditions.");
+    if(TBoundary==BC_MDBC&&SlipMode==SLIP_Vel0)Run_Exceptioon("Flexible structures are not allowed with mDBC slip mode velocity=0.");
   }
   //<vs_flexstruc_end>
 

@@ -937,7 +937,9 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersg->TmStart(TMG_SuFlexStruc,false);
-    if(MotionVel_g)cusphs::CopyMotionVelFlexStruc(CaseNflexstruc,Code_g->cptr(),FlexStrucRidpg,MotionVel_g->cptr(),Velrho_g->ptr());
+    #ifndef MDBC2_KEEPVEL
+      if(MotionVel_g)cusphs::CopyMotionVelFlexStruc(CaseNflexstruc,Code_g->cptr(),FlexStrucRidpg,MotionVel_g->cptr(),Velrho_g->ptr());
+    #endif
     cusphs::ComputeStepFlexStrucSemiImplicitEuler(CaseNflexstruc,Velrho_g->cptr(),Code_g->cptr(),FlexStrucRidpg,Ace_g->cptr(),dt,Gravity,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
     cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,Posxy_g->cptr(),Posz_g->cptr(),movxyg.cptr(),movzg.cptr(),Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
     BoundChanged=true;
@@ -991,7 +993,9 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersg->TmStart(TMG_SuFlexStruc,false);
-    if(MotionVel_g)cusphs::CopyMotionVelFlexStruc(CaseNflexstruc,Code_g->cptr(),FlexStrucRidpg,MotionVel_g->cptr(),VelrhoPre_g->ptr());
+    #ifndef MDBC2_KEEPVEL
+      if(MotionVel_g)cusphs::CopyMotionVelFlexStruc(CaseNflexstruc,Code_g->cptr(),FlexStrucRidpg,MotionVel_g->cptr(),VelrhoPre_g->ptr());
+    #endif
     cusphs::ComputeStepFlexStrucSymplecticPre(CaseNflexstruc,VelrhoPre_g->cptr(),Code_g->cptr(),FlexStrucRidpg,Ace_g->cptr(),dt05,Gravity,movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
     cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPre_g->cptr(),PoszPre_g->cptr(),movxyg.cptr(),movzg.cptr(),Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
     BoundChanged=true;
