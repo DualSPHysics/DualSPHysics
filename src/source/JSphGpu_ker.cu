@@ -2946,6 +2946,12 @@ private:
 struct IsFlexStrucAny{ __host__ __device__ bool operator()(const typecode& code) { return CODE_IsFlexStrucAny(code); } };
 
 //==============================================================================
+/// Functor for checking if a flexible structure is out.
+/// Functor para comprobar si una estructura flexible está fuera.
+//==============================================================================
+struct FlexStrucAnyIsOut{ __host__ __device__ bool operator()(const typecode& code) { return CODE_IsFlexStrucAny(code) && !CODE_IsNotOut(code); } };
+
+//==============================================================================
 /// Finds the clamp particles and updates the code.
 /// Encuentra las partículas de abrazadera y actualiza el código.
 //==============================================================================
@@ -3607,6 +3613,18 @@ void ComputeStepPosFlexStruc(unsigned npfs,const unsigned* flexstrucridp
     dim3 sgrid=GetSimpleGridSize(npfs,SPHBSIZE);
     KerComputeStepPosFlexStruc <<<sgrid,SPHBSIZE>>> (npfs,flexstrucridp,posxypre,poszpre,movxy,movz,posxy,posz,dcell,code);
   }
+}
+
+//==============================================================================
+/// Checks if any issues with FlexStruc particle update.
+/// Comprueba si hay algún problema con la actualización de partículas FlexStruc.
+//==============================================================================
+bool FlexStrucStepIsValid(unsigned npb,const typecode* code){
+  if(npb){
+    thrust::device_ptr<const typecode> dev_code(code);
+    return !thrust::any_of(dev_code,dev_code+npb,FlexStrucAnyIsOut());
+  }
+  return true;
 }
 //<vs_flexstruc_end>
 

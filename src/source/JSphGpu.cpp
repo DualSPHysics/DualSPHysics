@@ -942,6 +942,8 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
     #endif
     cusphs::ComputeStepFlexStrucSemiImplicitEuler(CaseNflexstruc,Velrho_g->cptr(),Code_g->cptr(),FlexStrucRidpg,Ace_g->cptr(),dt,Gravity,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
     cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,Posxy_g->cptr(),Posz_g->cptr(),movxyg.cptr(),movzg.cptr(),Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
+    if(!cusph::FlexStrucStepIsValid(Npb,Code_g->cptr()))
+      Run_Exceptioon("Issue with FlexStruc particle update step (either naturally moved out of the domain or blew up).");
     BoundChanged=true;
     Timersg->TmStop(TMG_SuFlexStruc,false);
   }
@@ -998,6 +1000,8 @@ void JSphGpu::ComputeSymplecticPre(double dt){
     #endif
     cusphs::ComputeStepFlexStrucSymplecticPre(CaseNflexstruc,VelrhoPre_g->cptr(),Code_g->cptr(),FlexStrucRidpg,Ace_g->cptr(),dt05,Gravity,movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
     cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPre_g->cptr(),PoszPre_g->cptr(),movxyg.cptr(),movzg.cptr(),Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
+    if(!cusph::FlexStrucStepIsValid(Npb,Code_g->cptr()))
+      Run_Exceptioon("Issue with FlexStruc particle update step (either naturally moved out of the domain or blew up).");
     BoundChanged=true;
     Timersg->TmStop(TMG_SuFlexStruc,false);
   }
@@ -1039,6 +1043,8 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
     Timersg->TmStart(TMG_SuFlexStruc,false);
     cusphs::ComputeStepFlexStrucSymplecticCor(CaseNflexstruc,VelrhoPre_g->cptr(),Code_g->cptr(),FlexStrucRidpg,Ace_g->cptr(),dt05,dt,Gravity,movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
     cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPre_g->cptr(),PoszPre_g->cptr(),movxyg.cptr(),movzg.cptr(),Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
+    if(!cusph::FlexStrucStepIsValid(Npb,Code_g->cptr()))
+      Run_Exceptioon("Issue with FlexStruc particle update step (either naturally moved out of the domain or blew up).");
     BoundChanged=true;
     Timersg->TmStop(TMG_SuFlexStruc,false);
   }

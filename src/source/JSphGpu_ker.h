@@ -412,6 +412,7 @@ void Interaction_ForcesFlexStruc(const StInterParmsFlexStrucg& tfs);
 void ComputeStepPosFlexStruc(unsigned npfs,const unsigned* flexstrucridp
     ,const double2* posxypre,const double* poszpre,const double2* movxy,const double* movz
     ,double2* posxy,double* posz,unsigned* dcell,typecode* code);
+bool FlexStrucStepIsValid(unsigned npb,const typecode* code);
 //<vs_flexstruc_end>
 
 }
