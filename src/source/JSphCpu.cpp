@@ -1872,9 +1872,11 @@ double JSphCpu::DtVariable(bool final){
     if(FlexStruc)Run_Exceptioon(fun::PrintStr(
     "The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f, FlexStrucDtMax=%f) is NaN or infinity at nstep=%u."
     ,dt,AceMax,VelMax,ViscDtMax,FlexStrucDtMax,Nstep));
-  //-Correct dt with minimum allowed value.
-    else         Run_Exceptioon(fun::PrintStr("The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u.",dt,AceMax,VelMax,ViscDtMax,Nstep));
+    else         Run_Exceptioon(fun::PrintStr(
+    "The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u."
+    ,dt,AceMax,VelMax,ViscDtMax,Nstep));
   }
+  //-Correct dt with minimum allowed value.
   if(dt<double(DtMin)){
     dt=double(DtMin); DtModif++;
     if(DtModif>=DtModifWrn){

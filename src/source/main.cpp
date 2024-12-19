@@ -121,7 +121,7 @@ bool ShowsVersionInfo(int argc,char** argv,bool show=true){
     features.push_back(fun::JSONProperty("CHRONO_Coupling",AVAILABLE_CHRONO));
     features.push_back(fun::JSONProperty("MoorDynPlus_Coupling",AVAILABLE_MOORDYNPLUS));
     features.push_back(fun::JSONProperty("WaveGen",AVAILABLE_WAVEGEN));
-    features.push_back(fun::JSONProperty("FlexStruc",true)); //<vs_flexstruc>
+    features.push_back(fun::JSONProperty("FlexStruc",AVAILABLE_FLEXSTRUC)); //<vs_flexstruc>
     features.push_back(fun::JSONProperty("DDT_Fourtakas",true));
     //-Defines main information about the version program.
     std::vector<std::string> info;
