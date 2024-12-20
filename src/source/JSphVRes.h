@@ -129,30 +129,23 @@ class JDsVResDataLoad;
 class JSphVRes : protected JObject {
   
 private:
+
+  const bool Cpu;
+  const StCteSph CSP;     ///< Structure with main SPH constants values and configurations.
+  unsigned ZoneId;
+  JCaseVRes VresZone;			///< Pointer to the data structure that load vres configuration from XML file.
+
     
 	JLog2 *Log;
-  const std::string XmlFile;
-  const std::string XmlPath;
-  static const unsigned MaxZones = CODE_TYPE_FLUID_INOUTNUM;  ///< Maximum number of buffer zones.
   std::string AppName;
   std::string DirDataOut;
   unsigned PartBegin;
   std::string PartBeginDir;
   JDsVResDataSave* SvVResDataBi4;
 
-	JCaseVRes VresZone;				///< Pointer to the data structure that load vres configuration from XML file.
 
   std::vector<JSphBufferZone *> List;   ///<List of buffer zones.        
   unsigned ListSize;                    ///<Number of buffer zones.
-  unsigned ZoneId;
-
-#ifdef _WITHGPU
-
-  // StrGeomVresGpu& GeomInfo;
-   #endif 
-
-  std::vector<unsigned> ListNum;
-  // const std::string Datafile;
 
   tdouble3*	 BoxLimitMin;
   tdouble3*	 BoxLimitMax;
@@ -178,31 +171,30 @@ private:
     tmatrix4f* Matmovg;
   #endif
 
-	unsigned	PtCount;
-  tdouble3* PtPointsIni;    ///> Initial position of points.
-  tfloat3*  PtNormalsIni;   ///> Initial definition of points normals.
+	unsigned	PtCount;        ///> Total number of interface points;
+  tdouble3* PtPointsIni;    ///> Initial position of interface points.
+  tfloat3*  PtNormalsIni;   ///> Initial definition of interface points normals.
 
-  tdouble3* PtPoints;       ///> Position of points.
-  tfloat3*  PtNormals;      ///> Normals of points.
-  tfloat3*  PtVelMot;       ///> Motion Velocity of points.
-  float*    PtMass;         ///> Mass accumulated of points.
+  tdouble3* PtPoints;       ///> Position of interface points.
+  tfloat3*  PtNormals;      ///> Normals of interface points.
+  tfloat3*  PtVelMot;       ///> Motion Velocity of interface points.
+  float*    PtMass;         ///> Mass accumulated of interface points.
 
   #ifdef _WITHGPU
-		double2*  PtPosxyg;			///> Position of points.
-    double*   PtPoszg;			///> Position of points.
-		float3*   PtNormalsg;			///> Normals of points.
-		float3*   PtVelMotg;			///> Motion Velocity of points.
-		float*    PtMassg;				///> Mass accumulated of points.
+		double2*  PtPosxyg;			///> Position of interface points.
+    double*   PtPoszg;			///> Position of interface points.
+		float3*   PtNormalsg;		///> Normals of interface points.
+		float3*   PtVelMotg;		///> Motion Velocity of interface points.
+		float*    PtMassg;			///> Mass accumulated of interface points.
   #endif
     
-
-    unsigned ParticlesIni=0;
 
   void AllocateMemory(unsigned listsize);
   void FreeMemory();
 
   void AllocatePtMemory(unsigned ptcount);
   void FreePtMemory();
+
 #ifdef _WITHGPU
   void AllocatePtMemoryGpu(unsigned ptcount);
   void FreePtMemoryGpu();
@@ -221,8 +213,7 @@ public:
 
 
   
-  const bool Cpu;
-  const StCteSph CSP;  ///< Structure with main SPH constants values and configurations.
+  
   JSphVRes(bool cpu, const StCteSph &csp,const JCaseVRes vreszone,unsigned zoneid
       ,std::string appname,std::string dirdataout,unsigned partbegin,std::string partbegindir);
   ~JSphVRes();

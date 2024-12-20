@@ -40,9 +40,9 @@
 
 using namespace std;
 
-JSphVRes::JSphVRes(bool cpu, const StCteSph &csp,const JCaseVRes vreszone,unsigned zoneid
+JSphVRes::JSphVRes(bool cpu,const StCteSph &csp,const JCaseVRes vreszone,unsigned zoneid
     ,std::string appname,std::string dirdataout,unsigned partbegin,std::string partbegindir)
-    : Log(AppInfo.LogPtr()), Cpu(cpu), CSP(csp),VresZone(vreszone),ZoneId(zoneid)
+    : Log(AppInfo.LogPtr()),Cpu(cpu),CSP(csp),VresZone(vreszone),ZoneId(zoneid)
     ,AppName(appname),DirDataOut(dirdataout),PartBegin(partbegin),PartBeginDir(partbegindir)
 {
   ClassName = "JSphVRes";
@@ -174,7 +174,7 @@ void JSphVRes::AllocatePtMemory(unsigned ptcount){
 }
 
 //==============================================================================
-/// Frees allocated memory for reference points and auxiliary memory on GPU.
+/// Frees allocated memory for interface points and auxiliary memory on GPU.
 //==============================================================================
 void JSphVRes::FreePtMemory(){
   delete[] PtPointsIni;     PtPointsIni=NULL;
@@ -191,7 +191,7 @@ void JSphVRes::FreePtMemory(){
 
 #ifdef _WITHGPU
 //==============================================================================
-/// Allocates memory for reference points on GPU.
+/// Allocates memory for interface points on GPU.
 //==============================================================================
 void JSphVRes::AllocatePtMemoryGpu(unsigned ptcount){
   fcuda::Malloc(&PtPosxyg   ,ptcount);
@@ -622,7 +622,6 @@ unsigned JSphVRes::ComputeStepCpu(unsigned bufferpartcount,int *bufferpart
 	  const unsigned p=(unsigned)bufferpart[cp];
 	  const typecode rcode=code[p];
 	  const unsigned izone0=CODE_GetIzoneFluidBuffer(rcode);
-	  const unsigned izone=(izone0&CODE_TYPE_FLUID_BUFFER015MASK); //-Substract 16 to obtain the actual zone (0-15).
 	  tdouble3 ps=pos[p]; 
     if(Tracking[nzone]) ps=MovePoint(ps,Matmov[nzone].GetMatrix4d());
 

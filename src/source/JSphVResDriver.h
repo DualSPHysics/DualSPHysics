@@ -185,6 +185,7 @@ void JSphVResDriver<T, TP>::RunVRes(JCaseVRes& casemultires) {
   SynchTimeStep();
   while(TimeStep<TimeMax){
     for(auto &vrobj : VResObj) stepdt=vrobj.ComputeStepVRes();
+    stepdt=VResObj[0].getSymplecticDtPre();
     SynchTimeStep();
     ComputeStepBuffer(stepdt, parms.data(), casemultires);
     TimeStep += stepdt;

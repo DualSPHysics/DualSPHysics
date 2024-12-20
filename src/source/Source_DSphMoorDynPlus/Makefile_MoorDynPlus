@@ -47,12 +47,12 @@ endif
 COMPILE=$(LIBS)
 
 all:$(COMPILE)
-	rm -rf *.o Tools/*.o
+#	rm -rf *.o Tools/*.o
 ifeq ($(USE_DEBUG), NO)
 	@echo "  --- Compiled MoorDynPlus Release mode ---"	
 else
 	@echo "  --- Compiled MoorDynPlus Debug mode ---"
-	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECS_DIRECTORY)/$(EXECNAME)_debug
+#	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECS_DIRECTORY)/$(EXECNAME)_debug
 endif
 
 $(LIBS): $(OBJECTS)
