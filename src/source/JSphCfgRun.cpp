@@ -99,7 +99,7 @@ void JSphCfgRun::Reset(){
   CreateDirs=true;
   CsvSepComa=false;
   VRes=false;
-  MROrder=-1;
+  VResOrder=-1;
   MRFastSingle=true;
   
 }
@@ -503,11 +503,10 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
       }
 #ifdef _WITHMR //<vs_vrres_ini>
       else if(txword=="VRES")VRes=true;
-      else if(txword=="MR_FAST")MRFastSingle=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
-      else if(txword=="MR_ORDER")MROrder=(txoptfull!=""? atoi(txoptfull.c_str()): -1);
-      else if(txword=="MRTHRESHOLD"){ 
-        MRThreshold=float(atof(txoptfull.c_str())); 
-      }
+      else if(txword=="VRES_FAST")MRFastSingle=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
+      else if(txword=="VRES_ORDER")VResOrder=(txoptfull!=""? atoi(txoptfull.c_str()): -1);
+      else if(txword=="VRES_THRESHOLD")VResThreshold=float(txoptfull!=""?atof(txoptfull.c_str()): -1); 
+      
 #endif         //<vs_vrres_end>
       else if(txword=="OPT" && c+1<optn){ LoadFile(optlis[c+1],lv+1); c++; }
       else if(txword=="H" || txword=="HELP" || txword=="?")PrintInfo=true;

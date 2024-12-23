@@ -47,10 +47,10 @@ class JSphGpuSingle_VRes  :  public JSphGpuSingle
 private:
   TpVresOrder   VResOrder;
   TpVresMethod  VResMethod;
-  JSphVRes* VRes;
+  JSphVRes*     VRes;
 
-  bool  MRfastsingle=true;
-  float MRThreshold;
+  bool  VResFastSingle;
+  float VResThreshold;
 
   StCteInteraction CTE;
   double SymplecticDtPre1;

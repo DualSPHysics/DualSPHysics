@@ -35,6 +35,7 @@
 #include "JCaseVRes.h"
 #include "JMatrix4.h"
 #include "JVResDataLimits.h"
+#include "JSphGpu_VRes_iker.h"
 
 //##############################################################################
 //# JSphVResDriver
@@ -46,16 +47,19 @@ public:
   void Run(std::string appname,JSphCfgRun* cfg,JLog2* log);
 
 private:
-  std::vector<T> VResObj;    
+  std::vector<T> VResObj; 
+  std::vector<TP> Parms;   
   JCaseVRes CaseVRes;
-  unsigned VResCount = 1;
+  unsigned VResCount  = 1;
   std::vector<std::vector<JMatrix4d>> CalcBufferMotion(JCaseVRes& casemultires, double dt);
   JMatrix4d GetBufferMotion(const JCaseVRes_Box* box, double dt, int mkbound = 0);
   void LoadCaseVRes(const JSphCfgRun* cfg);
   void InitProc(std::string appname, JSphCfgRun* cfg, JLog2* log);
+  void LoadParms();
+  void UpdateParms();
   void SynchTimeStep();
-  void BufferExtrapolateData(TP* parms);
-  void ComputeStepBuffer(double dt,TP* parms,JCaseVRes& casemultires);
+  void BufferExtrapolateData();
+  void ComputeStepBuffer(double dt,JCaseVRes& casemultires);
   void RunVRes(JCaseVRes& casemultires);
 };
 
@@ -82,45 +86,61 @@ void JSphVResDriver<T, TP>::InitProc(std::string appname, JSphCfgRun* cfg, JLog2
 }
 
 //==============================================================================
-template<typename T, typename TP>
-void JSphVResDriver<T, TP>::BufferExtrapolateData(TP* parms) {
-    for (unsigned i = 0; i < VResCount; i++) VResObj[i].CallRunCellDivide();
-    for (unsigned i = 0; i < VResCount; i++) parms[i] = VResObj[i].getParms();
-    for (unsigned i = 0; i < VResCount; i++) VResObj[i].BufferExtrapolateData(parms);
-    for (unsigned i = 0; i < VResCount; i++) VResObj[i].CallRunCellDivide();
+/// Initial loading of parameters for VRes Coupling.
+//============================================================================== 
+template<typename T,typename TP>
+void JSphVResDriver<T, TP>::LoadParms(){
+  for(unsigned i=0;i<VResCount;i++) Parms.push_back(VResObj[i].getParms());
+}
+
+//==============================================================================
+/// Updates parameters for VRes Coupling.
+//==============================================================================  
+template<typename T,typename TP>
+void JSphVResDriver<T, TP>::UpdateParms(){
+  for(unsigned i=0;i<VResCount;i++) Parms[i]=VResObj[i].getParms();
+}
+
+//==============================================================================
+template<typename T,typename TP>
+void JSphVResDriver<T, TP>::BufferExtrapolateData() {
+  for (unsigned i=0;i<VResCount;i++) VResObj[i].CallRunCellDivide();
+  UpdateParms();
+  for (unsigned i=0;i<VResCount;i++) VResObj[i].BufferExtrapolateData(Parms.data());
+  for (unsigned i=0;i<VResCount;i++) VResObj[i].CallRunCellDivide();
 }
 
 //==============================================================================
 /// Compute Step for buffer particles and obtain interpolation.
 //==============================================================================   
-template<typename T, typename TP>
-void JSphVResDriver<T, TP>::ComputeStepBuffer(double dt, TP* parms, JCaseVRes& casemultires) {
-    for (unsigned i = 0; i < VResCount; i++) parms[i] = VResObj[i].getParms();
-    std::vector<std::vector<JMatrix4d>> mat = CalcBufferMotion(casemultires, dt);
-    for (unsigned i = 0; i < VResCount; i++) {
-        for (unsigned j = 0; j < VResCount; j++) parms[j] = VResObj[j].getParms();
-        VResObj[i].ComputeStepBuffer(dt, mat[i], parms);
-    }
-    for (unsigned i = 0; i < VResCount; i++) VResObj[i].CallRunCellDivide();
-    for (unsigned i = 0; i < VResCount; i++) parms[i] = VResObj[i].getParms();
-    for (unsigned i = 0; i < VResCount; i++) VResObj[i].BufferExtrapolateData(parms);
+template<typename T,typename TP>
+void JSphVResDriver<T, TP>::ComputeStepBuffer(double dt, JCaseVRes& casemultires) {
+  UpdateParms();
+  std::vector<std::vector<JMatrix4d>> mat=CalcBufferMotion(casemultires, dt);
+  for(unsigned i=0;i<VResCount;i++) {
+    UpdateParms();
+    VResObj[i].ComputeStepBuffer(dt,mat[i],Parms.data());
+  }
+  for(unsigned i=0;i<VResCount;i++) VResObj[i].CallRunCellDivide();
+  UpdateParms();
+  for(unsigned i=0;i<VResCount;i++) VResObj[i].BufferExtrapolateData(Parms.data());
 }
 
 //==============================================================================
 /// Obtain movements information from VRes simulations
 //==============================================================================   
-template<typename T, typename TP>
-std::vector<std::vector<JMatrix4d>> JSphVResDriver<T, TP>::CalcBufferMotion(JCaseVRes& casemultires, double dt) {
+template<typename T,typename TP>
+std::vector<std::vector<JMatrix4d>> JSphVResDriver<T, TP>::CalcBufferMotion(JCaseVRes& casemultires,double dt) {
   std::vector<std::vector<JMatrix4d>> mat;
   unsigned count = casemultires.Count();
   mat.resize(count);
 
-  for(unsigned i = 0; i < count; i++){
+  for(unsigned i=0;i<count;i++){
     const JCaseVRes_Box* box = casemultires.GetZoneBox(i);
     if(box->Parent){
       mat[i].push_back(GetBufferMotion(box, dt));
     }
-    unsigned subcount = box->Count();
+    unsigned subcount =box->Count();
     for (unsigned j=0;j<subcount;j++) mat[i].push_back(GetBufferMotion(box->GetSubZoneBox(j),dt));
   }
   return mat;
@@ -129,8 +149,8 @@ std::vector<std::vector<JMatrix4d>> JSphVResDriver<T, TP>::CalcBufferMotion(JCas
 //==============================================================================
 /// Obtain movements information from VRes simulations
 //==============================================================================  
-template<typename T, typename TP>
-JMatrix4d JSphVResDriver<T, TP>::GetBufferMotion(const JCaseVRes_Box* box, double dt, int mkbound) {
+template<typename T,typename TP>
+JMatrix4d JSphVResDriver<T, TP>::GetBufferMotion(const JCaseVRes_Box* box,double dt,int mkbound) {
   unsigned idzone = box->Id;
   bool IsTracking = box->TrackingIsActive();
   JMatrix4d mat;
@@ -149,7 +169,7 @@ JMatrix4d JSphVResDriver<T, TP>::GetBufferMotion(const JCaseVRes_Box* box, doubl
 //==============================================================================
 /// Load VRes configuration from xml.
 //==============================================================================  
-template<typename T, typename TP>
+template<typename T,typename TP>
 void JSphVResDriver<T, TP>::LoadCaseVRes(const JSphCfgRun* cfg) {
   const std::string filexml = cfg->CaseName + fun::PrintStr("_vres%02u", 0) + ".xml";
   CaseVRes.LoadFileXmlRun(filexml, "case.execution.vres");
@@ -159,21 +179,16 @@ void JSphVResDriver<T, TP>::LoadCaseVRes(const JSphCfgRun* cfg) {
   vrlim.SaveFile(cfg->DirOut);
 }
 
-
 //==============================================================================
 /// Main Loop for VRes simulation.
 //==============================================================================  
-template<typename T, typename TP>
+template<typename T,typename TP>
 void JSphVResDriver<T, TP>::RunVRes(JCaseVRes& casemultires) {
-  std::vector<TP> parms;
-  if (VResCount > 1) {
-    for (unsigned i = 0; i < VResCount; i++) parms.push_back(VResObj[i].getParms());
-    for (unsigned i = 0; i < VResCount; i++) parms[i] = VResObj[i].getParms();
-    for (unsigned i = 0; i < VResCount; i++) VResObj[i].BufferInit(parms.data());
-    BufferExtrapolateData(parms.data());
-  }
+  LoadParms();
+  for (unsigned i=0; i<VResCount;i++) VResObj[i].BufferInit(Parms.data());
+  BufferExtrapolateData();
     
-  ComputeStepBuffer(0.0,parms.data(),casemultires);
+  ComputeStepBuffer(0.0,casemultires);
 
   double TimeMax=0;
 
@@ -187,7 +202,7 @@ void JSphVResDriver<T, TP>::RunVRes(JCaseVRes& casemultires) {
     for(auto &vrobj : VResObj) stepdt=vrobj.ComputeStepVRes();
     stepdt=VResObj[0].getSymplecticDtPre();
     SynchTimeStep();
-    ComputeStepBuffer(stepdt, parms.data(), casemultires);
+    ComputeStepBuffer(stepdt, casemultires);
     TimeStep += stepdt;
     for(auto &vrobj : VResObj) vrobj.Finish(stepdt);
     if (VResObj[0].getNStepsBreak() && VResObj[0].getNStep() >= VResObj[0].getNStepsBreak()) break;
@@ -198,7 +213,7 @@ void JSphVResDriver<T, TP>::RunVRes(JCaseVRes& casemultires) {
 //==============================================================================
 /// Perform VRes simulation.
 //============================================================================== 
-template<typename T, typename TP>
+template<typename T,typename TP>
 void JSphVResDriver<T, TP>::Run(std::string appname,JSphCfgRun* cfg,JLog2* log) {
   LoadCaseVRes(cfg);
   VResCount = CaseVRes.Count();
@@ -208,7 +223,7 @@ void JSphVResDriver<T, TP>::Run(std::string appname,JSphCfgRun* cfg,JLog2* log) 
   RunVRes(CaseVRes);
 }
 
-template<typename T, typename TP>
+template<typename T,typename TP>
 void JSphVResDriver<T, TP>::SynchTimeStep(){
   std::vector<double> dtsync(VResCount);
 
@@ -216,9 +231,4 @@ void JSphVResDriver<T, TP>::SynchTimeStep(){
   double dtmin = *std::min_element(dtsync.begin(), dtsync.end());
   for(unsigned i=0;i<VResCount;i++) VResObj[i].setSymplecticDtPre(dtmin);
 }
-
-
-
-
-
 #endif 

@@ -395,7 +395,9 @@ void JSphVRes::Config()
 
   
 }
-
+//========================================================================================
+/// Obtain basic arrays for interface points for Cpu computations.
+//=========================================================================================
 StrDataVresCpu JSphVRes::GetZoneFluxInfoCpu(unsigned nzone){
   unsigned nini=NIni[nzone];
   unsigned npoints=NPoints[nzone];
@@ -413,6 +415,9 @@ StrGeomVresCpu JSphVRes::GetGeomInfoVresCpu(){
   };
 
 #ifdef _WITHGPU
+//========================================================================================
+/// Obtain basic arrays for interface points for Gpu computations.
+//=========================================================================================
 StrDataVresGpu JSphVRes::GetZoneFluxInfoGpu(unsigned nzone){
   unsigned nini=NIni[nzone];
   unsigned npoints=NPoints[nzone];
@@ -431,7 +436,9 @@ StrDataVresGpu JSphVRes::GetZoneFluxInfoGpu(unsigned nzone){
   };
 #endif
 
-
+//========================================================================================
+/// Update the movement of VRes region by matrix representation on Cpu and Gpu.
+//=========================================================================================
 void JSphVRes::UpdateMatMov(std::vector<JMatrix4d> mat){
 
   for(unsigned ci=0; ci<ListSize; ci++){

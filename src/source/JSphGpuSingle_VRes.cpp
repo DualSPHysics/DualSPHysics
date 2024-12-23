@@ -22,14 +22,11 @@
 using namespace std;
 JSphGpuSingle_VRes::JSphGpuSingle_VRes():JSphGpuSingle(){
   ClassName="JSphGpuSingle";
-  MRfastsingle=false;
-  MRThreshold=100;
+  VResFastSingle=true;
+  VResThreshold=100;
   VRes=NULL;
   VResOrder=VrOrder_1st;
-
-
 }
-
 
 //==============================================================================
 /// Destructor.
@@ -39,19 +36,20 @@ JSphGpuSingle_VRes::~JSphGpuSingle_VRes(){
   delete VRes; VRes=NULL;
 }
 
-
 //==============================================================================
 /// Load VRes configuration.
 //==============================================================================
 void JSphGpuSingle_VRes::LoadVResConfigParameters(const JSphCfgRun* cfg){
-  if(cfg->MROrder>=0){
-    switch(cfg->MROrder){
+  if(cfg->VResOrder>=0){
+    switch(cfg->VResOrder){
       case 0:   VResOrder=VrOrder_0th;
       case 1:   VResOrder=VrOrder_1st;
       case 2:   VResOrder=VrOrder_2nd;
       default:  Run_Exceptioon("Variable resolution reconstruction method is not valid.");
     }
   }
+  if(cfg->MRFastSingle>=0)  VResFastSingle=(cfg->MRFastSingle>0);
+  if(cfg->VResThreshold>=0) VResThreshold=cfg->VResThreshold;
 }
 
 
@@ -74,13 +72,10 @@ StInterParmsbg JSphGpuSingle_VRes::getParms(){
 void JSphGpuSingle_VRes::BufferInit(StInterParmsbg *parms){
   cusph::CteInteractionUp(&CTE);
 
-
 	for(unsigned i=0;i<VRes->GetCount();i++){
-		agint bufferpartg("-",Arrays_Gpu,true);
-		unsigned buffercountpre;
 
-//		DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-		buffercountpre=VRes->CreateListGpuInit(Np,0,Posxy_g->cptr()
+		agint bufferpartg("-",Arrays_Gpu,true);
+		const unsigned buffercountpre=VRes->CreateListGpuInit(Np,0,Posxy_g->cptr()
       ,Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize,bufferpartg.ptr(),i);
 	}
 
@@ -119,7 +114,8 @@ void JSphGpuSingle_VRes::BufferExtrapolateData(StInterParmsbg *parms){
 /// - Update position of buffer regions and compute motion velocity.
 //==============================================================================
 void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,StInterParmsbg *parms){
-    
+  cusph::CteInteractionUp(&CTE);                            //-Update constant memory.
+
   //-Compute movement for VRes regions
   VRes->UpdateMatMov(mat);
 	VRes->MoveBufferZone(dt,mat);
@@ -127,34 +123,25 @@ void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
 	//- ComputeStep for each buffer region.
 	for(unsigned i=0;i<VRes->GetCount();i++){
     
-    cusph::CteInteractionUp(&CTE);                            //-Update constant memory.
-
-    //-Compute list of buffer particles.
-		agint bufferpartg("-",Arrays_Gpu,true);       
-		const unsigned buffercountpre=VRes->CreateListGpu(Np-Npb,Npb
-      ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize
-      ,bufferpartg.ptr(),i);
+    StrDataVresGpu vresdata=VRes->GetZoneFluxInfoGpu(i);  //-Retrieve buffer parameters.			 
 
     //-Compute eulerian flux on the mass accumulation points.
   	unsigned id=VRes->GetZone(i)->getZone()-1;      
 		cusph::CteInteractionUp(&parms[id].cte);                  //-Update constant memory.
-
-    StrDataVresGpu vresdata=VRes->GetZoneFluxInfoGpu(i);  //-Retrieve buffer parameters.			
-
-		
     cusphvres::Interaction_BufferExtrapFlux(parms[id]
       ,vresdata,CTE.dp,dt,true,VrOrder_1st,100);
 
 		
-    //-Update code of particles.
+    //-Compute step on buffer particles.
+		agint bufferpartg("-",Arrays_Gpu,true);       
+		const unsigned buffercountpre=VRes->CreateListGpu(Np-Npb,Npb
+      ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize
+      ,bufferpartg.ptr(),i);
     VRes->ComputeStepGpu(buffercountpre,bufferpartg.ptr(),IdMax+1,Posxy_g->ptr()
       ,Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr(),Idp_g->ptr(),Velrho_g->ptr(),NULL,this,i);
 
 		
     cusph::CteInteractionUp(&CTE);                            //-Update constant memory.
-    
-    
-
 		
     cusphvres::CheckMassFlux(vresdata.ntot,vresdata.nini,DivData,Map_PosMin
       ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),PosCell_g->cptr()
@@ -170,10 +157,11 @@ void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
     if(newnp){			
       if(!CheckGpuParticlesSize(Np+newnp)){ //-Check memory allocation and resize.
         const unsigned ndatacpu=0,ndatagpu=Np;
-        ResizeParticlesSizeData(ndatacpu,ndatagpu,Np+newnp,Np+newnp, 0.2,true);
+        ResizeParticlesSizeData(ndatacpu,ndatagpu,Np+newnp,Np+newnp,0.2,true);
         CellDivSingle->SetIncreaseNp(newnp);
 			}  
-      cusphvres::BufferCreateNewPart(PeriActive,newnp,vresdata.nini,newpart,Np,IdMax+1,vresdata.normals,CTE.dp,Posxy_g->ptr(),Posz_g->ptr()
+      cusphvres::BufferCreateNewPart(PeriActive,newnp,vresdata.nini,
+        newpart,Np,IdMax+1,vresdata.normals,CTE.dp,Posxy_g->ptr(),Posz_g->ptr()
         ,vresdata.ptposxy,vresdata.ptposz,Dcell_g->ptr(),Code_g->ptr(),Idp_g->ptr(),Velrho_g->ptr(),i);
       
       //-Updates basic arrays.
@@ -197,7 +185,6 @@ void JSphGpuSingle_VRes::BufferShifting(){
 	cusphvres::BufferShiftingGpu(Np,Npb,Posxy_g->ptr(),Posz_g->ptr(),ShiftVel_g->ptr(),Code_g->ptr(),vresgdata,NULL);
 }
 
-
 //==============================================================================
 /// Wrapper for call particle sorting procedure in VResDriver.
 //==============================================================================
@@ -205,9 +192,6 @@ void JSphGpuSingle_VRes::CallRunCellDivide(){
   	cusph::CteInteractionUp(&CTE);
     RunCellDivide(true);
 }
-
-
-
 
 //==============================================================================
 /// PreLoop for additional models computation.
@@ -247,7 +231,6 @@ void JSphGpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
   }
 }
 
-
 //==============================================================================
 /// Compute free-surface particles and their normals.
 /// Interaccion para el calculo de fuerzas.
@@ -280,9 +263,6 @@ void JSphGpuSingle_VRes::ComputeUmbrellaRegionVRes(){
 
 }
 
-
-
-
 //==============================================================================
 /// Return movement of an object for VRes tracking.
 //==============================================================================
@@ -308,7 +288,6 @@ JMatrix4d JSphGpuSingle_VRes::CalcVelMotion(unsigned trackingmk,double dt){
   }
   return (mat);
 }
-
 
 //==============================================================================
 /// Return movement if mkbound is a moving object.
@@ -343,7 +322,6 @@ JMatrix4d JSphGpuSingle_VRes::CalcMotionFloating(const StFloatingData m,double d
   return(mat);  
 }
 
-
 //==============================================================================
 /// Initialises VRes simulation.
 //==============================================================================
@@ -358,11 +336,6 @@ void JSphGpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* l
   //-Selection of GPU.
   const int gpuid=SelecDevice(cfg->GpuId);
   LoadVResConfigParameters(cfg);
-
-
-  if(cfg->MRFastSingle>=0)MRfastsingle=(cfg->MRFastSingle>0);
-  if(cfg->MRThreshold >=0)MRThreshold=cfg->MRThreshold;
-
 
   //-Creates array system for particles.
   Arrays_Cpu=new JArraysCpu(Log);
@@ -417,8 +390,6 @@ double JSphGpuSingle_VRes::Init2(){
 	PrintHeadPart();
 	return(TimeMax);
 }
-
-
 
 //==============================================================================
 /// Compute time step of VRes simulation.

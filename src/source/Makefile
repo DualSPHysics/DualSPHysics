@@ -1,7 +1,7 @@
 #DualSPHysics GPU/CPU v5.4.351 07-12-2024
 
 #=============== Compilation Options (YES/NO) ===============
-USE_DEBUG=YES
+USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_CHRONO=YES

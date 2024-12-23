@@ -1,3 +1,23 @@
+//HEAD_DSPH
+/*
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+
+ EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
+ School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
+
+ This file is part of DualSPHysics. 
+
+ DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License 
+ as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.
+ 
+ DualSPHysics is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details. 
+
+ You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
+*/
+
+/// \file JSphCpuSingle_VRes.h \brief Declares the class \ref JSphCpuSingle_VRes.
+
 #ifndef _JSphCpuSingle_VRes_
 #define _JSphCpuSingle_VRes_
 
@@ -11,6 +31,7 @@
 #include "JCaseVRes.h"
 #include "JSphCpu.h"
 #include "JSphCpu_VRes.h"
+#include "JSphVResDef.h"
 
 
 
@@ -34,20 +55,30 @@ inline stinterparmscb StInterparmscb(unsigned np,unsigned npb,unsigned npbok
   return(d);
 }
 
-
+//##############################################################################
+//# JSphGpuSingle_VRes
+//##############################################################################
+/// \brief Defines the attributes and functions used only in Single-CPU Variable resolution implementation.
 class JSphCpuSingle_VRes  :  public JSphCpuSingle
 {
 protected:
-	JSphVRes* VRes;
+	TpVresOrder   VResOrder;
+  TpVresMethod  VResMethod;
+  JSphVRes*     VRes;
 
-//   StCteInteraction CTE;
+  float VResThreshold;
+
   double SymplecticDtPre1;
 
 
+  void LoadVResConfigParameters(const JSphCfgRun* cfg);
+  void ComputeUmbrellaRegionVRes();
+  void ComputeFSParticlesVRes();
+  void PreLoopProcedureVRes(TpInterStep interstep);
 
-  bool MRfastsingle=true;
-  unsigned MROrder=1;
-  float MRThreshold;
+  JMatrix4d CalcMotionMoving(const StMotionData m,double dt);
+  JMatrix4d CalcMotionFloating(const StFloatingData m,double dt);
+
 
 
 
@@ -77,17 +108,14 @@ public:
 
   void BufferExtrapolateData(stinterparmscb *parms);
   void ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,stinterparmscb *parms);
-  void ComputeUmbrellaRegionVRes();
-  void ComputeFSParticlesVRes();
-  void PreLoopProcedureVRes(TpInterStep interstep);
+
 
 
   double GetTimeStep(){return TimeStep;};
   void Interaction_ForcesB(TpInterStep interstep);
 
   JMatrix4d CalcVelMotion(unsigned trackingmk,double dt);
-  JMatrix4d CalcMotionMoving(const StMotionData m,double dt);
-  JMatrix4d CalcMotionFloating(const StFloatingData m,double dt);
+  
     
 
 

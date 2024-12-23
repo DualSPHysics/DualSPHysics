@@ -100,8 +100,8 @@ public:
   #ifdef _WITHMR //<vs_vrres_ini>
   bool VRes;          ///<Define use of variable resolution zones (false by default).
   int MRFastSingle;   
-  int MROrder;
-  float MRThreshold;
+  int VResOrder;
+  float VResThreshold;
 #endif         //<vs_vrres_end>
 
 public:

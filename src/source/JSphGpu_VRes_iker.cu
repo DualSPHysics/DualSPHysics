@@ -108,14 +108,7 @@ unsigned BufferCreateList(bool stable,unsigned n,unsigned pini,const tdouble3 bo
     KerBufferCreateList <<<sgrid,SPHBSIZE,smem>>> (n,pini,Double3(boxlimitmininner),Double3(boxlimitmaxinner),Double3(boxlimitminouter)
     	      ,Double3(boxlimitmaxouter),inner,posxy,posz,code,listp,mat,tracking,nzone);
     cudaMemcpy(&count,listp+n,sizeof(unsigned),cudaMemcpyDeviceToHost);
-   // KerTestCTE <<<sgrid,SPHBSIZE,smem>>>();
-    //-Reorders list when stable has been activated.
-    //-Reordena lista cuando stable esta activado.
-//    if(stable && count){ //-Does not affect results.
-//      thrust::device_ptr<unsigned> dev_list(listp);
-//      thrust::sort(dev_list,dev_list+count);
-//    }
-  //  cudaDeviceSynchronize();
+    cudaDeviceSynchronize();
   }
   return(count);
 }
@@ -196,21 +189,17 @@ unsigned BufferCreateListInit(bool stable,unsigned n,unsigned pini
     KerBufferCreateListInit <<<sgrid,SPHBSIZE,smem>>> (n,pini,Double3(boxlimitmininner),Double3(boxlimitmaxinner),Double3(boxlimitminouter)
       ,Double3(boxlimitmaxouter),Double3(boxlimitminmid),Double3(boxlimitmaxmid),inner,posxy,posz,code,listp,mat,tracking,nzone);
     cudaMemcpy(&count,listp+n,sizeof(unsigned),cudaMemcpyDeviceToHost);
-   // KerTestCTE <<<sgrid,SPHBSIZE,smem>>>();
-    //-Reorders list when stable has been activated.
-    //-Reordena lista cuando stable esta activado.
-//    if(stable && count){ //-Does not affect results.
-//      thrust::device_ptr<unsigned> dev_list(listp);
-//      thrust::sort(dev_list,dev_list+count);
-//    }
-  //  cudaDeviceSynchronize();
+    cudaDeviceSynchronize();
   }
   return(count);
 }
 
-
-
-
+//------------------------------------------------------------------------------
+/// Checks particle position.
+/// If particle is moved to fluid zone then it changes to fluid particle and
+/// it creates a new in/out particle.
+/// If particle is moved out the domain then it changes to ignore particle.
+//------------------------------------------------------------------------------
 __global__ void KerBufferComputeStep(unsigned n,int *inoutpart,const double2 *posxy,const double *posz
   ,typecode *code,const double3 boxlimitmininner,const double3 boxlimitmaxinner,const double3 boxlimitminouter
   ,const double3 boxlimitmaxouter,const bool inner,tmatrix4f* mat,bool tracking,unsigned nzone)
@@ -925,7 +914,8 @@ void CheckMassFlux(unsigned n,unsigned pini
 /// Create list for new inlet particles to create.
 /// Crea lista de nuevas particulas inlet a crear.
 //------------------------------------------------------------------------------
-__global__ void KerBufferListCreate(unsigned n,unsigned pini,unsigned nmax,float *fluxes,int *bufferpart,double massf)
+__global__ void KerBufferListCreate(unsigned n,unsigned pini,unsigned nmax
+  ,float *fluxes,int *bufferpart,double massf)
 {
   extern __shared__ unsigned slist[];
   if(!threadIdx.x)slist[0]=0;
@@ -1563,9 +1553,6 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
       if(CODE_IsPeriodic(code[p1])) fstype[p1]=0;  
     }
   }
-
-
-
 
 //==============================================================================
 /// Scan Umbrella region to identify free-surface particle.

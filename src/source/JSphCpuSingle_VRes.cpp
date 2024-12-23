@@ -19,12 +19,9 @@
 using namespace std;
 JSphCpuSingle_VRes::JSphCpuSingle_VRes():JSphCpuSingle(){
   ClassName="JSphGpuSingle";
-  MRfastsingle=true;
-  MROrder=0;
-  MRThreshold=100;
+  VResThreshold=100;
   VRes=NULL;
-
-
+  VResOrder=VrOrder_1st;
 }
 
 
@@ -32,6 +29,22 @@ JSphCpuSingle_VRes::JSphCpuSingle_VRes():JSphCpuSingle(){
 JSphCpuSingle_VRes::~JSphCpuSingle_VRes(){
   DestructorActive=true;
   delete VRes; VRes=NULL;
+}
+
+
+//==============================================================================
+/// Load VRes configuration.
+//==============================================================================
+void JSphCpuSingle_VRes::LoadVResConfigParameters(const JSphCfgRun* cfg){
+  if(cfg->VResOrder>=0){
+    switch(cfg->VResOrder){
+      case 0:   VResOrder=VrOrder_0th;
+      case 1:   VResOrder=VrOrder_1st;
+      case 2:   VResOrder=VrOrder_2nd;
+      default:  Run_Exceptioon("Variable resolution reconstruction method is not valid.");
+    }
+  }
+  if(cfg->VResThreshold>=0) VResThreshold=cfg->VResThreshold;
 }
 
 //==============================================================================
@@ -45,12 +58,7 @@ void JSphCpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* l
   VResCount=vrescount;
   VResId=vresid; 
 
-  
-
-
-  if(cfg->MRFastSingle>=0)MRfastsingle=(cfg->MRFastSingle>0);
-  if(cfg->MROrder>=0)MROrder=cfg->MROrder;
-  if(cfg->MRThreshold >=0)MRThreshold=cfg->MRThreshold;
+  LoadVResConfigParameters(cfg);
 
   //-Creates array system for particles.
   Arrays_Cpu=new JArraysCpu(Log);
@@ -223,7 +231,8 @@ void JSphCpuSingle_VRes::BufferExtrapolateData(stinterparmscb *parms){
 		unsigned id=VRes->GetZone(i)->getZone()-1;
 
 
-	 fvres::Interaction_BufferExtrap(buffercountpre,bufferpartc.ptr(),parms[id],Pos_c->ptr(),Velrho_c->ptr(),Code_c->ptr(),2);
+	 fvres::Interaction_BufferExtrap(buffercountpre,bufferpartc.ptr()
+    ,parms[id],Pos_c->ptr(),Velrho_c->ptr(),Code_c->ptr(),2);
     // DgSaveVtkParticlesCpuMRBuffer("Debug_Buffer_CpuInit.vtk",Nstep,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL);
 	  // DgSaveVtkParticlesCpuMR("Debug_Multi_CpuInit.vtk",Nstep,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL,NULL);
 		
@@ -233,12 +242,8 @@ void JSphCpuSingle_VRes::BufferExtrapolateData(stinterparmscb *parms){
 }
 
 void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,stinterparmscb *parms){
-	// // TmgStart(Timers,TMG_SuBuffer);
-    VRes->UpdateMatMov(mat);
-	  VRes->MoveBufferZone(dt,mat);
-	// // TmgStart(Timers,TMG_SuBuffer);
-
-	// // VRes->MoveBufferZone(dt,velmot);
+  VRes->UpdateMatMov(mat);
+	VRes->MoveBufferZone(dt,mat);
 	
 	for(unsigned i=0;i<VRes->GetCount();i++){
     
