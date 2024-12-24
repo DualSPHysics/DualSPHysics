@@ -56,6 +56,7 @@ private:
   double SymplecticDtPre1;
 
   void LoadVResConfigParameters(const JSphCfgRun* cfg);
+  void VisuConfigVRes();
   void ComputeUmbrellaRegionVRes();
   void ComputeFSParticlesVRes();
   void PreLoopProcedureVRes(TpInterStep interstep);
@@ -78,7 +79,7 @@ public:
 
   double ComputeStepVRes();
   
-    void Finish(double dt1);
+  void Finish(double dt1);
   void Finish2();
   void BufferShifting();
   

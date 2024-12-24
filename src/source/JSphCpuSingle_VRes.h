@@ -72,6 +72,7 @@ protected:
 
 
   void LoadVResConfigParameters(const JSphCfgRun* cfg);
+  void VisuConfigVRes();
   void ComputeUmbrellaRegionVRes();
   void ComputeFSParticlesVRes();
   void PreLoopProcedureVRes(TpInterStep interstep);

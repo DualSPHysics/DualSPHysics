@@ -335,7 +335,7 @@ __device__ void LUdecomp_Single(T (&A)[m_dim*m_dim],int (&p)[m_dim]
 //------------------------------------------------------------------------------
 /// Perform interaction between buffer particles and fluid particles. Buffer-Fluid
 //------------------------------------------------------------------------------
-template <TpKernel tker,bool sim2d,TpVresOrder vrorder, typename T = float>
+template <TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod, typename T = float>
 __global__ void KerInteractionBufferExtrap_Single(
     unsigned bufferpartcount, const int *bufferpart, int scelldiv, int4 nc, int3 cellzero, const int2 *beginendcellfluid, const float4 *poscell, double3 mapposmin,
     const double2 *posxy, const double *posz, const typecode *code, const unsigned *idp,
@@ -400,40 +400,47 @@ __global__ void KerInteractionBufferExtrap_Single(
           T volp2=massp2/T(velrhopp2.w);
 
           // Set up C and C1 based on order and sim2d
+          if(vrmethod==VrMethod_Mls){
+            drx=drx/CTE.kernelh;
+            dry=dry/CTE.kernelh;
+            drz=drz/CTE.kernelh;
+          }
+
+          // Set up C and C1 based on order and sim2d
           if (vrorder==VrOrder_2nd){
             if (sim2d){
               T tempC[] ={T(1.0),drx,drz,drx*drx*T(0.5),drx*drz,drz*drz*T(0.5)};
-              T tempC1[]={volp2*wab,volp2*frx,volp2*frz,volp2*frxx,volp2*frxz,volp2*frzz};
-
+              T tempC1[]={wab,frx,frz,frxx,frxz,frzz};
               for (int i=0;i<m_dim;++i){
                 C[i]  = tempC[i];
-                C1[i] = tempC1[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
               }
             }else{
               T tempC[]   ={T(1.0),drx,dry,drz,drx*drx*T(0.5),drx*dry,dry*dry*T(0.5),drx*drz,drz*drz*T(0.5),dry*drz};
-              T tempC1[]  ={volp2*wab,volp2*frx,volp2*fry,volp2*frz,volp2*frxx,volp2*frxy,volp2*fryy,volp2*frxz,volp2*frzz,volp2*fryz};
-
+              T tempC1[]  ={wab,frx,fry,frz,frxx,frxy,fryy,frxz,frzz,fryz};
               for (int i=0;i<m_dim;++i){
-                C[i] = tempC[i];
-                C1[i] = tempC1[i];
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
               }
-            }
+            }            
           }else{
             if (sim2d){
-              T tempC[]   = {T(1.0),drx,drz};
-              T tempC1[]  = {volp2*wab,volp2*frx,volp2*frz};
-
+              T tempC[]   = {T(1.0),-drx,-drz};
+              T tempC1[]  = {wab,frx,frz};
               for (int i=0;i<m_dim;++i){
-                    C[i] = tempC[i];
-                    C1[i] = tempC1[i];
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
               }
             }else{
               T tempC[] = {T(1.0),drx,dry,drz};
-              T tempC1[] = {volp2*wab,volp2*frx,volp2*fry,volp2*frz};
-
-              for (int i =0;i<m_dim;++i){
-                C[i] = tempC[i];
-                C1[i] = tempC1[i];
+              T tempC1[] = {wab,frx,fry,frz};
+              for (int i=0;i<m_dim;++i){
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
               }
             }
           }
@@ -465,10 +472,13 @@ __global__ void KerInteractionBufferExtrap_Single(
     T treshold = T(0);                              ///<condition number;
     T cond = T(0);                                  ///<Scaled reciprocal condition number;
     T kernelh2=CTE.kernelh*CTE.kernelh;             ///<Scaling factor;
+    T scaleh= T(0);
+
 
     if(shep>T(0.05)){
       if (vrorder==VrOrder_2nd){
-        T scaleh = kernelh2*kernelh2;
+        if(vrmethod==VrMethod_Liu) scaleh = kernelh2*kernelh2;
+        else scaleh=T(1.0);
 
         int P[m_dim]{0};
 
@@ -476,11 +486,12 @@ __global__ void KerInteractionBufferExtrap_Single(
 
         cond=(T(1.0)/treshold)*scaleh;
       }else if (vrorder==VrOrder_1st){
-
+        if(vrmethod==VrMethod_Liu) scaleh = kernelh2*kernelh2;
+        else scaleh=T(1.0);
         int P[m_dim]{0};
 
         LUdecomp_Single<T,m_dim,m_dim2>(A,P,B,sol,treshold);
-        cond=(T(1.0)/treshold)*kernelh2;
+        cond=(T(1.0)/treshold)*scaleh;
       }
       if (cond>mrthreshold || vrorder==VrOrder_0th)
       {
@@ -509,8 +520,9 @@ __global__ void KerInteractionBufferExtrap_Single(
 /// Perform interaction between buffer particles and fluid particles. Buffer-Fluid
 //==============================================================================
 template<TpKernel tker,bool sim2d,TpVresOrder vrorder>
- void Interaction_BufferExtrapT(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t,
-		const double2 *posxyb,const double *poszb,float4 *velrhop,typecode *code1,bool fastsingle,float mrthreshold)
+void Interaction_BufferExtrapT(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t,
+	const double2 *posxyb,const double *poszb,float4 *velrhop,typecode *code1,bool fastsingle
+  ,const TpVresMethod vrmethod,float mrthreshold)
 {
   const StDivDataGpu &dvd=t.divdatag;
   const int2* beginendcellfluid=dvd.beginendcell+dvd.cellfluid;
@@ -518,10 +530,17 @@ template<TpKernel tker,bool sim2d,TpVresOrder vrorder>
   if(bufferpartcount){
     const unsigned bsize=128;
     dim3 sgrid=GetSimpleGridSize(bufferpartcount,bsize);
-    if(fastsingle)  KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,float> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
-      ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);
-    // else            KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,double> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
-    //   ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);     
+    if(vrmethod==VrMethod_Liu){
+      if(fastsingle)  KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,VrMethod_Liu,float> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
+        ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);
+      // else            KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,VrMethod_Liu,double> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
+      //   ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);     
+    }else{
+      if(fastsingle)  KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,VrMethod_Mls,float> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
+        ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);
+      // else            KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,VrMethod_Mls,double> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
+      //   ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);       
+    }  
   }
 }
 
@@ -532,19 +551,19 @@ template<TpKernel tker,bool sim2d,TpVresOrder vrorder>
 template<TpKernel tker>
 void Interaction_BufferExtrap_gt0(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t
   ,const double2 *posxyb,const double *poszb,float4* velrhop,typecode *code1,bool fastsingle
-  ,const TpVresOrder vrorder,float mrthreshold)
+  ,const TpVresOrder vrorder,const TpVresMethod vrmethod,float mrthreshold)
 {
   if(t.simulate2d){
     switch(vrorder){
-      case VrOrder_0th: Interaction_BufferExtrapT<tker,true,VrOrder_0th>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
-      case VrOrder_1st: Interaction_BufferExtrapT<tker,true,VrOrder_1st>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
-      case VrOrder_2nd: Interaction_BufferExtrapT<tker,true,VrOrder_2nd>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
+      case VrOrder_0th: Interaction_BufferExtrapT<tker,true,VrOrder_0th>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,vrmethod,mrthreshold); break;
+      case VrOrder_1st: Interaction_BufferExtrapT<tker,true,VrOrder_1st>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,vrmethod,mrthreshold); break;
+      case VrOrder_2nd: Interaction_BufferExtrapT<tker,true,VrOrder_2nd>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,vrmethod,mrthreshold); break;
     }
   }else{
       switch(vrorder){
-      case VrOrder_0th: Interaction_BufferExtrapT<tker,false,VrOrder_0th>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
-      case VrOrder_1st: Interaction_BufferExtrapT<tker,false,VrOrder_1st>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
-      case VrOrder_2nd: Interaction_BufferExtrapT<tker,false,VrOrder_2nd>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,mrthreshold); break;
+      case VrOrder_0th: Interaction_BufferExtrapT<tker,false,VrOrder_0th>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,vrmethod,mrthreshold); break;
+      case VrOrder_1st: Interaction_BufferExtrapT<tker,false,VrOrder_1st>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,vrmethod,mrthreshold); break;
+      case VrOrder_2nd: Interaction_BufferExtrapT<tker,false,VrOrder_2nd>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,vrmethod,mrthreshold); break;
     }
   } 
 }
@@ -554,11 +573,11 @@ void Interaction_BufferExtrap_gt0(unsigned bufferpartcount,const int *bufferpart
 //==============================================================================
 void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart,const StInterParmsbg &t
 	,const double2 *posxyb,const double *poszb,float4* velrhop,typecode *code1,bool fastsingle
-  ,const TpVresOrder order,float mrthreshold)
+  ,const TpVresOrder order,const TpVresMethod vrmethod,float mrthreshold)
 {
   switch(t.tkernel){
     case KERNEL_Wendland:
-      Interaction_BufferExtrap_gt0<KERNEL_Wendland>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,order,mrthreshold);
+      Interaction_BufferExtrap_gt0<KERNEL_Wendland>(bufferpartcount,bufferpart,t,posxyb,poszb,velrhop,code1,fastsingle,order,vrmethod,mrthreshold);
     break;
 #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:
@@ -573,7 +592,7 @@ void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart,con
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //------------------------------------------------------------------------------
-template <TpKernel tker,bool sim2d,TpVresOrder vrorder, typename T = float>
+template <TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod, typename T = float>
 __global__ void KerInteractionBufferExtrap_SingleFlux
   (unsigned bufferpartcount,unsigned pini,int scelldiv,int4 nc,int3 cellzero,const int2 *beginendcellfluid,const float4* poscell, double3 mapposmin
   ,const double2 *posxy,const double *posz,const typecode *code,const unsigned *idp
@@ -682,43 +701,47 @@ __global__ void KerInteractionBufferExtrap_SingleFlux
           T volp2=massp2/T(velrhopp2.w);
           ShiftTFS-=volp2*(drx*frx+dry*fry+drz*frz);
           mindist=min(mindist,rr2);
-
+          if(vrmethod==VrMethod_Mls){
+            drx=drx/CTE.kernelh;
+            dry=dry/CTE.kernelh;
+            drz=drz/CTE.kernelh;
+          }
 
           // Set up C and C1 based on order and sim2d
           if (vrorder==VrOrder_2nd){
             if (sim2d){
               T tempC[] ={T(1.0),drx,drz,drx*drx*T(0.5),drx*drz,drz*drz*T(0.5)};
-              T tempC1[]={volp2*wab,volp2*frx,volp2*frz,volp2*frxx,volp2*frxz,volp2*frzz};
-
+              T tempC1[]={wab,frx,frz,frxx,frxz,frzz};
               for (int i=0;i<m_dim;++i){
                 C[i]  = tempC[i];
-                C1[i] = tempC1[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
               }
             }else{
               T tempC[]   ={T(1.0),drx,dry,drz,drx*drx*T(0.5),drx*dry,dry*dry*T(0.5),drx*drz,drz*drz*T(0.5),dry*drz};
-              T tempC1[]  ={volp2*wab,volp2*frx,volp2*fry,volp2*frz,volp2*frxx,volp2*frxy,volp2*fryy,volp2*frxz,volp2*frzz,volp2*fryz};
-
+              T tempC1[]  ={wab,frx,fry,frz,frxx,frxy,fryy,frxz,frzz,fryz};
               for (int i=0;i<m_dim;++i){
-                C[i] = tempC[i];
-                C1[i] = tempC1[i];
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
               }
-            }
+            }            
           }else{
             if (sim2d){
               T tempC[]   = {T(1.0),-drx,-drz};
-              T tempC1[]  = {volp2*wab,volp2*frx,volp2*frz};
-
+              T tempC1[]  = {wab,frx,frz};
               for (int i=0;i<m_dim;++i){
-                    C[i] = tempC[i];
-                    C1[i] = tempC1[i];
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
               }
             }else{
               T tempC[] = {T(1.0),drx,dry,drz};
-              T tempC1[] = {volp2*wab,volp2*frx,volp2*fry,volp2*frz};
-
-              for (int i =0;i<m_dim;++i){
-                C[i] = tempC[i];
-                C1[i] = tempC1[i];
+              T tempC1[] = {wab,frx,fry,frz};
+              for (int i=0;i<m_dim;++i){
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
               }
             }
           }
@@ -750,10 +773,12 @@ __global__ void KerInteractionBufferExtrap_SingleFlux
     T treshold = T(0);                              ///<condition number;
     T cond = T(0);                                  ///<Scaled reciprocal condition number;
     T kernelh2=CTE.kernelh*CTE.kernelh;             ///<Scaling factor;
+    T scaleh= T(0);
 
     if(shep>T(0.05)){
       if (vrorder==VrOrder_2nd){
-        T scaleh = kernelh2*kernelh2;
+        if(vrmethod==VrMethod_Liu) scaleh = kernelh2*kernelh2;
+        else scaleh=T(1.0);
 
         int P[m_dim]{0};
 
@@ -761,11 +786,13 @@ __global__ void KerInteractionBufferExtrap_SingleFlux
 
         cond=(T(1.0)/treshold)*scaleh;
       }else if (vrorder==VrOrder_1st){
+        if(vrmethod==VrMethod_Liu) scaleh = kernelh2;
+        else scaleh=T(1.0);
 
         int P[m_dim]{0};
 
         LUdecomp_Single<T,m_dim,m_dim2>(A,P,B,sol,treshold);
-        cond=(T(1.0)/treshold)*kernelh2;
+        cond=(T(1.0)/treshold)*scaleh;
       }
       if (cond>mrthreshold || vrorder==VrOrder_0th)
       {
@@ -795,7 +822,7 @@ __global__ void KerInteractionBufferExtrap_SingleFlux
 //==============================================================================
 template<TpKernel tker,bool sim2d,TpVresOrder vrorder>
 void Interaction_BufferExtrapFluxT(const StInterParmsbg &t,StrDataVresGpu &vres
-	,double dp,double dt,bool fastsingle,float mrthreshold)
+	,double dp,double dt,bool fastsingle,const TpVresMethod vrmethod,float mrthreshold)
 {
   const StDivDataGpu &dvd=t.divdatag;
   const int2* beginendcellfluid=dvd.beginendcell/* +dvd.cellfluid */;
@@ -804,10 +831,17 @@ void Interaction_BufferExtrapFluxT(const StInterParmsbg &t,StrDataVresGpu &vres
   if(n){
     const unsigned bsize=128;
     dim3 sgrid=GetSimpleGridSize(n,bsize);
-    if(fastsingle)  KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,float> <<<sgrid,bsize>>> (vres.ntot,vres.nini,dvd.scelldiv,dvd.nc,dvd.cellzero
-      ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,vres.ptposxy,vres.ptposz,vres.normals,vres.mass,vres.velmot,dp,dt,mrthreshold,dvd.cellfluid);
-    // else KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,double> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero
-    //   ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);    
+    if(vrmethod==VrMethod_Liu){
+      if(fastsingle)  KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,VrMethod_Liu,float> <<<sgrid,bsize>>> (vres.ntot,vres.nini,dvd.scelldiv,dvd.nc,dvd.cellzero
+        ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,vres.ptposxy,vres.ptposz,vres.normals,vres.mass,vres.velmot,dp,dt,mrthreshold,dvd.cellfluid);
+      // else KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,VrMethod_Liu,double> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero
+      //   ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);    
+    }else{
+      if(fastsingle)  KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,VrMethod_Mls,float> <<<sgrid,bsize>>> (vres.ntot,vres.nini,dvd.scelldiv,dvd.nc,dvd.cellzero
+        ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,vres.ptposxy,vres.ptposz,vres.normals,vres.mass,vres.velmot,dp,dt,mrthreshold,dvd.cellfluid);
+      // else KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,VrMethod_Mls,double> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero
+      //   ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);    
+    }
   }
 }
 
@@ -817,19 +851,19 @@ void Interaction_BufferExtrapFluxT(const StInterParmsbg &t,StrDataVresGpu &vres
 //==============================================================================
 template<TpKernel tker>
 void Interaction_BufferExtrapFlux_gt0(const StInterParmsbg &t,StrDataVresGpu &vres
-	,double dp,double dt,bool fastsingle,const TpVresOrder vrorder,float mrthreshold)
+	,double dp,double dt,bool fastsingle,const TpVresOrder vrorder,const TpVresMethod vrmethod,float mrthreshold)
 {
   if(t.simulate2d){
     switch(vrorder){
-      case VrOrder_0th: Interaction_BufferExtrapFluxT<tker,true,VrOrder_0th>(t,vres,dp,dt,fastsingle,mrthreshold); break;
-      case VrOrder_1st: Interaction_BufferExtrapFluxT<tker,true,VrOrder_1st>(t,vres,dp,dt,fastsingle,mrthreshold); break;
-      case VrOrder_2nd: Interaction_BufferExtrapFluxT<tker,true,VrOrder_2nd>(t,vres,dp,dt,fastsingle,mrthreshold); break;
+      case VrOrder_0th: Interaction_BufferExtrapFluxT<tker,true,VrOrder_0th>(t,vres,dp,dt,fastsingle,vrmethod,mrthreshold); break;
+      case VrOrder_1st: Interaction_BufferExtrapFluxT<tker,true,VrOrder_1st>(t,vres,dp,dt,fastsingle,vrmethod,mrthreshold); break;
+      case VrOrder_2nd: Interaction_BufferExtrapFluxT<tker,true,VrOrder_2nd>(t,vres,dp,dt,fastsingle,vrmethod,mrthreshold); break;
     }
   }else{
       switch(vrorder){
-      case VrOrder_0th: Interaction_BufferExtrapFluxT<tker,false,VrOrder_0th>(t,vres,dp,dt,fastsingle,mrthreshold); break;
-      case VrOrder_1st: Interaction_BufferExtrapFluxT<tker,false,VrOrder_1st>(t,vres,dp,dt,fastsingle,mrthreshold); break;
-      case VrOrder_2nd: Interaction_BufferExtrapFluxT<tker,false,VrOrder_2nd>(t,vres,dp,dt,fastsingle,mrthreshold); break;
+      case VrOrder_0th: Interaction_BufferExtrapFluxT<tker,false,VrOrder_0th>(t,vres,dp,dt,fastsingle,vrmethod,mrthreshold); break;
+      case VrOrder_1st: Interaction_BufferExtrapFluxT<tker,false,VrOrder_1st>(t,vres,dp,dt,fastsingle,vrmethod,mrthreshold); break;
+      case VrOrder_2nd: Interaction_BufferExtrapFluxT<tker,false,VrOrder_2nd>(t,vres,dp,dt,fastsingle,vrmethod,mrthreshold); break;
     }
   } 
 }
@@ -839,11 +873,11 @@ void Interaction_BufferExtrapFlux_gt0(const StInterParmsbg &t,StrDataVresGpu &vr
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
 void Interaction_BufferExtrapFlux(const StInterParmsbg &t,StrDataVresGpu &vres
-	,double dp,double dt,bool fastsingle,const TpVresOrder vrorder,float mrthreshold)
+	,double dp,double dt,bool fastsingle,const TpVresOrder vrorder,const TpVresMethod vrmethod,float mrthreshold)
 {
   switch(t.tkernel){
     case KERNEL_Wendland:
-      Interaction_BufferExtrapFlux_gt0<KERNEL_Wendland>(t,vres,dp,dt,fastsingle,vrorder,mrthreshold);
+      Interaction_BufferExtrapFlux_gt0<KERNEL_Wendland>(t,vres,dp,dt,fastsingle,vrorder,vrmethod,mrthreshold);
     break;
 #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:

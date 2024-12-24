@@ -98,9 +98,10 @@ public:
   unsigned PipsSteps;  ///<Number of steps per interval to compute PIPS (100 by default).
 
   #ifdef _WITHMR //<vs_vrres_ini>
-  bool VRes;          ///<Define use of variable resolution zones (false by default).
-  int MRFastSingle;   
-  int VResOrder;
+  bool  VRes;          ///<Define use of variable resolution zones (false by default).
+  int   MRFastSingle;   
+  int   VResOrder;
+  int   VResMethod;
   float VResThreshold;
 #endif         //<vs_vrres_end>
 

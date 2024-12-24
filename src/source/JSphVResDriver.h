@@ -104,10 +104,10 @@ void JSphVResDriver<T, TP>::UpdateParms(){
 //==============================================================================
 template<typename T,typename TP>
 void JSphVResDriver<T, TP>::BufferExtrapolateData() {
-  for (unsigned i=0;i<VResCount;i++) VResObj[i].CallRunCellDivide();
+  for(auto &vrobj : VResObj) vrobj.CallRunCellDivide();
   UpdateParms();
-  for (unsigned i=0;i<VResCount;i++) VResObj[i].BufferExtrapolateData(Parms.data());
-  for (unsigned i=0;i<VResCount;i++) VResObj[i].CallRunCellDivide();
+  for(auto &vrobj : VResObj) vrobj.BufferExtrapolateData(Parms.data());
+  for(auto &vrobj : VResObj) vrobj.CallRunCellDivide();
 }
 
 //==============================================================================
@@ -121,9 +121,9 @@ void JSphVResDriver<T, TP>::ComputeStepBuffer(double dt, JCaseVRes& casemultires
     UpdateParms();
     VResObj[i].ComputeStepBuffer(dt,mat[i],Parms.data());
   }
-  for(unsigned i=0;i<VResCount;i++) VResObj[i].CallRunCellDivide();
+  for(auto &vrobj : VResObj) vrobj.CallRunCellDivide();
   UpdateParms();
-  for(unsigned i=0;i<VResCount;i++) VResObj[i].BufferExtrapolateData(Parms.data());
+  for(auto &vrobj : VResObj) vrobj.BufferExtrapolateData(Parms.data());
 }
 
 //==============================================================================
@@ -185,17 +185,18 @@ void JSphVResDriver<T, TP>::LoadCaseVRes(const JSphCfgRun* cfg) {
 template<typename T,typename TP>
 void JSphVResDriver<T, TP>::RunVRes(JCaseVRes& casemultires) {
   LoadParms();
-  for (unsigned i=0; i<VResCount;i++) VResObj[i].BufferInit(Parms.data());
+  
+  for(auto &vrobj : VResObj) vrobj.BufferInit(Parms.data());
   BufferExtrapolateData();
-    
   ComputeStepBuffer(0.0,casemultires);
 
   double TimeMax=0;
+  double TimeStep=VResObj[0].GetTimeStep();
+  double stepdt=0;
 
   for(auto &vrobj : VResObj) TimeMax=vrobj.Init2();
 
-  double TimeStep=VResObj[0].GetTimeStep();
-  double stepdt=0;
+  
 
   SynchTimeStep();
   while(TimeStep<TimeMax){
@@ -207,7 +208,7 @@ void JSphVResDriver<T, TP>::RunVRes(JCaseVRes& casemultires) {
     for(auto &vrobj : VResObj) vrobj.Finish(stepdt);
     if (VResObj[0].getNStepsBreak() && VResObj[0].getNStep() >= VResObj[0].getNStepsBreak()) break;
   }  
-  for (unsigned i = 0; i < VResCount; i++) VResObj[i].Finish2();
+  for(auto &vrobj : VResObj) vrobj.Finish2();
 }
 
 //==============================================================================
@@ -229,6 +230,6 @@ void JSphVResDriver<T, TP>::SynchTimeStep(){
 
   for(unsigned i=0;i<VResCount;i++) dtsync[i]=VResObj[i].getSymplecticDtPre1();
   double dtmin = *std::min_element(dtsync.begin(), dtsync.end());
-  for(unsigned i=0;i<VResCount;i++) VResObj[i].setSymplecticDtPre(dtmin);
+  for(auto &vrobj : VResObj) vrobj.setSymplecticDtPre(dtmin);
 }
 #endif 

@@ -98,10 +98,14 @@ void JSphCfgRun::Reset(){
   PipsMode=0; PipsSteps=100;
   CreateDirs=true;
   CsvSepComa=false;
-  VRes=false;
-  VResOrder=-1;
-  MRFastSingle=true;
-  
+  #ifdef _WITHMR //<vs_vrres_ini>
+    VRes=false;
+    VResOrder=-1;
+    VResMethod=-1;
+    MRFastSingle=true;
+    VResThreshold=-1;
+  #endif         //<vs_vrres_end>
+
 }
 
 //==============================================================================
@@ -505,6 +509,7 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
       else if(txword=="VRES")VRes=true;
       else if(txword=="VRES_FAST")MRFastSingle=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
       else if(txword=="VRES_ORDER")VResOrder=(txoptfull!=""? atoi(txoptfull.c_str()): -1);
+      else if(txword=="VRES_METHOD")VResMethod=(txoptfull!=""? atoi(txoptfull.c_str()): -1);
       else if(txword=="VRES_THRESHOLD")VResThreshold=float(txoptfull!=""?atof(txoptfull.c_str()): -1); 
       
 #endif         //<vs_vrres_end>

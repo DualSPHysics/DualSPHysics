@@ -346,11 +346,11 @@ void JSphVRes::Config()
 
     tmatrix4f* matc=  new tmatrix4f[ListSize];
     for(unsigned ci=0; ci<ListSize; ci++){
-    tmatrix4f mat_new=Matmov[ci].GetMatrix4f();
-    matc[ci]=mat_new;
-  }
-  cudaMemcpy(Matmovg,matc,sizeof(tmatrix4f)*ListSize,cudaMemcpyHostToDevice);
-  delete[] matc;  matc=NULL;
+      tmatrix4f mat_new=Matmov[ci].GetMatrix4f();
+      matc[ci]=mat_new;
+    }
+    cudaMemcpy(Matmovg,matc,sizeof(tmatrix4f)*ListSize,cudaMemcpyHostToDevice);
+    delete[] matc;  matc=NULL;
   }
   //-Create object for retrieving vres zone configurations.
   // GeomInfo=new StrGeomVresGpu(BoxLimitMing,BoxLimitMaxg,BoxDomMing,BoxDomMaxg,Trackingg,Innerg,Matmovg);
@@ -380,8 +380,8 @@ void JSphVRes::Config()
     tdouble2* pxy=new tdouble2[PtCount];
     double*   pz =new double[PtCount];
     for(unsigned c=0;c<PtCount;c++){
-    pxy[c]=TDouble2(PtPointsIni[c].x,PtPointsIni[c].y);
-    pz[c]=PtPointsIni[c].z;
+    pxy[c]=TDouble2(PtPoints[c].x,PtPoints[c].y);
+    pz[c]=PtPoints[c].z;
     }
     cudaMemcpy(PtPosxyg     ,pxy          ,sizeof(double2)  *PtCount ,cudaMemcpyHostToDevice);
     cudaMemcpy(PtPoszg      ,pz           ,sizeof(double)   *PtCount ,cudaMemcpyHostToDevice);
@@ -460,6 +460,9 @@ void JSphVRes::UpdateMatMov(std::vector<JMatrix4d> mat){
 #endif
 }
 
+//========================================================================================
+/// Save interface points arrays.
+//=========================================================================================
 void JSphVRes::SaveVResData(int part,double timestep,int nstep){
 
   SvVResDataBi4->InitPartData(part,timestep,nstep);
@@ -486,7 +489,9 @@ void JSphVRes::SaveVResData(int part,double timestep,int nstep){
   delete  []  matarray;   matarray=NULL;
 }
 
-
+//========================================================================================
+/// Load interface points arrays for restaring simulation.
+//=========================================================================================
 void JSphVRes::LoadVResData(){
 
   JDsVResDataLoad edat(Log);
@@ -501,6 +506,17 @@ void JSphVRes::LoadVResData(){
   float*    mass    = new float  [PtCount];
 
   edat.LoadArray(PtCount,msize,velmot,mass,matarray);
+
+  memcpy(PtPoints   ,pos      ,sizeof(tdouble3) *PtCount);
+  memcpy(PtNormals  ,normals  ,sizeof(tfloat3)  *PtCount);
+  memcpy(PtVelMot   ,normals  ,sizeof(tfloat3)  *PtCount);
+  memcpy(PtMass     ,normals  ,sizeof(float)    *PtCount);
+
+  for(unsigned i=0;i<ListSize;i++){
+    tmatrix4d mat = reinterpret_cast<tmatrix4d*>(matarray)[i]; 
+    Matmov[i]=JMatrix4d(mat);  
+  }
+
 
   delete  []  pos     ;   pos     =NULL;
   delete  []  normals ;   normals =NULL;
@@ -657,33 +673,32 @@ unsigned JSphVRes::ComputeStepCpu(unsigned bufferpartcount,int *bufferpart
 	return(newcp);
 }
 
-  void JSphVRes::CreateNewPart(const unsigned idnext,unsigned *dcell,typecode *code,tdouble3 *pos,unsigned *idp,
-		tfloat4 *velrhop,const JSphCpu *sphcpu,unsigned np,unsigned nzone){    
-    unsigned newcp=0;
-    const unsigned nini=NIni[nzone];
-    const unsigned npoints=NPoints[nzone];
-	  for(unsigned i=nini;i<npoints;i++){
-		  float mass=PtMass[i];
-      if(mass>CSP.massfluid){
-        tdouble3 rpos=PtPoints[i];
-        tfloat3  normal=PtNormals[i];
-        PtMass[i]-=CSP.massfluid;
-        const double dis=0.5*CSP.dp;
-        rpos.x-=(double)dis*normal.x;
-        rpos.y-=(double)dis*normal.y;
-        rpos.z-=(double)dis*normal.z;
-        const unsigned p2=np+newcp;
-        code[p2]=CODE_ToFluidBuffer(CODE_TYPE_FLUID,byte(nzone));
-			  sphcpu->UpdatePos(rpos,0,0,0,false,p2,pos,dcell,code);
-			  idp[p2]=idnext+newcp;
-			  velrhop[p2]=TFloat4(0,0,0,1000);
-			  newcp++;
-      }
+void JSphVRes::CreateNewPart(const unsigned idnext,unsigned *dcell,typecode *code,tdouble3 *pos,unsigned *idp,
+	tfloat4 *velrhop,const JSphCpu *sphcpu,unsigned np,unsigned nzone){    
+  unsigned newcp=0;
+  const unsigned nini=NIni[nzone];
+  const unsigned npoints=NPoints[nzone];
+  for(unsigned i=nini;i<npoints;i++){
+	  float mass=PtMass[i];
+    if(mass>CSP.massfluid){
+      tdouble3 rpos=PtPoints[i];
+      tfloat3  normal=PtNormals[i];
+      PtMass[i]-=CSP.massfluid;
+      const double dis=0.5*CSP.dp;
+      rpos.x-=(double)dis*normal.x;
+      rpos.y-=(double)dis*normal.y;
+      rpos.z-=(double)dis*normal.z;
+      const unsigned p2=np+newcp;
+      code[p2]=CODE_ToFluidBuffer(CODE_TYPE_FLUID,byte(nzone));
+			sphcpu->UpdatePos(rpos,0,0,0,false,p2,pos,dcell,code);
+		  idp[p2]=idnext+newcp;
+		  velrhop[p2]=TFloat4(0,0,0,1000);
+		  newcp++;
     }
   }
+}
+
 #ifdef _WITHGPU
-
-
 //==============================================================================
 /// ComputeStep over buffer regions:
 /// - If buffer particle is moved to fluid zone then it changes to fluid particle.
@@ -723,13 +738,12 @@ void JSphVRes::MoveBufferZone(double dt,std::vector<JMatrix4d> mat){
         }
       }else{
         #ifdef _WITHGPU
-        cusphvres::MoveBufferZone(NIni[i],ntot,PtPosxyg,PtPoszg,PtNormalsg,PtVelMotg,dt,mat_i,i );
+        cusphvres::MoveBufferZone(NIni[i],ntot,PtPosxyg,PtPoszg,PtNormalsg,PtVelMotg,dt,mat_i,i);
         #endif
       }
     }
   }
 }
-
 
 //==============================================================================
 // Saves VTK file with accumulation points info.

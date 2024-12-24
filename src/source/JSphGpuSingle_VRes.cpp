@@ -26,6 +26,7 @@ JSphGpuSingle_VRes::JSphGpuSingle_VRes():JSphGpuSingle(){
   VResThreshold=100;
   VRes=NULL;
   VResOrder=VrOrder_1st;
+  VResMethod=VrMethod_Liu;
 }
 
 //==============================================================================
@@ -42,14 +43,32 @@ JSphGpuSingle_VRes::~JSphGpuSingle_VRes(){
 void JSphGpuSingle_VRes::LoadVResConfigParameters(const JSphCfgRun* cfg){
   if(cfg->VResOrder>=0){
     switch(cfg->VResOrder){
-      case 0:   VResOrder=VrOrder_0th;
-      case 1:   VResOrder=VrOrder_1st;
-      case 2:   VResOrder=VrOrder_2nd;
+      case 0:   VResOrder=VrOrder_0th;  break;
+      case 1:   VResOrder=VrOrder_1st;  break;
+      case 2:   VResOrder=VrOrder_2nd;  break;
+      default:  Run_Exceptioon("Variable resolution reconstruction order is not valid.");
+    }
+  }
+  if(cfg->VResMethod>=0){
+    switch(cfg->VResMethod){
+      case 0:   VResMethod=VrMethod_Liu;  break;
+      case 1:   VResMethod=VrMethod_Mls;  break;
       default:  Run_Exceptioon("Variable resolution reconstruction method is not valid.");
     }
   }
-  if(cfg->MRFastSingle>=0)  VResFastSingle=(cfg->MRFastSingle>0);
+  if(cfg->MRFastSingle>=0)  VResFastSingle=cfg->MRFastSingle>0;
   if(cfg->VResThreshold>=0) VResThreshold=cfg->VResThreshold;
+}
+
+//==============================================================================
+/// Print VRes configuration.
+//==============================================================================
+void JSphGpuSingle_VRes::VisuConfigVRes(){
+  Log->Print("\nVRes Configuration:");
+  Log->Printf(" Interpolation Method: %s",(VResMethod==VrMethod_Liu? "Liu-Liu Correction": "Moving Least Square"));
+  Log->Printf(" Interpolation Order: %s" ,(VResOrder==VrOrder_2nd? "2nd": (VResOrder==VrOrder_1st? "1st": "0th")));
+  Log->Printf(" Inter Threshold: %g" ,VResThreshold);
+  Log->Printf(" Inter Precision: %s" ,(VResFastSingle ? "Single": "Double"));
 }
 
 
@@ -80,7 +99,8 @@ void JSphGpuSingle_VRes::BufferInit(StInterParmsbg *parms){
 	}
 
   RunCellDivide(true);
-  if(VRES_DG_SAVEVTK)DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),Velrho_g->cptr());
+  if(VRES_DG_SAVEVTK)DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np
+    ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),Velrho_g->cptr());
 
 }
 
@@ -100,8 +120,9 @@ void JSphGpuSingle_VRes::BufferExtrapolateData(StInterParmsbg *parms){
     //-Update constant memory and perform interpolation.  
 		unsigned id=VRes->GetZone(i)->getZone()-1;
 		cusph::CteInteractionUp(&parms[id].cte);
-		cusphvres::Interaction_BufferExtrap(buffercountpre,bufferpartg.ptr(),parms[id]
-      ,Posxy_g->cptr(),Posz_g->cptr(),Velrho_g->ptr(),Code_g->ptr(),true,VrOrder_1st,100);
+		cusphvres::Interaction_BufferExtrap(buffercountpre,bufferpartg.ptr()
+      ,parms[id],Posxy_g->cptr(),Posz_g->cptr(),Velrho_g->ptr(),Code_g->ptr()
+      ,true,VResOrder,VResMethod,VResThreshold);
 	}
 }
 
@@ -129,7 +150,7 @@ void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
   	unsigned id=VRes->GetZone(i)->getZone()-1;      
 		cusph::CteInteractionUp(&parms[id].cte);                  //-Update constant memory.
     cusphvres::Interaction_BufferExtrapFlux(parms[id]
-      ,vresdata,CTE.dp,dt,true,VrOrder_1st,100);
+      ,vresdata,CTE.dp,dt,true,VResOrder,VResMethod,VResThreshold);
 
 		
     //-Compute step on buffer particles.
@@ -206,7 +227,8 @@ void JSphGpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
      StrGeomVresGpu vresgdata=VRes->GetGeomInfoVresGpu();
 
   if(runshift)cusphvres::PreLoopInteraction(TKernel,Simulate2D,runshift,bsfluid,Np-Npb,Npb,DivData
-    ,Posxy_g->cptr(),Posz_g->cptr(),Dcell_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr()
+    ,Posxy_g->cptr(),Posz_g->cptr(),Dcell_g->cptr(),PosCell_g->cptr()
+    ,Velrho_g->cptr(),Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr()
     ,FSType_g->ptr(),FSNormal_g->ptr(),FSMinDist_g->ptr(),vresgdata,NULL);
 
       
@@ -349,6 +371,7 @@ void JSphGpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* l
   LoadConfig(cfg);
   LoadCaseParticles();
   VisuConfig();
+  VisuConfigVRes();
   ConfigDomain();
   ConfigRunMode();
   VisuParticleSummary();

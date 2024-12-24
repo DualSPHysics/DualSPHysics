@@ -155,7 +155,7 @@ NCC=nvcc
 ifeq ($(USE_DEBUG), NO)
   NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC) -D_WITHMR -D_WITHGPU
 else
-  NCCFLAGS+=-c $(GENCODE) -O0 -ccbin $(CC) -g -G  -D_WITHMR -D_WITHGPU
+  NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC)  -D_WITHMR -D_WITHGPU
 endif
 ifeq ($(USE_FAST_MATH), YES)
   NCCFLAGS+= -use_fast_math

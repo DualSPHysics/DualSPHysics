@@ -27,139 +27,110 @@ using namespace std;
 
 namespace fvres{
 
-template<const int n,const int n1> bool LUdecomp(double *a,int *p,double *b,double *sol,double& treshold){
+//------------------------------------------------------------------------------
+/// Solve a linear system of m_dim unknown and m_dim2 right hand sides with a LU Decomposition.
+/// Return the reciprocal of the condition number.
+//------------------------------------------------------------------------------
+template<const int m_dim, const int m_dim2>
+void LUdecomp_Single(double (&A)[m_dim*m_dim],int (&p)[m_dim]
+  ,double (&b)[m_dim*m_dim2],double (&sol)[m_dim2],double &treshold){
+  //-Compute the norm of matrix A
+  double maxs = 0;
+  for(int i=0;i<m_dim;i++){
+    double sum = 0;
+    for(int j=0;j<m_dim;j++) sum+=fabs(A[i*m_dim+j]);
+    maxs =max(maxs, sum);
+  }
 
+  //- Initialize permutation array
+  for(int i=0;i<m_dim;i++) p[i]=i;
+  
 
-//norm matrix a
-	double maxs=0;
-#pragma unroll
-	for (int i=0;i<n;i++){
-		double sum=0;
-#pragma unroll
-		for(int j=0;j<n;j++) sum+=fabs(a[n*j+i]);
-		maxs=max(maxs,sum);
-	}
+  double maxv = 0;
+  for(int i=0;i<m_dim;i++){
+    int imax=i;
+      for(int k=i;k<m_dim;k++){
+        if(fabs(A[i+k*m_dim])>maxv){
+          maxv=fabs(A[i+k*m_dim]);
+          imax=k;
+        }
+      }
 
+      if(imax!=i){
+        int tmp =p[i];
+        p[i]    =p[imax];
+        p[imax] =tmp;
 
+        for(int j=0;j<m_dim;j++) {
+          double temp          =A[i*m_dim+j];
+          A[i*m_dim+j]    =A[imax*m_dim+j];
+          A[imax*m_dim+j] =temp;
+        }
+      }
 
+        // LU decomposition
+      for (int j=i+1;j<m_dim;j++){
+        A[j*m_dim+i] /= A[i*m_dim+i];
+        for (int k=i+1;k<m_dim;k++) A[j*m_dim+k]-=A[j*m_dim+i]*A[i*m_dim+k];
+      }
+  }
 
+  double ia[m_dim*m_dim] = {0};
 
-	double maxv=0;
-#pragma unroll
-	for(int i=0;i<n;i++){
-		p[i]=i;
-	}
+  //-Compute inverse matrix
+  for (int j=0;j<m_dim;j++) {
+    for (int i=0;i<m_dim;i++) {
+      ia[i*m_dim+j]= p[i]==j ? 1.0 : 0.0;
+      for (int k = 0;k<i;k++)ia[i*m_dim+j]-=A[i*m_dim+k]*ia[k*m_dim+j];
+  }
+    for (int i=m_dim-1;i>=0;i--){
+      for (int k=i+1;k<m_dim;k++)
+        ia[i*m_dim+j] -= A[i*m_dim+k]*ia[k*m_dim+j];
+        ia[i*m_dim+j] /= A[i*m_dim+i];
+    }
+  }
 
-#pragma unroll
-	for(int i=0;i<n;i++){
-		//pivoting
-		maxv=0;
-		int imax=i;
-#pragma unroll
-		for(int k=i;k<n;k++){
-			if(std::abs(a[i+k*n])>maxv){
-				maxv=std::abs(a[i+k*n]);
-				imax=k;
-			}
-		}
+  //-Compute norm of inverse matrix
+  double maxs1 = 0;
+  for (int i=0;i<m_dim;i++) {
+    double sum=0;
+    for (int j=0;j<m_dim;j++) sum += fabs(ia[i*m_dim+j]);
+    maxs1 =max(maxs1,sum);
+  }
 
-		if(imax!=i){
-			int j=p[i];
-			p[i]=p[imax];
-			p[imax]=j;
-		}
-#pragma unroll
-		for(int j=0;j<n;j++){
-			double temp=a[i*n+j];
-			a[i*n+j]=a[imax*n+j];
-			a[imax*n+j]=temp;
-		}
+  treshold =1.0f/(maxs*maxs1);
 
-		//LU decomp
-#pragma unroll
-		for (int j = i + 1; j < n; j++) {
-			a[j*n+i] /= a[i*n+i];
-#pragma unroll
-			for (int k = i + 1; k < n; k++)
-				a[j*n+k] -= a[j*n+i] * a[i*n+k];
-		}
-
-	}
-	double ia[n*n]{0};
-	//matrix inversion
-#pragma unroll
-	for (int j = 0; j < n; j++) {
-#pragma unroll
-		for (int i = 0; i < n; i++) {
-			ia[i*n+j] = p[i] == j ? 1.0 : 0.0;
-#pragma unroll
-			for (int k = 0; k < i; k++)
-				ia[i*n+j] -= a[i*n+k] * ia[k*n+j];
-		}
-#pragma unroll
-		for (int i = n - 1; i >= 0; i--) {
-#pragma unroll
-			for (int k = i + 1; k < n; k++)
-				ia[i*n+j] -= a[i*n+k] * ia[k*n+j];
-
-			ia[i*n+j] /= a[i*n+i];
-		}
-	}
-
-//norm of inv matrix
-	double maxs1=0;
-#pragma unroll
-	for (int i=0;i<n;i++){
-		double sum=0;
-#pragma unroll
-		for(int j=0;j<n;j++) sum+=std::abs(ia[n*j+i]);
-		maxs1=max(maxs1,sum);
-	}
-	
-  treshold=1.0/(maxs*maxs1);
-
-
-
-	//solution
-#pragma unroll
-	for (int k = 0; k < n1; k++)
-#pragma unroll
-	for (int i = 0; i < n; i++) {
-		sol[k] += ia[i]*b[i+k*n];
-	}
-
-	return true;
-
+  //-Compute Solution array
+  for (int k=0;k<m_dim2;k++)
+    for (int i=0;i<m_dim;i++) sol[k]+=ia[i]*b[i+k*m_dim];
+        
 }
 
-template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrap(unsigned bufferpartcount,const int *bufferpart,
+template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod> 
+ void InteractionBufferExtrap(unsigned bufferpartcount,const int *bufferpart,
 		StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos,
-		const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const StCteSph csp,tdouble3*posb,tfloat4 *velrhopb,typecode *codeb)
+		const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const StCteSph csp
+    ,tdouble3*posb,tfloat4 *velrhopb,typecode *codeb,const float mrthreshold)
 {
-    float scaleh=csp.kernelh*csp.kernelh*csp.kernelh*csp.kernelh;
-
-  //Log->Printf("%u>++> InteractionInOutGhost_Double",Nstep);
-  //-Inicia ejecucion con OpenMP.
   const int n=int(bufferpartcount);
-  #ifdef OMP_USE
-    #pragma omp parallel for schedule (guided)
-  #endif
-
+  // #ifdef OMP_USE
+  //   #pragma omp parallel for schedule (guided)
+  // #endif
   for(int p=0;p<n;p++){
 
     const int p1=bufferpart[p];
     tdouble3 pos_p1=posb[p1];
 
-    constexpr unsigned nmatrix = (order == 0) ? (sim2d ? 6 : 10) : (sim2d ? 3 : 4);
-    constexpr unsigned nrhs = sim2d ? 3 : 4;
+    // Compute size of the reconstruction matrix and right hand sime.
+    constexpr unsigned m_dim  = vrorder==VrOrder_2nd ? (sim2d ? 6 : 10) : (sim2d ? 3 : 4);
+    constexpr unsigned m_dim2 = sim2d ? 3: 4;
 
-    double C[nmatrix]{0};
-    double C1[nmatrix]{0};
-    double D[nrhs]{0};
+    double C[m_dim]{0};
+    double C1[m_dim]{0};
+    double D[m_dim2]{0};
 
-
-    double A[nmatrix*nmatrix]{0};
-    double B[nmatrix*nrhs]{0};
+    double A[m_dim*m_dim]{0};
+    double B[m_dim*m_dim2]{0};
 
     //-Search for neighbours in adjacent cells.
     const StNgSearch ngs=nsearch::Init(pos_p1,false,dvd);
@@ -168,9 +139,9 @@ template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrap(u
     	//-Interaction of boundary with type Fluid/Float | Interaccion de Bound con varias Fluid/Float.
     	//---------------------------------------------------------------------------------------------
     	for(unsigned p2=pif.x;p2<pif.y;p2++){
-    		const double drx=-double(pos_p1.x-pos[p2].x);
-    		const double dry=-double(pos_p1.y-pos[p2].y);
-    		const double drz=-double(pos_p1.z-pos[p2].z);
+    		double drx=double(pos_p1.x-pos[p2].x);
+    		double dry=double(pos_p1.y-pos[p2].y);
+    		double drz=double(pos_p1.z-pos[p2].z);
     		const double rr2=drx*drx+dry*dry+drz*drz;
 
     		if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2]) && !CODE_IsFluidBuffer(code[p2]) &&!CODE_IsFluidFixed(code[p2])){//-Only with fluid particles but not inout particles.
@@ -191,112 +162,108 @@ template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrap(u
     			//===== Get mass and volume of particle p2 =====
     			double massp2=csp.massfluid;
     			double volp2=massp2/velrhopp2.w;
-          if constexpr (order == 0) {
-    			  if constexpr (sim2d) {
-              double tempC[] = {1.0f, drx, drz, drx * drx * 0.5f, drx * drz, drz * drz * 0.5f};
-              double tempC1[] = {volp2 * wab, volp2 * frx, volp2 * frz, volp2 * frxx, volp2 * frxz, volp2 * frzz};
+           // Set up C and C1 based on order and sim2d
+          if(vrmethod==VrMethod_Mls){
+            drx=drx/csp.kernelh;
+            dry=dry/csp.kernelh;
+            drz=drz/csp.kernelh;
+          }
 
-              #pragma unroll
-              for (int i = 0; i < nmatrix; ++i) {
-                C[i] = tempC[i];
-                C1[i] = tempC1[i];
+          // Set up C and C1 based on order and sim2d
+          if (vrorder==VrOrder_2nd){
+            if (sim2d){
+              double tempC[] ={(1.0),drx,drz,drx*drx*(0.5),drx*drz,drz*drz*(0.5)};
+              double tempC1[]={wab,frx,frz,frxx,frxz,frzz};
+              for (int i=0;i<m_dim;++i){
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
               }
-            } else {
-                double tempC[] = {1.0f, drx, dry, drz, drx * drx * 0.5f, drx * dry, dry * dry * 0.5f, drx * drz, drz * drz * 0.5f, dry * drz};
-                double tempC1[] = {volp2 * wab, volp2 * frx, volp2 * fry, volp2 * frz, volp2 * frxx, volp2 * frxy, volp2 * fryy, volp2 * frxz, volp2 * frzz, volp2 * fryz};
-
-                #pragma unroll
-                for (int i = 0; i < nmatrix; ++i) {
-                    C[i] = tempC[i];
-                    C1[i] = tempC1[i];
-                }
-            }
-          } else {
-              if constexpr (sim2d) {
-                  double tempC[] = {1.0f, drx, drz};
-                  double tempC1[] = {volp2 * wab, volp2 * frx, volp2 * frz};
-
-                  #pragma unroll
-                  for (int i = 0; i < nmatrix; ++i) {
-                      C[i] = tempC[i];
-                      C1[i] = tempC1[i];
-                  }
-              } else {
-                  double tempC[] = {1.0f, drx, dry, drz};
-                  double tempC1[] = {volp2 * wab, volp2 * frx, volp2 * fry, volp2 * frz};
-
-                  #pragma unroll
-                  for (int i = 0; i < nmatrix; ++i) {
-                      C[i] = tempC[i];
-                      C1[i] = tempC1[i];
-                  }
+            }else{
+              double tempC[]   ={(1.0),drx,dry,drz,drx*drx*(0.5),drx*dry,dry*dry*(0.5),drx*drz,drz*drz*(0.5),dry*drz};
+              double tempC1[]  ={wab,frx,fry,frz,frxx,frxy,fryy,frxz,frzz,fryz};
+              for (int i=0;i<m_dim;++i){
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
               }
-          }
-
-          if constexpr (sim2d) {
-            double tempD[] = {velrhop[p2].w, velrhop[p2].x, velrhop[p2].z};
-            #pragma unroll
-            for (int i = 0; i < nrhs; ++i) D[i] = tempD[i];
-          } else {
-            double tempD[] = {velrhop[p2].w, velrhop[p2].x, velrhop[p2].y, velrhop[p2].z};
-            #pragma unroll
-            for (int i = 0; i < nrhs; ++i) D[i] = tempD[i];
-          }
-
-              // Your computation logic
-          #pragma unroll
-          for (int i = 0; i < nmatrix; i++) {
-            #pragma unroll
-            for (int j = 0; j < nmatrix; j++) {
-              A[i * nmatrix + j] += C1[i] * C[j];
+            }            
+          }else{
+            if (sim2d){
+              double tempC[]   = {(1.0),-drx,-drz};
+              double tempC1[]  = {wab,frx,frz};
+              for (int i=0;i<m_dim;++i){
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
+              }
+            }else{
+              double tempC[] = {(1.0),drx,dry,drz};
+              double tempC1[] = {wab,frx,fry,frz};
+              for (int i=0;i<m_dim;++i){
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
+              }
             }
           }
-            
-          #pragma unroll
-          for (int i = 0; i < nrhs; i++) {
-            #pragma unroll
-            for (int j = 0; j < nmatrix; j++) {
-              B[i * nmatrix + j] += D[i] * C1[j];
+
+          // Set up D
+          if (sim2d){
+            double tempD[] = {velrhop[p2].w,velrhop[p2].x,velrhop[p2].z};
+            for (int i =0;i<m_dim2;++i)D[i]=tempD[i];
+          }else{
+            double tempD[] = {velrhop[p2].w,velrhop[p2].x,velrhop[p2].y,velrhop[p2].z};
+            for (int i =0;i<m_dim2;++i)D[i]=tempD[i];
+          }
+          // Accumulate A and B matrices
+          for (int i=0;i<m_dim;i++)
+            for (int j=0;j<m_dim;j++){
+              A[i*m_dim+j]+=C1[i]*C[j];
             }
+              
+          for (int i=0; i<m_dim2;i++)
+            for (int j=0;j<m_dim;j++){
+              B[i*m_dim+j]+=D[i]*C1[j];
           }
         }
       }
     }
 
-  double mrthreshold=100;
-    double shep = A[0];
-    double sol[nrhs]{0};
-    double treshold=0;
-    double cond=0;
+    double shep = A[0];                                   ///<Shepard summation.
+    double sol[m_dim2]{0};                                ///<Solution array;
+    double treshold = 0.0;                                ///<condition number;
+    double cond = 0.0;                                    ///<Scaled reciprocal condition number;
+    double kernelh2=csp.kernelh*csp.kernelh;              ///<Scaling factor;
+    double scaleh= 0.0;
       
-      if (shep > 0.1){
-        if (order==0){
+    if(shep>0.05){
+      if (vrorder==VrOrder_2nd){
+        if(vrmethod==VrMethod_Liu) scaleh = kernelh2*kernelh2;
+        else scaleh=1.0;
 
-          int P[nmatrix]{0};
-          
-          LUdecomp<nmatrix, nrhs>(A, P, B, sol, treshold);
-    
-    
-          cond=(1.0f/treshold)*scaleh;
+        int P[m_dim]{0};
 
-        } else if (order==1){
+        LUdecomp_Single<m_dim,m_dim2>(A,P,B,sol,treshold);
 
-          int P[nmatrix]{0};
+        cond=(1.0/treshold)*scaleh;
+      }else if (vrorder==VrOrder_1st){
+        if(vrmethod==VrMethod_Liu) scaleh = kernelh2;
+        else scaleh=1.0;
 
+        int P[m_dim]{0};
 
-        LUdecomp<nmatrix, nrhs>(A, P, B, sol, treshold);
-        cond=(1.0f/treshold)*csp.kernelh*csp.kernelh;
-
-
+        LUdecomp_Single<m_dim,m_dim2>(A,P,B,sol,treshold);
+        cond=(1.0/treshold)*scaleh;
       }
-      if (cond>mrthreshold || order==2){
-         for (unsigned i = 0; i < nrhs; i++)
-           sol[i] = B[i * nmatrix] / shep;
-         }
+      if (cond>mrthreshold || vrorder==VrOrder_0th)
+      {
+        for (unsigned i=0;i<m_dim2;i++)
+          sol[i]=B[i*m_dim]/shep;
+      }
 
       if (sim2d)
-      {
-         
+      {      
         velrhopb[p1].w = sol[0];
         velrhopb[p1].x = sol[1];
         velrhopb[p1].z = sol[2];
@@ -307,10 +274,9 @@ template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrap(u
         velrhopb[p1].z = sol[3];
       }
          
-      } else{
-        codeb[p1] = CODE_SetOutIgnore(codeb[p1]);
-
-      }
+    }else{
+      codeb[p1] = CODE_SetOutIgnore(codeb[p1]);
+    }
     
   }
 }
@@ -319,22 +285,33 @@ template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrap(u
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-template<TpKernel tker> void Interaction_BufferExtrapT(unsigned bufferpartcount,const int *bufferpart
-        ,const stinterparmscb &t,tdouble3*posb,tfloat4 *velrhopb,typecode *codeb,unsigned order)
+template<TpKernel tker,bool sim2d,TpVresOrder vrorder> 
+void Interaction_BufferExtrapT(unsigned bufferpartcount,const int *bufferpart
+  ,const stinterparmscb &t,tdouble3 *posb,tfloat4 *velrhopb,typecode *codeb
+  ,const TpVresMethod vrmethod,float mrthreshold)
+{	
+  if(vrmethod==VrMethod_Liu) InteractionBufferExtrap<tker,sim2d,vrorder,VrMethod_Liu> (bufferpartcount,bufferpart,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,posb,velrhopb,codeb,mrthreshold);
+  else InteractionBufferExtrap<tker,sim2d,vrorder,VrMethod_Mls> (bufferpartcount,bufferpart,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,posb,velrhopb,codeb,mrthreshold);
+}
+
+template<TpKernel tker> 
+void Interaction_BufferExtrap_ct0(unsigned bufferpartcount,const int *bufferpart
+  ,const stinterparmscb &t,tdouble3 *posb,tfloat4 *velrhopb,typecode *codeb
+  ,const TpVresOrder vrorder,const TpVresMethod vrmethod,float mrthreshold)
 {
-	if(t.csp.simulate2d){const bool sim2d=true;
-    if(order==0) InteractionBufferExtrap<sim2d ,tker,0> (bufferpartcount,bufferpart,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,posb,velrhopb,codeb);
-    if(order==1) InteractionBufferExtrap<sim2d ,tker,1> (bufferpartcount,bufferpart,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,posb,velrhopb,codeb);
-    if(order==2) InteractionBufferExtrap<sim2d ,tker,2> (bufferpartcount,bufferpart,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,posb,velrhopb,codeb);
-
-	}
-	else{ const bool sim2d=false;
-    if(order==0) InteractionBufferExtrap<sim2d ,tker,0> (bufferpartcount,bufferpart,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,posb,velrhopb,codeb);
-    if(order==1) InteractionBufferExtrap<sim2d ,tker,1> (bufferpartcount,bufferpart,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,posb,velrhopb,codeb);
-    if(order==2) InteractionBufferExtrap<sim2d ,tker,2> (bufferpartcount,bufferpart,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,posb,velrhopb,codeb);
-
-	}
-
+	if(t.csp.simulate2d){
+    switch(vrorder){
+      case VrOrder_0th: Interaction_BufferExtrapT<tker,true,VrOrder_0th>(bufferpartcount,bufferpart,t,posb,velrhopb,codeb,vrmethod,mrthreshold); break;
+      case VrOrder_1st: Interaction_BufferExtrapT<tker,true,VrOrder_1st>(bufferpartcount,bufferpart,t,posb,velrhopb,codeb,vrmethod,mrthreshold); break;
+      case VrOrder_2nd: Interaction_BufferExtrapT<tker,true,VrOrder_2nd>(bufferpartcount,bufferpart,t,posb,velrhopb,codeb,vrmethod,mrthreshold); break;
+    }
+  }else{
+    switch(vrorder){
+      case VrOrder_0th: Interaction_BufferExtrapT<tker,false,VrOrder_0th>(bufferpartcount,bufferpart,t,posb,velrhopb,codeb,vrmethod,mrthreshold); break;
+      case VrOrder_1st: Interaction_BufferExtrapT<tker,false,VrOrder_1st>(bufferpartcount,bufferpart,t,posb,velrhopb,codeb,vrmethod,mrthreshold); break;
+      case VrOrder_2nd: Interaction_BufferExtrapT<tker,false,VrOrder_2nd>(bufferpartcount,bufferpart,t,posb,velrhopb,codeb,vrmethod,mrthreshold); break;
+    }
+  }
 }
 
 //==============================================================================
@@ -342,51 +319,54 @@ template<TpKernel tker> void Interaction_BufferExtrapT(unsigned bufferpartcount,
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
 void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart
-                                       ,const stinterparmscb &t,tdouble3 *posb,tfloat4 *velrhopb,typecode *codeb,unsigned order)
+  ,const stinterparmscb &t,tdouble3 *posb,tfloat4 *velrhopb,typecode *codeb
+  ,const TpVresOrder order,const TpVresMethod vrmethod,float mrthreshold)
 {
   switch(t.csp.tkernel){
-    // case KERNEL_Cubic:       Interaction_BufferExtrapT<KERNEL_Cubic>     (bufferpartcount,bufferpart,t,posb,velrhopb,order);  break;
-    case KERNEL_Wendland:    Interaction_BufferExtrapT<KERNEL_Wendland>  (bufferpartcount,bufferpart,t,posb,velrhopb,codeb,order);  break;
-    default: fun::Run_ExceptioonFun("Kernel unknown.");
+    case KERNEL_Wendland:
+      Interaction_BufferExtrap_ct0<KERNEL_Wendland> (bufferpartcount,bufferpart,t,posb,velrhopb,codeb,order,vrmethod,mrthreshold);  break;
+    break;
+#ifndef DISABLE_KERNELS_EXTRA
+    case KERNEL_Cubic:
+    	// Interaction_BufferExtrapFlux_gt0<KERNEL_Wendland>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,vrorder,mrthreshold);
+    break;
+#endif
+    default: throw "Kernel unknown at Interaction_InOutExtrap().";
   }
 }
 
 
 
-template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrapFlux(const unsigned n,const int pini,
-		StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos,
-		const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const StCteSph csp,tdouble3 *ptpoints,tfloat3 *normals,tfloat3* velflux,float *fluxes
-  ,unsigned mrorder,double dp,double dt,float mrthreshold)
+template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod> 
+void InteractionBufferExtrapFlux(const unsigned n,const int pini
+		,StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos
+		,const typecode *code,const unsigned *idp,const tfloat4 *velrhop
+    ,const StCteSph csp,tdouble3 *ptpoints,tfloat3 *normals,tfloat3* velflux
+    ,float *fluxes,double dp,double dt,float mrthreshold)
 {
-    float scaleh=csp.kernelh*csp.kernelh*csp.kernelh*csp.kernelh;
-
-  //Log->Printf("%u>++> InteractionInOutGhost_Double",Nstep);
-  //-Inicia ejecucion con OpenMP.
-  // const int n=int(bufferpartcount);
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
-
   for(int p=0;p<n;p++){
 
     const int p1=p+pini;
     tdouble3 pos_p1=ptpoints[p1];
 
-    constexpr unsigned nmatrix = (order == 0) ? (sim2d ? 6 : 10) : (sim2d ? 3 : 4);
-    constexpr unsigned nrhs = sim2d ? 3 : 4;
+    // Compute size of the reconstruction matrix and right hand sime.
+    constexpr unsigned m_dim  = vrorder==VrOrder_2nd ? (sim2d ? 6 : 10) : (sim2d ? 3 : 4);
+    constexpr unsigned m_dim2 = sim2d ? 3: 4;
 
-    double C[nmatrix]{0};
-    double C1[nmatrix]{0};
-    double D[nrhs]{0};
+    double C[m_dim]{0};
+    double C1[m_dim]{0};
+    double D[m_dim2]{0};
+
+    double A[m_dim*m_dim]{0};
+    double B[m_dim*m_dim2]{0};
 
 
-    double A[nmatrix*nmatrix]{0};
-    double B[nmatrix*nrhs]{0};
-
-
-    float ShiftTFS=0;
+    double ShiftTFS=0;
     double mindist=1000000.0;
-    float mindp=min(dp,csp.dp);
+    double mindp=min(dp,csp.dp);
 
     const StNgSearch ngsb=nsearch::Init(pos_p1,true,dvd);
     for(int z=ngsb.zini;z<ngsb.zfin;z++)for(int y=ngsb.yini;y<ngsb.yfin;y++){
@@ -394,9 +374,9 @@ template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrapFl
     	//-Interaction of boundary with type Fluid/Float | Interaccion de Bound con varias Fluid/Float.
     	//---------------------------------------------------------------------------------------------
     	for(unsigned p2=pif.x;p2<pif.y;p2++){
-    		const double drx=-double(pos_p1.x-pos[p2].x);
-    		const double dry=-double(pos_p1.y-pos[p2].y);
-    		const double drz=-double(pos_p1.z-pos[p2].z);
+    		double drx=double(pos_p1.x-pos[p2].x);
+    		double dry=double(pos_p1.y-pos[p2].y);
+    		double drz=double(pos_p1.z-pos[p2].z);
     		const double rr2=drx*drx+dry*dry+drz*drz;
         if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO){//-Only with fluid particles but not inout particles.
     			//-Computes kernel.
@@ -419,9 +399,9 @@ template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrapFl
     	//-Interaction of boundary with type Fluid/Float | Interaccion de Bound con varias Fluid/Float.
     	//---------------------------------------------------------------------------------------------
     	for(unsigned p2=pif.x;p2<pif.y;p2++){
-    		const double drx=-double(pos_p1.x-pos[p2].x);
-    		const double dry=-double(pos_p1.y-pos[p2].y);
-    		const double drz=-double(pos_p1.z-pos[p2].z);
+    		double drx=double(pos_p1.x-pos[p2].x);
+    		double dry=double(pos_p1.y-pos[p2].y);
+    		double drz=double(pos_p1.z-pos[p2].z);
     		const double rr2=drx*drx+dry*dry+drz*drz;
 
     		if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2]) && !CODE_IsFluidBuffer(code[p2]) &&!CODE_IsFluidFixed(code[p2])){//-Only with fluid particles but not inout particles.
@@ -444,122 +424,119 @@ template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrapFl
     			double volp2=massp2/velrhopp2.w;
           ShiftTFS-=volp2*(drx*frx+dry*fry+drz*frz);
           mindist=min(mindist,rr2);
-          if constexpr (order == 0) {
-    			  if constexpr (sim2d) {
-              double tempC[] = {1.0f, drx, drz, drx * drx * 0.5f, drx * drz, drz * drz * 0.5f};
-              double tempC1[] = {volp2 * wab, volp2 * frx, volp2 * frz, volp2 * frxx, volp2 * frxz, volp2 * frzz};
+          
+          // Set up C and C1 based on order and sim2d
+          if(vrmethod==VrMethod_Mls){
+            drx=drx/csp.kernelh;
+            dry=dry/csp.kernelh;
+            drz=drz/csp.kernelh;
+          }
 
-              #pragma unroll
-              for (int i = 0; i < nmatrix; ++i) {
-                C[i] = tempC[i];
-                C1[i] = tempC1[i];
+          // Set up C and C1 based on order and sim2d
+          if (vrorder==VrOrder_2nd){
+            if (sim2d){
+              double tempC[] ={(1.0),drx,drz,drx*drx*(0.5),drx*drz,drz*drz*(0.5)};
+              double tempC1[]={wab,frx,frz,frxx,frxz,frzz};
+              for (int i=0;i<m_dim;++i){
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
               }
-            } else {
-                double tempC[] = {1.0f, drx, dry, drz, drx * drx * 0.5f, drx * dry, dry * dry * 0.5f, drx * drz, drz * drz * 0.5f, dry * drz};
-                double tempC1[] = {volp2 * wab, volp2 * frx, volp2 * fry, volp2 * frz, volp2 * frxx, volp2 * frxy, volp2 * fryy, volp2 * frxz, volp2 * frzz, volp2 * fryz};
-
-                #pragma unroll
-                for (int i = 0; i < nmatrix; ++i) {
-                    C[i] = tempC[i];
-                    C1[i] = tempC1[i];
-                }
-            }
-          } else {
-              if constexpr (sim2d) {
-                  double tempC[] = {1.0f, drx, drz};
-                  double tempC1[] = {volp2 * wab, volp2 * frx, volp2 * frz};
-
-                  #pragma unroll
-                  for (int i = 0; i < nmatrix; ++i) {
-                      C[i] = tempC[i];
-                      C1[i] = tempC1[i];
-                  }
-              } else {
-                  double tempC[] = {1.0f, drx, dry, drz};
-                  double tempC1[] = {volp2 * wab, volp2 * frx, volp2 * fry, volp2 * frz};
-
-                  #pragma unroll
-                  for (int i = 0; i < nmatrix; ++i) {
-                      C[i] = tempC[i];
-                      C1[i] = tempC1[i];
-                  }
+            }else{
+              double tempC[]   ={(1.0),drx,dry,drz,drx*drx*(0.5),drx*dry,dry*dry*(0.5),drx*drz,drz*drz*(0.5),dry*drz};
+              double tempC1[]  ={wab,frx,fry,frz,frxx,frxy,fryy,frxz,frzz,fryz};
+              for (int i=0;i<m_dim;++i){
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
               }
-          }
-
-          if constexpr (sim2d) {
-            double tempD[] = {velrhop[p2].w, velrhop[p2].x, velrhop[p2].z};
-            #pragma unroll
-            for (int i = 0; i < nrhs; ++i) D[i] = tempD[i];
-          } else {
-            double tempD[] = {velrhop[p2].w, velrhop[p2].x, velrhop[p2].y, velrhop[p2].z};
-            #pragma unroll
-            for (int i = 0; i < nrhs; ++i) D[i] = tempD[i];
-          }
-
-              // Your computation logic
-          #pragma unroll
-          for (int i = 0; i < nmatrix; i++) {
-            #pragma unroll
-            for (int j = 0; j < nmatrix; j++) {
-              A[i * nmatrix + j] += C1[i] * C[j];
+            }            
+          }else{
+            if (sim2d){
+              double tempC[]   = {(1.0),-drx,-drz};
+              double tempC1[]  = {wab,frx,frz};
+              for (int i=0;i<m_dim;++i){
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
+              }
+            }else{
+              double tempC[] = {(1.0),drx,dry,drz};
+              double tempC1[] = {wab,frx,fry,frz};
+              for (int i=0;i<m_dim;++i){
+                C[i]  = tempC[i];
+                if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
+                else C1[i] = volp2*wab*tempC[i];
+              }
             }
           }
-            
-          #pragma unroll
-          for (int i = 0; i < nrhs; i++) {
-            #pragma unroll
-            for (int j = 0; j < nmatrix; j++) {
-              B[i * nmatrix + j] += D[i] * C1[j];
+
+              // Set up D
+          if (sim2d){
+            double tempD[] = {velrhop[p2].w,velrhop[p2].x,velrhop[p2].z};
+            for (int i =0;i<m_dim2;++i)D[i]=tempD[i];
+          }else{
+            double tempD[] = {velrhop[p2].w,velrhop[p2].x,velrhop[p2].y,velrhop[p2].z};
+            for (int i =0;i<m_dim2;++i)D[i]=tempD[i];
+          }
+          // Accumulate A and B matrices
+          for (int i=0;i<m_dim;i++)
+            for (int j=0;j<m_dim;j++){
+              A[i*m_dim+j]+=C1[i]*C[j];
             }
+              
+          for (int i=0; i<m_dim2;i++)
+            for (int j=0;j<m_dim;j++){
+              B[i*m_dim+j]+=D[i]*C1[j];
           }
         }
       }
     }
 
   
-    double shep = A[0];
-    double sol[nrhs]{0};
-    double treshold=0;
-    double cond=0;
+    double shep = A[0];                                   ///<Shepard summation.
+    double sol[m_dim2]{0};                                ///<Solution array;
+    double treshold = 0.0;                                ///<condition number;
+    double cond = 0.0;                                    ///<Scaled reciprocal condition number;
+    double kernelh2=csp.kernelh*csp.kernelh;              ///<Scaling factor;
+    double scaleh= 0.0;
       
-      if (shep > 0.1){
-        if (order==0){
+    if(shep>0.05){
+      if (vrorder==VrOrder_2nd){
+        if(vrmethod==VrMethod_Liu) scaleh = kernelh2*kernelh2;
+        else scaleh=1.0;
 
-          int P[nmatrix]{0};
-          
-          LUdecomp<nmatrix, nrhs>(A, P, B, sol, treshold);
-    
-    
-          cond=(1.0f/treshold)*scaleh;
+        int P[m_dim]{0};
 
-        } else if (order==1){
+        LUdecomp_Single<m_dim,m_dim2>(A,P,B,sol,treshold);
 
-          int P[nmatrix]{0};
+        cond=(1.0/treshold)*scaleh;
+      }else if (vrorder==VrOrder_1st){
+        if(vrmethod==VrMethod_Liu) scaleh = kernelh2;
+        else scaleh=1.0;
 
+        int P[m_dim]{0};
 
-        LUdecomp<nmatrix, nrhs>(A, P, B, sol, treshold);
-        cond=(1.0f/treshold)*csp.kernelh*csp.kernelh;
-
-
+        LUdecomp_Single<m_dim,m_dim2>(A,P,B,sol,treshold);
+        cond=(1.0/treshold)*scaleh;
       }
-      if (cond>mrthreshold || order==2){
-         for (unsigned i = 0; i < nrhs; i++)
-           sol[i] = B[i * nmatrix] / shep;
-         }
-
-      if (sim2d)
+      if (cond>mrthreshold || vrorder==VrOrder_0th)
       {
-        if ((ShiftTFS > 1.5 || sqrt(mindist) < mindp) && fluxes[p1] < 0.0 )
-        fluxes[p1] += max(0.0, -sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt);
-        else if ((ShiftTFS > 1.5 || sqrt(mindist) < mindp) )
-        fluxes[p1] += -sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt;
-      } else {
-        if((ShiftTFS>2.75 || sqrt(mindist)<mindp)  && fluxes[p1]<0.0 ) fluxes[p1]+=max(0.0,-sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt);
-          else if((ShiftTFS>2.75 || sqrt(mindist)<mindp) )               fluxes[p1]+= -sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt;
+        for (unsigned i=0;i<m_dim2;i++)
+          sol[i]=B[i*m_dim]/shep;
+      }
+
+      if (sim2d){
+        if((ShiftTFS>1.5 || sqrt(mindist)<mindp) && fluxes[p1]<0.0)
+        fluxes[p1]+=max(0.0,-sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt);
+        else if((ShiftTFS>1.5 || sqrt(mindist)<mindp))
+        fluxes[p1]+=-sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt;
+      }else{
+        if      ((ShiftTFS>2.75 || sqrt(mindist)<mindp)  &&fluxes[p1]<0.0)  fluxes[p1]+=max(0.0,-sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt);
+        else if ((ShiftTFS>2.75 || sqrt(mindist)<mindp))                    fluxes[p1]+= -sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt;
           
       }
-         
-      } 
+    } 
     
   }
 }
@@ -568,37 +545,54 @@ template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrapFl
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-template<TpKernel tker> void Interaction_BufferExtrapFluxT(const unsigned n,const int pini
-  ,const stinterparmscb &t,tdouble3 *ptpoints,tfloat3 *normals,tfloat3* velmot,float *fluxes
-  ,unsigned mrorder,double dp,double dt,float mrthreshold)
+template<TpKernel tker,bool sim2d,TpVresOrder vrorder> 
+void Interaction_BufferExtrapFluxT(const stinterparmscb &t,StrDataVresCpu &vres
+  ,double dp,double dt,const TpVresMethod vrmethod,float mrthreshold)
 {
-	if(t.csp.simulate2d){const bool sim2d=true;
-    if(mrorder==0) InteractionBufferExtrapFlux<sim2d ,tker,0> (n,pini,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);
-    if(mrorder==1) InteractionBufferExtrapFlux<sim2d ,tker,1> (n,pini,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);
-    if(mrorder==2) InteractionBufferExtrapFlux<sim2d ,tker,2> (n,pini,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);
-
-	}
-	else{ const bool sim2d=false;
-    if(mrorder==0) InteractionBufferExtrapFlux<sim2d ,tker,0> (n,pini,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);
-    if(mrorder==1) InteractionBufferExtrapFlux<sim2d ,tker,1> (n,pini,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);
-    if(mrorder==2) InteractionBufferExtrapFlux<sim2d ,tker,2> (n,pini,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);
-
-	}
-
+	if(vrmethod==VrMethod_Liu) InteractionBufferExtrapFlux<tker,sim2d,vrorder,VrMethod_Liu> (vres.ntot,vres.nini,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,vres.points,vres.normals,vres.velmot,vres.mass,dp,dt,mrthreshold);
+	else InteractionBufferExtrapFlux<tker,sim2d,vrorder,VrMethod_Mls>  (vres.ntot,vres.nini,t.divdata,t.dcell,t.pos,t.code,t.idp,t.velrhop,t.csp,vres.points,vres.normals,vres.velmot,vres.mass,dp,dt,mrthreshold);
 }
 
 //==============================================================================
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-void Interaction_BufferExtrapFlux(const unsigned n,const int pini
-  ,const stinterparmscb &t,tdouble3 *ptpoints,tfloat3 *normals,tfloat3* velmot,float *fluxes
-  ,unsigned mrorder,double dp,double dt,float mrthreshold)
+template<TpKernel tker> 
+void Interaction_BufferExtrapFlux_ct0(const stinterparmscb &t,StrDataVresCpu &vres
+  ,double dp,double dt,const TpVresOrder vrorder,const TpVresMethod vrmethod,float mrthreshold)
+{
+	if(t.csp.simulate2d){
+    switch(vrorder){
+      case VrOrder_0th: Interaction_BufferExtrapFluxT<tker,true,VrOrder_0th>(t,vres,dp,dt,vrmethod,mrthreshold); break;
+      case VrOrder_1st: Interaction_BufferExtrapFluxT<tker,true,VrOrder_1st>(t,vres,dp,dt,vrmethod,mrthreshold); break;
+      case VrOrder_2nd: Interaction_BufferExtrapFluxT<tker,true,VrOrder_2nd>(t,vres,dp,dt,vrmethod,mrthreshold); break;
+    }
+  }else{
+      switch(vrorder){
+      case VrOrder_0th: Interaction_BufferExtrapFluxT<tker,false,VrOrder_0th>(t,vres,dp,dt,vrmethod,mrthreshold); break;
+      case VrOrder_1st: Interaction_BufferExtrapFluxT<tker,false,VrOrder_1st>(t,vres,dp,dt,vrmethod,mrthreshold); break;
+      case VrOrder_2nd: Interaction_BufferExtrapFluxT<tker,false,VrOrder_2nd>(t,vres,dp,dt,vrmethod,mrthreshold); break;
+    }
+  }
+}
+
+//==============================================================================
+/// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
+/// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
+//==============================================================================
+void Interaction_BufferExtrapFlux(const stinterparmscb &t,StrDataVresCpu &vres
+  ,double dp,double dt,const TpVresOrder vrorder,const TpVresMethod vrmethod,float mrthreshold)
 {
   switch(t.csp.tkernel){
-    // case KERNEL_Cubic:       Interaction_BufferExtrapT<KERNEL_Cubic>  (n,pini,t,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);  break;
-    case KERNEL_Wendland:    Interaction_BufferExtrapFluxT<KERNEL_Wendland>  (n,pini,t,ptpoints,normals,velmot,fluxes,mrorder,dp,dt,mrthreshold);  break;
-    default: fun::Run_ExceptioonFun("Kernel unknown.");
+    case KERNEL_Wendland:
+      Interaction_BufferExtrapFlux_ct0<KERNEL_Wendland>(t,vres,dp,dt,vrorder,vrmethod,mrthreshold);
+    break;
+#ifndef DISABLE_KERNELS_EXTRA
+    case KERNEL_Cubic:
+    	// Interaction_BufferExtrapFlux_gt0<KERNEL_Wendland>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,vrorder,mrthreshold);
+    break;
+#endif
+    default: throw "Kernel unknown at Interaction_InOutExtrap().";
   }
 }
 
@@ -687,15 +681,15 @@ void CheckMassFlux(unsigned n,unsigned pinit,const StCteSph csp
   ,const StDivDataCpu& divdata,const unsigned* dcell,const tdouble3* pos
   ,const typecode* code,tdouble3* posb,tfloat3 *normals,float *fluxes)
 {
-  #ifdef OMP_USE
-    #pragma omp parallel for schedule (guided)
-  #endif
+  // #ifdef OMP_USE
+  //   #pragma omp parallel for schedule (guided)
+  // #endif
   for(int p1=int(pinit);p1<n;p1++){
 
     tdouble3 posp1=posb[p1];
 
     //-Search for neighbours in adjacent cells.
-    const StNgSearch ngs=nsearch::Init(dcell[p1],true,divdata);
+    const StNgSearch ngs=nsearch::Init(posp1,true,divdata);
     for(int z=ngs.zini;z<ngs.zfin;z++)for(int y=ngs.yini;y<ngs.yfin;y++){
       const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
       for(unsigned p2=pif.x;p2<pif.y;p2++){
@@ -705,15 +699,13 @@ void CheckMassFlux(unsigned n,unsigned pinit,const StCteSph csp
         const float rr2=drx*drx+dry*dry+drz*drz;
         if(rr2<csp.dp*csp.dp){
           const tfloat3 normalp1=normals[p1];
-          const float norm = (-normalp1.x*drx+-normalp1.y*dry-normalp1.z*drz)/sqrt(rr2);
-          if(acos(norm)>0.785398) fluxes[p1]=0; 
+          const float norm =abs((-normalp1.x*drx-normalp1.y*dry-normalp1.z*drz)/sqrt(rr2));
+          if(acos(norm)<0.785398) fluxes[p1]=0; 
         }      
       }
     }
   }
 }
-
-
 
 //==============================================================================
 /// Perform interaction between particles: Fluid/Float-Fluid/Float or Fluid/Float-Bound

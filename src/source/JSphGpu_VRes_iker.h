@@ -78,11 +78,11 @@ unsigned BufferCreateListInit(bool stable,unsigned n,unsigned pini
 
 void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart
   ,const StInterParmsbg &t,const double2 *posxyb,const double *poszb,float4* velrhop
-  ,typecode *code1,bool fastsingle,const TpVresOrder order,float mrthreshold);
+  ,typecode *code1,bool fastsingle,const TpVresOrder order,TpVresMethod vrmethod,float mrthreshold);
 
 
 void Interaction_BufferExtrapFlux(const StInterParmsbg &t,StrDataVresGpu &vres
-  ,double dp,double dt,bool fastsingle,const TpVresOrder vrorder,float mrthreshold);
+  ,double dp,double dt,bool fastsingle,const TpVresOrder vrorder,TpVresMethod vrmethod,float mrthreshold);
 
 
 void CheckMassFlux(unsigned n,unsigned pini

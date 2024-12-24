@@ -22,6 +22,7 @@ JSphCpuSingle_VRes::JSphCpuSingle_VRes():JSphCpuSingle(){
   VResThreshold=100;
   VRes=NULL;
   VResOrder=VrOrder_1st;
+  VResMethod=VrMethod_Liu;
 }
 
 
@@ -38,13 +39,27 @@ JSphCpuSingle_VRes::~JSphCpuSingle_VRes(){
 void JSphCpuSingle_VRes::LoadVResConfigParameters(const JSphCfgRun* cfg){
   if(cfg->VResOrder>=0){
     switch(cfg->VResOrder){
-      case 0:   VResOrder=VrOrder_0th;
-      case 1:   VResOrder=VrOrder_1st;
-      case 2:   VResOrder=VrOrder_2nd;
+      case 0:   VResOrder=VrOrder_0th;  break;
+      case 1:   VResOrder=VrOrder_1st;  break;
+      case 2:   VResOrder=VrOrder_2nd;  break;
+      default:  Run_Exceptioon("Variable resolution reconstruction order is not valid.");
+    }
+  }
+  if(cfg->VResMethod>=0){
+    switch(cfg->VResMethod){
+      case 0:   VResMethod=VrMethod_Liu;  break;
+      case 1:   VResMethod=VrMethod_Mls;  break;
       default:  Run_Exceptioon("Variable resolution reconstruction method is not valid.");
     }
   }
   if(cfg->VResThreshold>=0) VResThreshold=cfg->VResThreshold;
+}
+
+void JSphCpuSingle_VRes::VisuConfigVRes(){
+  Log->Print("\nVRes Configuration:");
+  Log->Printf(" Interpolation Method: %s",(VResMethod==VrMethod_Liu? "Liu-Liu Correction": "Moving Least Square"));
+  Log->Printf(" Interpolation Order: %s" ,(VResOrder==VrOrder_2nd? "2nd": (VResOrder==VrOrder_1st? "1st": "0th")));
+  Log->Printf(" Inter Threshold: %g" ,VResThreshold);
 }
 
 //==============================================================================
@@ -71,6 +86,7 @@ void JSphCpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* l
   LoadConfig(cfg);
   LoadCaseParticles();
   VisuConfig();
+  VisuConfigVRes();
   ConfigDomain();
   ConfigRunMode();
   VisuParticleSummary();
@@ -232,7 +248,7 @@ void JSphCpuSingle_VRes::BufferExtrapolateData(stinterparmscb *parms){
 
 
 	 fvres::Interaction_BufferExtrap(buffercountpre,bufferpartc.ptr()
-    ,parms[id],Pos_c->ptr(),Velrho_c->ptr(),Code_c->ptr(),2);
+    ,parms[id],Pos_c->ptr(),Velrho_c->ptr(),Code_c->ptr(),VResOrder,VResMethod,VResThreshold);
     // DgSaveVtkParticlesCpuMRBuffer("Debug_Buffer_CpuInit.vtk",Nstep,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL);
 	  // DgSaveVtkParticlesCpuMR("Debug_Multi_CpuInit.vtk",Nstep,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL,NULL);
 		
@@ -259,7 +275,8 @@ void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
 
 		unsigned id=VRes->GetZone(i)->getZone()-1;
 		
-    fvres::Interaction_BufferExtrapFlux(vresdata.ntot,vresdata.nini,parms[id],vresdata.points,vresdata.normals,vresdata.velmot,vresdata.mass,2,Dp,dt,100);
+    fvres::Interaction_BufferExtrapFlux(parms[id],vresdata,Dp,dt
+      ,VResOrder,VResMethod,VResThreshold);
 
 		fvres::CheckMassFlux(vresdata.ntot,vresdata.nini,CSP,DivData
       ,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()

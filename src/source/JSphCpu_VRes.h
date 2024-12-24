@@ -28,6 +28,7 @@
 #include "JSph.h"
 #include "JArraysCpu.h"
 #include "JSphCpu.h"
+#include "JSphVResDef.h"
 
 
 typedef struct{
@@ -46,28 +47,43 @@ namespace fvres{
 //-Code for VRes in JSphCpu_Buffer.cpp
   //--------------------------------------
 
-  template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrap(unsigned bufferpartcount,const int *bufferpart,
-			StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos,
-			const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const StCteSph csp,tdouble3*posb,tfloat4 *velrhopb,typecode *codeb);
+template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod> 
+  void InteractionBufferExtrap(unsigned bufferpartcount,const int *bufferpart,
+		StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos,
+		const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const StCteSph csp
+    ,tdouble3*posb,tfloat4 *velrhopb,typecode *codeb,const float mrthreshold);
 
-  template<TpKernel tker> void Interaction_BufferExtrapT(unsigned bufferpartcount,
-	const int *bufferpart,const stinterparmscb &t,tdouble3*posb,tfloat4 *velrhopb,typecode *codeb,unsigned order);
+  template<TpKernel tker,bool sim2d,TpVresOrder vrorder> 
+  void Interaction_BufferExtrapT(unsigned bufferpartcount,const int *bufferpart
+    ,const stinterparmscb &t,tdouble3 *posb,tfloat4 *velrhopb,typecode *codeb
+    ,const TpVresMethod vrmethod,float mrthreshold);
+
+  template<TpKernel tker> 
+  void Interaction_BufferExtrap_ct0(unsigned bufferpartcount,const int *bufferpart
+    ,const stinterparmscb &t,tdouble3 *posb,tfloat4 *velrhopb,typecode *codeb
+    ,const TpVresOrder vrorder,const TpVresMethod vrmethod,float mrthreshold);
 
   void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart
-     ,const stinterparmscb &t,tdouble3*posb,tfloat4 *velrhopb,typecode *codeb,unsigned order);
+    ,const stinterparmscb &t,tdouble3 *posb,tfloat4 *velrhopb,typecode *codeb
+    ,const TpVresOrder order,const TpVresMethod vrmethod,float mrthreshold);
 
-  template<bool sim2d,TpKernel tker,unsigned order> void InteractionBufferExtrapFlux(const unsigned n,const int pini,
-		StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos,
-		const typecode *code,const unsigned *idp,const tfloat4 *velrhop,const StCteSph csp,tdouble3 *ptpoints,tfloat3 *normals,tfloat3* velmot,float *fluxes
-  ,unsigned mrorder,double dp,double dt,float mrthreshold);
+  template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod> 
+  void InteractionBufferExtrapFlux(const unsigned n,const int pini
+		,StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos
+		,const typecode *code,const unsigned *idp,const tfloat4 *velrhop
+    ,const StCteSph csp,tdouble3 *ptpoints,tfloat3 *normals,tfloat3* velflux
+    ,float *fluxes,double dp,double dt,float mrthreshold);
 
-  template<TpKernel tker> void Interaction_BufferExtrapFluxT(const unsigned n,const int pini
-  ,const stinterparmscb &t,tdouble3 *ptpoints,tfloat3 *normals,tfloat3* velmot,float *fluxes
-  ,unsigned mrorder,double dp,double dt,float mrthreshold);
+  template<TpKernel tker,bool sim2d,TpVresOrder vrorder> 
+  void Interaction_BufferExtrapFluxT(const stinterparmscb &t,StrDataVresCpu &vres
+    ,double dp,double dt,const TpVresMethod vrmethod,float mrthreshold);
 
-  void Interaction_BufferExtrapFlux(const unsigned n,const int pini
-  ,const stinterparmscb &t,tdouble3 *ptpoints,tfloat3 *normals,tfloat3* velmot,float *fluxes
-  ,unsigned mrorder,double dp,double dt,float mrthreshold);
+  template<TpKernel tker> 
+  void Interaction_BufferExtrapFlux_ct0(const stinterparmscb &t,StrDataVresCpu &vres
+    ,double dp,double dt,const TpVresOrder vrorder,const TpVresMethod vrmethod,float mrthreshold);
+
+  void Interaction_BufferExtrapFlux(const stinterparmscb &t,StrDataVresCpu &vres
+  ,double dp,double dt,const TpVresOrder vrorder,const TpVresMethod vrmethod,float mrthreshold);
 
   inline bool InZone(const tdouble3 &ps,const tdouble3 &boxlimitmin,tdouble3 &boxlimitmax){
     return (boxlimitmin.x <= ps.x && ps.x <= boxlimitmax.x && boxlimitmin.y <= ps.y 
