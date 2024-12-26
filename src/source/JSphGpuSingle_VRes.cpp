@@ -1,3 +1,23 @@
+//HEAD_DSPH
+/*
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+
+ EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
+ School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
+
+ This file is part of DualSPHysics. 
+
+ DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License 
+ as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.
+ 
+ DualSPHysics is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details. 
+
+ You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
+*/
+
+/// \file JSphGpuSingle_VRes.cpp \brief Implements the class \ref JSphGpuSingle_VRes.
+
 #include "JSphGpuSingle_VRes.h"
 #include "JSphGpuSingle.h"
 #include "JSphVRes.h"
@@ -15,11 +35,10 @@
 #include "JSphShiftingAdv.h"
 #include "JSphGpu_preloop_iker.h"
 
-
+using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-using namespace std;
 JSphGpuSingle_VRes::JSphGpuSingle_VRes():JSphGpuSingle(){
   ClassName="JSphGpuSingle";
   VResFastSingle=true;
@@ -71,14 +90,18 @@ void JSphGpuSingle_VRes::VisuConfigVRes(){
   Log->Printf(" Inter Precision: %s" ,(VResFastSingle ? "Single": "Double"));
 }
 
-
-
-void JSphGpuSingle_VRes::InitMultires(const JSphCfgRun* cfg, JCaseVRes casemultires, unsigned id){
+//==============================================================================
+/// Initialize VRes object.
+//==============================================================================
+void JSphGpuSingle_VRes::VResInit(const JSphCfgRun* cfg,JCaseVRes casemultires,unsigned id){
    VRes=new JSphVRes(Cpu,CSP,casemultires,id,AppName,DirDataOut,PartBegin,PartBeginDir);
    VRes->Config();
 }
 
-StInterParmsbg JSphGpuSingle_VRes::getParms(){
+//==============================================================================
+/// Return parameters for VRes coupling.
+//==============================================================================
+StInterParmsbg JSphGpuSingle_VRes::GetVResParms(){
 	StrInterParmsbg parms=StrInterParmsbg(Simulate2D,TKernel
 		    ,DivData,CTE,Map_PosMin,Dcell_g->cptr()
 		    ,Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr()
@@ -87,10 +110,11 @@ StInterParmsbg JSphGpuSingle_VRes::getParms(){
  return(parms);
 }
 
-
+//==============================================================================
+/// Initial definition of buffer particles and reordering.
+//==============================================================================
 void JSphGpuSingle_VRes::BufferInit(StInterParmsbg *parms){
   cusph::CteInteractionUp(&CTE);
-
 	for(unsigned i=0;i<VRes->GetCount();i++){
 
 		agint bufferpartg("-",Arrays_Gpu,true);
@@ -105,7 +129,7 @@ void JSphGpuSingle_VRes::BufferInit(StInterParmsbg *parms){
 }
 
 //==============================================================================
-/// Perform interpolation of buffer particles over coupled VRes simulation:
+/// Perform interpolation of buffer particles over coupled VRes simulation.
 //==============================================================================
 void JSphGpuSingle_VRes::BufferExtrapolateData(StInterParmsbg *parms){
   const unsigned count=VRes->GetCount();
@@ -122,7 +146,7 @@ void JSphGpuSingle_VRes::BufferExtrapolateData(StInterParmsbg *parms){
 		cusph::CteInteractionUp(&parms[id].cte);
 		cusphvres::Interaction_BufferExtrap(buffercountpre,bufferpartg.ptr()
       ,parms[id],Posxy_g->cptr(),Posz_g->cptr(),Velrho_g->ptr(),Code_g->ptr()
-      ,true,VResOrder,VResMethod,VResThreshold);
+      ,VResFastSingle,VResOrder,VResMethod,VResThreshold);
 	}
 }
 
@@ -150,7 +174,7 @@ void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
   	unsigned id=VRes->GetZone(i)->getZone()-1;      
 		cusph::CteInteractionUp(&parms[id].cte);                  //-Update constant memory.
     cusphvres::Interaction_BufferExtrapFlux(parms[id]
-      ,vresdata,CTE.dp,dt,true,VResOrder,VResMethod,VResThreshold);
+      ,vresdata,CTE.dp,dt,VResFastSingle,VResOrder,VResMethod,VResThreshold);
 
 		
     //-Compute step on buffer particles.
@@ -172,8 +196,8 @@ void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
 		cudaMalloc((void**)&newpart, sizeof(int)*(vresdata.ntot+1));
 		cudaMemset(newpart,0,vresdata.ntot*sizeof(int));
 
-    unsigned newnp=cusphvres::BufferListCreate(false,vresdata.ntot,vresdata.nini
-      ,vresdata.ntot, vresdata.mass, newpart, CTE.massf);
+
+    unsigned newnp = VRes->NewPartListCreate(newpart,i);
 		
     if(newnp){			
       if(!CheckGpuParticlesSize(Np+newnp)){ //-Check memory allocation and resize.
@@ -181,15 +205,14 @@ void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
         ResizeParticlesSizeData(ndatacpu,ndatagpu,Np+newnp,Np+newnp,0.2,true);
         CellDivSingle->SetIncreaseNp(newnp);
 			}  
-      cusphvres::BufferCreateNewPart(PeriActive,newnp,vresdata.nini,
-        newpart,Np,IdMax+1,vresdata.normals,CTE.dp,Posxy_g->ptr(),Posz_g->ptr()
-        ,vresdata.ptposxy,vresdata.ptposz,Dcell_g->ptr(),Code_g->ptr(),Idp_g->ptr(),Velrho_g->ptr(),i);
+      VRes->CreateNewPartGpu(Np,newnp,IdMax+1,Posxy_g->ptr(),Posz_g->ptr()
+        ,Dcell_g->ptr(),Code_g->ptr(),Idp_g->ptr(),Velrho_g->ptr(),newpart,i);
       
       //-Updates basic arrays.
-      if(SpsTauRho2_g)SpsTauRho2_g->CuMemsetOffset(Np,0,newnp);
-      if(BoundNor_g)BoundNor_g->CuMemsetOffset(Np,0,newnp);
-      if(FSType_g)FSType_g->CuMemsetOffset(Np,0,newnp);
-      if(ShiftVel_g)ShiftVel_g->CuMemsetOffset(Np,0,newnp);
+      if(SpsTauRho2_g)  SpsTauRho2_g->CuMemsetOffset(Np,0,newnp);
+      if(BoundNor_g)    BoundNor_g  ->CuMemsetOffset(Np,0,newnp);
+      if(FSType_g)      FSType_g    ->CuMemsetOffset(Np,0,newnp);
+      if(ShiftVel_g)    ShiftVel_g  ->CuMemsetOffset(Np,0,newnp);
       Np+=newnp; 
       TotalNp+=newnp;
       IdMax=unsigned(TotalNp-1);
@@ -266,7 +289,6 @@ void JSphGpuSingle_VRes::ComputeFSParticlesVRes(){
     ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
     ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
     ,inoutpartg.ptr(),vresgdata,NULL);
-
 }
 
 //==============================================================================
@@ -282,7 +304,6 @@ void JSphGpuSingle_VRes::ComputeUmbrellaRegionVRes(){
     ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
     ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
     ,inoutpartg.ptr(),vresgdata,NULL);
-
 }
 
 //==============================================================================
@@ -322,8 +343,7 @@ JMatrix4d JSphGpuSingle_VRes::CalcMotionMoving(const StMotionData m,double dt){
   } else if (m.type==MOTT_Matrix) {
     mat=m.matmov;
   }
-  return(mat);
-  
+  return(mat);  
 }
 
 //==============================================================================

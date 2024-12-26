@@ -945,10 +945,10 @@ void CheckMassFlux(unsigned n,unsigned pini
 }
 
 //------------------------------------------------------------------------------
-/// Create list for new inlet particles to create.
-/// Crea lista de nuevas particulas inlet a crear.
+/// Create list for new buffer particles to create.
+/// Crea lista de nuevas particulas buffer a crear.
 //------------------------------------------------------------------------------
-__global__ void KerBufferListCreate(unsigned n,unsigned pini,unsigned nmax
+__global__ void KerNewPartListCreate(unsigned n,unsigned pini,unsigned nmax
   ,float *fluxes,int *bufferpart,double massf)
 {
   extern __shared__ unsigned slist[];
@@ -974,7 +974,7 @@ __global__ void KerBufferListCreate(unsigned n,unsigned pini,unsigned nmax
 /// Create list for new buffer particles to create at end of buffer[].
 /// Returns number of new particles to create.
 //==============================================================================
-unsigned BufferListCreate(bool stable,unsigned n,unsigned pini,unsigned nmax
+unsigned NewPartListCreate(unsigned n,unsigned pini,unsigned nmax
   ,float *fluxes,int *bufferpart,double massf)
 {
   unsigned count=0;
@@ -983,7 +983,7 @@ unsigned BufferListCreate(bool stable,unsigned n,unsigned pini,unsigned nmax
     cudaMemset(bufferpart+nmax,0,sizeof(unsigned));
     dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
     const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); 
-    KerBufferListCreate <<<sgrid,SPHBSIZE,smem>>> (n,pini,nmax,fluxes,bufferpart,massf);
+    KerNewPartListCreate <<<sgrid,SPHBSIZE,smem>>> (n,pini,nmax,fluxes,bufferpart,massf);
     cudaMemcpy(&count,bufferpart+nmax,sizeof(unsigned),cudaMemcpyDeviceToHost);
   }
   return(count);
@@ -993,14 +993,14 @@ unsigned BufferListCreate(bool stable,unsigned n,unsigned pini,unsigned nmax
 //------------------------------------------------------------------------------
 /// Creates new vres buffer particles to replace the particles moved to fluid domain.
 //------------------------------------------------------------------------------
-template<bool periactive> __global__ void KerBufferCreateNewPart(unsigned newn,unsigned pini
-  ,int *bufferpart
-  ,unsigned np,unsigned idnext,const float3 *normals,const float dp
-  ,double2 *posxy,double *posz,double2 *posxyb,double *poszb,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop,unsigned nzone)
+__global__ void KerCreateNewPart(unsigned newnp,unsigned pini,int *newpart
+  ,unsigned np,unsigned idnext,double2 *posxy,double *posz
+  ,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop
+  ,const float3 *normals,const float dp,double2 *posxyb,double *poszb,unsigned nzone)
 {
   const unsigned cp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
-  if(cp<newn){
-    const int p=bufferpart[cp];
+  if(cp<newnp){
+    const int p=newpart[cp];
     const double dis=0.5*dp;
     const float3 normal=normals[p+pini];
     double2 rposxy=posxyb[p+pini];
@@ -1019,15 +1019,16 @@ template<bool periactive> __global__ void KerBufferCreateNewPart(unsigned newn,u
 //==============================================================================
 /// Creates new buffer particles in VRes simulations.
 //==============================================================================
-void BufferCreateNewPart(byte periactive,unsigned newn,unsigned pini
-		  ,int *bufferpart
-		  ,unsigned np,unsigned idnext,const float3 *normals,const float dp
-		  ,double2 *posxy,double *posz,double2 *posxyb,double *poszb,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop,unsigned nzone)
+void CreateNewPart(unsigned newnp,unsigned pini,int *newpart
+  ,unsigned np,unsigned idnext,double2 *posxy,double *posz
+  ,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop
+  ,const float3 *normals,const float dp,double2 *posxyb,double *poszb
+  ,unsigned nzone)
 {
-  if(newn){
-    dim3 sgrid=GetSimpleGridSize(newn,SPHBSIZE);
-    if(periactive) KerBufferCreateNewPart<true> <<<sgrid,SPHBSIZE>>> (newn,pini,bufferpart,np,idnext,normals,dp,posxy,posz,posxyb,poszb,dcell,code,idp,velrhop,nzone);
-    else KerBufferCreateNewPart<false> <<<sgrid,SPHBSIZE>>> (newn,pini,bufferpart,np,idnext,normals,dp,posxy,posz,posxyb,poszb,dcell,code,idp,velrhop,nzone);
+  if(newnp){
+    dim3 sgrid=GetSimpleGridSize(newnp,SPHBSIZE);
+    KerCreateNewPart<<<sgrid,SPHBSIZE>>> (newnp,pini,newpart,np,idnext,posxy,posz
+    ,dcell,code,idp,velrhop,normals,dp,posxyb,poszb,nzone);
 
   }
 }

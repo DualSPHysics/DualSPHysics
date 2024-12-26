@@ -1,3 +1,23 @@
+//HEAD_DSPH
+/*
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+
+ EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
+ School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
+
+ This file is part of DualSPHysics. 
+
+ DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License 
+ as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.
+ 
+ DualSPHysics is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details. 
+
+ You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
+*/
+
+/// \file JSphCpuSingle_VRes.cpp \brief Implements the class \ref JSphCpuSingle_VRes.
+
 #include "JSphCpuSingle_VRes.h"
 #include "JSphCpuSingle.h"
 #include "JSphCpu_VRes.h"
@@ -14,9 +34,10 @@
 #include "JSphShiftingAdv.h"
 #include "JSph.h"
 
-
-
 using namespace std;
+//==============================================================================
+/// Constructor.
+//==============================================================================
 JSphCpuSingle_VRes::JSphCpuSingle_VRes():JSphCpuSingle(){
   ClassName="JSphGpuSingle";
   VResThreshold=100;
@@ -25,13 +46,13 @@ JSphCpuSingle_VRes::JSphCpuSingle_VRes():JSphCpuSingle(){
   VResMethod=VrMethod_Liu;
 }
 
-
-
+//==============================================================================
+/// Destructor.
+//==============================================================================
 JSphCpuSingle_VRes::~JSphCpuSingle_VRes(){
   DestructorActive=true;
   delete VRes; VRes=NULL;
 }
-
 
 //==============================================================================
 /// Load VRes configuration.
@@ -55,6 +76,9 @@ void JSphCpuSingle_VRes::LoadVResConfigParameters(const JSphCfgRun* cfg){
   if(cfg->VResThreshold>=0) VResThreshold=cfg->VResThreshold;
 }
 
+//==============================================================================
+/// Print VRes configuration.
+//==============================================================================
 void JSphCpuSingle_VRes::VisuConfigVRes(){
   Log->Print("\nVRes Configuration:");
   Log->Printf(" Interpolation Method: %s",(VResMethod==VrMethod_Liu? "Liu-Liu Correction": "Moving Least Square"));
@@ -63,7 +87,248 @@ void JSphCpuSingle_VRes::VisuConfigVRes(){
 }
 
 //==============================================================================
-/// ???
+/// Initialize VRes object.
+//==============================================================================
+void JSphCpuSingle_VRes::VResInit(const JSphCfgRun* cfg, JCaseVRes casemultires, unsigned id){
+   VRes=new JSphVRes(Cpu,CSP,casemultires,id,AppName,DirDataOut,PartBegin,PartBeginDir);
+   VRes->Config();
+}
+
+//==============================================================================
+/// Return parameters for VRes coupling.
+//==============================================================================
+stinterparmscb JSphCpuSingle_VRes::GetVResParms(){
+	stinterparmscb parms=StInterparmscb(Np,Npb,NpbOk,DivData
+    ,Dcell_c->cptr(),Pos_c->cptr(),Velrho_c->cptr()
+    ,Idp_c->cptr(),Code_c->cptr(),CSP);  
+	return(parms);
+}
+
+//==============================================================================
+/// Initial definition of buffer particles and reordering.
+//==============================================================================
+void JSphCpuSingle_VRes::BufferInit(stinterparmscb *parms){
+  for(unsigned i=0;i<VRes->GetCount();i++){
+    acint bufferpartc("-",Arrays_Cpu,true);
+    unsigned buffercountpre=VRes->CreateListCpuInit(Np,0,Pos_c->cptr()
+      ,Idp_c->cptr(),Code_c->ptr(),bufferpartc.ptr(),i);
+    }
+    RunCellDivide(true);
+    if(VRES_DG_SAVEVTK)DgSaveVtkParticlesCpuMRBuffer("Compute_step",Nstep,0,Np
+      ,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL);
+
+}
+
+//==============================================================================
+/// Perform interpolation of buffer particles over coupled VRes simulation:
+//==============================================================================
+void JSphCpuSingle_VRes::BufferExtrapolateData(stinterparmscb *parms){
+  const unsigned count=VRes->GetCount();
+	for(unsigned i=0;i<count;i++){
+		
+    //-Compute list of buffer particles.	
+    acint bufferpartc("-",Arrays_Cpu,true);
+    unsigned buffercountpre=VRes->CreateListCpuInit(Np,0,Pos_c->cptr()
+      ,Idp_c->cptr(),Code_c->ptr(),bufferpartc.ptr(),i);
+
+    //-Update constant memory and perform interpolation.  
+		unsigned id=VRes->GetZone(i)->getZone()-1;
+    fvres::Interaction_BufferExtrap(buffercountpre,bufferpartc.ptr()
+      ,parms[id],Pos_c->ptr(),Velrho_c->ptr(),Code_c->ptr()
+      ,VResOrder,VResMethod,VResThreshold);
+	}
+}
+
+//==============================================================================
+/// ComputeStep over buffer regions:
+/// - If buffer particle is moved to fluid zone then it changes to fluid particle.
+/// - If fluid particle is moved to buffer zone then it changes to buffer particle.
+/// - If buffer particle is moved out the domain then it changes to ignore particle.
+/// - Create buffer particle based on eulerian flux on the accumulations points.
+/// - Update position of buffer regions and compute motion velocity.
+//==============================================================================
+void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,stinterparmscb *parms){
+  //-Compute movement for VRes regions
+  VRes->UpdateMatMov(mat);
+	VRes->MoveBufferZone(dt,mat);
+	
+  //- ComputeStep for each buffer region.
+	for(unsigned i=0;i<VRes->GetCount();i++){
+
+    StrDataVresCpu vresdata=VRes->GetZoneFluxInfoCpu(i);    //-Retrieve buffer parameters
+
+    //-Compute eulerian flux on the mass accumulation points.
+		unsigned id=VRes->GetZone(i)->getZone()-1;	
+    fvres::Interaction_BufferExtrapFlux(parms[id],vresdata,Dp,dt
+      ,VResOrder,VResMethod,VResThreshold);
+    
+    //-Compute step on buffer particles.
+    acint bufferpartc("-",Arrays_Cpu,true);
+    unsigned buffercountpre=VRes->CreateListCpuInit(Np,0,Pos_c->cptr()
+      ,Idp_c->cptr(),Code_c->ptr(),bufferpartc.ptr(),i);
+
+		fvres::CheckMassFlux(vresdata.ntot,vresdata.nini,CSP,DivData
+      ,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
+      ,vresdata.points,vresdata.normals,vresdata.mass);
+    
+    unsigned newnp=VRes->ComputeStepCpu(buffercountpre,bufferpartc.ptr(),Code_c->ptr(),Pos_c->cptr(),i);
+
+    if(newnp){
+      if(!CheckCpuParticlesSize(Np+newnp)){
+        const unsigned ndatacpu=Np;
+        ResizeParticlesSizeData(ndatacpu,Np+newnp,Np+newnp, 0.2,true);
+        CellDivSingle->SetIncreaseNp(newnp);
+      }
+      VRes->CreateNewPart(IdMax+1,Dcell_c->ptr(),Code_c->ptr()
+        ,Pos_c->ptr(),Idp_c->ptr(),Velrho_c->ptr(),this,Np,i);
+
+    }
+
+    if(newnp){      
+      if(SpsTauRho2_c)  SpsTauRho2_c->MemsetOffset(Np,0,newnp);
+      if(BoundNor_c)    BoundNor_c->MemsetOffset(Np,0,newnp);
+      if(FSType_c)      FSType_c->MemsetOffset(Np,0,newnp);
+      if(ShiftVel_c)    ShiftVel_c->MemsetOffset(Np,0,newnp);
+      Np+=newnp; 
+      TotalNp+=newnp;
+      IdMax=unsigned(TotalNp-1);
+		} 
+	}
+}
+
+void JSphCpuSingle_VRes::BufferShifting(){
+  // StrGeomVresGpu& vresgdata=VRes->GetGeomInfoVres();
+	// cusphvres::BufferShiftingGpu(Np,Npb,Posxy_g->ptr(),Posz_g->ptr(),ShiftVel_g->ptr(),Code_g->ptr(),vresgdata,NULL);
+}
+
+//==============================================================================
+/// Wrapper for call particle sorting procedure in VResDriver.
+//==============================================================================
+void JSphCpuSingle_VRes::CallRunCellDivide(){
+    RunCellDivide(true);
+}
+
+//==============================================================================
+/// PreLoop for additional models computation.
+/// Interaccion para el calculo de fuerzas.
+//==============================================================================
+void JSphCpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
+  const bool runshift=(ShiftingAdv && interstep==INTERSTEP_SymPredictor && Nstep!=0);
+  if(runshift){
+    Timersc->TmStart(TMC_SuShifting);
+    ComputeFSParticlesVRes();
+    ComputeUmbrellaRegionVRes();
+
+    StrGeomVresCpu vresdata=VRes->GetGeomInfoVresCpu();
+    fvres::CallCorrectShiftBuff(Np,Npb,CSP,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
+    ,ShiftVel_c->ptr(),FSType_c->ptr(),vresdata);
+
+    PreLoopInteraction_ct(DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
+      ,Velrho_c->cptr(),FSType_c->ptr(),ShiftVel_c->ptr(),FSNormal_c->ptr()
+      ,FSMinDist_c->ptr());
+    ComputeShiftingVel(Simulate2D,ShiftingAdv->GetShiftCoef()
+      ,ShiftingAdv->GetAleActive(),SymplecticDtPre,FSType_c->ptr()
+      ,FSNormal_c->ptr(),FSMinDist_c->ptr(),ShiftVel_c->ptr());
+    fvres::BufferShiftingCpu(Np,Npb,Pos_c->cptr(),ShiftVel_c->ptr(),Code_c->ptr(),vresdata);
+    //-Updates pre-loop variables in periodic particles.
+    if(PeriParent_c){
+      const unsigned* periparent=PeriParent_c->ptr();
+      unsigned* fstype  =FSType_c->ptr();
+      tfloat4*  shiftvel=ShiftVel_c->ptr();
+      for(unsigned p=Npb;p<Np;p++)if(periparent[p]!=UINT_MAX){
+        fstype[p]  =fstype[periparent[p]];
+        shiftvel[p]=shiftvel[periparent[p]];
+      }
+    }
+    //-Saves VTK for debug.
+    if(1 && runshift && TimeStep+LastDt>=TimePartNext)DgSaveVtkParticlesCpu("Compute_FreeSurface_",Part,0,Np,Pos_c->cptr()
+      ,Code_c->cptr(),FSType_c->cptr(),ShiftVel_c->cptr(),FSNormal_c->cptr());
+    Timersc->TmStop(TMC_SuShifting);
+  }
+}
+
+//==============================================================================
+/// Compute free-surface particles and their normals.
+//==============================================================================
+void JSphCpuSingle_VRes::ComputeFSParticlesVRes(){
+  StrGeomVresCpu vresdata=VRes->GetGeomInfoVresCpu();
+
+  acuint fspart("-",Arrays_Cpu,true);
+  fvres::CallComputeFSNormals(Np,Npb,CSP,DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
+    ,Velrho_c->cptr(),FSType_c->ptr(),FSNormal_c->ptr(),fspart.ptr(),vresdata);
+}
+
+//==============================================================================
+/// Scan Umbrella region to identify free-surface particle.
+//==============================================================================
+void JSphCpuSingle_VRes::ComputeUmbrellaRegionVRes(){
+  StrGeomVresCpu vresdata=VRes->GetGeomInfoVresCpu();
+
+  acuint fspart("-",Arrays_Cpu,true);
+  fvres::CallScanUmbrellaRegion(Np,Npb,CSP,DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
+    ,FSNormal_c->cptr(),fspart.ptr(),FSType_c->ptr(),vresdata);
+}
+
+//==============================================================================
+/// Return movement of an object for VRes tracking.
+//==============================================================================
+JMatrix4d JSphCpuSingle_VRes::CalcVelMotion(unsigned trackingmk,double dt){
+  //-Check if the mkbound a motion object.
+  JMatrix4d mat;
+  if(CaseNmoving){
+    const unsigned nref=DsMotion->GetNumObjects();
+    for(unsigned ref=0;ref<nref;ref++){
+      const StMotionData& m=DsMotion->GetMotionData(ref);
+      const unsigned mk=m.mkbound;
+      if(trackingmk==mk) return(CalcMotionMoving(m,dt));
+    }
+  }
+  //-Check if the mkbound is a floating object.
+  if(CaseNfloat){
+    for(unsigned cf=0;cf<FtCount;cf++){
+    //-Get Floating object values.
+      const StFloatingData fobj=FtObjs[cf];
+      const unsigned mk=fobj.mkbound;
+      if(trackingmk==mk) return(CalcMotionFloating(fobj,dt));
+    }
+  }
+  return (mat);
+}
+
+//==============================================================================
+/// Return movement if mkbound is a moving object.
+//==============================================================================
+JMatrix4d JSphCpuSingle_VRes::CalcMotionMoving(const StMotionData m,double dt){
+  JMatrix4d mat;
+  if(m.type==MOTT_Linear){
+    mat.Move(TDouble3(dt*m.linvel.x,dt*m.linvel.y,dt*m.linvel.z));
+    mat.IsMovMatrix();
+  } else if (m.type==MOTT_Matrix) {
+    mat=m.matmov;
+  }
+  return(mat);  
+}
+
+//==============================================================================
+/// Return movement if mkbound is a floating object.
+//==============================================================================
+JMatrix4d JSphCpuSingle_VRes::CalcMotionFloating(const StFloatingData m,double dt){
+  JMatrix4d mat;
+  const tfloat3  fvel   =m.fvel;
+  const tfloat3  fomega =m.fomega;
+  const tdouble3 fcenter=m.center;
+  const tdouble3 dang=(ToTDouble3(fomega)*dt)*TODEG;
+  // const tdouble3 cen2=(PeriActive? UpdatePeriodicPos(fcenter): fcenter);
+
+  mat.Move(fcenter);
+  mat.Rotate(dang);
+  mat.Move(TDouble3(-m.center.x,-m.center.y,-m.center.z));
+  mat.Move(TDouble3(dt*fvel.x,dt*fvel.y,dt*fvel.z)); 
+  return(mat); 
+}
+
+//==============================================================================
+/// Initialises VRes simulation.
 //==============================================================================
 void JSphCpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
   ,unsigned vrescount,unsigned vresid)
@@ -106,6 +371,9 @@ void JSphCpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* l
   PartNstep=0; Part++;
 }
 
+//==============================================================================
+/// Complete initialization of VRes simulation.
+//==============================================================================
 double JSphCpuSingle_VRes::Init2(){
 	 //-Main Loop.
 	JTimeControl tc("30,60,300,600");//-Shows information at 0.5, 1, 5 y 10 minutes (before first PART).
@@ -118,7 +386,9 @@ double JSphCpuSingle_VRes::Init2(){
 	return(TimeMax);
 }
 
-
+//==============================================================================
+/// Compute time step of VRes simulation.
+//==============================================================================
 double JSphCpuSingle_VRes::ComputeStepVRes(){
   const double dt=SymplecticDtPre;
   if(CaseNmoving)CalcMotion(dt);          //-Calculate motion for moving bodies.
@@ -155,348 +425,50 @@ double JSphCpuSingle_VRes::ComputeStepVRes(){
   return(dt);
 }
 
-
+//==============================================================================
+/// Complete time step of VRes simulation.
+//==============================================================================
 void JSphCpuSingle_VRes::Finish(double dt1){
-	    RunGaugeSystem(TimeStep+dt1);
-	    if(CaseNmoving)RunMotion(dt1);
-	    if(InOut)InOutComputeStep(dt1);
-	    // else RunCellDivide(true);
-	    TimeStep+=dt1;
-	    LastDt=dt1;
-      Nstep++;
-    //-Save extra PART data.
-    if(TimeOutExtraCheck(TimeStep)){
-      if(PartFloatSave)PartFloatSave->AddDataExtra(Part,TimeStep,Nstep);
-      if(PartMotionSave)PartMotionSave->AddDataExtraCpu(Part,TimeStep,Nstep,Np
-        ,Pos_c->cptr(),RidpMot);
-      TimeOutExtraUpdate(TimeStep);
+	RunGaugeSystem(TimeStep+dt1);
+	if(CaseNmoving)RunMotion(dt1);
+	if(InOut)InOutComputeStep(dt1);
+	// else RunCellDivide(true);
+	TimeStep+=dt1;
+	LastDt=dt1;
+  Nstep++;
+  //-Save extra PART data.
+  if(TimeOutExtraCheck(TimeStep)){
+    if(PartFloatSave)PartFloatSave->AddDataExtra(Part,TimeStep,Nstep);
+    if(PartMotionSave)PartMotionSave->AddDataExtraCpu(Part,TimeStep,Nstep,Np
+      ,Pos_c->cptr(),RidpMot);
+    TimeOutExtraUpdate(TimeStep);
+  }
+	if(TimeStep>=TimePartNext ){
+	  if(VRES_DG_SAVEVTK){
+      DgSaveVtkParticlesCpuMRBuffer("Compute_Debug_Buffer.vtk",Part,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL);
+	    DgSaveVtkParticlesCpuMR("Compute_Debug_Fluid.vtk",Part,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL,NULL);
     }
-	    if(TimeStep>=TimePartNext ){
-        // MultiRes->SaveFluxesData(DirDataOut,Part);
-	    	if(VRES_DG_SAVEVTK){
-          DgSaveVtkParticlesCpuMRBuffer("Compute_Debug_Buffer.vtk",Part,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL);
-	        DgSaveVtkParticlesCpuMR("Compute_Debug_Fluid.vtk",Part,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL,NULL);
-        }
-        if(VRES_DG_SAVEVTK)VRes->SaveNormals(DirDataOut+"NormalsBuffer_",Part);
-        if(VRES_DG_SAVEVTK)VRes->SaveVtkDomains(DirDataOut+"Domains",Part,Simulate2D);
-        if(VRES_DG_SAVEVTK)VRes->SaveVResData(Part,TimeStep,Nstep);
+    if(VRES_DG_SAVEVTK)VRes->SaveNormals(DirDataOut+"NormalsBuffer_",Part);
+    if(VRES_DG_SAVEVTK)VRes->SaveVtkDomains(DirDataOut+"Domains",Part,Simulate2D);
+    if(VRES_DG_SAVEVTK)VRes->SaveVResData(Part,TimeStep,Nstep);
 
-	      SaveData();
-	      Part++;
-	      PartNstep=Nstep;
-	      TimeStepM1=TimeStep;
-        TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
-	      TimerPart.Start();
-	    }
-	    UpdateMaxValues();
+	  SaveData();
+	  Part++;
+	  PartNstep=Nstep;
+	  TimeStepM1=TimeStep;
+    TimePartNext=(SvAllSteps? TimeStep: OutputTime->GetNextTime(TimeStep));
+	  TimerPart.Start();
+	}
+	UpdateMaxValues();
 }
 
+//==============================================================================
+/// Complete VRes simulation.
+//==============================================================================
 void JSphCpuSingle_VRes::Finish2(){
 	TimerSim.Stop(); TimerTot.Stop();
+	//-End of Simulation.
+	//--------------------
+	FinishRun(false);
 
-	  //-End of Simulation.
-	  //--------------------
-	  FinishRun(false);
-
-}
-
-void JSphCpuSingle_VRes::InitMultires(const JSphCfgRun* cfg, JCaseVRes casemultires, unsigned id){
-   VRes=new JSphVRes(Cpu,CSP,casemultires,id,AppName,DirDataOut,PartBegin,PartBeginDir);
-   VRes->Config();
-}
-
-stinterparmscb JSphCpuSingle_VRes::getParms()
-{
-	 stinterparmscb parms=StInterparmscb(Np,Npb,NpbOk
-	    ,DivData,Dcell_c->cptr()
-	    ,Pos_c->cptr(),Velrho_c->cptr(),Idp_c->cptr(),Code_c->cptr(),CSP
-	  );
-
-	return(parms);
-}
-
-
-
-void JSphCpuSingle_VRes::BufferInit(stinterparmscb *parms){
-
-  for(unsigned i=0;i<VRes->GetCount();i++){
-      acint bufferpartc("-",Arrays_Cpu,true);
-      unsigned buffercountpre;
-
-  //		DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-      buffercountpre=VRes->CreateListCpuInit(Np,0,Pos_c->cptr(),Idp_c->cptr(),Code_c->ptr(),bufferpartc.ptr(),i);
-      // std::cout << buffercountpre << std::endl;
-
-    }
-
-    RunCellDivide(true);
-    if(VRES_DG_SAVEVTK)DgSaveVtkParticlesCpuMRBuffer("Compute_step",Nstep,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL);
-
-}
-
-void JSphCpuSingle_VRes::BufferExtrapolateData(stinterparmscb *parms){
-
-	for(unsigned i=0;i<VRes->GetCount();i++){
-		
-   acint bufferpartc("-",Arrays_Cpu,true);
-      unsigned buffercountpre;
-
-  //		DgSaveVtkParticlesGpuMultiRes("Compute_step",Nstep,0,Np,Posxyg,Poszg,Codeg,Idpg,Velrhopg);
-      buffercountpre=VRes->CreateListCpuInit(Np,0,Pos_c->cptr(),Idp_c->cptr(),Code_c->ptr(),bufferpartc.ptr(),i);
-		
-		unsigned id=VRes->GetZone(i)->getZone()-1;
-
-
-	 fvres::Interaction_BufferExtrap(buffercountpre,bufferpartc.ptr()
-    ,parms[id],Pos_c->ptr(),Velrho_c->ptr(),Code_c->ptr(),VResOrder,VResMethod,VResThreshold);
-    // DgSaveVtkParticlesCpuMRBuffer("Debug_Buffer_CpuInit.vtk",Nstep,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL);
-	  // DgSaveVtkParticlesCpuMR("Debug_Multi_CpuInit.vtk",Nstep,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr(),NULL,NULL,NULL,NULL);
-		
-
-		
-	}
-}
-
-void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,stinterparmscb *parms){
-  VRes->UpdateMatMov(mat);
-	VRes->MoveBufferZone(dt,mat);
-	
-	for(unsigned i=0;i<VRes->GetCount();i++){
-    
-    acint bufferpartc("-",Arrays_Cpu,true);
-    unsigned buffercountpre;
-
-    buffercountpre=VRes->CreateListCpuInit(Np,0,Pos_c->cptr(),Idp_c->cptr(),Code_c->ptr(),bufferpartc.ptr(),i);
-
-    StrDataVresCpu vresdata=VRes->GetZoneFluxInfoCpu(i);
-			
-  //   // cusphvres::MoveBufferZone(nini,ntot,posxy,posz,dt,velmot[i]);
-
-
-		unsigned id=VRes->GetZone(i)->getZone()-1;
-		
-    fvres::Interaction_BufferExtrapFlux(parms[id],vresdata,Dp,dt
-      ,VResOrder,VResMethod,VResThreshold);
-
-		fvres::CheckMassFlux(vresdata.ntot,vresdata.nini,CSP,DivData
-      ,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
-      ,vresdata.points,vresdata.normals,vresdata.mass);
-    
-    unsigned newnp=VRes->ComputeStepCpu(buffercountpre,bufferpartc.ptr(),Code_c->ptr(),Pos_c->cptr(),i);
-
-    if(newnp){
-      if(!CheckCpuParticlesSize(Np+newnp)){
-        const unsigned ndatacpu=Np;
-        ResizeParticlesSizeData(ndatacpu,Np+newnp,Np+newnp, 0.2,true);
-        CellDivSingle->SetIncreaseNp(newnp);
-      }
-      VRes->CreateNewPart(IdMax+1,Dcell_c->ptr(),Code_c->ptr(),Pos_c->ptr(),Idp_c->ptr(),Velrho_c->ptr()
-        ,this,Np,i);
-
-    }
-
-    if(newnp){      
-      if(SpsTauRho2_c)  SpsTauRho2_c->MemsetOffset(Np,0,newnp);
-      if(BoundNor_c)    BoundNor_c->MemsetOffset(Np,0,newnp);
-      if(FSType_c)      FSType_c->MemsetOffset(Np,0,newnp);
-      if(ShiftVel_c)    ShiftVel_c->MemsetOffset(Np,0,newnp);
-      Np+=newnp; 
-      TotalNp+=newnp;
-      IdMax=unsigned(TotalNp-1);
-		} 
-	}
-}
-
-void JSphCpuSingle_VRes::BufferShifting(){
-  // StrGeomVresGpu& vresgdata=VRes->GetGeomInfoVres();
-	// cusphvres::BufferShiftingGpu(Np,Npb,Posxy_g->ptr(),Posz_g->ptr(),ShiftVel_g->ptr(),Code_g->ptr(),vresgdata,NULL);
-}
-
-
-
-void JSphCpuSingle_VRes::CallRunCellDivide(){
-    RunCellDivide(true);
-}
-
-
-//==============================================================================
-/// PreLoop for additional models computation.
-/// Interaccion para el calculo de fuerzas.
-//==============================================================================
-void JSphCpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
-  const bool runshift=(ShiftingAdv && interstep==INTERSTEP_SymPredictor && Nstep!=0);
-  if(runshift){
-    Timersc->TmStart(TMC_SuShifting);
-    ComputeFSParticlesVRes();
-    ComputeUmbrellaRegionVRes();
-
-    StrGeomVresCpu vresdata=VRes->GetGeomInfoVresCpu();
-    fvres::CallCorrectShiftBuff(Np,Npb,CSP,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
-    ,ShiftVel_c->ptr(),FSType_c->ptr(),vresdata);
-
-    PreLoopInteraction_ct(DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
-      ,Velrho_c->cptr(),FSType_c->ptr(),ShiftVel_c->ptr(),FSNormal_c->ptr()
-      ,FSMinDist_c->ptr());
-    ComputeShiftingVel(Simulate2D,ShiftingAdv->GetShiftCoef()
-      ,ShiftingAdv->GetAleActive(),SymplecticDtPre,FSType_c->ptr()
-      ,FSNormal_c->ptr(),FSMinDist_c->ptr(),ShiftVel_c->ptr());
-    fvres::BufferShiftingCpu(Np,Npb,Pos_c->cptr(),ShiftVel_c->ptr(),Code_c->ptr(),vresdata);
-    //-Updates pre-loop variables in periodic particles.
-    if(PeriParent_c){
-      const unsigned* periparent=PeriParent_c->ptr();
-      unsigned* fstype  =FSType_c->ptr();
-      tfloat4*  shiftvel=ShiftVel_c->ptr();
-      for(unsigned p=Npb;p<Np;p++)if(periparent[p]!=UINT_MAX){
-        fstype[p]  =fstype[periparent[p]];
-        shiftvel[p]=shiftvel[periparent[p]];
-      }
-    }
-    //-Saves VTK for debug.
-    if(1 && runshift && TimeStep+LastDt>=TimePartNext)DgSaveVtkParticlesCpu("Compute_FreeSurface_",Part,0,Np,Pos_c->cptr()
-      ,Code_c->cptr(),FSType_c->cptr(),ShiftVel_c->cptr(),FSNormal_c->cptr());
-    Timersc->TmStop(TMC_SuShifting);
-  }
-}
-
-
-//==============================================================================
-/// Compute free-surface particles and their normals.
-//==============================================================================
-void JSphCpuSingle_VRes::ComputeFSParticlesVRes(){
-  StrGeomVresCpu vresdata=VRes->GetGeomInfoVresCpu();
-
-  acuint fspart("-",Arrays_Cpu,true);
-  fvres::CallComputeFSNormals(Np,Npb,CSP,DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
-    ,Velrho_c->cptr(),FSType_c->ptr(),FSNormal_c->ptr(),fspart.ptr(),vresdata);
-
-}
-
-//==============================================================================
-/// Scan Umbrella region to identify free-surface particle.
-//==============================================================================
-void JSphCpuSingle_VRes::ComputeUmbrellaRegionVRes(){
-  StrGeomVresCpu vresdata=VRes->GetGeomInfoVresCpu();
-
-  acuint fspart("-",Arrays_Cpu,true);
-  fvres::CallScanUmbrellaRegion(Np,Npb,CSP,DivData,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
-    ,FSNormal_c->cptr(),fspart.ptr(),FSType_c->ptr(),vresdata);
-}
-
-
-//==============================================================================
-/// Interaction for force computation.
-/// Interaccion para el calculo de fuerzas.
-//==============================================================================
-void JSphCpuSingle_VRes::Interaction_ForcesB(TpInterStep interstep){
-  //-Boundary correction for mDBC.
-  const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
-  const bool mdbc2=(runmdbc && SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
-  
-
-  tfloat3* dengradcorr=NULL;
-
-  Timersc->TmStart(TMC_CfForces);
-  //-Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces and DEM). | Interaccion Fluid-Fluid/Bound & Bound-Fluid (forces and DEM).
-  const stinterparmsc parms=StInterparmsc(Np,Npb,NpbOk
-    ,DivData,Dcell_c->cptr()
-    ,Pos_c->cptr(),Velrho_c->cptr(),Idp_c->cptr(),Code_c->cptr(),Press_c->cptr()
-    ,AC_CPTR(BoundMode_c),AC_CPTR(TangenVel_c),AC_CPTR(MotionVel_c) //<vs_m2dbc>
-    ,AC_CPTR(BoundNor_c),AC_PTR(NoPenShift_c) //<vs_m2dbcNP>
-    ,dengradcorr
-    ,Ar_c->ptr(),Ace_c->ptr(),AC_PTR(Delta_c)
-    ,ShiftingMode,AC_PTR(ShiftPosfs_c)
-    ,AC_PTR(SpsTauRho2_c),AC_PTR(Sps2Strain_c)
-    ,AC_PTR(FSType_c),AC_PTR(ShiftVel_c) //<vs_advshift>
-  );
-  StInterResultc res;
-  res.viscdt=0;
-  JSphCpu::Interaction_Forces_ct(parms,res);
-
-  //-For 2-D simulations zero the 2nd component. | Para simulaciones 2D anula siempre la 2nd componente.
-  if(Simulate2D){
-    tfloat3* acec=Ace_c->ptr();
-    const int ini=int(Npb),fin=int(Np),npf=int(Np-Npb);
-    #ifdef OMP_USE
-      #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTELIGHT)
-    #endif
-    for(int p=ini;p<fin;p++)acec[p].y=0;
-  }
-
-  //-Add Delta-SPH correction to Ar_c[].
-  if(AC_CPTR(Delta_c)){
-    const float* deltac=Delta_c->cptr();
-    float* arc=Ar_c->ptr();
-    const int ini=int(Npb),fin=int(Np),npf=int(Np-Npb);
-    #ifdef OMP_USE
-      #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTELIGHT)
-    #endif
-    for(int p=ini;p<fin;p++)if(deltac[p]!=FLT_MAX)arc[p]+=deltac[p];
-  }
-
-  //-Calculates maximum value of ViscDt.
-  ViscDtMax=res.viscdt;
-  //-Calculates maximum value of Ace (periodic particles are ignored).
-  AceMax=ComputeAceMax();
-
-  InterNum++;
-  Timersc->TmStop(TMC_CfForces);
-}
-
-
-
-JMatrix4d JSphCpuSingle_VRes::CalcVelMotion(unsigned trackingmk,double dt){
-  //Check if the mkbound is in one of the motion objects
-  JMatrix4d mat;
-  if(CaseNmoving){
-     const unsigned nref=DsMotion->GetNumObjects();
-      for(unsigned ref=0;ref<nref;ref++){
-      const StMotionData& m=DsMotion->GetMotionData(ref);
-      const unsigned mk=m.mkbound;
-      if(trackingmk==mk) return(CalcMotionMoving(m,dt));
-      }
-  }
-  //Check if the mkbound is in one of the floating objects
-  if(CaseNfloat){
-    for(unsigned cf=0;cf<FtCount;cf++){
-      //-Get Floating object values.
-      const StFloatingData fobj=FtObjs[cf];
-      const unsigned mk=fobj.mkbound;
-      if(trackingmk==mk) return(CalcMotionFloating(fobj,dt));
-  }
-  }
-
-  return (mat);
-
-	
-
-}
-
-
-
-JMatrix4d JSphCpuSingle_VRes::CalcMotionMoving(const StMotionData m,double dt){
-  JMatrix4d mat;
-  if(m.type==MOTT_Linear){
-    mat.Move(TDouble3(dt*m.linvel.x,dt*m.linvel.y,dt*m.linvel.z));
-    mat.IsMovMatrix();
-  } else if (m.type==MOTT_Matrix) {
-    mat=m.matmov;
-  }
-  return(mat);
-  
-}
-
-JMatrix4d JSphCpuSingle_VRes::CalcMotionFloating(const StFloatingData m,double dt){
-  JMatrix4d mat;
-  const tfloat3  fvel   =m.fvel;
-  const tfloat3  fomega =m.fomega;
-  const tdouble3 fcenter=m.center;
-  const tdouble3 dang=(ToTDouble3(fomega)*dt)*TODEG;
-  // const tdouble3 cen2=(PeriActive? UpdatePeriodicPos(fcenter): fcenter);
-
-  mat.Move(fcenter);
-  mat.Rotate(dang);
-  mat.Move(TDouble3(-m.center.x,-m.center.y,-m.center.z));
-  mat.Move(TDouble3(dt*fvel.x,dt*fvel.y,dt*fvel.z)); 
-  return(mat);
-  
 }

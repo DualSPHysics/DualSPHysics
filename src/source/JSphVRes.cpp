@@ -1,9 +1,22 @@
+//HEAD_DSPH
 /*
- * JSphBuffer.cpp
- *
- *  Created on: Nov 9, 2021
- *      Author: francesco
- */
+ <DUALSPHYSICS>  Copyright (c) 2023 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+
+ EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
+ School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
+
+ This file is part of DualSPHysics. 
+
+ DualSPHysics is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or (at your option) any later version. 
+
+ DualSPHysics is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details. 
+
+ You should have received a copy of the GNU General Public License, along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
+*/
+
+/// \file JSphVRes.cpp \brief Implements the class \ref JSphVRes.
 
 #include "JSphVRes.h"
 #include "JSphCpu.h"
@@ -22,11 +35,9 @@
 #include "JDsVresData.h"
 #include "JBoxDef.h"
 #ifdef _WITHGPU
-#include "FunctionsCuda.h"
-#include "JSphGpu_VRes_iker.h"
-#include "JDebugSphGpu.h"
-
-
+  #include "FunctionsCuda.h"
+  #include "JSphGpu_VRes_iker.h"
+  #include "JDebugSphGpu.h"
 #endif
 
 #include <fstream>
@@ -191,28 +202,6 @@ void JSphVRes::FreePtMemory(){
 
 #ifdef _WITHGPU
 //==============================================================================
-/// Allocates memory for interface points on GPU.
-//==============================================================================
-void JSphVRes::AllocatePtMemoryGpu(unsigned ptcount){
-  fcuda::Malloc(&PtPosxyg   ,ptcount);
-  fcuda::Malloc(&PtPoszg    ,ptcount);
-  fcuda::Malloc(&PtNormalsg ,ptcount);
-  fcuda::Malloc(&PtVelMotg  ,ptcount);
-  fcuda::Malloc(&PtMassg    ,ptcount);
-}
-
-//==============================================================================
-/// Frees allocated memory for reference points and auxiliary memory on GPU.
-//==============================================================================
-void JSphVRes::FreePtMemoryGpu(){
-  if(PtPosxyg)     cudaFree(PtPosxyg);      PtPosxyg=NULL;
-  if(PtPoszg)      cudaFree(PtPoszg);       PtPoszg=NULL;
-  if(PtNormalsg)   cudaFree(PtNormalsg);    PtNormalsg=NULL;
-  if(PtVelMotg)    cudaFree(PtVelMotg);     PtVelMotg=NULL;
-  if(PtMassg)      cudaFree(PtMassg);       PtMassg=NULL;
-}
-
-//==============================================================================
 /// Allocates memory on GPU.
 //==============================================================================
 void JSphVRes::AllocateMemoryGpu(unsigned listsize){
@@ -247,6 +236,28 @@ void JSphVRes::FreeMemoryGpu(){
   if(NInig)           cudaFree(NInig);          NInig=NULL;
   if(NPointsg)        cudaFree(NPointsg);       NPointsg=NULL; 
   if(Matmovg)         cudaFree(Matmovg);        Matmovg=NULL;
+}
+
+//==============================================================================
+/// Allocates memory for interface points on GPU.
+//==============================================================================
+void JSphVRes::AllocatePtMemoryGpu(unsigned ptcount){
+  fcuda::Malloc(&PtPosxyg   ,ptcount);
+  fcuda::Malloc(&PtPoszg    ,ptcount);
+  fcuda::Malloc(&PtNormalsg ,ptcount);
+  fcuda::Malloc(&PtVelMotg  ,ptcount);
+  fcuda::Malloc(&PtMassg    ,ptcount);
+}
+
+//==============================================================================
+/// Frees allocated memory for reference points and auxiliary memory on GPU.
+//==============================================================================
+void JSphVRes::FreePtMemoryGpu(){
+  if(PtPosxyg)     cudaFree(PtPosxyg);      PtPosxyg=NULL;
+  if(PtPoszg)      cudaFree(PtPoszg);       PtPoszg=NULL;
+  if(PtNormalsg)   cudaFree(PtNormalsg);    PtNormalsg=NULL;
+  if(PtVelMotg)    cudaFree(PtVelMotg);     PtVelMotg=NULL;
+  if(PtMassg)      cudaFree(PtMassg);       PtMassg=NULL;
 }
 #endif
 
@@ -352,8 +363,6 @@ void JSphVRes::Config()
     cudaMemcpy(Matmovg,matc,sizeof(tmatrix4f)*ListSize,cudaMemcpyHostToDevice);
     delete[] matc;  matc=NULL;
   }
-  //-Create object for retrieving vres zone configurations.
-  // GeomInfo=new StrGeomVresGpu(BoxLimitMing,BoxLimitMaxg,BoxDomMing,BoxDomMaxg,Trackingg,Innerg,Matmovg);
 #endif
   
 
@@ -391,10 +400,9 @@ void JSphVRes::Config()
     delete[] pxy; pxy=NULL;
     delete[] pz;  pz=NULL;
   } 
-#endif  
-
-  
+#endif    
 }
+
 //========================================================================================
 /// Obtain basic arrays for interface points for Cpu computations.
 //=========================================================================================
@@ -440,7 +448,6 @@ StrDataVresGpu JSphVRes::GetZoneFluxInfoGpu(unsigned nzone){
 /// Update the movement of VRes region by matrix representation on Cpu and Gpu.
 //=========================================================================================
 void JSphVRes::UpdateMatMov(std::vector<JMatrix4d> mat){
-
   for(unsigned ci=0; ci<ListSize; ci++){
     JMatrix4d mat_new=mat[ci];    
     mat_new.Mul(Matmov[ci]);
@@ -449,7 +456,6 @@ void JSphVRes::UpdateMatMov(std::vector<JMatrix4d> mat){
 #ifdef _WITHGPU
   if(!Cpu){
     tmatrix4f* matc=  new tmatrix4f[ListSize];
-
     for(unsigned ci=0; ci<ListSize; ci++){
       tmatrix4f mat_1=Matmov[ci].GetMatrix4f();
       matc[ci]=mat_1;
@@ -528,10 +534,10 @@ void JSphVRes::LoadVResData(){
 
 
 
-unsigned JSphVRes::CreateListCpu(unsigned npf,unsigned pini
-		  ,const tdouble3 *pos,const unsigned *idp,typecode *code,int *inoutpart,unsigned nzone)
+unsigned JSphVRes::CreateListCpu(unsigned npf,unsigned pini,const tdouble3 *pos
+  ,const unsigned *idp,typecode *code,int *inoutpart,unsigned nzone)
 {
-unsigned count=0;
+  unsigned count=0;
   const unsigned pfin=pini+npf;
   for(unsigned p=pini;p<pfin;p++){
     const typecode rcode=code[p];
@@ -552,42 +558,38 @@ unsigned count=0;
         }
       }
     }
-return(count);
+  return(count);
 }
 
 
-unsigned JSphVRes::CreateListCpuInit(unsigned npf,unsigned pini
-		  ,const tdouble3 *pos,const unsigned *idp,typecode *code,int *inoutpart,unsigned nzone)
+unsigned JSphVRes::CreateListCpuInit(unsigned npf,unsigned pini,const tdouble3 *pos
+  ,const unsigned *idp,typecode *code,int *inoutpart,unsigned nzone)
 {
-    unsigned count=0;
-      const unsigned pfin=pini+npf;
-      for(unsigned p=pini;p<pfin;p++){
-        const typecode rcode=code[p];
-        if(CODE_IsNormal(rcode) && CODE_IsFluid(rcode)){//-It includes only normal fluid particles (no periodic).
-          if(CODE_IsFluidBuffer(rcode)){//-Particles already selected as Buffer.
-            inoutpart[count]=p; count++;
-          }
-          else{//-Fluid particles no buffer.
-            tdouble3 ps=pos[p];
-            if(Tracking[nzone]) ps=MovePoint(ps,Matmov[nzone].GetMatrix4d());
-            byte zone=255;
-             if(List[nzone]->InZoneBox(ps))zone=byte(0);
-              if(zone!=255){//-Particulas fluid que pasan a in/out.
-                code[p]=CODE_ToFluidBuffer(rcode,zone)|CODE_TYPE_FLUID_BUFFERNUM; //-Adds 16 to indicate new particle in zone.
-                inoutpart[count]=p; count++;
-              }
-              if(List[nzone]->is_Out(ps)){
-            	  if(!List[nzone]->InZoneBoxMid(ps))code[p]=CODE_TYPE_FLUID_FIXED;
-            	  else code[p]=CODE_SetOutIgnore(rcode);
-              }
-            }
-          }
+  unsigned count=0;
+  const unsigned pfin=pini+npf;
+  for(unsigned p=pini;p<pfin;p++){
+    const typecode rcode=code[p];
+    if(CODE_IsNormal(rcode) && CODE_IsFluid(rcode)){//-It includes only normal fluid particles (no periodic).
+      if(CODE_IsFluidBuffer(rcode)){//-Particles already selected as Buffer.
+        inoutpart[count]=p; count++;
+      }else{//-Fluid particles no buffer.
+        tdouble3 ps=pos[p];
+        if(Tracking[nzone]) ps=MovePoint(ps,Matmov[nzone].GetMatrix4d());
+        byte zone=255;
+        if(List[nzone]->InZoneBox(ps))zone=byte(0);
+        if(zone!=255){//-Particulas fluid que pasan a in/out.
+          code[p]=CODE_ToFluidBuffer(rcode,zone)|CODE_TYPE_FLUID_BUFFERNUM; //-Adds 16 to indicate new particle in zone.
+          inoutpart[count]=p; count++;
         }
-    return(count);
+        if(List[nzone]->is_Out(ps)){
+          if(!List[nzone]->InZoneBoxMid(ps))code[p]=CODE_TYPE_FLUID_FIXED;
+          else code[p]=CODE_SetOutIgnore(rcode);
+        }
+      }
+    }
+  }
+  return(count);
 }
-
-
-
 
 #ifdef _WITHGPU
 unsigned JSphVRes::CreateListGpuInit(unsigned npf, unsigned pini, const double2 *posxyg, const double *poszg, typecode *codeg, unsigned size, int *inoutpartg, unsigned nzone)
@@ -612,8 +614,7 @@ unsigned JSphVRes::CreateListGpu(unsigned npf, unsigned pini, const double2 *pos
   return (count);
 }
 #endif
-//
-//
+
 tdouble3 JSphVRes::MovePoint(tdouble3 oldpos,const tmatrix4d& mat){
   tdouble3 newpos=TDouble3(0);
   oldpos.x-=mat.a14;  oldpos.y-=mat.a24;  oldpos.z-=mat.a34;
@@ -623,14 +624,12 @@ tdouble3 JSphVRes::MovePoint(tdouble3 oldpos,const tmatrix4d& mat){
   return(newpos);
 }
 
-
 //==============================================================================
 /// ComputeStep over buffer regions:
 /// - If buffer particle is moved to fluid zone then it changes to fluid particle.
 /// - If fluid particle is moved to buffer zone then it changes to buffer particle.
 /// - If buffer particle is moved out the domain then it changes to ignore particle.
-/// - Create buffer particle based on eulerian flux on the accumulations points.
-/// - Update position of buffer regions and compute motion velocity.
+/// - Compute number of new particle to be created.
 //==============================================================================
 unsigned JSphVRes::ComputeStepCpu(unsigned bufferpartcount,int *bufferpart
 	,typecode *code,const tdouble3 *pos,unsigned nzone){
@@ -662,7 +661,7 @@ unsigned JSphVRes::ComputeStepCpu(unsigned bufferpartcount,int *bufferpart
 			}
 		}
 	}
-
+  //-Compute number of new particles.
 	unsigned newcp=0;
   const unsigned nini=NIni[nzone];
   const unsigned npoints=NPoints[nzone];
@@ -673,6 +672,9 @@ unsigned JSphVRes::ComputeStepCpu(unsigned bufferpartcount,int *bufferpart
 	return(newcp);
 }
 
+//==============================================================================
+/// Create new buffer particles at Dp*0.5 in the normal direction to the interface.
+//==============================================================================
 void JSphVRes::CreateNewPart(const unsigned idnext,unsigned *dcell,typecode *code,tdouble3 *pos,unsigned *idp,
 	tfloat4 *velrhop,const JSphCpu *sphcpu,unsigned np,unsigned nzone){    
   unsigned newcp=0;
@@ -704,8 +706,6 @@ void JSphVRes::CreateNewPart(const unsigned idnext,unsigned *dcell,typecode *cod
 /// - If buffer particle is moved to fluid zone then it changes to fluid particle.
 /// - If fluid particle is moved to buffer zone then it changes to buffer particle.
 /// - If buffer particle is moved out the domain then it changes to ignore particle.
-/// - Create buffer particle based on eulerian flux on the accumulations points.
-/// - Update position of buffer regions and compute motion velocity.
 //==============================================================================
 void JSphVRes::ComputeStepGpu(unsigned bufferpartcount,int *bufferpart,unsigned idnext,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg
     ,unsigned *idpg,float4 *velrhopg,byte *newizoneg,const JSphGpuSingle *gp,unsigned nzone)
@@ -714,6 +714,28 @@ void JSphVRes::ComputeStepGpu(unsigned bufferpartcount,int *bufferpart,unsigned 
   cusphvres::BufferComputeStep(bufferpartcount,bufferpart,posxyg,poszg,codeg,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner
       ,List[nzone]->BoxLimitMinOuter,List[nzone]->BoxLimitMaxOuter,List[nzone]->Inner,Matmovg,Tracking[nzone],nzone);
 
+}
+
+//==============================================================================
+/// Compute list of new buffer particles.
+//==============================================================================
+unsigned JSphVRes::NewPartListCreate(int* newpart,unsigned idzone){
+  unsigned newnp=0;
+  newnp = cusphvres::NewPartListCreate(NPoints[idzone],NIni[idzone]
+    ,NPoints[idzone],PtMassg,newpart,CSP.massfluid);
+
+  return(newnp);
+}
+
+//==============================================================================
+/// Create new buffer particles at Dp*0.5 in the normal direction to the interface.
+//==============================================================================
+void JSphVRes::CreateNewPartGpu(unsigned np,unsigned newnp,unsigned idnext,double2 *posxy
+  ,double *posz,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop
+  ,int *newpart,unsigned nzone)
+{
+  cusphvres::CreateNewPart(newnp,NIni[nzone],newpart,np,idnext
+    ,posxy,posz,dcell,code,idp,velrhop,PtNormalsg,CSP.dp,PtPosxyg,PtPoszg,nzone);
 }
 #endif
 

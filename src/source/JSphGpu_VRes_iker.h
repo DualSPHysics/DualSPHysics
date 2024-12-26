@@ -80,10 +80,8 @@ void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart
   ,const StInterParmsbg &t,const double2 *posxyb,const double *poszb,float4* velrhop
   ,typecode *code1,bool fastsingle,const TpVresOrder order,TpVresMethod vrmethod,float mrthreshold);
 
-
 void Interaction_BufferExtrapFlux(const StInterParmsbg &t,StrDataVresGpu &vres
   ,double dp,double dt,bool fastsingle,const TpVresOrder vrorder,TpVresMethod vrmethod,float mrthreshold);
-
 
 void CheckMassFlux(unsigned n,unsigned pini
   ,const StDivDataGpu& dvd,const tdouble3& mapposmin,const double2* posxy
@@ -98,21 +96,19 @@ void ComputeFluxesBuffer(unsigned n,double3 *normals,double *fluxes,double* rhs,
 
 void CopySolutionBuffer(unsigned n,int *bufferpart,float4 *velrhop,double* rhs,bool simulate2d);
 
-void BufferCreateNewPart(byte periactive,unsigned newnp
-  ,unsigned pini,int *bufferpart,unsigned np,unsigned idnext
-  ,const float3 *normals,const float dp,double2 *posxy,double *posz,double2 *posxyb,double *poszb,unsigned *dcell
-  ,typecode *code,unsigned *idp,float4 *velrhop,unsigned nzone);
+void CreateNewPart(unsigned newnp,unsigned pini,int *newpart
+  ,unsigned np,unsigned idnext,double2 *posxy,double *posz
+  ,unsigned *dcell,typecode *code,unsigned *idp,float4 *velrhop
+  ,const float3 *normals,const float dp,double2 *posxyb,double *poszb
+  ,unsigned nzone);
 
-unsigned BufferListCreate(bool stable,unsigned n,unsigned pini,unsigned nmax, float *fluxes,int *bufferpart,double massf);
-
-
+unsigned NewPartListCreate(unsigned n,unsigned pini,unsigned nmax
+  ,float *fluxes,int *bufferpart,double massf);
 
 void MoveBufferZone(unsigned pini,unsigned ntot, double2 *posxy,double *posz,float3* normals,float3* velflux,double dt,tmatrix4d mat,int zone);
 
 void BufferShiftingGpu(unsigned np,unsigned npb,const double2 *posxy,const double *posz
   ,float4 *shiftpos,typecode *code,StrGeomVresGpu& vresgdata,cudaStream_t stm);
-
-
 
 void ComputeFSNormals(TpKernel tkernel,bool simulate2d,unsigned bsfluid,unsigned fluidini,unsigned fluidnum
     ,StDivDataGpu& dvd,const unsigned* dcell,const double2* posxy,const double* posz
@@ -123,7 +119,6 @@ void ComputeUmbrellaRegion(TpKernel tkernel,bool simulate2d,unsigned bsfluid,uns
     ,StDivDataGpu& dvd,const unsigned* dcell,const double2* posxy,const double* posz
     ,const float4* poscell,const float4* velrho,const typecode* code,const float* ftomassp,float4* shiftposfs
     ,unsigned* fstype,float3* fsnormal,unsigned* listp,StrGeomVresGpu& vresgdata,cudaStream_t stm);
-
 
 void PreLoopInteraction(TpKernel tkernel,bool simulate2d,bool shiftadv
     ,unsigned bsfluid,unsigned fluidnum,unsigned fluidini,StDivDataGpu& dvd,const double2* posxy,const double* posz

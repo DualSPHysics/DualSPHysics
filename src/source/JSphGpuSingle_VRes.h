@@ -45,12 +45,11 @@ class JXml;
 class JSphGpuSingle_VRes  :  public JSphGpuSingle
 {
 private:
+  JSphVRes*     VRes;
   TpVresOrder   VResOrder;
   TpVresMethod  VResMethod;
-  JSphVRes*     VRes;
-
-  bool  VResFastSingle;
-  float VResThreshold;
+  bool          VResFastSingle;
+  float         VResThreshold;
 
   StCteInteraction CTE;
   double SymplecticDtPre1;
@@ -64,16 +63,13 @@ private:
   JMatrix4d CalcMotionMoving(const StMotionData m,double dt);
   JMatrix4d CalcMotionFloating(const StFloatingData m,double dt);
 
-  
-
-
 public:
 	JSphGpuSingle_VRes();
 	~JSphGpuSingle_VRes();
   void Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
     ,unsigned vrescount,unsigned vresid);
-  void InitMultires(const JSphCfgRun *cfg, JCaseVRes casemultires, unsigned id);
-  StInterParmsbg getParms();
+  void VResInit(const JSphCfgRun *cfg, JCaseVRes casemultires, unsigned id);
+  StInterParmsbg GetVResParms();
   void BufferInit(StInterParmsbg *parms);
   double Init2();
 
@@ -83,21 +79,18 @@ public:
   void Finish2();
   void BufferShifting();
   
-  double getSymplecticDtPre(){return SymplecticDtPre;};
-  double getSymplecticDtPre1(){return SymplecticDtPre1;};
-  void setSymplecticDtPre(double dt1){SymplecticDtPre=dt1;};
-  
-  int getNStep(){return Nstep;};
-  int getNStepsBreak(){return NstepsBreak;};
+  double  getSymplecticDtPre(){return SymplecticDtPre;};
+  double  getSymplecticDtPre1(){return SymplecticDtPre1;};
+  void    setSymplecticDtPre(double dt1){SymplecticDtPre=dt1;};
+  double  GetTimeStep(){return TimeStep;};
+  int     getNStep(){return Nstep;};
+  int     getNStepsBreak(){return NstepsBreak;};
 
 
   void BufferExtrapolateData(StInterParmsbg *parms);
   void ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,StInterParmsbg *parms);
   void CallRunCellDivide();
-
-
-  double GetTimeStep(){return TimeStep;};
-
+  
   JMatrix4d CalcVelMotion(unsigned trackingmk,double dt);
 
     
