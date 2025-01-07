@@ -1276,7 +1276,7 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   if(FlexStruc){
     if(PartBegin)   Run_Exceptioon("Simulation restart not allowed when flexible structures are used.");
     if(PeriActive)  Run_Exceptioon("Flexible structures are not allowed with periodic conditions.");
-    if(TBoundary==BC_MDBC&&SlipMode==SLIP_Vel0)Run_Exceptioon("Flexible structures are not allowed with mDBC slip mode velocity=0.");
+    if(TBoundary==BC_MDBC&&SlipMode==SLIP_Vel0)Run_Exceptioon("Flexible structures are not allowed with original mDBC (SlipMode=1).");
   }
   //<vs_flexstruc_end>
 
