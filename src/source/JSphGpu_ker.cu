@@ -1025,7 +1025,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   }
 }
 
-#define FAST_COMPILATION
+// #define FAST_COMPILATION
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,TpMdbc2Mode mdbc2>
   void Interaction_Forces_gt4(const StInterParmsg& t)
@@ -3341,7 +3341,7 @@ void UpdateFlexStrucGeometry(const StInterParmsFlexStrucg& tfs){
   else if(tfs.tkernel==KERNEL_Cubic)CalcFlexStrucDefGrad_ct0<KERNEL_Cubic>   (tfs);
 #endif
 #endif
-  if(tfs.vnpfs&&tfs.usenormals){
+  if(tfs.vnpfs&&tfs.mdbc2>=MDBC2_Std){
     dim3 sgridb=GetSimpleGridSize(tfs.vnpfs,SPHBSIZE);
     KerCalcFlexStrucNormals <<<sgridb,SPHBSIZE,0,tfs.stm>>>(tfs.vnpfs,tfs.flexstrucridp,tfs.defgrad,tfs.boundnor0,tfs.boundnor);
   }
@@ -3383,9 +3383,10 @@ __device__ tmatrix3f KerCalcFlexStrucPK1Stress(const tmatrix3f& defgrad,const tm
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker,TpVisco tvisco> __global__ void KerInteractionForcesFlexStruc(unsigned n,float visco
+template<TpKernel tker,TpVisco tvisco,TpMdbc2Mode mdbc2> __global__ void KerInteractionForcesFlexStruc(unsigned n,float visco
     ,int scelldiv,int4 nc,int3 cellzero,const int2* beginendcellfluid,const unsigned* dcell
     ,const float4* poscell,const float4* velrhop,const typecode* code
+    ,const byte* boundmode,const float3* tangenvel
     ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
     ,const float4* poscell0,const unsigned* numpairs,const unsigned* const* pairidx,const tmatrix3f* kercorr,const tmatrix3f* defgrad
     ,float* flexstrucdt,float3* ace)
@@ -3422,6 +3423,12 @@ template<TpKernel tker,TpVisco tvisco> __global__ void KerInteractionForcesFlexS
       const float mass0p1=vol0p1*rho0p1;
       const float rhop1=rho0p1/cumath::Determinant3x3(defgradp1);
 
+      //-Get current mass of fluid particle.
+      float massp2=CTE.massf;
+      if(mdbc2>=MDBC2_Std){
+        if(boundmode[p1]==BMODE_MDBC2OFF)massp2=0;
+      }
+
       //-Calculate structural speed of sound.
       const float csp1=sqrt(youngmod*(1.0-poissratio)/(rhop1*(1.0+poissratio)*(1.0-2.0*poissratio)));
 
@@ -3445,8 +3452,20 @@ template<TpKernel tker,TpVisco tvisco> __global__ void KerInteractionForcesFlexS
                   //-Computes kernel.
                   const float fac=cufsph::GetKernel_Fac<tker>(rr2);
                   const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
+                  //-Pressure derivative (Momentum equation).
                   float4 velrhop2=velrhop[p2];
-                  const float dvx=velrhop1.x-velrhop2.x,dvy=velrhop1.y-velrhop2.y,dvz=velrhop1.z-velrhop2.z;
+                  const float pressp2=cufsph::ComputePressCte(velrhop2.w);
+                  const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)+(tker==KERNEL_Cubic?cufsph::GetKernelCubic_Tensil(rr2,velrhop1.w,pressp1,velrhop2.w,pressp2):0);
+                  const float p_vpm=-prs*massp2*(CTE.massf/mass0p1);
+                  acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
+                  //-Velocity difference.
+                  float dvx=velrhop1.x-velrhop2.x,dvy=velrhop1.y-velrhop2.y,dvz=velrhop1.z-velrhop2.z;
+                  if(mdbc2>=MDBC2_Std){
+                    const float3 tangentvelp2=tangenvel[p2];
+                    dvx=velrhop1.x-tangentvelp2.x;
+                    dvy=velrhop1.y-tangentvelp2.y;
+                    dvz=velrhop1.z-tangentvelp2.z;
+                  }
                   //-Artificial viscosity.
                   if(tvisco==VISCO_Artificial){
                     const float dot=drx*dvx+dry*dvy+drz*dvz;
@@ -3454,7 +3473,7 @@ template<TpKernel tker,TpVisco tvisco> __global__ void KerInteractionForcesFlexS
                       const float dot_rr2=dot/(rr2+CTE.eta2);
                       const float amubar=CTE.kernelh*dot_rr2;
                       const float robar=(velrhop1.w+velrhop2.w)*0.5f;
-                      const float pi_visc=(-visco*CTE.cs0*amubar/robar)*CTE.massf*(CTE.massf/mass0p1);
+                      const float pi_visc=(-visco*CTE.cs0*amubar/robar)*massp2*(CTE.massf/mass0p1);
                       acep1.x-=pi_visc*frx; acep1.y-=pi_visc*fry; acep1.z-=pi_visc*frz;
                     }
                   }
@@ -3462,14 +3481,9 @@ template<TpKernel tker,TpVisco tvisco> __global__ void KerInteractionForcesFlexS
                   else{
                     const float robar2=(velrhop1.w+velrhop2.w);
                     const float temp=4.f*visco/((rr2+CTE.eta2)*robar2);
-                    const float vtemp=CTE.massf*temp*(drx*frx+dry*fry+drz*frz)*(CTE.massf/mass0p1);
+                    const float vtemp=massp2*temp*(drx*frx+dry*fry+drz*frz)*(CTE.massf/mass0p1);
                     acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
                   }
-                  //-Velocity derivative (Momentum equation).
-                  const float pressp2=cufsph::ComputePressCte(velrhop2.w);
-                  const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)+(tker==KERNEL_Cubic?cufsph::GetKernelCubic_Tensil(rr2,velrhop1.w,pressp1,velrhop2.w,pressp2):0);
-                  const float p_vpm=-prs*CTE.massf*(CTE.massf/mass0p1);
-                  acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
                 }
               }
             }
@@ -3539,13 +3553,28 @@ template<TpKernel tker,TpVisco tvisco> __global__ void KerInteractionForcesFlexS
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker,TpVisco tvisco> void Interaction_ForcesFlexStrucT(const StInterParmsFlexStrucg& tfs){
+template<TpKernel tker,TpVisco tvisco,TpMdbc2Mode mdbc2> void Interaction_ForcesFlexStrucT(const StInterParmsFlexStrucg& tfs){
   if(tfs.vnpfs){
     const StDivDataGpu& dvd=tfs.divdatag;
     dim3 sgridb=GetSimpleGridSize(tfs.vnpfs,SPHBSIZE);
-    KerInteractionForcesFlexStruc<tker,tvisco> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
-        (tfs.vnpfs,tfs.viscob,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell+dvd.cellfluid,tfs.dcell,tfs.poscell,tfs.velrhop,tfs.code,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,tfs.flexstrucdt,tfs.ace);
+    KerInteractionForcesFlexStruc<tker,tvisco,mdbc2> <<<sgridb,SPHBSIZE,0,tfs.stm>>>
+        (tfs.vnpfs,tfs.viscob,dvd.scelldiv,dvd.nc,dvd.cellzero,dvd.beginendcell+dvd.cellfluid,tfs.dcell,tfs.poscell,tfs.velrhop,tfs.code,tfs.boundmode,tfs.tangenvel,tfs.flexstrucdata,tfs.flexstrucridp,tfs.poscell0,tfs.numpairs,tfs.pairidx,tfs.kercorr,tfs.defgrad,tfs.flexstrucdt,tfs.ace);
   }
+}
+
+//==============================================================================
+/// Interaction forces for the flexible structure particles.
+/// Fuerzas de interacción para las partículas de estructura flexible.
+//==============================================================================
+template<TpKernel tker,TpVisco tvisco> void Interaction_ForcesFlexStruc_gt1(const StInterParmsFlexStrucg& tfs){
+#ifdef FAST_COMPILATION
+  if(tfs.mdbc2!=MDBC2_None)throw "Extra mDBC options are disabled for FastCompilation...";
+  Interaction_ForcesFlexStrucT<tker,tvisco,MDBC2_None>(tfs);
+#else
+  if(tfs.mdbc2==MDBC2_None)      Interaction_ForcesFlexStrucT<tker,tvisco,MDBC2_None> (tfs);
+  else if(tfs.mdbc2==MDBC2_Std)  Interaction_ForcesFlexStrucT<tker,tvisco,MDBC2_Std>  (tfs);
+  else if(tfs.mdbc2==MDBC2_NoPen)Interaction_ForcesFlexStrucT<tker,tvisco,MDBC2_NoPen>(tfs);
+#endif
 }
 
 //==============================================================================
@@ -3555,11 +3584,11 @@ template<TpKernel tker,TpVisco tvisco> void Interaction_ForcesFlexStrucT(const S
 template<TpKernel tker> void Interaction_ForcesFlexStruc_gt0(const StInterParmsFlexStrucg& tfs){
 #ifdef FAST_COMPILATION
   if(tfs.tvisco!=VISCO_Artificial)throw "Extra viscosity options are disabled for FastCompilation...";
-  Interaction_ForcesFlexStrucT<tker,VISCO_Artificial> (tfs);
+  Interaction_ForcesFlexStruc_gt1<tker,VISCO_Artificial> (tfs);
 #else
-  if(tfs.tvisco==VISCO_Artificial)     Interaction_ForcesFlexStrucT<tker,VISCO_Artificial>(tfs);
-  else if(tfs.tvisco==VISCO_Laminar)   Interaction_ForcesFlexStrucT<tker,VISCO_Laminar>   (tfs);
-  else if(tfs.tvisco==VISCO_LaminarSPS)Interaction_ForcesFlexStrucT<tker,VISCO_LaminarSPS>(tfs);
+  if(tfs.tvisco==VISCO_Artificial)     Interaction_ForcesFlexStruc_gt1<tker,VISCO_Artificial>(tfs);
+  else if(tfs.tvisco==VISCO_Laminar)   Interaction_ForcesFlexStruc_gt1<tker,VISCO_Laminar>   (tfs);
+  else if(tfs.tvisco==VISCO_LaminarSPS)Interaction_ForcesFlexStruc_gt1<tker,VISCO_LaminarSPS>(tfs);
 #endif
 }
 

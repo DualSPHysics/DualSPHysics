@@ -199,7 +199,7 @@ typedef struct StrInterParmsFlexStrucg{
   bool simulate2d;
   TpKernel tkernel;
   TpVisco tvisco;
-  bool usenormals;
+  TpMdbc2Mode mdbc2;
   //-Execution values.
   float viscob;
   unsigned vnpfs;
@@ -209,6 +209,8 @@ typedef struct StrInterParmsFlexStrucg{
   const float4* poscell;
   const float4* velrhop;
   const typecode* code;
+  const byte* boundmode;
+  const float3* tangenvel;
   const StFlexStrucData* flexstrucdata;
   const unsigned* flexstrucridp;
   const float4* poscell0;
@@ -226,11 +228,12 @@ typedef struct StrInterParmsFlexStrucg{
 
   ///Structure constructor.
   StrInterParmsFlexStrucg(
-       bool simulate2d,TpKernel tkernel,TpVisco tvisco,bool usenormals
+       bool simulate2d,TpKernel tkernel,TpVisco tvisco,TpMdbc2Mode mdbc2
       ,float viscob,unsigned vnpfs
       ,const StDivDataGpu& divdatag
       ,const unsigned* dcell
       ,const float4* poscell,const float4* velrhop,const typecode* code
+      ,const byte* boundmode,const float3* tangenvel
       ,const StFlexStrucData* flexstrucdata
       ,const unsigned* flexstrucridp,const float4* poscell0
       ,const unsigned* numpairs,const unsigned* const* pairidx
@@ -239,7 +242,7 @@ typedef struct StrInterParmsFlexStrucg{
       ,cudaStream_t stm)
   {
     //-Configuration options.
-    this->simulate2d=simulate2d; this->tkernel=tkernel; this->tvisco=tvisco; this->usenormals=usenormals;
+    this->simulate2d=simulate2d; this->tkernel=tkernel; this->tvisco=tvisco; this->mdbc2=mdbc2;
     //-Execution values.
     this->viscob=viscob;
     this->vnpfs=vnpfs;
@@ -247,6 +250,7 @@ typedef struct StrInterParmsFlexStrucg{
     //-Input data arrays.
     this->dcell=dcell;
     this->poscell=poscell; this->velrhop=velrhop; this->code=code;
+    this->boundmode=boundmode; this->tangenvel=tangenvel;
     this->flexstrucdata=flexstrucdata;
     this->flexstrucridp=flexstrucridp; this->poscell0=poscell0;
     this->numpairs=numpairs; this->pairidx=pairidx;
