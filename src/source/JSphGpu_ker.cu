@@ -3403,7 +3403,7 @@ template<TpKernel tker,TpVisco tvisco,TpMdbc2Mode mdbc2> __global__ void KerInte
 
       //-Obtains basic data of particle p1.
       const float4 pscellp1=poscell[p1];
-      const float4 velrhop1=velrhop[p1];
+      float4 velrhop1=velrhop[p1];
       const float pressp1=cufsph::ComputePressCte(velrhop1.w);
       const float4 pscell0p1=poscell0[pfs1];
       const tmatrix3f kercorrp1=kercorr[pfs1];
@@ -3423,14 +3423,18 @@ template<TpKernel tker,TpVisco tvisco,TpMdbc2Mode mdbc2> __global__ void KerInte
       const float mass0p1=vol0p1*rho0p1;
       const float rhop1=rho0p1/cumath::Determinant3x3(defgradp1);
 
-      //-Get current mass of fluid particle.
+      //-Calculate structural speed of sound.
+      const float csp1=sqrt(youngmod*(1.0-poissratio)/(rhop1*(1.0+poissratio)*(1.0-2.0*poissratio)));
+
+      //-Modify values if using mDBC.
       float massp2=CTE.massf;
       if(mdbc2>=MDBC2_Std){
         if(boundmode[p1]==BMODE_MDBC2OFF)massp2=0;
+        const float3 tangentvelp1=tangenvel[p1];
+        velrhop1.x=tangentvelp1.x;
+        velrhop1.y=tangentvelp1.y;
+        velrhop1.z=tangentvelp1.z;
       }
-
-      //-Calculate structural speed of sound.
-      const float csp1=sqrt(youngmod*(1.0-poissratio)/(rhop1*(1.0+poissratio)*(1.0-2.0*poissratio)));
 
       //-Obtains neighborhood search limits.
       int ini1,fin1,ini2,fin2,ini3,fin3;
@@ -3444,28 +3448,22 @@ template<TpKernel tker,TpVisco tvisco,TpMdbc2Mode mdbc2> __global__ void KerInte
             for(int p2=pini;p2<pfin;p2++){
               if(CODE_IsFluid(code[p2])){
                 const float4 pscellp2=poscell[p2];
-                float drx=pscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
-                float dry=pscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
-                float drz=pscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
+                const float drx=pscellp1.x-pscellp2.x+CTE.poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
+                const float dry=pscellp1.y-pscellp2.y+CTE.poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));
+                const float drz=pscellp1.z-pscellp2.z+CTE.poscellsize*(PSCEL_GetfZ(pscellp1.w)-PSCEL_GetfZ(pscellp2.w));
                 const float rr2=drx*drx+dry*dry+drz*drz;
                 if(rr2<=CTE.kernelsize2&&rr2>=ALMOSTZERO){
                   //-Computes kernel.
                   const float fac=cufsph::GetKernel_Fac<tker>(rr2);
                   const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
+                  //-Obtains velocity of particle p2 and compute difference.
+                  const float4 velrhop2=velrhop[p2];
+                  const float dvx=velrhop1.x-velrhop2.x,dvy=velrhop1.y-velrhop2.y,dvz=velrhop1.z-velrhop2.z;
                   //-Pressure derivative (Momentum equation).
-                  float4 velrhop2=velrhop[p2];
                   const float pressp2=cufsph::ComputePressCte(velrhop2.w);
                   const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)+(tker==KERNEL_Cubic?cufsph::GetKernelCubic_Tensil(rr2,velrhop1.w,pressp1,velrhop2.w,pressp2):0);
                   const float p_vpm=-prs*massp2*(CTE.massf/mass0p1);
-                  acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
-                  //-Velocity difference.
-                  float dvx=velrhop1.x-velrhop2.x,dvy=velrhop1.y-velrhop2.y,dvz=velrhop1.z-velrhop2.z;
-                  if(mdbc2>=MDBC2_Std){
-                    const float3 tangentvelp2=tangenvel[p2];
-                    dvx=velrhop1.x-tangentvelp2.x;
-                    dvy=velrhop1.y-tangentvelp2.y;
-                    dvz=velrhop1.z-tangentvelp2.z;
-                  }
+                  acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;                  
                   //-Artificial viscosity.
                   if(tvisco==VISCO_Artificial){
                     const float dot=drx*dvx+dry*dvy+drz*dvz;
