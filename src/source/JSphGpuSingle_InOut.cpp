@@ -123,9 +123,10 @@ void JSphGpuSingle::InOutInit(double timestepini){
   cusphinout::UpdatePosFluid(PeriActive,newnp,Np,Posxy_g->ptr(),Posz_g->ptr()
     ,Dcell_g->ptr(),Code_g->ptr());
 
-  //-Updates new particle values for Laminar+SPS.
+  //-Updates new particle values for Laminar+SPS, mDBC...
   if(SpsTauRho2_g)SpsTauRho2_g->CuMemsetOffset(Np,0,newnp);
   if(BoundNor_g)BoundNor_g->CuMemsetOffset(Np,0,newnp);
+  if(FSType_g)FSType_g->CuMemsetOffset(Np,3,newnp); //<vs_advshift>
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",0,Np,Np+newnp
     ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),Velrho_g->cptr());
 
@@ -242,9 +243,10 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
     }
   }
 
-  //-Updates new particle values for Laminar+SPS and normals for mDBC.
+  //-Updates new particle values for Laminar+SPS, mDBC...
   if(SpsTauRho2_g)SpsTauRho2_g->CuMemsetOffset(Np,0,newnp);
   if(BoundNor_g)BoundNor_g->CuMemsetOffset(Np,0,newnp);
+  if(FSType_g)FSType_g->CuMemsetOffset(Np,3,newnp); //<vs_advshift>
 
   //-Updates number of particles.
   if(newnp){

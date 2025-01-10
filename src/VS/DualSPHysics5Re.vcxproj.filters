@@ -517,14 +517,20 @@
     <ClInclude Include="..\source\JXmlDef.h">
       <Filter>Common\JXml</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JChronoGeoObj.h">
-      <Filter>Src_Chrono</Filter>
+    <ClInclude Include="..\source\JSphGpu_preloop_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphShiftingAdv.h">
+      <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JSpVtkData.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JSpVtkShape.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JChronoGeoObj.h">
+      <Filter>Src_Chrono</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -843,14 +849,20 @@
     <ClCompile Include="..\source\JDebugSphCpu.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\JChronoGeoObj.cpp">
-      <Filter>Src_Chrono</Filter>
+    <ClCompile Include="..\source\JSphShiftingAdv.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpu_preloop.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JSpVtkData.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JSpVtkShape.cpp">
       <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JChronoGeoObj.cpp">
+      <Filter>Src_Chrono</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -902,6 +914,9 @@
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\JSphGpu_mdbc_iker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_preloop_iker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
   </ItemGroup>

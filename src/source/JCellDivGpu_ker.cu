@@ -690,6 +690,22 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini
   }
 }
 
+//------------------------------------------------------------------------------
+/// Reorders particle data according to sortpart[].
+/// Reordena datos de particulas segun sortpart[].
+//------------------------------------------------------------------------------
+__global__ void KerSortDataParticles(unsigned n,unsigned pini
+  ,const unsigned* sortpart,const unsigned* a,const float4* b,unsigned* a2,float4* b2)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n){
+    const unsigned oldpos=(p<pini? p: sortpart[p]);
+    a2[p]=a[oldpos];
+    b2[p]=b[oldpos];
+  }
+}
+
+
 //==============================================================================
 /// Reorders particle data according to sortpart.
 /// Reordena datos de particulas segun sortpart.
@@ -792,6 +808,57 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,a2);
+  }
+}
+
+//==============================================================================
+/// Reorders particle data according to sortpart.
+/// Reordena datos de particulas segun sortpart.
+//==============================================================================
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const unsigned* a,const float4* b,unsigned* a2,float4* b2)
+{
+  if(np){
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
+    KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,b,a2,b2);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Reorders PeriParent references.
+//------------------------------------------------------------------------------
+__global__ void KerReSortData(unsigned n,const unsigned* sortpart
+  ,unsigned* rsortpart)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n){
+    rsortpart[sortpart[p]]=p;
+  }
+}
+//------------------------------------------------------------------------------
+/// Reorders PeriParent references.
+//------------------------------------------------------------------------------
+__global__ void KerSortArrayPeriParent(unsigned n
+  ,const unsigned* sortpart,const unsigned* rsortpart,const unsigned* a
+  ,unsigned* a2)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n){
+    const unsigned pp=a[sortpart[p]];
+    a2[p]=(pp!=UINT_MAX? rsortpart[pp]: pp);
+  }
+}
+
+//==============================================================================
+/// Reorders PeriParent references.
+//==============================================================================
+void SortArrayPeriParent(unsigned np,const unsigned* sortpart
+  ,unsigned* rsortpart,const unsigned* a,unsigned* a2)
+{
+  if(np){
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
+    KerReSortData <<<sgrid,DIVBSIZE>>>(np,sortpart,rsortpart);
+    KerSortArrayPeriParent <<<sgrid,DIVBSIZE>>>(np,sortpart,rsortpart,a,a2);
   }
 }
 

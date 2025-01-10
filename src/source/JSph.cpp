@@ -55,6 +55,7 @@
 #include "JDsExtraData.h"
 #include "JDsPartsOut.h"
 #include "JSphShifting.h"
+#include "JSphShiftingAdv.h" //<vs_advshift>
 #include "JDsDamping.h"
 #include "JDsInitialize.h"
 #include "JSphInOut.h"
@@ -106,6 +107,7 @@ JSph::JSph(int gpucount,bool withmpi):Cpu(gpucount==0)
   Moorings=NULL;
   ForcePoints=NULL;
   Shifting=NULL;
+  ShiftingAdv=NULL;   //<vs_advshift>
   Damping=NULL;
   AccInput=NULL;
   PartsLoaded=NULL;
@@ -149,6 +151,7 @@ JSph::~JSph(){
   delete Moorings;      Moorings=NULL;
   delete ForcePoints;   ForcePoints=NULL;
   delete Shifting;      Shifting=NULL;
+  delete ShiftingAdv;   ShiftingAdv=NULL; //<vs_advshift>
   delete Damping;       Damping=NULL;
   delete AccInput;      AccInput=NULL; 
   delete PartsLoaded;   PartsLoaded=NULL;
@@ -193,6 +196,8 @@ void JSph::InitVars(){
   UseNormalsFt=false;
   SvNormals=false;
   AbortNoNormals=true;
+  NoPenetration=false;                //<vs_m2dbcNP>
+  TMdbc2=MDBC2_None;                  //<vs_m2dbcNP>  
   UseDEM=false;  //(DEM)
   delete[] DemData; DemData=NULL;  //(DEM)
   UseChrono=false;
@@ -688,13 +693,17 @@ void JSph::LoadConfigParameters(const JXml* cxml){
     default: Run_Exceptioon("Boundary Condition method is not valid.");
   }
   if(TBoundary==BC_MDBC){
-    UseNormals=true;
+    UseNormals=true;    
     switch(eparms.GetValueInt("SlipMode",true,1)){
       case 1:  SlipMode=SLIP_Vel0;      break;
       case 2:  SlipMode=SLIP_NoSlip;    break;
       case 3:  SlipMode=SLIP_FreeSlip;  break;
       default: Run_Exceptioon("Slip mode is not valid.");
     }
+    //<vs_m2dbcNP_ini>
+    if(SlipMode>=SLIP_NoSlip) NoPenetration=eparms.GetValueBool("NoPenetration",true,false);   
+    if(SlipMode>=SLIP_NoSlip) TMdbc2=(NoPenetration? MDBC2_NoPen: MDBC2_Std);
+    //<vs_m2dbcNP_end>
   } 
 
   //-Density Diffusion Term configuration.
@@ -723,21 +732,27 @@ void JSph::LoadConfigParameters(const JXml* cxml){
   //-Old shifting configuration.
   if(eparms.Exists("Shifting")){
     TpShifting shiftmode=SHIFT_None;
-    float shiftcoef=0,shifttfs=0;
     switch(eparms.GetValueInt("Shifting",true,0)){
       case 0:  shiftmode=SHIFT_None;     break;
       case 1:  shiftmode=SHIFT_NoBound;  break;
       case 2:  shiftmode=SHIFT_NoFixed;  break;
       case 3:  shiftmode=SHIFT_Full;     break;
+      case 4:  shiftmode=SHIFT_FS;       break; //<vs_advshift>
       default: Run_ExceptioonFile("Shifting mode in <execution><parameters> is not valid.",FileXml);
     }
-    if(shiftmode!=SHIFT_None){
-      shiftcoef=eparms.GetValueFloat("ShiftCoef",true,-2);
-      if(shiftcoef==0)shiftmode=SHIFT_None;
-      else shifttfs=eparms.GetValueFloat("ShiftTFS",true,0);
+    if(shiftmode<=SHIFT_Full){
+      const float shiftcoef=eparms.GetValueFloat("ShiftCoef",true,-2);
+      const float shifttfs=eparms.GetValueFloat("ShiftTFS",true,0);
+      Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
+      Shifting->ConfigBasic(shiftmode,shiftcoef,shifttfs);
     }
-    Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
-    Shifting->ConfigBasic(shiftmode,shiftcoef,shifttfs);
+    if(shiftmode==SHIFT_FS){ //<vs_advshift_ini>
+      const float shiftcoef=eparms.GetValueFloat("ShiftAdvCoef",true,-0.01f);
+      const bool  aleform=eparms.GetValueBool("ShiftAdvALE",true,false);
+      const bool  ncpress=eparms.GetValueBool("ShiftAdvNCPress",true,false);
+      ShiftingAdv=new JSphShiftingAdv(Simulate2D,Dp,KernelH);
+      ShiftingAdv->ConfigBasic(shiftcoef,aleform,ncpress);
+    } //<vs_advshift_end>
   }
 
   WrnPartsOut=(eparms.GetValueInt("WrnPartsOut",true,1)!=0);
@@ -851,12 +866,18 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
       default: Run_Exceptioon("Slip mode for mDBC is not valid.");
     }
   }
-  if(TBoundary==BC_MDBC){
-    if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip)Run_Exceptioon(
-      "Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
-  }
+ // if(TBoundary==BC_MDBC){
+  //  if(SlipMode!=SLIP_Vel0 && SlipMode!=SLIP_NoSlip && SlipMode != SLIP_FreeSlip)Run_Exceptioon(
+  //    "Only the slip modes velocity=0 and no-slip are allowed with mDBC conditions.");
+  //}
   MdbcCorrector=(SlipMode>=SLIP_NoSlip);
   UseNormals=(TBoundary==BC_MDBC);
+  if(cfg->TBoundary>=0){
+    NoPenetration=false;
+    TMdbc2=MDBC2_None;
+    if(SlipMode>=SLIP_NoSlip)NoPenetration=cfg->NoPenetration;
+    if(SlipMode>=SLIP_NoSlip) TMdbc2=(NoPenetration? MDBC2_NoPen: MDBC2_Std);
+  }
     
   if(cfg->TStep)TStep=cfg->TStep;
   if(cfg->VerletSteps>=0)VerletSteps=cfg->VerletSteps;
@@ -898,10 +919,19 @@ void JSph::LoadConfigCommands(const JSphCfgRun* cfg){
       case 1:  shiftmode=SHIFT_NoBound;  break;
       case 2:  shiftmode=SHIFT_NoFixed;  break;
       case 3:  shiftmode=SHIFT_Full;     break;
+      case 4:  shiftmode=SHIFT_FS;       break;
       default: Run_Exceptioon("Shifting mode is not valid.");
     }
-    if(!Shifting)Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
-    Shifting->ConfigBasic(shiftmode);
+    if(shiftmode<=shiftmode){
+      delete ShiftingAdv; ShiftingAdv=NULL; //<vs_advshift>
+      if(!Shifting)Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
+      Shifting->ConfigBasic(shiftmode);
+    }
+    if(shiftmode==SHIFT_FS){ //<vs_advshift_ini>
+      delete Shifting; Shifting=NULL;
+      if(!ShiftingAdv)ShiftingAdv=new JSphShiftingAdv(Simulate2D,Dp,KernelH);
+      ShiftingAdv->ConfigBasic(ShiftingAdv->GetShiftCoef(),cfg->ShiftAdvALE,cfg->ShiftAdvNCP);
+    } //<vs_advshift_end>
   }
 
   if(cfg->CFLnumber>0)CFLnumber=cfg->CFLnumber;
@@ -1051,8 +1081,9 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
   }
 
   //-Configuration of Shifting with zones.
-  if(Shifting && xml.GetNodeSimple("case.execution.special.shifting",true))Run_ExceptioonFile("Shifting is defined several times (in <special><shifting> and <execution><parameters>).",FileXml);
   if(xml.GetNodeSimple("case.execution.special.shifting",true)){
+    if(ShiftingAdv)Run_ExceptioonFile("Advanced shifting is not compatible with standard shifting configuration in <special><shifting>.",FileXml); //<vs_advshift>
+    if(Shifting)Run_ExceptioonFile("Shifting is defined several times (in <special><shifting> and <execution><parameters>).",FileXml);
     Shifting=new JSphShifting(Simulate2D,Dp,KernelH);
     Shifting->LoadXml(&xml,"case.execution.special.shifting");
   }
@@ -1218,6 +1249,11 @@ void JSph::LoadCaseConfig(const JSphCfgRun* cfg){
       ,MkInfo,FtCount,FtObjs);
   } //<vs_outpaarts_end>
 
+  //-Checks invalid options for advanced shifting. //<vs_advshift_ini>
+  if(ShiftingAdv){
+    if(TStep==STEP_Verlet)Run_Exceptioon("Advanced shifting is not allowed with Verlet.");
+  } //<vs_advshift_end>
+  
   //-Defines NpfMinimum according to CaseNfluid. It is updated later to add initial inlet fluid particles.
   NpfMinimum=unsigned(MinFluidStop*CaseNfluid);
 
@@ -1498,6 +1534,7 @@ void JSph::VisuConfig(){
   if(TBoundary==BC_MDBC){
     Log->Print(fun::VarStr("  SlipMode",GetSlipName(SlipMode)));
     Log->Print(fun::VarStr("  mDBC-Corrector",MdbcCorrector));
+    Log->Print(fun::VarStr("  No Penetration",NoPenetration));
     ConfigInfo=ConfigInfo+"("+GetSlipName(SlipMode);
     if(MdbcCorrector)ConfigInfo=ConfigInfo+" - Corrector";
     ConfigInfo=ConfigInfo+")";
@@ -1547,6 +1584,10 @@ void JSph::VisuConfig(){
     Shifting->VisuConfig();
     ConfigInfo=ConfigInfo+sep+Shifting->GetConfigInfo();
   }
+  else if(ShiftingAdv){ //<vs_advshift_ini>
+    ShiftingAdv->VisuConfig();
+    ConfigInfo=ConfigInfo+sep+ShiftingAdv->GetConfigInfo();
+  } //<vs_advshift_end>
   else Log->Print(fun::VarStr("Shifting","None"));
   //-RigidAlgorithm.
   string rigidalgorithm=(!FtCount? "None": GetNameRigidMode(RigidMode));
@@ -3538,6 +3579,7 @@ void JSph::DgSaveVtkParticlesCpu(std::string filename,int numfile
   if(mpirank>=0)filename=string("p")+fun::IntStr(mpirank)+"_"+filename;
   if(numfile>=0)filename=fun::FileNameSec(filename,numfile);
   filename=DirDataOut+filename;
+  if(fun::GetExtension(filename).empty())filename=fun::AddExtension(filename,"vtk");
   //-Allocates memory.
   const unsigned np=pfin-pini;
   tfloat3* xpos=new tfloat3[np];

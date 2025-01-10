@@ -158,6 +158,8 @@ void JSphGpu::InitVars(){
   PosCell_g=NULL;
   Velrho_g=NULL;
 
+  PeriParent_g=NULL;
+
   BoundNor_g=NULL;     //-mDBC
   MotionVel_g=NULL;    //-mDBC2  //<vs_m2dbc>
   MotionAce_g=NULL;    //-mDBC2  //<vs_m2dbc>
@@ -173,10 +175,17 @@ void JSphGpu::InitVars(){
   Ace_g=NULL;
   Ar_g=NULL;
   Delta_g=NULL;
-  ShiftPosfs_g=NULL;   //-Shifting.
+  NoPenShift_g = NULL; //<vs_m2dbcNP>
 
   SpsTauRho2_g=NULL;   //-Laminar+SPS.
   Sps2Strain_g=NULL;   //-Laminar+SPS.
+
+  ShiftPosfs_g=NULL;   //-Shifting.
+
+  ShiftVel_g=NULL;     //-ShiftingAdvanced //<vs_advshift>
+  FSType_g=NULL;       //-ShiftingAdvanced //<vs_advshift>
+  FSMinDist_g=NULL;    //-ShiftingAdvanced //<vs_advshift>
+  FSNormal_g=NULL;     //-ShiftingAdvanced //<vs_advshift>
 
   FreeGpuMemoryParticles();
 
@@ -333,6 +342,8 @@ void JSphGpu::FreeGpuMemoryParticles(){
   delete PosCell_g;     PosCell_g=NULL;
   delete Velrho_g;      Velrho_g=NULL;
 
+  delete PeriParent_g;  PeriParent_g=NULL;
+
   delete BoundNor_g;    BoundNor_g=NULL;    //-mDBC
   delete MotionVel_g;   MotionVel_g=NULL;   //-mDBC2  //<vs_m2dbc>
   delete MotionAce_g;   MotionAce_g=NULL;   //-mDBC2  //<vs_m2dbc>
@@ -348,10 +359,17 @@ void JSphGpu::FreeGpuMemoryParticles(){
   delete Ace_g;         Ace_g=NULL;
   delete Ar_g;          Ar_g=NULL;
   delete Delta_g;       Delta_g=NULL;
-  delete ShiftPosfs_g;  ShiftPosfs_g=NULL;  //-Shifting.
+  delete NoPenShift_g;  NoPenShift_g=NULL;  //-NoPenetration //<vs_m2dbcNP>
 
   delete SpsTauRho2_g;  SpsTauRho2_g=NULL;  //-Laminar+SPS.
   delete Sps2Strain_g;  Sps2Strain_g=NULL;  //-Laminar+SPS.
+
+  delete ShiftPosfs_g;  ShiftPosfs_g=NULL;  //-Shifting.
+
+  delete ShiftVel_g;    ShiftVel_g=NULL;    //-ShiftingAdvanced //<vs_advshift>
+  delete FSType_g;      FSType_g=NULL;      //-ShiftingAdvanced //<vs_advshift>
+  delete FSMinDist_g;   FSMinDist_g=NULL;   //-ShiftingAdvanced //<vs_advshift>
+  delete FSNormal_g;    FSNormal_g=NULL;    //-ShiftingAdvanced //<vs_advshift>
 
   //-Free GPU memory for array objects.
   GpuParticlesSize=0;
@@ -404,13 +422,27 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
   Ace_g       =new agfloat3("Aceg"   ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
   Ar_g        =new agfloat ("Arg"    ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
   Delta_g     =new agfloat ("Deltag" ,Arrays_Gpu,false); //-NO INITIAL MEMORY.
-  //-Arrays for Shifting.
-  ShiftPosfs_g=new agfloat4("ShiftPosfsg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
+  //-Arrays for No Pentration.
+  if(TMdbc2==MDBC2_NoPen){
+    NoPenShift_g = new agfloat4("NoPenShiftg", Arrays_Gpu, false); //-NO INITIAL MEMORY.
+  }
   //-Arrays for Laminar+SPS.
   if(TVisco==VISCO_LaminarSPS){
     SpsTauRho2_g=new agsymatrix3f("SpsTauRho2g",Arrays_Gpu,true);
     Sps2Strain_g=new agsymatrix3f("Sps2Straing",Arrays_Gpu,false); //-NO INITIAL MEMORY.
   }
+  //-Arrays for Shifting.
+  ShiftPosfs_g=new agfloat4("ShiftPosfsg",Arrays_Gpu,false); //-NO INITIAL MEMORY.
+  //-Arrays for Advanced shifting. //<vs_advshift_ini>
+  if(ShiftingAdv!=NULL){
+    ShiftVel_g    =new agfloat4 ("ShiftVel_g" ,Arrays_Gpu,true); 
+    FSType_g      =new aguint   ("FSType_g"   ,Arrays_Gpu,true);
+    FSNormal_g    =new agfloat3 ("FSNormal_g" ,Arrays_Gpu,false);  //-NO INITIAL MEMORY.
+    FSMinDist_g   =new agfloat  ("FSMinDist_g",Arrays_Gpu,false);  //-NO INITIAL MEMORY.
+    if(PeriActive && !PeriParent_g){
+      PeriParent_g=new aguint(  "PeriParentg" ,Arrays_Gpu,true);
+    }
+  }//<vs_advshift_end>
 
   //-Check CUDA errors.
   Check_CudaErroor("Failed GPU memory allocation.");
@@ -636,19 +668,22 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
     StDivDataGpu divdatag;
     memset(&divdatag,0,sizeof(StDivDataGpu));
     #ifndef DISABLE_BSMODES
-      const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
       const StInterParmsg parms=StrInterParmsg(Simulate2D
         ,TKernel,FtMode
-        ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
+        ,TVisco,TDensity,ShiftingMode,TMdbc2 //<vs_m2dbc>
+        ,false,false,false,false //<vs_advshift>
         ,0,0,0,0,100,0,0
         ,0,0,divdatag,NULL
         ,NULL,NULL,NULL
         ,NULL,NULL,NULL
         ,NULL,NULL,NULL //<vs_m2dbc>
+        ,NULL //<vs_m2dbc> //SHABA4
         ,NULL,NULL,NULL
         ,NULL,NULL,NULL,NULL
         ,NULL
         ,NULL
+        ,NULL // SHABA
+        ,NULL,NULL     //<vs_advshift>
         ,NULL,&kerinfo);
       cusph::Interaction_Forces(parms);
       if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat,divdatag,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,&kerinfo);
@@ -751,14 +786,16 @@ void JSphGpu::InitRunGpu(){
   if(TVisco==VISCO_LaminarSPS)SpsTauRho2_g->CuMemset(0,Np);
   if(MotionVel_g)MotionVel_g->CuMemset(0,Np); //<vs_m2dbc>
   if(MotionAce_g)MotionAce_g->CuMemset(0,Np); //<vs_m2dbc>
+  if(ShiftVel_g)ShiftVel_g->CuMemset(0,Np);   //<vs_advshift>
+  if(ShiftVel_g)FSType_g->CuMemset(3,Np);     //<vs_advshift>
   Check_CudaErroor("Failed initializing variables for execution.");
 }
 
 //==============================================================================
-/// Prepares variables for interaction.
-/// Prepara variables para interaccion.
+/// Prepares variables for interaction (pre-loop and forces).
+/// Prepara variables para interaccion (pre-loop y fuerzas).
 //==============================================================================
-void JSphGpu::PreInteraction_Forces(){
+void JSphGpu::PreInteraction_Forces(TpInterStep interstep){
   Timersg->TmStart(TMG_CfPreForces,false);
   //-Assign memory.
   ViscDt_g->Reserve();
@@ -767,6 +804,11 @@ void JSphGpu::PreInteraction_Forces(){
   if(DDTArray)Delta_g->Reserve();
   if(Shifting)ShiftPosfs_g->Reserve();
   if(TVisco==VISCO_LaminarSPS)Sps2Strain_g->Reserve();
+  if(TMdbc2==MDBC2_NoPen)NoPenShift_g->Reserve(); // SHABA
+  if(ShiftingAdv){ //<vs_advshift_ini>
+    FSMinDist_g->Reserve();
+    FSNormal_g->Reserve();
+  } //<vs_advshift_end>
 
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
@@ -775,10 +817,18 @@ void JSphGpu::PreInteraction_Forces(){
   Ace_g->CuMemset(0,Np);                                            //Aceg[]=(0)
   if(AG_CPTR(Delta_g))Delta_g->CuMemset(0,Np);                      //Deltag[]=0
   if(AG_CPTR(Sps2Strain_g))Sps2Strain_g->CuMemsetOffset(Npb,0,npf); //Sps2Straing[]=(0)
+  if(AG_CPTR(NoPenShift_g))NoPenShift_g->CuMemset(0,Np);            //NoPenShiftg[]=(0) //<vs_m2dbcNP
   
   //-Select particles for shifting.
   if(AC_CPTR(ShiftPosfs_g))Shifting->InitGpu(npf,Npb,Posxy_g->cptr()
     ,Posz_g->cptr(),ShiftPosfs_g->ptr());
+
+  //<vs_advshift_ini>
+  if(AC_CPTR(ShiftVel_g) && interstep==INTERSTEP_SymPredictor)
+    ShiftVel_g->CuMemset(0,Np);
+  if(AC_CPTR(FSMinDist_g))FSMinDist_g->CuMemset(0,Np);
+  if(AC_CPTR(FSNormal_g))FSNormal_g->CuMemset(0,Np);
+  //<vs_advshift_end>
 
   //-Adds variable acceleration from input configuration.
   if(AccInput)AccInput->RunGpu(TimeStep,Gravity,npf,Npb,Code_g->cptr()
@@ -792,7 +842,7 @@ void JSphGpu::PreInteraction_Forces(){
     ,CellDiv->GetAuxMem(cusph::ReduMaxFloatSize(Np-pini)));
   VelMax=sqrt(velmax);
 
-  ViscDt_g->CuMemset(0,Np);           //ViscDtg[]=0
+  ViscDt_g->CuMemset(0,Np); //ViscDtg[]=0
   ViscDtMax=0;
   Timersg->TmStop(TMG_CfPreForces,true);
   Check_CudaErroor("Failed calculating VelMax.");
@@ -811,6 +861,9 @@ void JSphGpu::PosInteraction_Forces(){
   if(Sps2Strain_g)Sps2Strain_g->Free();
   if(BoundMode_g)BoundMode_g->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
   if(TangenVel_g)TangenVel_g->Free(); //-Reserved in MdbcBoundCorrection(). //<vs_m2dbc>
+  if(NoPenShift_g)NoPenShift_g->Free(); //<vs_m2dbcNP>
+  if(FSMinDist_g)FSMinDist_g->Free(); //<vs_advshift>
+  if(FSNormal_g)FSNormal_g->Free();   //<vs_advshift>
 }
 
 //==============================================================================
@@ -819,7 +872,6 @@ void JSphGpu::PosInteraction_Forces(){
 //==============================================================================
 void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   Timersg->TmStart(TMG_SuComputeStep,false);
-  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=(ShiftingMode!=SHIFT_None);
   const bool inout=(InOut!=NULL);
   const float3* indirvel=(inout? InOut->GetDirVelg(): NULL);
@@ -831,16 +883,16 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
   //-Computes displacement, velocity and density.
   if(VerletStep<VerletSteps){
     const double twodt=dt+dt;
-    cusphs::ComputeStepVerlet(WithFloating,shift,inout,mdbc2,Np,Npb
+    cusphs::ComputeStepVerlet(WithFloating,shift,inout,TMdbc2,Np,Npb
       ,Velrho_g->cptr(),VelrhoM1_g->cptr(),boundmode,Ar_g->cptr()
-      ,Ace_g->cptr(),ShiftPosfs_g->cptr(),indirvel,dt,twodt
+      ,Ace_g->cptr(),ShiftPosfs_g->cptr(),indirvel,AG_CPTR(NoPenShift_g),dt,twodt
       ,RhopZero,RhopOutMin,RhopOutMax,Gravity,Code_g->ptr()
       ,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
   }
   else{
-    cusphs::ComputeStepVerlet(WithFloating,shift,inout,mdbc2,Np,Npb
+    cusphs::ComputeStepVerlet(WithFloating,shift,inout,TMdbc2,Np,Npb
       ,Velrho_g->cptr(),Velrho_g->cptr(),boundmode,Ar_g->cptr()
-      ,Ace_g->cptr(),ShiftPosfs_g->cptr(),indirvel,dt,dt
+      ,Ace_g->cptr(),ShiftPosfs_g->cptr(),indirvel,AG_CPTR(NoPenShift_g),dt,dt
       ,RhopZero,RhopOutMin,RhopOutMax,Gravity,Code_g->ptr()
       ,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
     VerletStep=0;
@@ -859,7 +911,6 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
 //==============================================================================
 void JSphGpu::ComputeSymplecticPre(double dt){
   Timersg->TmStart(TMG_SuComputeStep,false);
-  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=false; //(ShiftingMode!=SHIFT_None); //-We strongly recommend running the shifting correction only for the corrector. If you want to re-enable shifting in the predictor, change the value here to "true".
   const bool inout=(InOut!=NULL);
   //-Assign memory to PRE variables.
@@ -877,7 +928,7 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   const double dt05=dt*.5;
   const float3* indirvel=(InOut? InOut->GetDirVelg(): NULL);
   const byte* boundmode=AG_CPTR(BoundMode_g); //<vs_m2dbc>
-  cusphs::ComputeStepSymplecticPre(WithFloating,shift,inout,mdbc2,Np,Npb
+  cusphs::ComputeStepSymplecticPre(WithFloating,shift,inout,TMdbc2,Np,Npb
     ,VelrhoPre_g->cptr(),boundmode,Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
     ,indirvel,dt05,RhopZero,RhopOutMin,RhopOutMax,Gravity
     ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
@@ -898,19 +949,20 @@ void JSphGpu::ComputeSymplecticPre(double dt){
 //==============================================================================
 void JSphGpu::ComputeSymplecticCorr(double dt){
   Timersg->TmStart(TMG_SuComputeStep,false);
-  const bool mdbc2=(SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
   const bool shift=(ShiftingMode!=SHIFT_None);
   const bool inout=(InOut!=NULL);
+  const bool shiftadv=(ShiftingAdv!=NULL); //<vs_advshift>
   //-Allocate memory to compute the diplacement.
   agdouble2 movxyg("movxyg",Arrays_Gpu,true);
   agdouble  movzg("movzg",Arrays_Gpu,true);
   //-Computes displacement, velocity and density.
   const double dt05=dt*.5;
   const float3* indirvel=(InOut? InOut->GetDirVelg(): NULL);
-  const byte* boundmode=AG_CPTR(BoundMode_g); //<vs_m2dbc>
-  cusphs::ComputeStepSymplecticCor(WithFloating,shift,inout,mdbc2,Np,Npb
+  const byte*   boundmode=AG_CPTR(BoundMode_g); //<vs_m2dbc>
+  const float4* shiftvel=AG_CPTR(ShiftVel_g); //<vs_advshift>
+  cusphs::ComputeStepSymplecticCor(WithFloating,shift,shiftadv,inout,TMdbc2,Np,Npb
     ,VelrhoPre_g->cptr(),boundmode,Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
-    ,indirvel,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity
+    ,indirvel,AG_CPTR(NoPenShift_g),shiftvel,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity // SHABA
     ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
 
   //-Applies displacement to non-periodic fluid particles.
@@ -1081,6 +1133,35 @@ void JSphGpu::SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,uns
   delete[] pos;
   delete[] idp;
   delete[] nor;
+}
+
+//==============================================================================
+/// Saves VTK file with particle data (degug).
+/// Graba fichero VTK con datos de las particulas (degug).
+//==============================================================================
+void JSphGpu::DgSaveVtkParticlesGpu(std::string filename,int numfile
+  ,unsigned pini,unsigned pfin,const double2* posxyg,const double* poszg
+  ,const typecode* codeg,const unsigned* idpg,const float4* velrhog,const float3* fsnormal)const
+{
+  const unsigned np=pfin-pini;
+  //-Copy data to CPU memory.
+  tdouble3* posh=fcuda::ToHostPosd3(pini,np,posxyg,poszg);
+  #ifdef CODE_SIZE4
+    typecode* codeh=fcuda::ToHostUint(pini,np,codeg);
+  #else
+    typecode* codeh=fcuda::ToHostWord(pini,np,codeg);
+  #endif
+  unsigned* idph=fcuda::ToHostUint(pini,np,idpg);
+  tfloat4*  velrhoh=fcuda::ToHostFloat4(pini,np,velrhog);
+  tfloat3*  fsnormalh=fcuda::ToHostFloat3(pini,np,fsnormal);
+  //-Creates VTK file.
+  DgSaveVtkParticlesCpu(filename,numfile,0,np,posh,codeh,idph,velrhoh,fsnormalh);
+  //-Deallocates memory.
+  delete[] posh;  
+  delete[] codeh;
+  delete[] idph;
+  delete[] velrhoh;
+  delete[] fsnormalh;
 }
 
 //==============================================================================
@@ -1411,5 +1492,4 @@ void JSphGpu::DgSaveCsvParticles2(std::string filename,int numfile
   }
   else Run_ExceptioonFile("File could not be opened.",filename);
 }
-
 
