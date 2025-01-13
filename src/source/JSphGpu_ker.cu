@@ -669,17 +669,14 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
                   dvy=velrhop1.y-movvelp2.y;
                   dvz=velrhop1.z-movvelp2.z;
                   float vfc=dvx*normx+dvy*normy+dvz*normz; //-fluid velocity normal to boundary particle
+                  const float ratio=max(normdist/norm,0.25f);
+                  const float factor=-2.f*ratio+2.5f;
                   if (vfc<0.f) { //-if fluid particle velocity is pointing towards boundary add correction velocity
                       nopenshift.w+=1.f; //-boundary particle counter for average
                       //-delta v = sum uij dot (nj cross nj)
-                      nopenshift.x-=(dvx*normx*normx+dvy*normx*normy+dvz*normx*normz);
-                      nopenshift.y-=(dvx*normx*normy+dvy*normy*normy+dvz*normy*normz);
-                      nopenshift.z-=(dvx*normx*normz+dvy*normy*normz+dvz*normz*normz);
-                      if (normdist<0.25f*norm) {// if normal distanne is less than 0.25 boundary normal size double correction velocity
-                          nopenshift.x-=(dvx*normx*normx+dvy*normx*normy+dvz*normx*normz);
-                          nopenshift.y-=(dvx*normx*normy+dvy*normy*normy+dvz*normy*normz);
-                          nopenshift.z-=(dvx*normx*normz+dvy*normy*normz+dvz*normz*normz);
-                      }
+                      nopenshift.x-=factor*(dvx*normx*normx+dvy*normx*normy+dvz*normx*normz);
+                      nopenshift.y-=factor*(dvx*normx*normy+dvy*normy*normy+dvz*normy*normz);
+                      nopenshift.z-=factor*(dvx*normx*normz+dvy*normy*normz+dvz*normz*normz);
                   }
               }
           }
