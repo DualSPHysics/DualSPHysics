@@ -670,7 +670,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
                   dvz=velrhop1.z-movvelp2.z;
                   float vfc=dvx*normx+dvy*normy+dvz*normz; //-fluid velocity normal to boundary particle
                   const float ratio=max(normdist/norm,0.25f);
-                  const float factor=-2.f*ratio+2.5f;
+                  const float factor=-4.f*ratio+3.f;
                   if (vfc<0.f) { //-if fluid particle velocity is pointing towards boundary add correction velocity
                       nopenshift.w+=1.f; //-boundary particle counter for average
                       //-delta v = sum uij dot (nj cross nj)
