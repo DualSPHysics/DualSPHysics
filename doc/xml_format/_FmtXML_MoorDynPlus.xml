@@ -15,7 +15,7 @@
 			<floating mkbound="45" comment="Mkbound of the Floating body the mooring is linked to" />
 			<floating mkbound="50" comment="Mkbound of the Floating body the mooring is linked to" />
 		</mooredfloatings>
-		<moordynplus file="moordynplus.xml" comment="MoorDyn configuration"/>
+		<moordynplus file="moordynplus.xml" comment="MoorDynPlus configuration"/>
     </moorings>
 </special>
 <!----------------------------------------------------------------------------------------->
