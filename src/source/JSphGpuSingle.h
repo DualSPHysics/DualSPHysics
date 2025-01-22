@@ -52,8 +52,12 @@ protected:
   void AbortBoundOut();
   void SaveFluidOut();
 
+  void MdbcBoundCorrection(TpInterStep interstep);
+  void PreLoopProcedure(TpInterStep interstep);  //<vs_advshift>
+  void ComputeFSParticles();                     //<vs_advshift>
+  void ComputeUmbrellaRegion();                  //<vs_advshift>
+
   void Interaction_Forces(TpInterStep interstep);
-  void MdbcBoundCorrection();
 
   double ComputeAceMax(float* auxmemg);
 

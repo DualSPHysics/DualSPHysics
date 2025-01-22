@@ -517,6 +517,11 @@
     <ClInclude Include="..\source\JXmlDef.h">
       <Filter>Common\JXml</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_preloop_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphShiftingAdv.h">
+      <Filter>Source</Filter>
     <ClInclude Include="..\source\JChronoGeoObj.h">
       <Filter>Src_Chrono</Filter>
     </ClInclude>
@@ -843,6 +848,11 @@
     <ClCompile Include="..\source\JDebugSphCpu.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\JSphShiftingAdv.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpu_preloop.cpp">
+      <Filter>Source</Filter>
     <ClCompile Include="..\source\JChronoGeoObj.cpp">
       <Filter>Src_Chrono</Filter>
     </ClCompile>
@@ -902,6 +912,9 @@
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\JSphGpu_mdbc_iker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_preloop_iker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
   </ItemGroup>

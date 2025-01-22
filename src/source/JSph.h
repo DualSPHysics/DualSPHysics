@@ -64,6 +64,7 @@ class JDsPartMotionSave;
 class JDsPartFloatSave;
 class JDsPartsOut;
 class JSphShifting;
+class JSphShiftingAdv;     //<vs_advshift>
 class JDsDamping;
 class JXml;
 class JDsOutputTime;
@@ -180,6 +181,8 @@ protected:
   bool UseNormalsFt;          ///<Indicates use of normals of floating bodies for mDBC.
   bool SvNormals;             ///<Saves normals VTK each PART (default=false).
   bool AbortNoNormals;        ///<Abort execution when no normals data for mDBC (default=true).
+  bool NoPenetration;         ///<No penetration algorithm for mDBC2                                    <vs_m2dbcNP>
+  TpMdbc2Mode TMdbc2;         ///<Mdbc2 mode 0:None, 1:mDBC2 std, 2:mDBC2 No penetration.               <vs_m2dbcNP>
 
   bool RhopOut;               ///<Indicates whether the RhopOut density correction is active or not.    | Indica si activa la correccion de densidad RhopOut o no.                       
   float RhopOutMin;           ///<Minimum limit for Rhopout correction.                                 | Limite minimo para la correccion de RhopOut.
@@ -318,6 +321,8 @@ protected:
 
   JSphShifting* Shifting;       ///<Object for shifting correction.
   TpShifting ShiftingMode;      ///<Mode of Shifting: None, NoBound, NoFixed, Full.
+
+  JSphShiftingAdv* ShiftingAdv; ///<Object for Advanced Shifting. //<vs_advshift>
 
   JDsDamping* Damping;          ///<Object for damping zones.
 

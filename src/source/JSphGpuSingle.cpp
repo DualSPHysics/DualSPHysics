@@ -20,6 +20,7 @@
 
 #include "JSphGpuSingle.h"
 #include "JCellDivGpuSingle.h"
+#include "JSphGpu_preloop_iker.h" //<vs_advshift>
 #include "JSphGpu_mdbc_iker.h"
 #include "JSphMk.h"
 #include "JPartsLoad4.h"
@@ -45,6 +46,7 @@
 #include "JDataArrays.h"
 #include "JDebugSphGpu.h"
 #include "JSphShifting.h"
+#include "JSphShiftingAdv.h" //<vs_advshift>
 #include "JDsPips.h"
 #include "JDsExtraData.h"
 #include "FunctionsCuda.h"
@@ -272,6 +274,7 @@ void JSphGpuSingle::ResizeParticlesSizeData(unsigned ndatacpu,unsigned ndatagpu
 //==============================================================================
 void JSphGpuSingle::RunPeriodic(){
   Timersg->TmStart(TMG_SuPeriodic,false);
+  if(PeriParent_g)PeriParent_g->CuMemset(255,Np);
   //-Stores the current number of periodic particles.
   //-Guarda numero de periodicas actuales.
   NpfPerM1=NpfPer;
@@ -343,6 +346,9 @@ void JSphGpuSingle::RunPeriodic(){
             if(UseNormals){
               cusph::PeriodicDuplicateNormals(count,Np,listpg.cptr()
                 ,BoundNor_g->ptr(),AG_PTR(MotionVel_g),AG_PTR(MotionAce_g)); //<vs_m2dbc>
+            }
+            if(PeriParent_g){
+              cusph::PeriodicSaveParent(count,Np,listpg.cptr(),PeriParent_g->ptr());
             }
             //-Update the total number of particles.
             Np+=count;
@@ -437,6 +443,19 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
       MotionAce_g->SwapPtr(&maceg);
     }//<vs_m2dbc_end>
   }
+  if(ShiftingAdv!=NULL){//<vs_advshift_ini>
+      aguint      fstypeg     ("-",Arrays_Gpu,true);
+      agfloat4    shiftvelg   ("-",Arrays_Gpu,true);
+      CellDivSingle->SortDataArrays(FSType_g->cptr(),ShiftVel_g->cptr(),fstypeg.ptr(),shiftvelg.ptr());
+      FSType_g  ->SwapPtr(&fstypeg);
+      ShiftVel_g->SwapPtr(&shiftvelg);
+  }//<vs_advshift_end>
+  if(PeriParent_g){
+    aguint auxg("-",Arrays_Gpu,true);
+    aguint periparentg("-",Arrays_Gpu,true);
+    CellDivSingle->SortArrayPeriParent(auxg.ptr(),PeriParent_g->cptr(),periparentg.ptr());
+    PeriParent_g->SwapPtr(&periparentg);
+  }
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
@@ -497,50 +516,108 @@ void JSphGpuSingle::SaveFluidOut(){
     ,AuxVel_c->cptr(),AuxRho_c->cptr(),Code_c->cptr());
 }
 
+//<vs_advshift_ini>
+//==============================================================================
+/// PreLoop for additional models computation.
+//==============================================================================
+void JSphGpuSingle::PreLoopProcedure(TpInterStep interstep){
+  const bool runshift=(ShiftingAdv && interstep==INTERSTEP_SymPredictor && Nstep!=0);
+  if(runshift){
+    Timersg->TmStart(TMG_SuShifting,false);
+    ComputeFSParticles();
+    ComputeUmbrellaRegion();
+    const unsigned bsfluid=BlockSizes.forcesfluid;
+    cusph::PreLoopInteraction(TKernel,Simulate2D,runshift,bsfluid,Np-Npb
+      ,Npb,DivData,Dcell_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
+      ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr()
+      ,FSNormal_g->ptr(),FSMinDist_g->ptr(),NULL);
+    cusph::ComputeShiftingVel(bsfluid,Np-Npb,Npb,Simulate2D,ShiftingAdv->GetShiftCoef()
+      ,ShiftingAdv->GetAleActive(),float(SymplecticDtPre),FSType_g->cptr()
+      ,FSNormal_g->cptr(),FSMinDist_g->cptr(),ShiftVel_g->ptr(),NULL);
+    //-Updates pre-loop variables in periodic particles.
+    if(PeriParent_g){
+      cusph::PeriPreLoopCorr(Np,0,PeriParent_g->cptr(),FSType_g->ptr()
+        ,ShiftVel_g->ptr());
+    }
+    //-Saves VTK for debug.
+    if(0 && TimeStep+LastDt>=TimePartNext){
+		  DgSaveVtkParticlesGpu("Compute_FreeSurface_",Part,0,Np,Posxy_g->cptr()
+        ,Posz_g->cptr(),Code_g->cptr(),FSType_g->cptr(),ShiftVel_g->cptr()
+        ,FSNormal_g->cptr());
+	  }
+    Timersg->TmStop(TMG_SuShifting,true);
+  }
+}
+
+//==============================================================================
+/// Compute free-surface particles and their normals.
+//==============================================================================
+void JSphGpuSingle::ComputeFSParticles(){
+  const unsigned bsfluid=BlockSizes.forcesfluid;
+  aguint fspartg("-",Arrays_Gpu,true);
+  cusph::ComputeFSNormals(TKernel,Simulate2D,bsfluid,Npb,Np-Npb,DivData
+    ,Dcell_g->cptr(),Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr(),Velrho_g->cptr()
+    ,Code_g->cptr(),FtoMasspg,ShiftVel_g->ptr(),FSType_g->ptr(),FSNormal_g->ptr()
+    ,fspartg.ptr(),NULL);
+}
+
+//==============================================================================
+/// Scan Umbrella region to identify free-surface particle.
+//==============================================================================
+void JSphGpuSingle::ComputeUmbrellaRegion(){
+  const unsigned bsfluid=BlockSizes.forcesfluid;
+  aguint fspartg("-",Arrays_Gpu,true);
+  cusph::ComputeUmbrellaRegion(TKernel,Simulate2D,bsfluid,Npb,Np-Npb,DivData
+    ,Dcell_g->cptr(),PosCell_g->cptr(),Code_g->cptr(),FSNormal_g->cptr()
+    ,fspartg.ptr(),FSType_g->ptr(),NULL);
+}
+//<vs_advshift_end>
+
 //==============================================================================
 /// Interaction for force computation.
 /// Interaccion para el calculo de fuerzas.
 //==============================================================================
 void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
-  //-Boundary correction for mDBC.
-  const bool runmdbc=(TBoundary==BC_MDBC && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
-  if(runmdbc)MdbcBoundCorrection(); 
-  const bool mdbc2=(runmdbc && SlipMode>=SLIP_NoSlip); //<vs_m2dbc>
-
-  InterStep=interstep;
-  PreInteraction_Forces();
-
   float3* dengradcorr=NULL;
 
   Timersg->TmStart(TMG_CfForces,true);
-  unsigned bsfluid=BlockSizes.forcesfluid;
-  unsigned bsbound=BlockSizes.forcesbound;
+  const unsigned bsfluid=BlockSizes.forcesfluid;
+  const unsigned bsbound=BlockSizes.forcesbound;
 
-  //-Interaction Fluid-Fluid/Bound & Bound-Fluid.
+  //<vs_advshift_ini>
+  const bool shiftadv=(ShiftingAdv!=NULL);
+  const bool corrector=(InterStep==INTERSTEP_SymCorrector);
+  const bool aleform=(shiftadv? ShiftingAdv->GetAleActive(): false);
+  const bool ncpress=(shiftadv? ShiftingAdv->GetNcPress()  : false);
+  //<vs_advshift_end>
+
+  //-Interaction of Fluid-Fluid/Bound & Bound-Fluid (forces).
   const StInterParmsg parms=StrInterParmsg(Simulate2D
     ,TKernel,FtMode
-    ,TVisco,TDensity,ShiftingMode,mdbc2 //<vs_m2dbc>
+    ,TVisco,TDensity,ShiftingMode,TMdbc2 //<vs_m2dbcNP>
+    ,shiftadv,corrector,aleform,ncpress //<vs_advshift>
     ,Visco*ViscoBoundFactor,Visco
     ,bsbound,bsfluid,Np,Npb,NpbOk
     ,0,Nstep,DivData,Dcell_g->cptr()
     ,Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr()
     ,Velrho_g->cptr(),Idp_g->cptr(),Code_g->cptr()
-    ,AG_CPTR(BoundMode_g),AG_CPTR(TangenVel_g),AG_CPTR(MotionVel_g) //<vs_m2dbc>
+    ,AG_CPTR(BoundMode_g),AG_CPTR(TangenVel_g),AG_CPTR(MotionVel_g)//<vs_m2dbc>
+    ,AG_CPTR(BoundNor_g),AG_PTR(NoPenShift_g) //<vs_m2dbcNP>
     ,FtoMasspg,AG_CPTR(SpsTauRho2_g),dengradcorr
     ,ViscDt_g->ptr(),Ar_g->ptr(),Ace_g->ptr(),AG_PTR(Delta_g)
     ,AG_PTR(Sps2Strain_g)
     ,AG_PTR(ShiftPosfs_g)
+    ,AG_PTR(FSType_g),AG_CPTR(ShiftVel_g) //<vs_advshift>
     ,NULL,NULL);
   cusph::Interaction_Forces(parms);
 
-  //-Interaction DEM Floating-Bound & Floating-Floating. //(DEM)
+  //-DEM interaction of Floating-Bound & Floating-Floating.
   if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat
     ,DivData,Dcell_g->cptr(),RidpMotg+CaseNmoving,DemDatag,FtoMasspg
     ,float(DemDtForce),PosCell_g->cptr(),Velrho_g->cptr(),Code_g->cptr()
     ,Idp_g->cptr(),ViscDt_g->ptr(),Ace_g->ptr(),NULL);
 
-  //-For 2D simulations always overrides the 2nd component (Y axis).
-  //-Para simulaciones 2D anula siempre la 2nd componente.
+  //-For 2-D simulations zero the 2nd component.
   if(Simulate2D)cusph::Resety(Np-Npb,Npb,Ace_g->ptr());
 
   //-Computes Tau for Laminar+SPS.
@@ -567,27 +644,32 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
 /// Calculates extrapolated data on boundary particles from fluid domain for mDBC.
 /// Calcula datos extrapolados en el contorno para mDBC.
 //==============================================================================
-void JSphGpuSingle::MdbcBoundCorrection(){
-  Timersg->TmStart(TMG_CfPreMDBC,false);
-  if(SlipMode==SLIP_Vel0){
-    const unsigned n=(UseNormalsFt? Np: NpbOk);
-    cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,n,CaseNbound
-      ,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr()
-      ,Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr(),Velrho_g->ptr());
+void JSphGpuSingle::MdbcBoundCorrection(TpInterStep interstep){
+  const bool runmdbc=(TBoundary==BC_MDBC
+    && (MdbcCorrector || interstep!=INTERSTEP_SymCorrector));
+  if(runmdbc){
+    Timersg->TmStart(TMG_CfPreMDBC,false);
+    if(SlipMode==SLIP_Vel0){
+      const unsigned n=(UseNormalsFt? Np: NpbOk);
+      cusph::Interaction_MdbcCorrection(TKernel,Simulate2D,n,CaseNbound
+        ,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr(),PosCell_g->cptr()
+        ,Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr(),Velrho_g->ptr());
+    }
+    else{
+  //else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
+      const unsigned n=(UseNormalsFt? Np: Npb);
+      BoundMode_g->Reserve();     //-BoundOnOff_g is freed in PosInteraction_Forces().
+      BoundMode_g->CuMemset(0,n); //-BoundMode_g[]=0=BMODE_DBC
+      TangenVel_g->Reserve();     //-TangenVel_g is freed in PosInteraction_Forces().
+      cusph::Interaction_Mdbc2Correction(TKernel,Simulate2D,SlipMode,n,CaseNbound
+        ,Gravity,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
+        ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
+        ,MotionVel_g->cptr(),MotionAce_g->cptr(),Velrho_g->ptr()
+        ,BoundMode_g->ptr(),TangenVel_g->ptr());
+    } //<vs_m2dbc_end>
+    //else Run_Exceptioon("Error: SlipMode is invalid.");
+    Timersg->TmStop(TMG_CfPreMDBC,true);
   }
-  else if(SlipMode==SLIP_NoSlip){ //<vs_m2dbc_ini>
-    const unsigned n=(UseNormalsFt? Np: Npb);
-    BoundMode_g->Reserve();     //-BoundOnOff_g is freed in PosInteraction_Forces().
-    BoundMode_g->CuMemset(0,n); //-BoundMode_g[]=0=BMODE_DBC
-    TangenVel_g->Reserve();     //-TangenVel_g is freed in PosInteraction_Forces().
-    cusph::Interaction_Mdbc2Correction(TKernel,Simulate2D,SlipMode,n,CaseNbound
-      ,Gravity,DivData,Map_PosMin,Posxy_g->cptr(),Posz_g->cptr()
-      ,PosCell_g->cptr(),Code_g->cptr(),Idp_g->cptr(),BoundNor_g->cptr()
-      ,MotionVel_g->cptr(),MotionAce_g->cptr(),Velrho_g->ptr()
-      ,BoundMode_g->ptr(),TangenVel_g->ptr());
-  } //<vs_m2dbc_end>
-  else Run_Exceptioon("Error: SlipMode is invalid.");
-  Timersg->TmStop(TMG_CfPreMDBC,true);
 }
 
 
@@ -638,7 +720,10 @@ void JSphGpuSingle::RunInitialDDTRamp(){
 /// calculadas en la interaccion usando Verlet.
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Ver(){
-  Interaction_Forces(INTERSTEP_Verlet);  //-Interaction.
+  InterStep=INTERSTEP_Verlet;
+  MdbcBoundCorrection(InterStep);        //-mDBC correction
+  PreInteraction_Forces(InterStep);      //-Allocating temporary arrays.
+  Interaction_Forces(InterStep);         //-Interaction.
   const double dt=DtVariable(true);      //-Calculate new dt.
   if(CaseNmoving)CalcMotion(dt);         //-Calculate motion for moving bodies.
   DemDtForce=dt;                         //-For DEM interaction.
@@ -660,30 +745,38 @@ double JSphGpuSingle::ComputeStep_Ver(){
 //==============================================================================
 double JSphGpuSingle::ComputeStep_Sym(){
   const double dt=SymplecticDtPre;
-  if(CaseNmoving)CalcMotion(dt);               //-Calculate motion for moving bodies.
+  if(CaseNmoving)CalcMotion(dt);          //-Calculate motion for moving bodies.
   //-Predictor
   //-----------
-  DemDtForce=dt*0.5f;                          //-For DEM interaction.
-  Interaction_Forces(INTERSTEP_SymPredictor);  //-Interaction.
-  const double dt_p=DtVariable(false);         //-Calculate dt of predictor step.
-  if(Shifting)RunShifting(dt*.5);              //-Shifting.
-  ComputeSymplecticPre(dt);                    //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
-  if(CaseNfloat)RunFloating(dt*.5,true);       //-Control of floating bodies.
-  PosInteraction_Forces();                     //-Free memory used for interaction.
+  InterStep=INTERSTEP_SymPredictor;
+  DemDtForce=dt*0.5f;                     //-For DEM interaction.
+  MdbcBoundCorrection(InterStep);         //-mDBC correction
+  PreInteraction_Forces(InterStep);       //-Allocating temporary arrays.
+  PreLoopProcedure(InterStep);            //-Pre-calculation for advanced shifting and other formulations. //<vs_advshift>
+  Interaction_Forces(InterStep);          //-Interaction.
+  const double dt_p=DtVariable(false);    //-Calculate dt of predictor step.
+  if(Shifting)RunShifting(dt*.5);         //-Standard shifting.
+  ComputeSymplecticPre(dt);               //-Apply Symplectic-Predictor to particles (periodic particles become invalid).
+  if(CaseNfloat)RunFloating(dt*.5,true);  //-Control of floating bodies.
+  PosInteraction_Forces();                //-Free memory used for interaction.
   //-Corrector
   //-----------
-  DemDtForce=dt;                               //-For DEM interaction.
-  RunCellDivide(true);
-  Interaction_Forces(INTERSTEP_SymCorrector);  //-Interaction.
-  const double dt_c=DtVariable(true);          //-Calculate dt of corrector step.
-  if(Shifting)RunShifting(dt);                 //-Shifting.
-  ComputeSymplecticCorr(dt);                   //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
-  if(CaseNfloat)RunFloating(dt,false);         //-Control of floating bodies.
-  PosInteraction_Forces();                     //-Free memory used for interaction.
-  if(Damping)RunDamping(dt);                   //-Aplies Damping.
-  if(RelaxZones)RunRelaxZone(dt);              //-Generate waves using RZ.
+  InterStep=INTERSTEP_SymCorrector;
+  DemDtForce=dt;                          //-For DEM interaction.
+  RunCellDivide(true);                    //-Rearrange particles in cells.
+  MdbcBoundCorrection(InterStep);         //-mDBC correction.
+  PreInteraction_Forces(InterStep);       //-Allocating temporary arrays.
+  PreLoopProcedure(InterStep);            //-Pre-calculation for advanced shifting and other formulations. //<vs_advshift>
+  Interaction_Forces(InterStep);          //-Interaction.
+  const double dt_c=DtVariable(true);     //-Calculate dt of corrector step.
+  if(Shifting)RunShifting(dt);            //-Shifting.
+  ComputeSymplecticCorr(dt);              //-Apply Symplectic-Corrector to particles (periodic particles become invalid).
+  if(CaseNfloat)RunFloating(dt,false);    //-Control of floating bodies.
+  PosInteraction_Forces();                //-Free memory used for interaction.
+  if(Damping)RunDamping(dt);              //-Aplies Damping.
+  if(RelaxZones)RunRelaxZone(dt);         //-Generate waves using RZ.
 
-  SymplecticDtPre=min(dt_p,dt_c);              //-Calculate dt for next ComputeStep.
+  SymplecticDtPre=min(dt_p,dt_c);         //-Calculate dt for next ComputeStep.
   return(dt);
 }
 

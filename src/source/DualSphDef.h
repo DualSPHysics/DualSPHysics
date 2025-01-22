@@ -413,6 +413,12 @@ typedef enum{
  ,SLIP_FreeSlip=3  ///<mDBC2 slip mode: Free slip (in development).
 }TpSlipMode;
 
+typedef enum{
+  MDBC2_None=0    ///<mDBC original
+ ,MDBC2_Std=1     ///mDBC2 
+ ,MDBC2_NoPen=2   ///mDBC2 No Penetration.
+}TpMdbc2Mode;
+
 #define MDBC2_KEEPVEL  ///<En MdbcBoundCorrection() no modifica velrho para usarlo en interaccion en lugar de velmotion.
 
 #define BMODE_DBC 0       ///<Boundary particle use DBC.
@@ -437,13 +443,12 @@ typedef enum{
 
 ///Types of Shifting applied to fluid particles. 
 typedef enum{
-  SHIFT_Full=3,             ///<Shifting is applied to all fluid particles.
-  SHIFT_NoFixed=2,          ///<Shifting is applied to fluid particles except those that interact with fixed boundaries.
-  SHIFT_NoBound=1,          ///<Shifting is applied to fluid particles except those that interact with all boundaries.
-  SHIFT_None=0              ///<Shifting is not applied.
+  SHIFT_None=0     ///<Shifting is not applied.
+ ,SHIFT_NoBound=1  ///<Shifting is applied to fluid particles except those that interact with all boundaries.
+ ,SHIFT_NoFixed=2  ///<Shifting is applied to fluid particles except those that interact with fixed boundaries.
+ ,SHIFT_Full=3     ///<Shifting is applied to all fluid particles.
+ ,SHIFT_FS=4       ///<Advanced shifting for free-surface detection. //<vs_advshift>
 }TpShifting; 
-
-
 
 ///Structure with main SPH constants and configurations.
 typedef struct{

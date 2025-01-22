@@ -409,31 +409,15 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbc2CorrectionT2
           #endif
           tangenvel[p1]=Mdbc2TangenVel(bnormalp1,v2);
         }
-        if(SlipMode==SLIP_FreeSlip){//-No-Penetration and free slip.
-          tfloat3 fsvelfinal; //-Final free slip boundary velocity.
-          const tfloat3 v=motionvel[p1];
-          const float motion=sqrt(v.x*v.x + v.y*v.y + v.z*v.z); //-To check if boundary moving.
-          const float norm=sqrt(bnormalp1.x*bnormalp1.x + bnormalp1.y*bnormalp1.y + bnormalp1.z*bnormalp1.z);
-          //-Creating a normailsed boundary normal.
-          const tfloat3 normal=TFloat3(fabs(bnormalp1.x)/norm,fabs(bnormalp1.y)/norm,fabs(bnormalp1.z)/norm);
-          //-Finding the velocity componants normal and tangential to boundary.
-          const tfloat3 normvel=TFloat3(velrhofinal.x*normal.x,velrhofinal.y*normal.y,velrhofinal.z*normal.z);//-Velocity in direction of normal pointing into fluid).
-          if(motion>0){ //-If moving boundary.
-            const tfloat3 normmot=TFloat3(v.x*normal.x,v.y*normal.y,v.z*normal.z); //-Boundary motion in direction normal to boundary.
-            fsvelfinal=TFloat3(normmot.x+normmot.x - normvel.x,
-                               normmot.y+normmot.y - normvel.y,
-                               normmot.z+normmot.z - normvel.z);
-            //-Only velocity in normal direction for no-penetration.
-            //-Fluid sees zero velocity in the tangetial direction.
-          }
-          else {
-            const tfloat3 tangvel=velrhofinal-normvel; //-Velocity tangential to normal.
-            fsvelfinal=tangvel-normvel;
-            //-Tangential velocity equal to fluid velocity for free slip.
-            //-Normal velocity reversed for no-penetration.
-          }
-          //-Save the velocity and density.
-          velrho[p1]=TFloat4(fsvelfinal.x,fsvelfinal.y,fsvelfinal.z,rhofinal);
+        else if(SlipMode==SLIP_FreeSlip){//-Free slip: vel = ghost vel
+            // copy velocity from ghost node
+            const tfloat3 v2 = TFloat3(velrhofinal.x, velrhofinal.y, velrhofinal.z);
+            #ifndef MDBC2_KEEPVEL
+                velrho[p1] = TFloat4(v2.x, v2.y, v2.z, rhofinal);
+            #else
+                velrho[p1].w = rhofinal;
+            #endif
+            tangenvel[p1] = Mdbc2TangenVel(bnormalp1, v2);
         }
       }
       else{//-If unsubmerged switch off boundary particle.

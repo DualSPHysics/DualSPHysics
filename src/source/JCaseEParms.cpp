@@ -217,7 +217,24 @@ std::string JCaseEParms::GetValue(const std::string& key){
 }
 
 //==============================================================================
-/// Returns a given value associated to the requested key.
+/// Returns a given bool value associated to the requested key.
+//==============================================================================
+bool JCaseEParms::GetValueNumBool(const std::string& key,int num,bool optional
+  ,bool valdef)
+{
+  bool ret=valdef;
+  const std::string txval=fun::StrUpper(GetValueNum(key,num));
+  if(!txval.empty()){
+    if(txval=="1" || txval=="TRUE")ret=true;
+    else if(txval=="0" || txval=="FALSE")ret=false;
+    else Run_Exceptioon(string("The requested value \'")+key+"\' is not valid (1/0 or true/false).");
+  }
+  else if(!optional)Run_Exceptioon(string("The requested value \'")+key+"\' does not exist.");
+  return(ret);
+}
+
+//==============================================================================
+/// Returns a given int value associated to the requested key.
 //==============================================================================
 int JCaseEParms::GetValueNumInt(const std::string& key,int num,bool optional
   ,int valdef)
@@ -232,6 +249,9 @@ int JCaseEParms::GetValueNumInt(const std::string& key,int num,bool optional
   else if(!optional)Run_Exceptioon(string("The requested value \'")+key+"\' does not exist.");
   return(ret);
 }
+
+//==============================================================================
+/// Returns a given double value associated to the requested key.
 //==============================================================================
 double JCaseEParms::GetValueNumDouble(const std::string& key,int num
   ,bool optional,double valdef)
@@ -246,6 +266,9 @@ double JCaseEParms::GetValueNumDouble(const std::string& key,int num
   else if(!optional)Run_Exceptioon(string("The requested value \'")+key+"\' does not exist.");
   return(ret);
 }
+
+//==============================================================================
+/// Returns a given float value associated to the requested key.
 //==============================================================================
 float JCaseEParms::GetValueNumFloat(const std::string& key,int num
   ,bool optional,float valdef)
@@ -260,6 +283,9 @@ float JCaseEParms::GetValueNumFloat(const std::string& key,int num
   else if(!optional)Run_Exceptioon(string("The requested value \'")+key+"\' does not exist.");
   return(ret);
 }
+
+//==============================================================================
+/// Returns a given string value associated to the requested key.
 //==============================================================================
 std::string JCaseEParms::GetValueNumStr(const std::string& key,int num
   ,bool optional,std::string valdef)

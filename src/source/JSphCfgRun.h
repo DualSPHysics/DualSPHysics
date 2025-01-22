@@ -49,6 +49,7 @@ public:
   bool CellDomFixed;    ///<The Cell domain is fixed according maximum domain size (default=false).
   int TBoundary;        ///<Boundary method: -1:None, 1:DBC (by default), 2:mDBC (SlipMode: 1:DBC vel=0)
   int SlipMode;         ///<Slip mode for mDBC: -1:None, 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1).
+  bool NoPenetration;   ///<No Penetration for mDBC2.
 
   TpStep TStep;
   int VerletSteps;
@@ -67,7 +68,9 @@ public:
   double DDTValueTRamp;   ///<Total time of initial ramp for DDT value (default=0)  //<vs_ddramp>
   double DDTValueTMax;    ///<Time of maximum DDT value (default=0)                 //<vs_ddramp>
   double DDTValueMax;     ///<Maximum DDT value for initial ramp (default=0)        //<vs_ddramp>
-  int Shifting;   ///<Shifting mode -1:no defined, 0:none, 1:nobound, 2:nofixed, 3:full
+  int Shifting;           ///<Shifting mode -1:no defined, 0:none, 1:nobound, 2:nofixed, 3:full
+  bool ShiftAdvALE;       ///<Arbitrarian Eulerian-Lagrangian for Advanced shifting. //<vs_advshift>
+  bool ShiftAdvNCP;       ///<Non conservative pressure for Advanced shifting.       //<vs_advshift>
   bool Sv_Binx,Sv_Info,Sv_Csv,Sv_Vtk;
   bool SvNormals; ///<Saves normals VTK each PART (default=0).
   bool SvRes;
