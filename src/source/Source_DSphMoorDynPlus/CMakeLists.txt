@@ -1,5 +1,5 @@
 #--------------------------------------------------------------
-# CMAKE file to compile MoorDyn+
+# CMAKE file to compile MoorDynPlus
 #--------------------------------------------------------------
 
 cmake_minimum_required(VERSION 3.0)
@@ -37,7 +37,7 @@ endif()
 #--------------------------------------------------------------
 # 4. Source files
 #--------------------------------------------------------------
-# MoorDyn+ source files
+# MoorDynPlus source files
 set(SRC
   IEnvironment.cpp  
   IQSlines.cpp       
@@ -52,7 +52,7 @@ set(SRC
   MoorDynPlus.cpp
 )
 
-# MoorDyn+ header files
+# MoorDynPlus header files
 set(HEADER 
   FunMoorDynPlus.h
   MoorDynPlus.h

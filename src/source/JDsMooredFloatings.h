@@ -26,7 +26,7 @@
 //:#############################################################################
 //:# Cambios:
 //:# =========
-//:# - Gestion de moorings usando la libreria MoorDyn. (06-02-2017)
+//:# - Gestion de moorings usando la libreria MoorDynPlus. (06-02-2017)
 //:# - Inclusion en codigo DualSPHysics v4.2.073. (13-08-2018)
 //:# - Actualiza coupling con MoorDynPlus. (23-12-2019)
 //:# - Saves VTK files in MooringsVtk directory. (24-12-2019)
