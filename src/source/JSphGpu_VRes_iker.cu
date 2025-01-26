@@ -38,8 +38,8 @@ __device__ bool KerBufferInZone(double2 rxy,double rz,double3 boxlimitmin,double
 }
 
 //------------------------------------------------------------------------------
-/// Creates list with current inout particles and normal (no periodic) fluid in
-/// inlet/outlet zones (update its code).
+/// Creates list with current buffer particles and normal (no periodic) fluid in
+/// buffer zones (update its code).
 //------------------------------------------------------------------------------
 __global__ void KerBufferCreateList(unsigned n,unsigned pini,const double3 boxlimitmininner,const double3 boxlimitmaxinner
   ,const double3 boxlimitminouter,const double3 boxlimitmaxouter,const bool inner,const double2 *posxy,const double *posz
@@ -91,8 +91,8 @@ __global__ void KerBufferCreateList(unsigned n,unsigned pini,const double3 boxli
 
 
 //==============================================================================
-/// Creates list with current inout particles and normal (no periodic) fluid in
-/// inlet/outlet zones (update its code).
+/// Creates list with current buffer particles and normal (no periodic) fluid in
+/// buffer zones (update its code).
 //==============================================================================
 unsigned BufferCreateList(bool stable,unsigned n,unsigned pini,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner,
           const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const bool inner,const double2 *posxy,const double *posz
@@ -114,8 +114,8 @@ unsigned BufferCreateList(bool stable,unsigned n,unsigned pini,const tdouble3 bo
 }
 
 //------------------------------------------------------------------------------
-/// Creates list with current inout particles and normal (no periodic) fluid in
-/// inlet/outlet zones (update its code).
+/// Creates list with current buffer particles and normal (no periodic) fluid in
+/// buffer zones (update its code).
 //------------------------------------------------------------------------------
 __global__ void KerBufferCreateListInit(unsigned n,unsigned pini
   ,const double3 boxlimitmininner,const double3 boxlimitmaxinner,const double3 boxlimitminouter,const double3 boxlimitmaxouter,const double3 boxlimitminmid,const double3 boxlimitmaxmid,const bool inner
@@ -170,10 +170,9 @@ __global__ void KerBufferCreateListInit(unsigned n,unsigned pini
   }
 }
 
-
 //==============================================================================
-/// Creates list with current inout particles and normal (no periodic) fluid in
-/// inlet/outlet zones (update its code).
+/// Creates list with current buffer particles and normal (no periodic) fluid in
+/// buffer zones (update its code).
 //==============================================================================
 unsigned BufferCreateListInit(bool stable,unsigned n,unsigned pini
   ,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter,const tdouble3 boxlimitminmid,const tdouble3 boxlimitmaxmid,const bool inner,const double2 *posxy,const double *posz
@@ -188,6 +187,79 @@ unsigned BufferCreateListInit(bool stable,unsigned n,unsigned pini
     const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); //-All fluid particles can be in in/out area and one position for counter.
     KerBufferCreateListInit <<<sgrid,SPHBSIZE,smem>>> (n,pini,Double3(boxlimitmininner),Double3(boxlimitmaxinner),Double3(boxlimitminouter)
       ,Double3(boxlimitmaxouter),Double3(boxlimitminmid),Double3(boxlimitmaxmid),inner,posxy,posz,code,listp,mat,tracking,nzone);
+    cudaMemcpy(&count,listp+n,sizeof(unsigned),cudaMemcpyDeviceToHost);
+    cudaDeviceSynchronize();
+  }
+  return(count);
+}
+
+//------------------------------------------------------------------------------
+/// Creates list with current buffer particles and normal (no periodic) fluid in
+/// buffer zones (update its code).
+//------------------------------------------------------------------------------
+__global__ void KerBufferCheckNormals(TpBoundary tboundary,unsigned n,unsigned pini
+  ,const double3 boxlimitmininner,const double3 boxlimitmaxinner
+  ,const double3 boxlimitminouter,const double3 boxlimitmaxouter
+  ,const bool inner,const double2 *posxy,const double *posz,const float3* boundnor
+  ,typecode *code,unsigned *listp,tmatrix4f* mat,bool tracking,unsigned nzone)
+{
+  extern __shared__ unsigned slist[];
+  if(!threadIdx.x)slist[0]=0;
+  __syncthreads();
+  const unsigned pp=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(pp<n){
+    const unsigned p=pp+pini;
+    bool select=false;//-Particles already selected as InOut.
+    double2 rxy=posxy[p];
+    double rz=posz[p];
+    if(tracking){
+      double2 rxy_t=make_double2(0,0);
+      double rz_t=0.0;
+      MovePoint(rxy,rz,rxy_t,rz_t,mat[nzone]);
+      rxy=rxy_t; rz=rz_t;
+    }
+    if(KerBufferInZone(rxy,rz,boxlimitminouter,boxlimitmaxouter)&&!KerBufferInZone(rxy,rz,boxlimitmininner,boxlimitmaxinner)){
+      if(tboundary==BC_DBC)select=true;
+      else{
+        const float3 bnormalp1=boundnor[p];
+        if(bnormalp1.x==0 && bnormalp1.y==0 && bnormalp1.z==0){
+          select=true;
+        }
+      }
+    }      
+    if(select)slist[atomicAdd(slist,1)+1]=p; //-Add particle in the list.
+  }
+  __syncthreads();
+  const unsigned ns=slist[0];
+  __syncthreads();
+  if(!threadIdx.x && ns)slist[0]=atomicAdd((listp+n),ns);
+  __syncthreads();
+  if(threadIdx.x<ns){
+    const unsigned cp=slist[0]+threadIdx.x;
+    listp[cp]=slist[threadIdx.x+1];
+  }
+}
+
+//==============================================================================
+/// Creates list with current inout particles and normal (no periodic) fluid in
+/// inlet/outlet zones (update its code).
+//==============================================================================
+
+unsigned BufferCheckNormals(TpBoundary tboundary,bool stable,unsigned n,unsigned pini
+  ,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner
+  ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter
+  ,const bool inner,const double2 *posxy,const double *posz,const float3* boundnor
+  ,typecode *code,unsigned *listp,tmatrix4f* mat,bool tracking,unsigned nzone)
+{
+  unsigned count=0;
+  if(n){
+    //-listp size list initialized to zero.
+    //-Inicializa tamanho de lista listp a cero.
+    cudaMemset(listp+n,0,sizeof(unsigned));
+    dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);
+    const unsigned smem=(SPHBSIZE+1)*sizeof(unsigned); //-All fluid particles can be in in/out area and one position for counter.
+    KerBufferCheckNormals <<<sgrid,SPHBSIZE,smem>>> (tboundary,n,pini,Double3(boxlimitmininner),Double3(boxlimitmaxinner),Double3(boxlimitminouter)
+      ,Double3(boxlimitmaxouter),inner,posxy,posz,boundnor,code,listp,mat,tracking,nzone);
     cudaMemcpy(&count,listp+n,sizeof(unsigned),cudaMemcpyDeviceToHost);
     cudaDeviceSynchronize();
   }

@@ -1298,8 +1298,8 @@ template<TpKernel tker>
   void JSphCpu::Interaction_Forces_ct2(const stinterparmsc& t,StInterResultc& res)const
 {
        if(FtMode==FTMODE_None)Interaction_Forces_ct3<tker,FTMODE_None>(t,res);
-  else if(FtMode==FTMODE_Sph )Interaction_Forces_ct3<tker,FTMODE_Sph >(t,res);
-  else if(FtMode==FTMODE_Ext )Interaction_Forces_ct3<tker,FTMODE_Ext >(t,res);
+  // else if(FtMode==FTMODE_Sph )Interaction_Forces_ct3<tker,FTMODE_Sph >(t,res);
+  // else if(FtMode==FTMODE_Ext )Interaction_Forces_ct3<tker,FTMODE_Ext >(t,res);
 }
 //==============================================================================
 void JSphCpu::Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)const{

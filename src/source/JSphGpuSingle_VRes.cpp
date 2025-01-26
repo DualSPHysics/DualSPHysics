@@ -115,11 +115,19 @@ StInterParmsbg JSphGpuSingle_VRes::GetVResParms(){
 //==============================================================================
 void JSphGpuSingle_VRes::BufferInit(StInterParmsbg *parms){
   cusph::CteInteractionUp(&CTE);
+
+  acfloat3* boundnormc=new acfloat3("-",Arrays_Cpu,false);
+  boundnormc->Reserve();
+  if(TBoundary==BC_MDBC)BoundNor_g->CuCopyToHost(boundnormc,Np);
+  VRes->CheckNormals(TBoundary,Npb,0,AuxPos_c->cptr()
+    ,Idp_c->cptr(),Code_c->ptr(),AC_CPTR(boundnormc),VResId);
+  boundnormc->Free();
+
 	for(unsigned i=0;i<VRes->GetCount();i++){
 
 		agint bufferpartg("-",Arrays_Gpu,true);
 		const unsigned buffercountpre=VRes->CreateListGpuInit(Np,0,Posxy_g->cptr()
-      ,Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize,bufferpartg.ptr(),i);
+      ,Posz_g->cptr(),Code_g->ptr(),GpuParticlesSize,bufferpartg.ptr(),i);   
 	}
 
   RunCellDivide(true);
@@ -374,6 +382,8 @@ void JSphGpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* l
   AppName=appname; Log=log; CfgRun=cfg;
   VResCount=vrescount;
   VResId=vresid; 
+
+  AbortNoNormals=false;
 
   //-Selection of GPU.
   const int gpuid=SelecDevice(cfg->GpuId);

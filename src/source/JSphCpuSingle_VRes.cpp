@@ -108,6 +108,8 @@ stinterparmscb JSphCpuSingle_VRes::GetVResParms(){
 /// Initial definition of buffer particles and reordering.
 //==============================================================================
 void JSphCpuSingle_VRes::BufferInit(stinterparmscb *parms){
+  VRes->CheckNormals(TBoundary,Npb,0,Pos_c->cptr()
+    ,Idp_c->cptr(),Code_c->ptr(),AC_CPTR(BoundNor_c),VResId);
   for(unsigned i=0;i<VRes->GetCount();i++){
     acint bufferpartc("-",Arrays_Cpu,true);
     unsigned buffercountpre=VRes->CreateListCpuInit(Np,0,Pos_c->cptr()
@@ -337,6 +339,7 @@ void JSphCpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* l
   AppName=appname; Log=log; CfgRun=cfg;
   VResCount=vrescount;
   VResId=vresid; 
+  AbortNoNormals=false;
 
   LoadVResConfigParameters(cfg);
 

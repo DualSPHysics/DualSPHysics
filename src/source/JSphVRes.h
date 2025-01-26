@@ -238,6 +238,12 @@ public:
     ,const unsigned *idp,typecode *code,int *inoutpart,unsigned nzone);
   unsigned CreateListCpuInit(unsigned npf, unsigned pini,const tdouble3 *pos
     ,const unsigned *idp,typecode *code,int *inoutpart, unsigned nzone);
+  unsigned CheckNormals(TpBoundary tboundary,unsigned npf,unsigned pini
+    ,const tdouble2 *posxy,const double* posz,const unsigned *idp,typecode *code
+    ,const tfloat3* boundnor,int *inoutpart,unsigned nzone);
+  void CheckNormals(TpBoundary tboundary,unsigned np,unsigned pini
+    ,const tdouble3* pos,const unsigned *idp,typecode *code
+    ,const tfloat3* boundnor,unsigned vresid);
   unsigned ComputeStepCpu(unsigned bufferpartcount,int *bufferpart
 		,typecode *code,const tdouble3 *pos,unsigned nzone);
   void CreateNewPart(const unsigned idnext,unsigned *dcell,typecode *code
@@ -250,6 +256,9 @@ public:
     ,const double *poszg,typecode *codeg,unsigned size,int *inoutpartg,unsigned nzone);
   unsigned CreateListGpu(unsigned npf,unsigned pini,const double2 *posxyg
     ,const double *poszg,typecode *codeg,unsigned size,int *inoutpartg,unsigned nzone);
+  // unsigned CheckNormals(TpBoundary tboundary,unsigned npf,unsigned pini,const double2 *posxyg
+  //   ,const double *poszg,const float3* boundnor,typecode *codeg
+  //   ,unsigned size,int *inoutpartg,unsigned nzone);
   void ComputeStepGpu(unsigned bufferpartcount,int *bufferpart,unsigned idnext
     ,double2 *posxyg,double *poszg,unsigned *dcellg,typecode *codeg,unsigned *idpg
     ,float4 *velrhopg,byte *newizoneg, const JSphGpuSingle *gp,unsigned nzone);

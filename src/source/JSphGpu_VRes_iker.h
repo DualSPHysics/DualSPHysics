@@ -76,6 +76,13 @@ unsigned BufferCreateListInit(bool stable,unsigned n,unsigned pini
   ,const bool inner,const double2 *posxy,const double *posz
   ,typecode *code,unsigned *listp,tmatrix4f mat,bool tracking,unsigned nzone);
 
+
+unsigned BufferCheckNormals(TpBoundary tboundary,bool stable,unsigned n,unsigned pini
+  ,const tdouble3 boxlimitmininner,const tdouble3 boxlimitmaxinner
+  ,const tdouble3 boxlimitminouter,const tdouble3 boxlimitmaxouter
+  ,const bool inner,const double2 *posxy,const double *posz,const float3* boundnor
+  ,typecode *code,unsigned *listp,tmatrix4f* mat,bool tracking,unsigned nzone);
+
 void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart
   ,const StInterParmsbg &t,const double2 *posxyb,const double *poszb,float4* velrhop
   ,typecode *code1,bool fastsingle,const TpVresOrder order,TpVresMethod vrmethod,float mrthreshold);

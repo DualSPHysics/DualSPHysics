@@ -1,7 +1,7 @@
 #DualSPHysics GPU/CPU v5.4.351 07-12-2024
 
 #=============== Compilation Options (YES/NO) ===============
-USE_DEBUG=NO
+USE_DEBUG=YES
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_CHRONO=YES
@@ -155,7 +155,7 @@ NCC=nvcc
 ifeq ($(USE_DEBUG), NO)
   NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC) -D_WITHMR -D_WITHGPU
 else
-  NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC)  -D_WITHMR -D_WITHGPU
+  NCCFLAGS+=-c $(GENCODE) -g -G -ccbin $(CC)  -D_WITHMR -D_WITHGPU
 endif
 ifeq ($(USE_FAST_MATH), YES)
   NCCFLAGS+= -use_fast_math

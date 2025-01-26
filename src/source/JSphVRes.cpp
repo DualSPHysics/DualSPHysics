@@ -591,6 +591,55 @@ unsigned JSphVRes::CreateListCpuInit(unsigned npf,unsigned pini,const tdouble3 *
   return(count);
 }
 
+
+
+void JSphVRes::CheckNormals(TpBoundary tboundary,unsigned np
+  ,unsigned pini,const tdouble3 *pos,const unsigned *idp,typecode *code
+  ,const tfloat3* boundnor,unsigned vresid)
+{
+  unsigned nerr=0;
+  byte* errpart=new byte[np];
+  memset(errpart,0,sizeof(byte)*np);
+  const unsigned nzone=List.size();
+  const unsigned pfin=pini+np;
+  for(unsigned p=pini;p<pfin;p++){
+    const typecode rcode=code[p];
+    tdouble3 ps=pos[p]; 
+    for(unsigned zone=0;zone<nzone;zone++){
+      if(Tracking[zone]) ps=MovePoint(ps,Matmov[zone].GetMatrix4d());
+      if(List[zone]->InZoneBox(ps)){
+        if(tboundary==BC_DBC){
+          errpart[p]=1; nerr++;
+        }else{
+          if(boundnor[p]==TFloat3(0)){
+            errpart[p]=1; nerr++;
+          } 
+        }
+      }
+    }
+  }
+  if(nerr>0){
+    tfloat3* vpos=new tfloat3[nerr];
+    byte*    vtype=new byte[nerr];
+    unsigned pp=0;
+    for(unsigned p=0;p<np;p++)if(errpart[p]){
+      vpos[pp]=ToTFloat3(pos[p]);
+      vtype[pp]=errpart[p];
+      pp++;
+    }
+    JDataArrays arrays;
+    arrays.AddArray("Pos",nerr,vpos,false);
+    arrays.AddArray("ErrorType",nerr,vtype,false);
+    const std::string vrname =std::string("Cfg")+fun::PrintStr("_vres%02u", vresid)+std::string("_ErrorParticles.vtk");
+    const string filevtk=AppInfo.GetDirOut()+vrname;
+    JSpVtkData::Save(filevtk,arrays,"Pos");
+    Log->AddFileInfo(filevtk,"Saves boundary particles inside VRes buffer region.");
+    delete[] vpos;  vpos=NULL;
+    delete[] vtype; vtype=NULL;
+  }
+  if(nerr>0) Run_Exceptioon("Boundary particles in the buffer region are not allowed. Check VTK file Cfg_vres%02_ErrorParticles.vtk with excluded particles.");
+}
+
 #ifdef _WITHGPU
 unsigned JSphVRes::CreateListGpuInit(unsigned npf, unsigned pini, const double2 *posxyg, const double *poszg, typecode *codeg, unsigned size, int *inoutpartg, unsigned nzone)
 {
@@ -613,6 +662,21 @@ unsigned JSphVRes::CreateListGpu(unsigned npf, unsigned pini, const double2 *pos
 
   return (count);
 }
+
+
+// unsigned JSphVRes::CheckNormals(TpBoundary tboundary,unsigned npf,unsigned pini
+//   ,const double2 *posxyg,const double *poszg,const float3* boundnor
+//   ,typecode *codeg,unsigned size,int *inoutpartg,unsigned nzone)
+// {
+//   unsigned count = 0;
+//   bool Stable = false;
+//   count = cusphvres::BufferCheckNormals(tboundary,Stable,npf,pini,List[nzone]->BoxLimitMinInner
+//     ,List[nzone]->BoxLimitMaxInner,List[nzone]->BoxLimitMinOuter
+//     ,List[nzone]->BoxLimitMaxOuter, List[nzone]->Inner,posxyg,poszg,boundnor
+//     ,codeg,(unsigned *)inoutpartg,Matmovg,Tracking[nzone],nzone);
+
+//   return (count);
+// }
 #endif
 
 tdouble3 JSphVRes::MovePoint(tdouble3 oldpos,const tmatrix4d& mat){
