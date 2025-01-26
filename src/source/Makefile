@@ -1,7 +1,7 @@
 #DualSPHysics GPU/CPU v5.4.351 07-12-2024
 
 #=============== Compilation Options (YES/NO) ===============
-USE_DEBUG=YES
+USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
 COMPILE_CHRONO=YES
@@ -16,7 +16,7 @@ EXECS_DIRECTORY=../../bin/linux
 
 # -std=c++0x ---> Used to avoid errors for calls to enums
 ifeq ($(USE_DEBUG), YES)
-  CCFLAGS=-c -O0 -g -Wall -fopenmp -D_WITHGPU -std=c++0x -D_WITHMR
+  CCFLAGS=-c -Ofast -g -Wall -fopenmp -D_WITHGPU -std=c++0x -D_WITHMR 
 else
   CCFLAGS=-c -O3 -fopenmp -D_WITHGPU -std=c++0x -D_WITHMR
   ifeq ($(USE_FAST_MATH), YES)

@@ -113,10 +113,10 @@ template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod>
     ,tdouble3*posb,tfloat4 *velrhopb,typecode *codeb,const float mrthreshold)
 {
   const int n=int(bufferpartcount);
-  // #ifdef OMP_USE
-  //   #pragma omp parallel for schedule (guided)
-  // #endif
-  for(int p=0;p<n;p++){
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(unsigned p=0;p<n;p++){
 
     const int p1=bufferpart[p];
     tdouble3 pos_p1=posb[p1];
@@ -148,14 +148,14 @@ template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod>
     			//-Computes kernel.
     			float fac;
     			float facc;
-    			const double wab=fsph::GetKernel_WabFac<tker>(csp,(rr2),fac);
+    			const double wab=fsph::GetKernel_WabFacFacc<tker>(csp,(rr2),fac,facc);
     			double frx=drx*fac,fry=dry*fac,frz=drz*fac; //-Gradients.
-    			double frxx=fac*(dry*dry+drz*drz)/rr2;
-        	double frzz=fac*(dry*dry+drx*drx)/rr2;
-        	double fryy=fac*(drz*drz+drx*drx)/rr2;
-        	double frxz=-fac*(drx*drz)/rr2;
-        	double frxy=-fac*(drx*dry)/rr2;
-        	double fryz=-fac*(dry*drz)/rr2;
+    			double frxx=facc*(drx*drx)/(rr2)+fac*(dry*dry+drz*drz)/rr2;
+          double frzz=facc*(drz*drz)/(rr2)+fac*(dry*dry+drx*drx)/rr2;
+          double fryy=facc*(dry*dry)/(rr2)+fac*(drz*drz+drx*drx)/rr2;
+          double frxz=facc*(drx*drz)/(rr2)-fac*(drx*drz)/rr2;
+          double frxy=facc*(drx*dry)/(rr2)-fac*(drx*dry)/rr2;
+          double fryz=facc*(dry*drz)/(rr2)-fac*(dry*drz)/rr2;
 
     			
     			const tdouble4 velrhopp2=TDouble4(velrhop[p2].x,velrhop[p2].y,velrhop[p2].z,velrhop[p2].w);
@@ -174,7 +174,7 @@ template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod>
             if (sim2d){
               double tempC[] ={(1.0),drx,drz,drx*drx*(0.5),drx*drz,drz*drz*(0.5)};
               double tempC1[]={wab,frx,frz,frxx,frxz,frzz};
-              for (int i=0;i<m_dim;++i){
+              for (unsigned i=0;i<m_dim;++i){
                 C[i]  = tempC[i];
                 if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
                 else C1[i] = volp2*wab*tempC[i];
@@ -182,7 +182,7 @@ template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod>
             }else{
               double tempC[]   ={(1.0),drx,dry,drz,drx*drx*(0.5),drx*dry,dry*dry*(0.5),drx*drz,drz*drz*(0.5),dry*drz};
               double tempC1[]  ={wab,frx,fry,frz,frxx,frxy,fryy,frxz,frzz,fryz};
-              for (int i=0;i<m_dim;++i){
+              for (unsigned i=0;i<m_dim;++i){
                 C[i]  = tempC[i];
                 if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
                 else C1[i] = volp2*wab*tempC[i];
@@ -192,7 +192,7 @@ template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod>
             if (sim2d){
               double tempC[]   = {(1.0),-drx,-drz};
               double tempC1[]  = {wab,frx,frz};
-              for (int i=0;i<m_dim;++i){
+              for (unsigned i=0;i<m_dim;++i){
                 C[i]  = tempC[i];
                 if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
                 else C1[i] = volp2*wab*tempC[i];
@@ -200,7 +200,7 @@ template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod>
             }else{
               double tempC[] = {(1.0),drx,dry,drz};
               double tempC1[] = {wab,frx,fry,frz};
-              for (int i=0;i<m_dim;++i){
+              for (unsigned i=0;i<m_dim;++i){
                 C[i]  = tempC[i];
                 if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
                 else C1[i] = volp2*wab*tempC[i];
@@ -211,19 +211,19 @@ template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod>
           // Set up D
           if (sim2d){
             double tempD[] = {velrhop[p2].w,velrhop[p2].x,velrhop[p2].z};
-            for (int i =0;i<m_dim2;++i)D[i]=tempD[i];
+            for (unsigned i =0;i<m_dim2;++i)D[i]=tempD[i];
           }else{
             double tempD[] = {velrhop[p2].w,velrhop[p2].x,velrhop[p2].y,velrhop[p2].z};
-            for (int i =0;i<m_dim2;++i)D[i]=tempD[i];
+            for (unsigned i =0;i<m_dim2;++i)D[i]=tempD[i];
           }
           // Accumulate A and B matrices
-          for (int i=0;i<m_dim;i++)
-            for (int j=0;j<m_dim;j++){
+          for (unsigned i=0;i<m_dim;i++)
+            for (unsigned j=0;j<m_dim;j++){
               A[i*m_dim+j]+=C1[i]*C[j];
             }
               
-          for (int i=0; i<m_dim2;i++)
-            for (int j=0;j<m_dim;j++){
+          for (unsigned i=0; i<m_dim2;i++)
+            for (unsigned j=0;j<m_dim;j++){
               B[i*m_dim+j]+=D[i]*C1[j];
           }
         }
@@ -328,7 +328,7 @@ void Interaction_BufferExtrap(unsigned bufferpartcount,const int *bufferpart
     break;
 #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:
-    	// Interaction_BufferExtrapFlux_gt0<KERNEL_Wendland>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,vrorder,mrthreshold);
+    	throw "KERNEL_Cubic is not available when variable resolution is active.";
     break;
 #endif
     default: throw "Kernel unknown at Interaction_InOutExtrap().";
@@ -347,7 +347,7 @@ void InteractionBufferExtrapFlux(const unsigned n,const int pini
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
-  for(int p=0;p<n;p++){
+  for(unsigned p=0;p<n;p++){
 
     const int p1=p+pini;
     tdouble3 pos_p1=ptpoints[p1];
@@ -381,7 +381,6 @@ void InteractionBufferExtrapFlux(const unsigned n,const int pini
         if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO){//-Only with fluid particles but not inout particles.
     			//-Computes kernel.
     			float fac;
-    			float facc;
     			const double wab=fsph::GetKernel_WabFac<tker>(csp,(rr2),fac);
     			double frx=drx*fac,fry=dry*fac,frz=drz*fac; //-Gradients.
 
@@ -406,16 +405,16 @@ void InteractionBufferExtrapFlux(const unsigned n,const int pini
 
     		if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO && CODE_IsFluid(code[p2]) && !CODE_IsFluidBuffer(code[p2]) &&!CODE_IsFluidFixed(code[p2])){//-Only with fluid particles but not inout particles.
     			//-Computes kernel.
-    			float fac;
-    			float facc;
-    			const double wab=fsph::GetKernel_WabFac<tker>(csp,(rr2),fac);
+    			float fac=0.f;
+    			float facc=0.f;
+    			const double wab=fsph::GetKernel_WabFacFacc<tker>(csp,(rr2),fac,facc);
     			double frx=drx*fac,fry=dry*fac,frz=drz*fac; //-Gradients.
-    			double frxx=fac*(dry*dry+drz*drz)/rr2;
-        	double frzz=fac*(dry*dry+drx*drx)/rr2;
-        	double fryy=fac*(drz*drz+drx*drx)/rr2;
-        	double frxz=-fac*(drx*drz)/rr2;
-        	double frxy=-fac*(drx*dry)/rr2;
-        	double fryz=-fac*(dry*drz)/rr2;
+    			double frxx=facc*(drx*drx)/(rr2)+fac*(dry*dry+drz*drz)/rr2;
+          double frzz=facc*(drz*drz)/(rr2)+fac*(dry*dry+drx*drx)/rr2;
+          double fryy=facc*(dry*dry)/(rr2)+fac*(drz*drz+drx*drx)/rr2;
+          double frxz=facc*(drx*drz)/(rr2)-fac*(drx*drz)/rr2;
+          double frxy=facc*(drx*dry)/(rr2)-fac*(drx*dry)/rr2;
+          double fryz=facc*(dry*drz)/(rr2)-fac*(dry*drz)/rr2;
 
     			
     			const tdouble4 velrhopp2=TDouble4(velrhop[p2].x,velrhop[p2].y,velrhop[p2].z,velrhop[p2].w);
@@ -437,7 +436,7 @@ void InteractionBufferExtrapFlux(const unsigned n,const int pini
             if (sim2d){
               double tempC[] ={(1.0),drx,drz,drx*drx*(0.5),drx*drz,drz*drz*(0.5)};
               double tempC1[]={wab,frx,frz,frxx,frxz,frzz};
-              for (int i=0;i<m_dim;++i){
+              for (unsigned i=0;i<m_dim;++i){
                 C[i]  = tempC[i];
                 if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
                 else C1[i] = volp2*wab*tempC[i];
@@ -445,7 +444,7 @@ void InteractionBufferExtrapFlux(const unsigned n,const int pini
             }else{
               double tempC[]   ={(1.0),drx,dry,drz,drx*drx*(0.5),drx*dry,dry*dry*(0.5),drx*drz,drz*drz*(0.5),dry*drz};
               double tempC1[]  ={wab,frx,fry,frz,frxx,frxy,fryy,frxz,frzz,fryz};
-              for (int i=0;i<m_dim;++i){
+              for (unsigned i=0;i<m_dim;++i){
                 C[i]  = tempC[i];
                 if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
                 else C1[i] = volp2*wab*tempC[i];
@@ -455,7 +454,7 @@ void InteractionBufferExtrapFlux(const unsigned n,const int pini
             if (sim2d){
               double tempC[]   = {(1.0),-drx,-drz};
               double tempC1[]  = {wab,frx,frz};
-              for (int i=0;i<m_dim;++i){
+              for (unsigned i=0;i<m_dim;++i){
                 C[i]  = tempC[i];
                 if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
                 else C1[i] = volp2*wab*tempC[i];
@@ -463,7 +462,7 @@ void InteractionBufferExtrapFlux(const unsigned n,const int pini
             }else{
               double tempC[] = {(1.0),drx,dry,drz};
               double tempC1[] = {wab,frx,fry,frz};
-              for (int i=0;i<m_dim;++i){
+              for (unsigned i=0;i<m_dim;++i){
                 C[i]  = tempC[i];
                 if(vrmethod==VrMethod_Liu) C1[i] = volp2*tempC1[i];
                 else C1[i] = volp2*wab*tempC[i];
@@ -474,19 +473,19 @@ void InteractionBufferExtrapFlux(const unsigned n,const int pini
               // Set up D
           if (sim2d){
             double tempD[] = {velrhop[p2].w,velrhop[p2].x,velrhop[p2].z};
-            for (int i =0;i<m_dim2;++i)D[i]=tempD[i];
+            for (unsigned i =0;i<m_dim2;++i)D[i]=tempD[i];
           }else{
             double tempD[] = {velrhop[p2].w,velrhop[p2].x,velrhop[p2].y,velrhop[p2].z};
-            for (int i =0;i<m_dim2;++i)D[i]=tempD[i];
+            for (unsigned i =0;i<m_dim2;++i)D[i]=tempD[i];
           }
           // Accumulate A and B matrices
-          for (int i=0;i<m_dim;i++)
-            for (int j=0;j<m_dim;j++){
+          for (unsigned i=0;i<m_dim;i++)
+            for (unsigned j=0;j<m_dim;j++){
               A[i*m_dim+j]+=C1[i]*C[j];
             }
               
-          for (int i=0; i<m_dim2;i++)
-            for (int j=0;j<m_dim;j++){
+          for (unsigned i=0; i<m_dim2;i++)
+            for (unsigned j=0;j<m_dim;j++){
               B[i*m_dim+j]+=D[i]*C1[j];
           }
         }
@@ -589,7 +588,7 @@ void Interaction_BufferExtrapFlux(const stinterparmscb &t,StrDataVresCpu &vres
     break;
 #ifndef DISABLE_KERNELS_EXTRA
     case KERNEL_Cubic:
-    	// Interaction_BufferExtrapFlux_gt0<KERNEL_Wendland>(bufferpartcount,pini,t,posxyb,poszb,normals,fluxes,dp,dt,velflux,fastsingle,vrorder,mrthreshold);
+    	throw "KERNEL_Cubic is not available when variable resolution is active.";
     break;
 #endif
     default: throw "Kernel unknown at Interaction_InOutExtrap().";
@@ -681,9 +680,9 @@ void CheckMassFlux(unsigned n,unsigned pinit,const StCteSph csp
   ,const StDivDataCpu& divdata,const unsigned* dcell,const tdouble3* pos
   ,const typecode* code,tdouble3* posb,tfloat3 *normals,float *fluxes)
 {
-  // #ifdef OMP_USE
-  //   #pragma omp parallel for schedule (guided)
-  // #endif
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (guided)
+  #endif
   for(int p1=int(pinit);p1<n;p1++){
 
     tdouble3 posp1=posb[p1];
@@ -699,8 +698,8 @@ void CheckMassFlux(unsigned n,unsigned pinit,const StCteSph csp
         const float rr2=drx*drx+dry*dry+drz*drz;
         if(rr2<csp.dp*csp.dp){
           const tfloat3 normalp1=normals[p1];
-          const float norm =abs((-normalp1.x*drx-normalp1.y*dry-normalp1.z*drz)/sqrt(rr2));
-          if(acos(norm)<0.785398) fluxes[p1]=0; 
+          const float norm =((-normalp1.x*drx-normalp1.y*dry-normalp1.z*drz)/sqrt(rr2));
+          if(acos(norm)>0.785398) fluxes[p1]=0; 
         }      
       }
     }

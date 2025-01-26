@@ -204,7 +204,7 @@ int main(int argc, char** argv){
           JSphCpuSingle sph;
           sph.Run(appname,&cfg,log);
         #endif
-      }
+      }else{
       #if defined(_WITHGPU) && defined(_WITHMR)               //<vs_vrres_ini>
       if(cfg.VRes){                             
         JSphVResDriver<JSphGpuSingle_VRes, StInterParmsbg> sph;
@@ -219,6 +219,7 @@ int main(int argc, char** argv){
         sph.Run(appname,&cfg,log);
       }
       #endif
+      }
     }
     errcode=0;
   }

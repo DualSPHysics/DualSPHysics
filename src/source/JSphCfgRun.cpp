@@ -245,6 +245,13 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -nortimes:<0/1> Removes execution dependent values from bi4 files\n");
   printf("\n");
 
+  printf("  Variable resolution options:\n");
+  printf("    -vres                     Execution with variable resolution algorithm\n");
+  printf("    -vres_fast:<0/1>          Precision of variable resolution interpolation (0=double, 1=single)\n");
+  printf("    -vres_order:<uint>        Maximum order vres interpolation (0=0th, 1:1st, 2:2nd)\n");
+  printf("    -vres_threshold:<float>   Threshold for vres interpolation\n");
+  printf("\n");
+
   printf("  Examples:\n");
   printf("    DualSPHysics case out_case -sv:binx,csv \n");
   printf("    DualSPHysics -name case -dirout out_case -sv:binx,csv \n");

@@ -431,6 +431,7 @@ void JSphGpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* l
 //==============================================================================
 double JSphGpuSingle_VRes::Init2(){
   cusph::CteInteractionUp(&CTE);
+SymplecticDtPre1=SymplecticDtPre;
 
 	//-Main Loop.
 	//------------
@@ -494,7 +495,7 @@ void JSphGpuSingle_VRes::Finish(double dt1){
 	RunGaugeSystem(TimeStep+dt1);
 	if(CaseNmoving)RunMotion(dt1);
 	if(InOut)InOutComputeStep(dt1);
-	// else RunCellDivide(true);
+	else RunCellDivide(true);
 	TimeStep+=dt1;
 	LastDt=dt1;
   Nstep++;

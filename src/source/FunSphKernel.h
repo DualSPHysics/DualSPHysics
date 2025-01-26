@@ -243,6 +243,22 @@ inline float GetKernelWendland_WabFac(const StKWendlandCte& kc,float h,float rr2
   const float wqq=qq+qq+1.f;
   return(kc.awen*wqq*wqq2*wqq2);
 }
+//============================================================================== 
+/// Returns wab (the kernel) and fac (module of the gradient of the kernel 
+/// divided by the distance between particles) and facc(2nd derivative of the kernel).
+//==============================================================================
+inline float GetKernelWendland_WabFac(const StKWendlandCte& kc,float h,float rr2
+  ,float& fac,float &facc)
+{
+  const float rad=sqrt(rr2);
+  const float qq=rad/h;
+  const float wqq1=1.f-0.5f*qq;
+  const float wqq2=wqq1*wqq1;
+  fac=kc.bwenh*wqq2*wqq1;
+  const float wqq=qq+qq+1.f;
+  facc=-kc.bwenh*wqq2*(2.f*qq-1.f);
+  return(kc.awen*wqq*wqq2*wqq2);
+}
 
 //============================================================================== 
 /// Returns the kernel (wab).
@@ -309,6 +325,14 @@ template<TpKernel tker> inline float GetKernel_WabFac(const StCteSph& csp,float 
 {
        if(tker==KERNEL_Wendland  )return(GetKernelWendland_WabFac  (csp.kwend,csp.kernelh,rr2,fac));
   else if(tker==KERNEL_Cubic     )return(GetKernelCubic_WabFac     (csp.kcubic,csp.kernelh,rr2,fac));
+  else return(0);
+}
+
+template<TpKernel tker> inline float GetKernel_WabFacFacc(const StCteSph& csp,float rr2
+  ,float& fac,float& facc)
+{
+       if(tker==KERNEL_Wendland  )return(GetKernelWendland_WabFac  (csp.kwend,csp.kernelh,rr2,fac,facc));
+  // else if(tker==KERNEL_Cubic     )return(GetKernelCubic_WabFac     (csp.kcubic,csp.kernelh,rr2,fac));
   else return(0);
 }
 

@@ -57,7 +57,7 @@ private:
   void InitProc(std::string appname, JSphCfgRun* cfg, JLog2* log);
   void LoadParms();
   void UpdateParms();
-  void SynchTimeStep();
+  double SynchTimeStep();
   void BufferExtrapolateData();
   void ComputeStepBuffer(double dt,JCaseVRes& casemultires);
   void RunVRes(JCaseVRes& casemultires);
@@ -183,12 +183,13 @@ void JSphVResDriver<T, TP>::LoadCaseVRes(const JSphCfgRun* cfg) {
 /// Synch time-step between VRes simulations.
 //==============================================================================  
 template<typename T,typename TP>
-void JSphVResDriver<T, TP>::SynchTimeStep(){
+double JSphVResDriver<T, TP>::SynchTimeStep(){
   std::vector<double> dtsync(VResCount);
 
   for(unsigned i=0;i<VResCount;i++) dtsync[i]=VResObj[i].getSymplecticDtPre1();
   double dtmin = *std::min_element(dtsync.begin(), dtsync.end());
   for(auto &vrobj : VResObj) vrobj.setSymplecticDtPre(dtmin);
+  return(dtmin);
 }
 
 //==============================================================================
@@ -206,13 +207,13 @@ void JSphVResDriver<T, TP>::RunVRes(JCaseVRes& casemultires) {
   double TimeStep=VResObj[0].GetTimeStep();
   double stepdt=0;
 
-  for(auto &vrobj : VResObj) TimeMax=vrobj.Init2();
+  for(unsigned i=0;i<VResCount;i++) TimeMax=VResObj[i].Init2();
   
   SynchTimeStep();
   while(TimeStep<TimeMax){
     for(auto &vrobj : VResObj) stepdt=vrobj.ComputeStepVRes();
     stepdt=VResObj[0].getSymplecticDtPre();
-    SynchTimeStep();
+    const double dtmin=SynchTimeStep();
     ComputeStepBuffer(stepdt, casemultires);
     TimeStep += stepdt;
     for(auto &vrobj : VResObj) vrobj.Finish(stepdt);

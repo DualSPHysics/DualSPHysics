@@ -378,6 +378,8 @@ void JSphCpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* l
 /// Complete initialization of VRes simulation.
 //==============================================================================
 double JSphCpuSingle_VRes::Init2(){
+  SymplecticDtPre1=SymplecticDtPre;
+
 	 //-Main Loop.
 	JTimeControl tc("30,60,300,600");//-Shows information at 0.5, 1, 5 y 10 minutes (before first PART).
   bool minfluidstopped=false;
@@ -435,7 +437,7 @@ void JSphCpuSingle_VRes::Finish(double dt1){
 	RunGaugeSystem(TimeStep+dt1);
 	if(CaseNmoving)RunMotion(dt1);
 	if(InOut)InOutComputeStep(dt1);
-	// else RunCellDivide(true);
+	else RunCellDivide(true);
 	TimeStep+=dt1;
 	LastDt=dt1;
   Nstep++;
