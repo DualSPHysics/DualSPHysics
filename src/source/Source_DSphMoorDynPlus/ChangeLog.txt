@@ -62,7 +62,7 @@
 * ==== (v2.0.18 / 07-05-2021) ====
 * - Improvements in the code style
 * ==== (v2.0.17 / 06-05-2021) ====
-* - New class FunMoorDyn.cpp/h to manage the common functions of MoorDyn
+* - New class FunMoorDyn.cpp/h to manage the common functions of MoorDynPlus
 * - New class IApi to show the progress in the IC calculation and the license
 * - Rename Types_moordyn.h by TypesMoorDyn.h
 * - Define the functions of Misc.cpp/h inside a namespace (misc::)
