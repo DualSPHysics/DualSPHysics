@@ -418,13 +418,15 @@ protected:
   void CalcFlexStrucNormals()const;
   void UpdateFlexStrucGeometry()const;
   inline tmatrix3f CalcFlexStrucPK1Stress(const tmatrix3f& defgrad,const tmatrix6f& cmat)const;
-  template<TpKernel tker,TpVisco tvisco> void InteractionForcesFlexStruc(unsigned np,float visco
+  template<TpKernel tker,TpVisco tvisco,TpMdbc2Mode mdbc2> void InteractionForcesFlexStruc(unsigned np,float visco
       ,StDivDataCpu divdata,const unsigned* dcell
       ,const tdouble3* pos,const tfloat4* velrhop,const float* press,const typecode* code
+      ,const byte* boundmode,const tfloat3* tangenvel
       ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
       ,const tdouble3* pos0,const unsigned* numpairs,const unsigned* const* pairidx,const tmatrix3f* kercorr,const tmatrix3f* defgrad
       ,float& flexstrucdt,tfloat3* ace)const;
-  template<TpKernel tker,TpVisco tvisco> void Interaction_ForcesFlexStrucT(float& flexstrucdtmax)const;
+  template<TpKernel tker,TpVisco tvisco,TpMdbc2Mode mdbc2> void Interaction_ForcesFlexStrucT(float& flexstrucdtmax)const;
+  template<TpKernel tker,TpVisco tvisco> void Interaction_ForcesFlexStruc_ct1(float& flexstrucdtmax)const;
   template<TpKernel tker> void Interaction_ForcesFlexStruc_ct0(float& flexstrucdtmax)const;
   void Interaction_ForcesFlexStruc(float& flexstrucdtmax)const;
   void CopyMotionVelFlexStruc(tfloat4* velrhop)const;

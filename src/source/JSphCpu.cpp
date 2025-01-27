@@ -2530,9 +2530,10 @@ inline tmatrix3f JSphCpu::CalcFlexStrucPK1Stress(const tmatrix3f& defgrad,const 
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker,TpVisco tvisco> void JSphCpu::InteractionForcesFlexStruc(unsigned np,float visco
+template<TpKernel tker,TpVisco tvisco,TpMdbc2Mode mdbc2> void JSphCpu::InteractionForcesFlexStruc(unsigned np,float visco
     ,StDivDataCpu divdata,const unsigned* dcell
     ,const tdouble3* pos,const tfloat4* velrhop,const float* press,const typecode* code
+    ,const byte* boundmode,const tfloat3* tangenvel
     ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
     ,const tdouble3* pos0,const unsigned* numpairs,const unsigned* const* pairidx,const tmatrix3f* kercorr,const tmatrix3f* defgrad
     ,float& flexstrucdt,tfloat3* ace)const{
@@ -2555,7 +2556,7 @@ template<TpKernel tker,TpVisco tvisco> void JSphCpu::InteractionForcesFlexStruc(
 
       //-Obtains basic data of particle p1.
       const tdouble3 posp1=pos[p1];
-      const tfloat4 velrhop1=velrhop[p1];
+      tfloat4 velrhop1=velrhop[p1];
       const float pressp1=press[p1];
       const tdouble3 pos0p1=pos0[pfs1];
       const tmatrix3f kercorrp1=kercorr[pfs1];
@@ -2578,6 +2579,16 @@ template<TpKernel tker,TpVisco tvisco> void JSphCpu::InteractionForcesFlexStruc(
       //-Calculate structural speed of sound.
       const float csp1=float( sqrt(youngmod*(1.0-poissratio)/(rhop1*(1.0+poissratio)*(1.0-2.0*poissratio))) );
 
+      //-Modify values if using mDBC.
+      float massp2=MassFluid;
+      if(mdbc2>=MDBC2_Std){
+        if(boundmode[p1]==BMODE_MDBC2OFF)massp2=0;
+        const tfloat3 tangentvelp1=tangenvel[p1];
+        velrhop1.x=tangentvelp1.x;
+        velrhop1.y=tangentvelp1.y;
+        velrhop1.z=tangentvelp1.z;
+      }
+
       //-Obtains neighborhood search limits.
       const StNgSearch ngs=nsearch::Init(dcell[p1],false,divdata);
 
@@ -2596,8 +2607,14 @@ template<TpKernel tker,TpVisco tvisco> void JSphCpu::InteractionForcesFlexStruc(
                 //-Computes kernel.
                 const float fac=fsph::GetKernel_Fac<tker>(CSP,rr2);
                 const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
-                tfloat4 velrhop2=velrhop[p2];
+                //-Obtains velocity of particle p2 and compute difference.
+                const tfloat4 velrhop2=velrhop[p2];
                 const float dvx=velrhop1.x-velrhop2.x,dvy=velrhop1.y-velrhop2.y,dvz=velrhop1.z-velrhop2.z;
+                //-Pressure derivative (Momentum equation).
+                const float pressp2=press[p2];
+                const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)+(tker==KERNEL_Cubic?fsph::GetKernelCubic_Tensil(CSP,rr2,velrhop1.w,pressp1,velrhop2.w,pressp2):0);
+                const float p_vpm=-prs*massp2*(MassFluid/mass0p1);
+                acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
                 //-Artificial viscosity.
                 if(tvisco==VISCO_Artificial){
                   const float dot=drx*dvx+dry*dvy+drz*dvz;
@@ -2605,7 +2622,7 @@ template<TpKernel tker,TpVisco tvisco> void JSphCpu::InteractionForcesFlexStruc(
                     const float dot_rr2=dot/(rr2+Eta2);
                     const float amubar=KernelH*dot_rr2;
                     const float robar=(velrhop1.w+velrhop2.w)*0.5f;
-                    const float pi_visc=(float)(-visco*Cs0*amubar/robar)*MassFluid*(MassFluid/mass0p1);
+                    const float pi_visc=(float)(-visco*Cs0*amubar/robar)*massp2*(MassFluid/mass0p1);
                     acep1.x-=pi_visc*frx; acep1.y-=pi_visc*fry; acep1.z-=pi_visc*frz;
                   }
                 }
@@ -2613,14 +2630,9 @@ template<TpKernel tker,TpVisco tvisco> void JSphCpu::InteractionForcesFlexStruc(
                 else{
                   const float robar2=(velrhop1.w+velrhop2.w);
                   const float temp=4.f*visco/((rr2+Eta2)*robar2);
-                  const float vtemp=MassFluid*temp*(drx*frx+dry*fry+drz*frz)*(MassFluid/mass0p1);
+                  const float vtemp=massp2*temp*(drx*frx+dry*fry+drz*frz)*(MassFluid/mass0p1);
                   acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
                 }
-                //-Velocity derivative (Momentum equation).
-                const float pressp2=press[p2];
-                const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)+(tker==KERNEL_Cubic?fsph::GetKernelCubic_Tensil(CSP,rr2,velrhop1.w,pressp1,velrhop2.w,pressp2):0);
-                const float p_vpm=-prs*MassFluid*(MassFluid/mass0p1);
-                acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
               }
             }
           }
@@ -2692,10 +2704,10 @@ template<TpKernel tker,TpVisco tvisco> void JSphCpu::InteractionForcesFlexStruc(
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
-template<TpKernel tker,TpVisco tvisco> void JSphCpu::Interaction_ForcesFlexStrucT(float& flexstrucdtmax)const{
+template<TpKernel tker,TpVisco tvisco,TpMdbc2Mode mdbc2> void JSphCpu::Interaction_ForcesFlexStrucT(float& flexstrucdtmax)const{
   if(CaseNflexstruc){
-    InteractionForcesFlexStruc<tker,tvisco>
-      (CaseNflexstruc,Visco*ViscoBoundFactor,DivData,Dcell_c->cptr(),Pos_c->cptr(),Velrho_c->cptr(),Press_c->cptr(),Code_c->cptr(),FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc,flexstrucdtmax,Ace_c->ptr());
+    InteractionForcesFlexStruc<tker,tvisco,mdbc2>
+      (CaseNflexstruc,Visco*ViscoBoundFactor,DivData,Dcell_c->cptr(),Pos_c->cptr(),Velrho_c->cptr(),Press_c->cptr(),Code_c->cptr(),BoundMode_c->cptr(),TangenVel_c->cptr(),FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc,flexstrucdtmax,Ace_c->ptr());
   }
 }
 
@@ -2703,10 +2715,20 @@ template<TpKernel tker,TpVisco tvisco> void JSphCpu::Interaction_ForcesFlexStruc
 /// Interaction forces for the flexible structure particles.
 /// Fuerzas de interacción para las partículas de estructura flexible.
 //==============================================================================
+template<TpKernel tker,TpVisco tvisco> void JSphCpu::Interaction_ForcesFlexStruc_ct1(float& flexstrucdtmax)const{
+       if(TMdbc2==MDBC2_None )Interaction_ForcesFlexStrucT<tker,tvisco,MDBC2_None >(flexstrucdtmax);
+  else if(TMdbc2==MDBC2_Std  )Interaction_ForcesFlexStrucT<tker,tvisco,MDBC2_Std  >(flexstrucdtmax);
+  else if(TMdbc2==MDBC2_NoPen)Interaction_ForcesFlexStrucT<tker,tvisco,MDBC2_NoPen>(flexstrucdtmax);
+}
+
+//==============================================================================
+/// Interaction forces for the flexible structure particles.
+/// Fuerzas de interacción para las partículas de estructura flexible.
+//==============================================================================
 template<TpKernel tker> void JSphCpu::Interaction_ForcesFlexStruc_ct0(float& flexstrucdtmax)const{
-       if(TVisco==VISCO_Artificial)Interaction_ForcesFlexStrucT<tker,VISCO_Artificial>(flexstrucdtmax);
-  else if(TVisco==VISCO_Laminar   )Interaction_ForcesFlexStrucT<tker,VISCO_Laminar   >(flexstrucdtmax);
-  else if(TVisco==VISCO_LaminarSPS)Interaction_ForcesFlexStrucT<tker,VISCO_LaminarSPS>(flexstrucdtmax);
+       if(TVisco==VISCO_Artificial)Interaction_ForcesFlexStruc_ct1<tker,VISCO_Artificial>(flexstrucdtmax);
+  else if(TVisco==VISCO_Laminar   )Interaction_ForcesFlexStruc_ct1<tker,VISCO_Laminar   >(flexstrucdtmax);
+  else if(TVisco==VISCO_LaminarSPS)Interaction_ForcesFlexStruc_ct1<tker,VISCO_LaminarSPS>(flexstrucdtmax);
 }
 
 //==============================================================================
