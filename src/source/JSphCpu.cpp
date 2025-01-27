@@ -877,28 +877,25 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 
           //-No Penetration Correction SHABA
           if (boundp2 && mdbc2==MDBC2_NoPen && !ftp2) {//<vs_m2dbcNP_ini>
-              float rrmag = sqrt(rr2);
+              const float rrmag = sqrt(rr2);
               if (rrmag < 1.25f * Dp) { //-if fluid particle is less than 1.25dp from a boundary particle
-                  float norm = sqrt(boundnorm[p2].x * boundnorm[p2].x + boundnorm[p2].y * boundnorm[p2].y + boundnorm[p2].z * boundnorm[p2].z);
-                  float normx = boundnorm[p2].x / norm; float normy = boundnorm[p2].y / norm; float normz = boundnorm[p2].z / norm;
-                  float normdist = (normx * drx + normy * dry + normz * drz);
+                  const float norm = sqrt(boundnorm[p2].x * boundnorm[p2].x + boundnorm[p2].y * boundnorm[p2].y + boundnorm[p2].z * boundnorm[p2].z);
+                  const float normx = boundnorm[p2].x / norm; float normy = boundnorm[p2].y / norm; float normz = boundnorm[p2].z / norm;
+                  const float normdist = (normx * drx + normy * dry + normz * drz);
                   if (normdist < 0.75f * norm && norm < 1.75f * Dp) {//-if normal distance is less than 0.75 boundary normal size and only first layer of bound
                       const tfloat3 movvelp2 = motionvel[p2];
                       dvx = velp1.x - movvelp2.x;
                       dvy = velp1.y - movvelp2.y;
                       dvz = velp1.z - movvelp2.z;
-                      float vfc = dvx * normx + dvy * normy + dvz * normz; //-fluid velocity normal to boundary particle
+                      const float vfc = dvx * normx + dvy * normy + dvz * normz; //-fluid velocity normal to boundary particle
                       if (vfc < 0.f) { //-if fluid particle velocity is pointing towards boundary add correction velocity
+                          const float ratio = max(normdist / norm, 0.25f);
+                          const float factor = -2.f * ratio + 2.5f;
                           nopenshiftp1.w += 1.f; //-boundary particle counter for average
                           //-delta v = sum uij dot (nj cross nj)
-                          nopenshiftp1.x -= (dvx * normx * normx + dvy * normx * normy + dvz * normx * normz);
-                          nopenshiftp1.y -= (dvx * normx * normy + dvy * normy * normy + dvz * normy * normz);
-                          nopenshiftp1.z -= (dvx * normx * normz + dvy * normy * normz + dvz * normz * normz);
-                          if (normdist < 0.25f * norm) {// if normal distanne is less than 0.25 boundary normal size double correction velocity
-                              nopenshiftp1.x -= (dvx * normx * normx + dvy * normx * normy + dvz * normx * normz);
-                              nopenshiftp1.y -= (dvx * normx * normy + dvy * normy * normy + dvz * normy * normz);
-                              nopenshiftp1.z -= (dvx * normx * normz + dvy * normy * normz + dvz * normz * normz);
-                          }
+                          nopenshiftp1.x -= factor * (dvx * normx * normx + dvy * normx * normy + dvz * normx * normz);
+                          nopenshiftp1.y -= factor * (dvx * normx * normy + dvy * normy * normy + dvz * normy * normz);
+                          nopenshiftp1.z -= factor * (dvx * normx * normz + dvy * normy * normz + dvz * normz * normz);
                       }
                   }
               }
@@ -2495,7 +2492,7 @@ void JSphCpu::CalcFlexStrucNormals()const
 void JSphCpu::UpdateFlexStrucGeometry()const{
   if(TKernel==KERNEL_Wendland)  CalcFlexStrucDefGrad_ct0<KERNEL_Wendland>();
   else if(TKernel==KERNEL_Cubic)CalcFlexStrucDefGrad_ct0<KERNEL_Cubic>   ();
-  if(CaseNflexstruc&&UseNormals)CalcFlexStrucNormals();
+  if(CaseNflexstruc&&TMdbc2>=MDBC2_Std)CalcFlexStrucNormals();
 }
 
 //==============================================================================

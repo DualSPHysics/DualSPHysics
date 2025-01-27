@@ -658,20 +658,20 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 
       //-No-Penetration correction SHABA
       if (boundp2 && mdbc2==MDBC2_NoPen && !ftp2) {//<vs_m2dbcNP_ini>
-          float rrmag=sqrt(rr2);
+          const float rrmag=sqrt(rr2);
           if (rrmag<1.25f*CTE.dp) { //-if fluid particle is less than 1.25dp from a boundary particle
-              float norm=sqrt(boundnorm[p2].x*boundnorm[p2].x+boundnorm[p2].y*boundnorm[p2].y+boundnorm[p2].z*boundnorm[p2].z);
-              float normx=boundnorm[p2].x/norm; float normy=boundnorm[p2].y/norm; float normz=boundnorm[p2].z/norm;
-              float normdist=(normx*drx+normy*dry+normz*drz);
+              const float norm=sqrt(boundnorm[p2].x*boundnorm[p2].x+boundnorm[p2].y*boundnorm[p2].y+boundnorm[p2].z*boundnorm[p2].z);
+              const float normx=boundnorm[p2].x/norm; float normy=boundnorm[p2].y/norm; float normz=boundnorm[p2].z/norm;
+              const float normdist=(normx*drx+normy*dry+normz*drz);
              if (normdist<0.75f*norm &&norm<1.75f*CTE.dp) {//-if normal distance is less than 0.75 boundary normal size and only first layer of bound
                   const float3 movvelp2=motionvel[p2];
                   dvx=velrhop1.x-movvelp2.x; 
                   dvy=velrhop1.y-movvelp2.y;
                   dvz=velrhop1.z-movvelp2.z;
-                  float vfc=dvx*normx+dvy*normy+dvz*normz; //-fluid velocity normal to boundary particle
-                  const float ratio=max(normdist/norm,0.25f);
-                  const float factor=-2.f*ratio+2.5f;
+                  const float vfc=dvx*normx+dvy*normy+dvz*normz; //-fluid velocity normal to boundary particle
                   if (vfc<0.f) { //-if fluid particle velocity is pointing towards boundary add correction velocity
+                      const float ratio=max(normdist/norm,0.25f);
+                      const float factor=-2.f*ratio+2.5f;
                       nopenshift.w+=1.f; //-boundary particle counter for average
                       //-delta v = sum uij dot (nj cross nj)
                       nopenshift.x-=factor*(dvx*normx*normx+dvy*normx*normy+dvz*normx*normz);

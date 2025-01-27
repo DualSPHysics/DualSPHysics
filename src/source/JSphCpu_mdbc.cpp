@@ -349,7 +349,7 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbc2CorrectionT2
               const float infnorma   =Mdbc2InfNorm3x3(a_corr2);
               const float infnormainv=Mdbc2InfNorm3x3(invacorr2);
               const float condinf=float(Dp*Dp)*infnorma*infnormainv;
-              if(condinf<=50)//-If matrix is well conditioned use matrix inverse for density and shepherd for velocity.
+              if(condinf<=50 && !CODE_IsFlexStrucFlex(code[p1]))//-If matrix is well conditioned use matrix inverse for density and shepherd for velocity.
                 rhofinal=float(invacorr2.a11*rhop1 + invacorr2.a12*gradrhop1.x + invacorr2.a13*gradrhop1.z);
               else//-If ill conditioned use shepherd.
                 rhofinal=float(rhop1/a_corr2.a11);
@@ -379,7 +379,7 @@ template<TpKernel tker,bool sim2d> void JSphCpu::InteractionMdbc2CorrectionT2
               const float infnorma   =Mdbc2InfNorm4x4(a_corr3);
               const float infnormainv=Mdbc2InfNorm4x4(invacorr3);
               const float condinf=float(Dp*Dp)*infnorma*infnormainv;
-              if(condinf<=50)//-If matrix is well conditioned use matrix inverse for density.
+              if(condinf<=50 && !CODE_IsFlexStrucFlex(code[p1]))//-If matrix is well conditioned use matrix inverse for density.
                 rhofinal=float(invacorr3.a11*rhop1 + invacorr3.a12*gradrhop1.x + invacorr3.a13*gradrhop1.y + invacorr3.a14*gradrhop1.z);
               else//-Matrix is not well conditioned, use shepherd for density.
                 rhofinal=float(rhop1/a_corr3.a11);
