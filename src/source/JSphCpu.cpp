@@ -1543,8 +1543,12 @@ void JSphCpu::ComputeVerlet(double dt){
   //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersc->TmStart(TMC_SuFlexStruc);
-    if(MotionVel_c)CopyMotionVelFlexStruc(Velrho_c->ptr());
+    #ifndef MDBC2_KEEPVEL
+      if(MotionVel_c)CopyMotionVelFlexStruc(Velrho_c->ptr());
+    #endif
     ComputeSemiImplicitEulerFlexStruc(dt,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr());
+    if(!FlexStrucStepIsValid(Npb,Code_c->cptr()))
+      Run_Exceptioon("Issue with FlexStruc particle update step (either naturally moved out of the domain or blew up).");
     BoundChanged=true;
     Timersc->TmStop(TMC_SuFlexStruc);
   }
@@ -1684,8 +1688,12 @@ void JSphCpu::ComputeSymplecticPre(double dt){
   //-Computes new position and velocity for flexible structures.
   if(CaseNflexstruc){
     Timersc->TmStart(TMC_SuFlexStruc);
-    if(MotionVel_c)CopyMotionVelFlexStruc(VelrhoPre_c->ptr());
+    #ifndef MDBC2_KEEPVEL
+      if(MotionVel_c)CopyMotionVelFlexStruc(VelrhoPre_c->ptr());
+    #endif
     ComputeSymplecticPreFlexStruc(dt05,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr());
+    if(!FlexStrucStepIsValid(Npb,Code_c->cptr()))
+      Run_Exceptioon("Issue with FlexStruc particle update step (either naturally moved out of the domain or blew up).");
     BoundChanged=true;
     Timersc->TmStop(TMC_SuFlexStruc);
   }
@@ -1841,6 +1849,8 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
   if(CaseNflexstruc){
     Timersc->TmStart(TMC_SuFlexStruc);
     ComputeSymplecticCorrFlexStruc(dt05,dt,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr());
+    if(!FlexStrucStepIsValid(Npb,Code_c->cptr()))
+      Run_Exceptioon("Issue with FlexStruc particle update step (either naturally moved out of the domain or blew up).");
     BoundChanged=true;
     Timersc->TmStop(TMC_SuFlexStruc);
   }
@@ -2728,6 +2738,14 @@ void JSphCpu::CopyMotionVelFlexStruc(tfloat4* velrhop)const
       velrhop[p1]=TFloat4(mvel.x,mvel.y,mvel.z,velrhop[p1].w);
     }
   }
+}
+
+//==============================================================================
+/// Checks if any issues with FlexStruc particle update.
+/// Comprueba si hay algún problema con la actualización de partículas FlexStruc.
+//==============================================================================
+bool JSphCpu::FlexStrucStepIsValid(unsigned npb,const typecode* code)const{
+  return !any_of(code,code+npb,[] (const typecode& code) { return CODE_IsFlexStrucAny(code) && !CODE_IsNotOut(code); });
 }
 
 //==============================================================================

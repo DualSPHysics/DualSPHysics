@@ -428,6 +428,7 @@ protected:
   template<TpKernel tker> void Interaction_ForcesFlexStruc_ct0(float& flexstrucdtmax)const;
   void Interaction_ForcesFlexStruc(float& flexstrucdtmax)const;
   void CopyMotionVelFlexStruc(tfloat4* velrhop)const;
+  bool FlexStrucStepIsValid(unsigned npb,const typecode* code)const;
   void ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3* pos,unsigned* dcell,typecode* code)const;
   void ComputeSymplecticPreFlexStruc(double dtm,tdouble3* pos,unsigned* dcell,typecode* code)const;
   void ComputeSymplecticCorrFlexStruc(double dtm,double dt,tdouble3* pos,unsigned* dcell,typecode* code)const;
