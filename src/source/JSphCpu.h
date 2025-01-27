@@ -396,7 +396,6 @@ protected:
 
   //<vs_flexstruc_ini>
   void SetFlexStrucClampCodes(unsigned np,const tdouble3* pos,const StFlexStrucData* flexstrucdata,typecode* code)const;
-  bool FlexStrucHasNormals(unsigned npb,const typecode* code,const tfloat3* boundnor)const;
   unsigned CountFlexStrucParts(unsigned npb,const typecode* code)const;
   void CalcFlexStrucRidp(unsigned npb,const typecode* code,unsigned* flexstrucridp)const;
   void GatherToFlexStrucArray(unsigned npfs,const unsigned* flexstrucridp,const tdouble3* fullarray,tdouble3* flexstrucarray)const;

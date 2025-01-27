@@ -2922,21 +2922,6 @@ void ComputeOutputPartsMk(byte resmask,bool cmband,bool inverse
 
 //<vs_flexstruc_ini>
 //==============================================================================
-/// Functor for checking if a flexible structure has a normal defined.
-/// Functor para verificar si una estructura flexible tiene una normal definida.
-//==============================================================================
-struct FlexStrucHasNormal{
-  FlexStrucHasNormal(const typecode* code,const float3* boundnor):code(code),boundnor(boundnor){};
-  __host__ __device__ bool operator()(unsigned idx){
-    const float3 bnormal=boundnor[idx];
-    return CODE_IsFlexStrucFlex(code[idx]) && (bnormal.x!=0 || bnormal.y!=0 || bnormal.z!=0);
-  }
-private:
-  const typecode* code;
-  const float3* boundnor;
-};
-
-//==============================================================================
 /// Functor for checking if particle is a flexible structure particle.
 /// Funtor para verificar si la partícula es una partícula de estructura flexible.
 //==============================================================================
@@ -2996,19 +2981,6 @@ void SetFlexStrucClampCodes(unsigned npb,const float4* poscell,const StFlexStruc
     dim3 sgridb=GetSimpleGridSize(npb,SPHBSIZE);
     KerSetFlexStrucClampCodes <<<sgridb,SPHBSIZE>>> (npb,poscell,flexstrucdata,code);
   }
-}
-
-//==============================================================================
-/// Checks if any normals are defined for the flexible structure particles.
-/// Comprueba si se han definido normales para las partículas de estructura flexible.
-//==============================================================================
-bool FlexStrucHasNormals(unsigned npb,const typecode* code,const float3* boundnor){
-  if(npb){
-    thrust::counting_iterator<unsigned> idx(0);
-    FlexStrucHasNormal pred=FlexStrucHasNormal(code,boundnor);
-    return thrust::any_of(idx,idx+npb,pred);
-  }
-  return false;
 }
 
 //==============================================================================

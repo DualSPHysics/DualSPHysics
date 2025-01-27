@@ -46,8 +46,6 @@
 //#define DISABLE_TIMERS     ///<Compiles without timers. | Compilado sin timers.
 //#define DISABLE_BSMODES    ///<compiles without advanced BlockSize modes.
 
-// #define DISABLE_FLEXSTRUC_MDBC  ///<Prevents mDBC normals defined on flexible structures since still in beta. <vs_flexstruc>
-
 
 //-Removes dependencies from precompiled libraries.
 //#define DISABLE_CHRONO     ///<It allows compile without ChronoLib library (dsphchrono.dll, ChronoEngine.dll and ChronoEngine_parallel.dll).
