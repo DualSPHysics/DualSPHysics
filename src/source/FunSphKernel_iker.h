@@ -148,7 +148,7 @@ __device__ float GetKernelWendland_WabFacFacc(float rr2,float &fac,float &facc){
   const float wqq2=wqq1*wqq1;
   fac=CTE.bwenh*wqq2*wqq1;
   const float wqq=qq+qq+1.f;
-  facc=-CTE.bwenh*(qq*0.5f-1.f)*(qq*0.5f-1.f)*(qq+qq-1.f);
+  facc=-CTE.bwenh*wqq2*(qq+qq-1.f);
   return(CTE.awen*wqq*wqq2*wqq2);
 }
 //<vs_vrres_end>
