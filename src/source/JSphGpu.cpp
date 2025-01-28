@@ -187,6 +187,20 @@ void JSphGpu::InitVars(){
   FSMinDist_g=NULL;    //-ShiftingAdvanced //<vs_advshift>
   FSNormal_g=NULL;     //-ShiftingAdvanced //<vs_advshift>
 
+  //<vs_flexstruc_ini>
+  FlexStrucDatag=NULL;
+  FlexStrucRidpg=NULL;
+  PosCell0g=NULL;
+  NumPairsg=NULL;
+  PairIdxBufferg=NULL;
+  PairIdxg=NULL;
+  KerCorrg=NULL;
+  DefGradg=NULL;
+  BoundNor0g=NULL;
+  FlexStrucDtg=NULL;
+  FlexStrucDtMax=0;
+  //<vs_flexstruc_end>
+
   FreeGpuMemoryParticles();
 
   //-Variables for moving and floating bodies (GPU memory).
@@ -246,6 +260,18 @@ void JSphGpu::FreeGpuMemoryFixed(){
   if(FtoAceg)   cudaFree(FtoAceg);     FtoAceg=NULL;
   //-Memory for DEM coefficients.
   if(DemDatag)  cudaFree(DemDatag);    DemDatag=NULL;
+  //<vs_flexstruc_ini>
+  if(FlexStrucDatag)    cudaFree(FlexStrucDatag);     FlexStrucDatag=NULL;
+  if(FlexStrucRidpg)    cudaFree(FlexStrucRidpg);     FlexStrucRidpg=NULL;
+  if(PosCell0g)         cudaFree(PosCell0g);          PosCell0g=NULL;
+  if(NumPairsg)         cudaFree(NumPairsg);          NumPairsg=NULL;
+  if(PairIdxBufferg)    cudaFree(PairIdxBufferg);     PairIdxBufferg=NULL;
+  if(PairIdxg)          cudaFree(PairIdxg);           PairIdxg=NULL;
+  if(KerCorrg)          cudaFree(KerCorrg);           KerCorrg=NULL;
+  if(DefGradg)          cudaFree(DefGradg);           DefGradg=NULL;
+  if(BoundNor0g)        cudaFree(BoundNor0g);         BoundNor0g=NULL;
+  if(FlexStrucDtg)      cudaFree(FlexStrucDtg);       FlexStrucDtg=NULL;
+  //<vs_flexstruc_end>
   //-Frees streams for floating bodies.
   for(unsigned c=0;c<MaxNStmFloatings;c++){
     if(StmFloatings[c])cudaStreamDestroy(StmFloatings[c]);
@@ -844,6 +870,12 @@ void JSphGpu::PreInteraction_Forces(TpInterStep interstep){
 
   ViscDt_g->CuMemset(0,Np); //ViscDtg[]=0
   ViscDtMax=0;
+  //<vs_flexstruc_ini>
+  if(FlexStruc){
+    cudaMemset(FlexStrucDtg,0,sizeof(float)*CaseNflexstruc);  //FlexStrucDtg[]=0
+    FlexStrucDtMax=0;
+  }
+  //<vs_flexstruc_end>
   Timersg->TmStop(TMG_CfPreForces,true);
   Check_CudaErroor("Failed calculating VelMax.");
 }
@@ -897,11 +929,29 @@ void JSphGpu::ComputeVerlet(double dt){  //pdtedom
       ,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
     VerletStep=0;
   }
-  //-The new values are calculated in VelrhoM1_g.
-  Velrho_g->SwapPtr(VelrhoM1_g); //-Exchanges Velrho_g and VelrhoM1_g.
   //-Applies displacement to non-periodic fluid particles.
   cusph::ComputeStepPos(PeriActive,WithFloating,Np,Npb,movxyg.cptr(),movzg.cptr()
     ,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
+
+  //<vs_flexstruc_ini>
+  //-Computes new position and velocity for flexible structures.
+  if(CaseNflexstruc){
+    Timersg->TmStart(TMG_SuFlexStruc,false);
+    #ifndef MDBC2_KEEPVEL
+      if(MotionVel_g)cusphs::CopyMotionVelFlexStruc(CaseNflexstruc,Code_g->cptr(),FlexStrucRidpg,MotionVel_g->cptr(),Velrho_g->ptr());
+    #endif
+    cusphs::ComputeStepFlexStrucSemiImplicitEuler(CaseNflexstruc,Velrho_g->cptr(),Code_g->cptr(),FlexStrucRidpg,Ace_g->cptr(),dt,Gravity,movxyg.ptr(),movzg.ptr(),VelrhoM1_g->ptr(),NULL);
+    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,Posxy_g->cptr(),Posz_g->cptr(),movxyg.cptr(),movzg.cptr(),Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
+    if(!cusph::FlexStrucStepIsValid(Npb,Code_g->cptr()))
+      Run_Exceptioon("Issue with FlexStruc particle update step (either naturally moved out of the domain or blew up).");
+    BoundChanged=true;
+    Timersg->TmStop(TMG_SuFlexStruc,false);
+  }
+  //<vs_flexstruc_end>
+
+  //-The new values are calculated in VelrhoM1_g.
+  Velrho_g->SwapPtr(VelrhoM1_g); //-Exchanges Velrho_g and VelrhoM1_g.
+
   Timersg->TmStop(TMG_SuComputeStep,true);
 }
 
@@ -940,6 +990,23 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   //-Copy previous position of the boundary particles.
   Posxy_g->CuCopyFrom(PosxyPre_g,Npb);
   Posz_g->CuCopyFrom(PoszPre_g,Npb);
+
+  //<vs_flexstruc_ini>
+  //-Computes new position and velocity for flexible structures.
+  if(CaseNflexstruc){
+    Timersg->TmStart(TMG_SuFlexStruc,false);
+    #ifndef MDBC2_KEEPVEL
+      if(MotionVel_g)cusphs::CopyMotionVelFlexStruc(CaseNflexstruc,Code_g->cptr(),FlexStrucRidpg,MotionVel_g->cptr(),VelrhoPre_g->ptr());
+    #endif
+    cusphs::ComputeStepFlexStrucSymplecticPre(CaseNflexstruc,VelrhoPre_g->cptr(),Code_g->cptr(),FlexStrucRidpg,Ace_g->cptr(),dt05,Gravity,movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
+    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPre_g->cptr(),PoszPre_g->cptr(),movxyg.cptr(),movzg.cptr(),Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
+    if(!cusph::FlexStrucStepIsValid(Npb,Code_g->cptr()))
+      Run_Exceptioon("Issue with FlexStruc particle update step (either naturally moved out of the domain or blew up).");
+    BoundChanged=true;
+    Timersg->TmStop(TMG_SuFlexStruc,false);
+  }
+  //<vs_flexstruc_end>
+
   Timersg->TmStop(TMG_SuComputeStep,false);
 }
 
@@ -970,6 +1037,19 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
     ,PosxyPre_g->cptr(),PoszPre_g->cptr(),movxyg.cptr(),movzg.cptr()
     ,Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
 
+  //<vs_flexstruc_ini>
+  //-Computes new position and velocity for flexible structures.
+  if(CaseNflexstruc){
+    Timersg->TmStart(TMG_SuFlexStruc,false);
+    cusphs::ComputeStepFlexStrucSymplecticCor(CaseNflexstruc,VelrhoPre_g->cptr(),Code_g->cptr(),FlexStrucRidpg,Ace_g->cptr(),dt05,dt,Gravity,movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
+    cusph::ComputeStepPosFlexStruc(CaseNflexstruc,FlexStrucRidpg,PosxyPre_g->cptr(),PoszPre_g->cptr(),movxyg.cptr(),movzg.cptr(),Posxy_g->ptr(),Posz_g->ptr(),Dcell_g->ptr(),Code_g->ptr());
+    if(!cusph::FlexStrucStepIsValid(Npb,Code_g->cptr()))
+      Run_Exceptioon("Issue with FlexStruc particle update step (either naturally moved out of the domain or blew up).");
+    BoundChanged=true;
+    Timersg->TmStop(TMG_SuFlexStruc,false);
+  }
+  //<vs_flexstruc_end>
+
   //-Free memory assigned to PRE variables in ComputeSymplecticPre().
   PosxyPre_g->Free();
   PoszPre_g->Free();
@@ -987,14 +1067,21 @@ double JSphGpu::DtVariable(bool final){
   const double dt1=(AceMax? (sqrt(double(KernelH)/AceMax)): DBL_MAX); 
   //-dt2 combines the Courant and the viscous time-step controls.
   const double dt2=double(KernelH)/(max(Cs0,VelMax*10.)+double(KernelH)*ViscDtMax);
+  //-dt3 uses the maximum speed of sound across all structure particles.
+  const double dt3=(FlexStrucDtMax? double(KernelH)/FlexStrucDtMax: DBL_MAX); //<vs_flexstruc>
   //-dt new value of time step.
-  double dt=CFLnumber*min(dt1,dt2);
+  double dt=CFLnumber*min(dt1,min(dt2,dt3));
   //-Use dt value defined by FixedDt object.
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
   //-Check that the dt is valid.
-  if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr(
+  if(fun::IsNAN(dt) || fun::IsInfinity(dt)){
+    if(FlexStruc)Run_Exceptioon(fun::PrintStr(
+    "The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f, FlexStrucDtMax=%f) is NaN or infinity at nstep=%u."
+    ,dt,AceMax,VelMax,ViscDtMax,FlexStrucDtMax,Nstep));
+    else         Run_Exceptioon(fun::PrintStr(
     "The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u."
     ,dt,AceMax,VelMax,ViscDtMax,Nstep));
+  }
   //-Correct dt with minimum allowed value.
   if(dt<double(DtMin)){ 
     dt=double(DtMin); DtModif++;
@@ -1009,7 +1096,7 @@ double JSphGpu::DtVariable(bool final){
     if(PartDtMax<dt)PartDtMax=dt;
     //-Saves detailed information about dt in SaveDt object.
     if(SaveDt)SaveDt->AddValues(TimeStep,dt,dt1*CFLnumber,dt2*CFLnumber
-      ,AceMax,ViscDtMax,VelMax);
+      ,dt3*CFLnumber,AceMax,ViscDtMax,FlexStrucDtMax,VelMax);
   }
   return(dt);
 }

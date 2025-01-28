@@ -60,7 +60,9 @@ void JDsSaveDt::Reset(){
   LastInterval=0;
   memset(&ValueNull,0,sizeof(StValue));
   LastDtf=LastDt1=LastDt2=ValueNull;
+  LastDt3=ValueNull;                              //<vs_flexstruc>
   LastAceMax=LastViscDtMax=LastVelMax=ValueNull;
+  LastFlexStrucDtMax=ValueNull;                   //<vs_flexstruc>
   CountAllDts=0;
 }
 
@@ -127,9 +129,11 @@ void JDsSaveDt::SaveFileValues(){
     scsv << "Dtf_mean [s];Dtf_min [s];Dtf_max [s]";
     scsv << "Dt1_mean [s];Dt1_min [s];Dt1_max [s]";
     scsv << "Dt2_mean [s];Dt2_min [s];Dt2_max [s]";
+    scsv << "Dt3_mean [s];Dt3_min [s];Dt3_max [s]";                         //<vs_flexstruc>
     if(FullInfo){
       scsv << "AceMax_mean [m/s^2];AceMax_min [m/s^2];AceMax_max [m/s^2]";
       scsv << "ViscDtMax_mean;ViscDtMax_min;ViscDtMax_max";
+      scsv << "FlexStrucDtMax_mean;FlexStrucDtMax_min;FlexStrucDtMax_max";  //<vs_flexstruc>
       scsv << "VelMax_mean [m/s];VelMax_min [m/s];VelMax_max [m/s]";
     }
     scsv << jcsv::Endl();
@@ -142,10 +146,12 @@ void JDsSaveDt::SaveFileValues(){
     v=DtFinal[c];    scsv << v.tini << v.num << v.vmean << v.vmin << v.vmax;
     v=Dt1[c];        scsv << v.vmean << v.vmin << v.vmax;
     v=Dt2[c];        scsv << v.vmean << v.vmin << v.vmax;
+    v=Dt3[c];        scsv << v.vmean << v.vmin << v.vmax;         //<vs_flexstruc>
     if(FullInfo){
       v=AceMax[c];     scsv << v.vmean << v.vmin << v.vmax;
       v=ViscDtMax[c];  scsv << v.vmean << v.vmin << v.vmax;
       v=VelMax[c];     scsv << v.vmean << v.vmin << v.vmax;
+      v=FlexStrucDtMax[c];  scsv << v.vmean << v.vmin << v.vmax;  //<vs_flexstruc>
     }
     scsv << jcsv::Endl();
   }
@@ -212,12 +218,16 @@ void JDsSaveDt::AddLastValues(){
   DtFinal[Count]=LastDtf;
   Dt1[Count]=LastDt1;
   Dt2[Count]=LastDt2;
+  Dt3[Count]=LastDt3; //<vs_flexstruc>
   LastDtf=LastDt1=LastDt2=ValueNull;
+  LastDt3=ValueNull;  //<vs_flexstruc>
   if(FullInfo){
     AceMax[Count]=LastAceMax;
     ViscDtMax[Count]=LastViscDtMax;
+    FlexStrucDtMax[Count]=LastFlexStrucDtMax; //<vs_flexstruc>
     VelMax[Count]=LastVelMax;
     LastAceMax=LastViscDtMax=LastVelMax=ValueNull;
+    LastFlexStrucDtMax=ValueNull; //<vs_flexstruc>
   }
   Count++;
 }
@@ -227,7 +237,7 @@ void JDsSaveDt::AddLastValues(){
 /// Guarda info del dt inicado. Si coincide timestep lo sobre
 //==============================================================================
 void JDsSaveDt::AddValues(double timestep,double dtfinal,double dt1,double dt2
-  ,double acemax,double viscdtmax,double velmax)
+  ,double dt3,double acemax,double viscdtmax,double flexstrucdtmax,double velmax)
 {
   if(TimeStart<=timestep && timestep<=TimeFinish){
     const unsigned interval=unsigned((timestep-TimeStart)/TimeInterval);
@@ -239,9 +249,11 @@ void JDsSaveDt::AddValues(double timestep,double dtfinal,double dt1,double dt2
     AddValueData(timestep,dtfinal,LastDtf);
     AddValueData(timestep,dt1,LastDt1);
     AddValueData(timestep,dt2,LastDt2);
+    AddValueData(timestep,dt3,LastDt3); //<vs_flexstruc>
     if(FullInfo){
       AddValueData(timestep,acemax,LastAceMax);
       AddValueData(timestep,viscdtmax,LastViscDtMax);
+      AddValueData(timestep,flexstrucdtmax,LastFlexStrucDtMax); //<vs_flexstruc>
       AddValueData(timestep,velmax,LastVelMax);
     }
     //-Management of AllDt.

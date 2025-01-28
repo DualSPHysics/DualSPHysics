@@ -49,6 +49,7 @@ JCellDivGpu::JCellDivGpu(bool stable,bool floating,byte periactive
   ClassName="JCellDivGpu";
   CellPart=NULL;  SortPart=NULL;  AuxMem=NULL;
   BeginEndCell=NULL;
+  SortPart2=NULL; SortIdx=NULL; //<vs_flexstruc>
   Reset();
 }
 
@@ -101,9 +102,11 @@ void JCellDivGpu::FreeMemoryNct(){
 //==============================================================================
 void JCellDivGpu::FreeMemoryAll(){
   FreeMemoryNct();
-  cudaFree(CellPart);  CellPart=NULL;
-  cudaFree(SortPart);  SortPart=NULL;
-  cudaFree(AuxMem);    AuxMem=NULL; 
+  cudaFree(CellPart);   CellPart=NULL;
+  cudaFree(SortPart);   SortPart=NULL;
+  cudaFree(AuxMem);     AuxMem=NULL;
+  cudaFree(SortPart2);  SortPart2=NULL; //<vs_flexstruc>
+  cudaFree(SortIdx);    SortIdx=NULL;   //<vs_flexstruc>
   MemAllocGpuNp=0;
   BoundDivideOk=false;
 }
@@ -126,6 +129,8 @@ void JCellDivGpu::AllocMemoryNp(ullong np,ullong npmin){
   MemAllocGpuNp+=fcuda::Malloc(&SortPart,SizeNp);
   SizeAuxMem=cudiv::LimitsPosSize(SizeNp);
   MemAllocGpuNp+=fcuda::Malloc(&AuxMem,SizeAuxMem);
+  MemAllocGpuNp+=fcuda::Malloc(&SortPart2,SizeNp);  //<vs_flexstruc>
+  MemAllocGpuNp+=fcuda::Malloc(&SortIdx,SizeNp);    //<vs_flexstruc>
   MemAllocGpuNpTimes++;
   //-Checks allocated memory.
   //-Comprueba reserva de memoria.
@@ -460,6 +465,20 @@ tdouble3 JCellDivGpu::GetDomainLimits(bool limitmin,unsigned slicecellmin)const{
   const tdouble6 limits=GetDomainLimitsMinMax(slicecellmin);
   return(limitmin? limits.getlo(): limits.gethi());
 }
+
+//<vs_flexstruc_ini>
+//==============================================================================
+/// Sorts and updates the indices of the flexible structure particles.
+/// Ordena y actualiza los índices de las partículas de estructura flexible.
+//==============================================================================
+void JCellDivGpu::UpdateIndices(unsigned n,unsigned* idx){
+  if(DivideFull){
+    cudaMemcpy(SortPart2,SortPart,sizeof(unsigned)*NpbFinal,cudaMemcpyDeviceToDevice);
+    cudiv::SortIndices(SortPart2,SortIdx,NpbFinal,Stable);
+    cudiv::UpdateIndices(n,SortIdx,idx);
+  }
+}
+//<vs_flexstruc_end>
 
 /*:
 ////==============================================================================

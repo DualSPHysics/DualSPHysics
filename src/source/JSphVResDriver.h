@@ -35,8 +35,9 @@
 #include "JCaseVRes.h"
 #include "JMatrix4.h"
 #include "JVResDataLimits.h"
-#include "JSphGpu_VRes_iker.h"
-
+#ifdef _WITHGPU
+  #include "JSphGpu_VRes_iker.h"
+#endif
 //##############################################################################
 //# JSphVResDriver
 //##############################################################################

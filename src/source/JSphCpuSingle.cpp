@@ -37,6 +37,7 @@
 #include "JTimeControl.h"
 #include "JDsGaugeSystem.h"
 #include "JSphInOut.h"
+#include "JSphFlexStruc.h"  //<vs_flexstruc>
 #include "JDsPartMotionSave.h"
 #include "JDsPartFloatSave.h"
 #include "JLinearValue.h"
@@ -551,6 +552,7 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   if(PeriParent_c){
     CellDivSingle->SortArrayPeriParent(PeriParent_c->ptr());
   }
+  if(FlexStruc&&FlexStrucRidpc)CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpc); //<vs_flexstruc>
 
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
@@ -694,6 +696,15 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
   res.viscdt=0;
   JSphCpu::Interaction_Forces_ct(parms,res);
 
+  //<vs_flexstruc_ini>
+  //-Interaction flexible structure-flexible structure.
+  if(FlexStruc){
+    Timersc->TmStart(TMC_SuFlexStruc);
+    JSphCpu::Interaction_ForcesFlexStruc(FlexStrucDtMax);
+    Timersc->TmStop(TMC_SuFlexStruc);
+  }
+  //<vs_flexstruc_end>
+
   //-For 2-D simulations zero the 2nd component.
   if(Simulate2D){
     tfloat3* acec=Ace_c->ptr();
@@ -758,9 +769,9 @@ void JSphCpuSingle::MdbcBoundCorrection(TpInterStep interstep){
 //==============================================================================
 double JSphCpuSingle::ComputeAceMax()const{
   const bool check=(PeriActive!=0 || InOut!=NULL);
-  const unsigned npf=Np-Npb;
-  if(check)return(ComputeAceMaxOmp<true >(npf,Ace_c->cptr()+Npb,Code_c->cptr()+Npb));
-  else     return(ComputeAceMaxOmp<false>(npf,Ace_c->cptr()+Npb,Code_c->cptr()+Npb));
+  const unsigned pini=(CaseNflexstruc? 0: Npb);
+  if(check)return(ComputeAceMaxOmp<true >(Np-pini,Ace_c->cptr()+pini,Code_c->cptr()+pini));
+  else     return(ComputeAceMaxOmp<false>(Np-pini,Ace_c->cptr()+pini,Code_c->cptr()+pini));
 }
 
 //==============================================================================
@@ -892,6 +903,7 @@ double JSphCpuSingle::ComputeStep_Sym(){
   InterStep=INTERSTEP_SymCorrector;
   DemDtForce=dt;                          //-For DEM interaction.
   RunCellDivide(true);                    //-Rearrange particles in cells.
+  if(FlexStruc)UpdateFlexStrucGeometry(); //-Update the geometric information for each flexible structure particle.
   MdbcBoundCorrection(InterStep);         //-mDBC correction.
   PreInteraction_Forces(InterStep);       //-Allocating temporary arrays.
   PreLoopProcedure(InterStep);            //-Pre-calculation for advanced shifting and other formulations. //<vs_advshift>
@@ -1140,6 +1152,7 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
   InitRunCpu();
   RunFirstGaugeSystem(TimeStep);
   if(InOut)InOutInit(TimeStepIni);
+  if(FlexStruc)FlexStrucInit(); //<vs_flexstruc>
   FreePartsInit();
   PrintAllocMemory(GetAllocMemoryCpu());
   UpdateMaxValues();
@@ -1168,6 +1181,7 @@ void JSphCpuSingle::Run(std::string appname,const JSphCfgRun* cfg,JLog2* log){
     if(CaseNmoving)RunMotion(stepdt);
     if(InOut)InOutComputeStep(stepdt);
     else RunCellDivide(true);
+    if(FlexStruc)UpdateFlexStrucGeometry();
     TimeStep+=stepdt;
     LastDt=stepdt;
     Nstep++;
@@ -1316,4 +1330,73 @@ void JSphCpuSingle::FinishRun(bool stop){
   VisuRefs();
 }
 
+//<vs_flexstruc_ini>
+//==============================================================================
+/// Initialises the associated arrays for the flexible structures.
+/// Inicializa las matrices asociadas para las estructuras flexibles.
+//==============================================================================
+void JSphCpuSingle::FlexStrucInit(){
+  //-Start timer and print info.
+  Timersc->TmStart(TMC_SuFlexStruc);
+  Log->Print("\nInitialising Flexible Structures...");
+  //-Allocate array.
+  FlexStrucDatac=new StFlexStrucData[FlexStrucCount]; MemCpuFixed+=(sizeof(StFlexStrucData)*FlexStrucCount);
+  //-Get flexible structure data for each body and copy to GPU
+  for(unsigned c=0;c<FlexStrucCount;c++){
+    std::vector<typecode> clampcode=FlexStruc->GetBody(c)->GetClampCode();
+    FlexStrucDatac[c].nc=unsigned(clampcode.size());
+    std::copy(clampcode.begin(),clampcode.end(),FlexStrucDatac[c].clampcode);
+    FlexStrucDatac[c].vol0=FlexStruc->GetBody(c)->GetParticleVolume();
+    FlexStrucDatac[c].rho0=FlexStruc->GetBody(c)->GetDensity();
+    FlexStrucDatac[c].youngmod=FlexStruc->GetBody(c)->GetYoungMod();
+    FlexStrucDatac[c].poissratio=FlexStruc->GetBody(c)->GetPoissRatio();
+    FlexStrucDatac[c].hgfactor=FlexStruc->GetBody(c)->GetHgFactor();
+    FlexStrucDatac[c].cmat=FlexStruc->GetBody(c)->GetConstitMatrix();
+  }
+  //-Configure code for flexible structures.
+  FlexStruc->ConfigCode(Npb,Code_c->ptr());
+  JSphCpu::SetFlexStrucClampCodes(Npb,Pos_c->cptr(),FlexStrucDatac,Code_c->ptr());
+  //-Count number of flexible structure particles.
+  CaseNflexstruc=JSphCpu::CountFlexStrucParts(Npb,Code_c->cptr());
+  //-Allocate arrays.
+  FlexStrucRidpc          =new unsigned[CaseNflexstruc];  MemCpuFixed+=(sizeof(unsigned)*CaseNflexstruc);
+  Pos0c                   =new tdouble3[CaseNflexstruc];  MemCpuFixed+=(sizeof(tdouble3)*CaseNflexstruc);
+  NumPairsc               =new unsigned[CaseNflexstruc];  MemCpuFixed+=(sizeof(unsigned)*CaseNflexstruc);
+  PairIdxc                =new unsigned*[CaseNflexstruc]; MemCpuFixed+=(sizeof(unsigned*)*CaseNflexstruc);
+  KerCorrc                =new tmatrix3f[CaseNflexstruc]; MemCpuFixed+=(sizeof(tmatrix3f)*CaseNflexstruc);
+  DefGradc                =new tmatrix3f[CaseNflexstruc]; MemCpuFixed+=(sizeof(tmatrix3f)*CaseNflexstruc);
+  if(UseNormals)BoundNor0c=new tfloat3[CaseNflexstruc];   MemCpuFixed+=(sizeof(tfloat3)*CaseNflexstruc);
+  //-Calculate array for indexing into flexible structure particles.
+  JSphCpu::CalcFlexStrucRidp(Npb,Code_c->cptr(),FlexStrucRidpc);
+  //-Copy current position and normals into initial position and normals.
+  JSphCpu::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpc,Pos_c->cptr(),Pos0c);
+  if(UseNormals)JSphCpu::GatherToFlexStrucArray(CaseNflexstruc,FlexStrucRidpc,BoundNor_c->cptr(),BoundNor0c);
+  //-Get number of particle pairs for each flexible structure particle.
+  const unsigned numpairstot=JSphCpu::CountFlexStrucPairs(CaseNflexstruc,Pos0c,NumPairsc);
+  //-Allocate memory for raw buffer for storing pair indices and set the pointers to the indices.
+  PairIdxBufferc=new unsigned[numpairstot]; MemCpuFixed+=(sizeof(unsigned)*numpairstot);
+  unsigned* offset=PairIdxBufferc;
+  vector<unsigned*> pairidx(CaseNflexstruc);
+  for(unsigned p=0;p<CaseNflexstruc;p++){
+    PairIdxc[p]=offset;
+    offset+=NumPairsc[p];
+  }
+  //-Set the indices for each particle pair.
+  JSphCpu::SetFlexStrucPairs(CaseNflexstruc,Pos0c,PairIdxc);
+  //-Calculate kernel correction and update geometry.
+  JSphCpu::CalcFlexStrucKerCorr();
+  JSphCpu::UpdateFlexStrucGeometry();
+  Log->Print("");
+  Timersc->TmStop(TMC_SuFlexStruc);
+}
 
+//==============================================================================
+/// Updates the geometric information for each flexible structure particle.
+/// Actualiza la información geométrica de cada partícula de estructura flexible.
+//==============================================================================
+void JSphCpuSingle::UpdateFlexStrucGeometry(){
+  Timersc->TmStart(TMC_SuFlexStruc);
+  JSphCpu::UpdateFlexStrucGeometry();
+  Timersc->TmStop(TMC_SuFlexStruc);
+}
+//<vs_flexstruc_end>

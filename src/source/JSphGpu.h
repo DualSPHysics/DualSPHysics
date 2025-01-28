@@ -161,6 +161,21 @@ protected:
   //-Variables for DEM.
   float4*   DemDatag;  ///<Data of the object {mass, (1-poisson^2)/young, kfric, restitu} in GPU [DemObjsSize].
 
+  //<vs_flexstruc_ini>
+  //-Variables for flexible structures.
+  StFlexStrucData* FlexStrucDatag;  ///<Data for each individual flexible structure body [FlexStruc->GetCount()]
+  unsigned* FlexStrucRidpg;         ///<Identifier to access the particles of the flexible structures [CaseNflexstruc].
+  float4* PosCell0g;                ///<Relative initial position and cell coordinates {posx,posy,posz,cellxyz} [CaseNflexstruc].
+  unsigned* NumPairsg;              ///<Number of initial neighbours [CaseNflexstruc].
+  unsigned* PairIdxBufferg;         ///<Raw buffer to particle indices [NumPairsTot].
+  unsigned** PairIdxg;              ///<List of indices to each initial neighbour [CaseNflexstruc].
+  tmatrix3f* KerCorrg;              ///<Kernel correction [CaseNflexstruc].
+  tmatrix3f* DefGradg;              ///<Deformation gradient tensor [CaseNflexstruc].
+  float3* BoundNor0g;               ///<Initial boundary normals for mDBC [CaseNflexstruc].
+  float* FlexStrucDtg;              ///<Structural speed of sound for each flexible structure particle [CaseNflexstruc].
+  float FlexStrucDtMax;             ///<Maximum value of FlexStrucDt computed in Interaction_ForcesFlexStruc().
+  //<vs_flexstruc_end>
+
   //-Variables for computing forces (Null).
   agfloat*  ViscDt_g;     ///< (Null).
   agfloat3* Ace_g;        ///<Sum of interaction acceleration (Null).

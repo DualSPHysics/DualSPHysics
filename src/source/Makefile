@@ -130,11 +130,12 @@ OBINOUT:=$(OBINOUT) JSphInOutPoints.o JSphInOutVel.o JSphInOutVelAwas.o JSphInOu
 OBINOUTGPU=JSphGpuSingle_InOut.o
 OBMESH=JMeshData.o JMeshTDatas.o JMeshTDatasLoad.o JMeshTDatasSave.o JMeshTDatasDsVel.o JMeshTDatasXml.o
 OBVRES=JSphVRes.o JSphBufferZone.o JSphCpuSingle_VRes.o JSphGpuSingle_VRes.o JSphCpu_VRes.o JCaseVRes.o JVResDataLimits.o JDsVresData.o JBoxDef.o
+OBFLEXSTRUC=JSphFlexStruc.o
 
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
 OBJECTS:=$(OBJECTS) $(OBCOMMONGPU) $(OBSPHGPU) $(OBSPHSINGLEGPU) $(OBCUDA)
 OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBWAVERZCUDA) $(OBCHRONO) $(OBMOORDYNPLUS)
-OBJECTS:=$(OBJECTS) $(OBINOUT) $(OBINOUTGPU) $(OBMESH) $(OBVRES)
+OBJECTS:=$(OBJECTS) $(OBINOUT) $(OBINOUTGPU) $(OBMESH) $(OBVRES) $(OBFLEXSTRUC)
 
 #=============== DualSPHysics libs to be included ===============
 JLIBS=${LIBS_DIRECTORIES}

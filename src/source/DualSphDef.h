@@ -115,6 +115,9 @@
 
 #define BSIZE_FORCES 128  ///<Blocksize for particle interaction (default=128).
 
+#define AVAILABLE_FLEXSTRUC true //<vs_flexstruc>
+#define MAX_NUM_MKCLAMP 8 ///<Maximum number of mkclamps for each flexible structure. <vs_flexstruc>
+
 //#define CODE_SIZE4  //-Enables or disables the use of unsigned type (32 bits) for code (allows valid 65530 MKs). | Activa o desactiva el uso de unsigned (32 bits) para code (permite 65530 MKs validos).
 #ifdef CODE_SIZE4
   #define CODE_MKRANGEMAX 65530        //-Maximum valid MK value. | Valor maximo de MK valido.
@@ -165,6 +168,11 @@
   #define CODE_TYPE_FLUID 0x1800    //---Particles fluid:  6144-8191                                      
   #define CODE_MASKVALUE 0x7ff      //-Bits type-value: 0000 0111 1111 1111  Range:0-2047
 
+  //<vs_flexstruc_ini>
+  #define CODE_TYPE_FLEXSTRUC_MASK 0x07e0         //-Bits for flexible structure: 0000 0111 1110 0000
+  #define CODE_TYPE_FLEXSTRUCCLAMP_MASK 0x0010    //-Bits for flexible structure clamp: 0000 0000 0001 0000
+  //<vs_flexstruc_end>
+
   #define CODE_TYPE_FLUID_LIMITFREE 0x1fdf  //---Last normal fluid code: 8159
   #define CODE_TYPE_FLUID_INOUT     0x1fe0  //---First inlet/outlet code: 8160 (16 different codes for InOut zones + 16 to select input particles).
   #define CODE_TYPE_FLUID_INOUTNUM  16      //---Maximum number of valid inlet/outlet zones.
@@ -197,6 +205,16 @@
 #define CODE_IsFluid(code)    (CODE_GetType(code)==CODE_TYPE_FLUID)
 #define CODE_IsNotFluid(code) (CODE_GetType(code)!=CODE_TYPE_FLUID)
 
+//<vs_flexstruc_ini>
+#define CODE_IsFlexStrucAny(code)   ((CODE_IsFixed(code)||CODE_IsMoving(code)) && (code&CODE_TYPE_FLEXSTRUC_MASK)==CODE_TYPE_FLEXSTRUC_MASK)
+#define CODE_IsFlexStrucFlex(code)  (CODE_IsMoving(code) && (code&(CODE_TYPE_FLEXSTRUC_MASK|CODE_TYPE_FLEXSTRUCCLAMP_MASK))==CODE_TYPE_FLEXSTRUC_MASK)
+#define CODE_IsFlexStrucClamp(code) ((CODE_IsFixed(code)||CODE_IsMoving(code)) && (code&(CODE_TYPE_FLEXSTRUC_MASK|CODE_TYPE_FLEXSTRUCCLAMP_MASK))==(CODE_TYPE_FLEXSTRUC_MASK|CODE_TYPE_FLEXSTRUCCLAMP_MASK))
+
+#define CODE_ToFlexStrucFlex(code,ibody)  ((code&(CODE_MASKSPECIAL|CODE_MASKTYPE))|CODE_TYPE_FLEXSTRUC_MASK|ibody)
+#define CODE_ToFlexStrucClamp(code,ibody) ((code&(CODE_MASKSPECIAL|CODE_MASKTYPE))|CODE_TYPE_FLEXSTRUC_MASK|CODE_TYPE_FLEXSTRUCCLAMP_MASK|ibody)
+#define CODE_GetIbodyFlexStruc(code)      (code&(~(CODE_MASKSPECIAL|CODE_MASKTYPE|CODE_TYPE_FLEXSTRUC_MASK|CODE_TYPE_FLEXSTRUCCLAMP_MASK)))
+//<vs_flexstruc_end>
+
 //#define CODE_IsFluidInout(code)    (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)
 #define CODE_IsFluidInout(code)    (CODE_GetTypeAndValue(code)>=CODE_TYPE_FLUID_INOUT)
 #define CODE_IsFluidNotInout(code) (CODE_IsFluid(code) && CODE_GetTypeAndValue(code)< CODE_TYPE_FLUID_INOUT)
@@ -221,6 +239,19 @@
   #define CODE_GetIzoneFluidFixed(code) (code&CODE_TYPE_FLUID_BUFFERMASK)
 //<vs_vrres_end>
 
+//<vs_flexstruc_ini>
+///Structure with the information of the flexible structure.
+typedef struct{
+  unsigned nc;                          ///<Number of clamping objects.
+  typecode clampcode[MAX_NUM_MKCLAMP];  ///<Code for clamping particles.
+  float vol0;                           ///<Initial particle volume.
+  float rho0;                           ///<Initial particle density.
+  float youngmod;                       ///<Young's modulus.
+  float poissratio;                     ///<Poisson ratio.
+  float hgfactor;                       ///<Hourglass correction factor.
+  tmatrix6f cmat;                       ///<Constitutive matrix.
+}StFlexStrucData;
+//<vs_flexstruc_end>
 
 ///Structure with the information of the floating object.
 typedef struct{
@@ -568,6 +599,16 @@ inline void ApplyConstraints(byte constraints,tfloat3& linear,tfloat3& angular){
   if(constraints&FTCON_RotateY)angular.y=0;
   if(constraints&FTCON_RotateZ)angular.z=0;
 }
+
+//<vs_flexstruc_ini>
+///Constitutive model for flexible structures.
+typedef enum{
+  CONSTITMODEL_None=1,          ///<None.
+  CONSTITMODEL_PlaneStrain=1,   ///<Plane strain.
+  CONSTITMODEL_PlaneStress=2,   ///<Plane stress.
+  CONSTITMODEL_SVK=3            ///<St. Venant Kirchhoff.
+}TpConstitModel;
+//<vs_flexstruc_end>
 
 
 ///Modes of cells division.

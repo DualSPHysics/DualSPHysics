@@ -363,6 +363,7 @@ void JSphCpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* l
   InitRunCpu();
   RunFirstGaugeSystem(TimeStep);
   if(InOut)InOutInit(TimeStepIni);
+  if(FlexStruc)FlexStrucInit(); //<vs_flexstruc>
   FreePartsInit();
   PrintAllocMemory(GetAllocMemoryCpu());
   UpdateMaxValues();
@@ -415,6 +416,7 @@ double JSphCpuSingle_VRes::ComputeStepVRes(){
   InterStep=INTERSTEP_SymCorrector;
   DemDtForce=dt;                          //-For DEM interaction.
   RunCellDivide(true);
+  if(FlexStruc)UpdateFlexStrucGeometry(); //-Update the geometric information for each flexible structure particle.
   MdbcBoundCorrection(InterStep);         //-Mdbc correction
   PreInteraction_Forces(InterStep);       //-Allocating temporary arrays.
   PreLoopProcedureVRes(InterStep);        //-Calculate variables for interaction forces (Shifting,DDT,etc...).
@@ -438,6 +440,7 @@ void JSphCpuSingle_VRes::Finish(double dt1){
 	if(CaseNmoving)RunMotion(dt1);
 	if(InOut)InOutComputeStep(dt1);
 	else RunCellDivide(true);
+  if(FlexStruc)UpdateFlexStrucGeometry();
 	TimeStep+=dt1;
 	LastDt=dt1;
   Nstep++;

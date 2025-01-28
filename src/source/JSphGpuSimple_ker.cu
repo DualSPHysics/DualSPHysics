@@ -506,6 +506,183 @@ void ComputeStepSymplecticCor(bool floating,bool shift,bool shiftadv,bool inout,
   }
 }
 
+//<vs_flexstruc_ini>
+//==============================================================================
+/// Copy motion velocity of flexible structure particles.
+/// Copie la velocidad de movimiento de partículas de estructura flexible.
+//==============================================================================
+__global__ void KerCopyMotionVelFlexStruc(unsigned n,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* motionvel,float4* velrhop)
+{
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=flexstrucridp[p]; //-Number of particle.
+    if(CODE_IsFlexStrucFlex(code[p1])){
+      const float3 mvel=motionvel[p1];
+      velrhop[p1]=make_float4(mvel.x,mvel.y,mvel.z,velrhop[p1].w);
+    }
+  }
+}
+
+//==============================================================================
+/// Copy motion velocity of flexible structure particles.
+/// Copie la velocidad de movimiento de partículas de estructura flexible.
+//==============================================================================
+void CopyMotionVelFlexStruc(unsigned npfs,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* motionvel,float4* velrhop)
+{
+  if(npfs){
+    dim3 sgrid=GetSimpleGridSize(npfs,SPHBSIZE);
+    KerCopyMotionVelFlexStruc <<<sgrid,SPHBSIZE>>> (npfs,code,flexstrucridp,motionvel,velrhop);
+  }
+}
+
+//==============================================================================
+/// Updates position and velocity using semi-implicit Euler scheme (used with Verlet scheme).
+/// Actualiza la posición y la velocidad usando el esquema de Euler semiimplícito (usado con el esquema de Verlet).
+//==============================================================================
+__global__ void KerComputeStepFlexStrucSemiImplicitEuler(unsigned n,const float4* velrhop,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* ace,double dt,float3 gravity
+    ,double2* movxy,double* movz,float4* velrhopnew)
+{
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=flexstrucridp[p]; //-Number of particle.
+    if(CODE_IsFlexStrucFlex(code[p1])){
+      const float4 rvelrhop=velrhop[p1];
+      const float3 race=ace[p1];
+      const double acegrx=double(race.x)+gravity.x;
+      const double acegry=double(race.y)+gravity.y;
+      const double acegrz=double(race.z)+gravity.z;
+      const float4 rvelrhopnew=make_float4(
+          float(double(rvelrhop.x) + acegrx*dt),
+          float(double(rvelrhop.y) + acegry*dt),
+          float(double(rvelrhop.z) + acegrz*dt),
+          velrhopnew[p1].w);
+      //-Calculate displacement. | Calcula desplazamiento.
+      const double dx=double(rvelrhopnew.x)*dt;
+      const double dy=double(rvelrhopnew.y)*dt;
+      const double dz=double(rvelrhopnew.z)*dt;
+      //-Update particle data.
+      movxy[p1]=make_double2(dx,dy);
+      movz[p1]=dz;
+      velrhopnew[p1]=rvelrhopnew;
+    }
+  }
+}
+
+//==============================================================================
+/// Updates position and velocity using semi-implicit Euler scheme (used with Verlet scheme).
+/// Actualiza la posición y la velocidad usando el esquema de Euler semiimplícito (usado con el esquema de Verlet).
+//==============================================================================
+void ComputeStepFlexStrucSemiImplicitEuler(unsigned npfs,const float4* velrhop,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* ace,double dt,tfloat3 gravity
+    ,double2* movxy,double* movz,float4* velrhopnew,cudaStream_t stm)
+{
+  if(npfs){
+    dim3 sgrid=GetSimpleGridSize(npfs,SPHBSIZE);
+    KerComputeStepFlexStrucSemiImplicitEuler <<<sgrid,SPHBSIZE,0,stm>>> (npfs,velrhop,code,flexstrucridp
+        ,ace,dt,Float3(gravity)
+        ,movxy,movz,velrhopnew);
+  }
+}
+
+//==============================================================================
+/// Updates position and velocity using symplectic predictor scheme.
+/// Actualiza la posición y la velocidad utilizando un esquema predictor simpléctico.
+//==============================================================================
+__global__ void KerComputeStepFlexStrucSymplecticPre(unsigned n,const float4* velrhoppre,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* ace,double dtm,float3 gravity
+    ,double2* movxy,double* movz,float4* velrhop)
+{
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=flexstrucridp[p]; //-Number of particle.
+    if(CODE_IsFlexStrucFlex(code[p1])){
+      const float4 rvelrhoppre=velrhoppre[p1];
+      const float3 race=ace[p1];
+      //-Calculate displacement. | Calcula desplazamiento.
+      double dx=double(rvelrhoppre.x)*dtm;
+      double dy=double(rvelrhoppre.y)*dtm;
+      double dz=double(rvelrhoppre.z)*dtm;
+      //-Calculate velocity & density. | Calcula velocidad y densidad.
+      const float4 rvelrhopnew=make_float4(
+          float(double(rvelrhoppre.x) + (double(race.x)+gravity.x) * dtm),
+          float(double(rvelrhoppre.y) + (double(race.y)+gravity.y) * dtm),
+          float(double(rvelrhoppre.z) + (double(race.z)+gravity.z) * dtm),
+          velrhop[p1].w);
+      //-Update particle data.
+      movxy[p1]=make_double2(dx,dy);
+      movz[p1]=dz;
+      velrhop[p1]=rvelrhopnew;
+    }
+  }
+}
+
+//==============================================================================
+/// Updates position and velocity using symplectic predictor scheme.
+/// Actualiza la posición y la velocidad utilizando un esquema predictor simpléctico.
+//==============================================================================
+void ComputeStepFlexStrucSymplecticPre(unsigned npfs,const float4* velrhoppre,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* ace,double dtm,tfloat3 gravity
+    ,double2* movxy,double* movz,float4* velrhop,cudaStream_t stm)
+{
+  if(npfs){
+    dim3 sgrid=GetSimpleGridSize(npfs,SPHBSIZE);
+    KerComputeStepFlexStrucSymplecticPre <<<sgrid,SPHBSIZE,0,stm>>> (npfs,velrhoppre,code,flexstrucridp
+        ,ace,dtm,Float3(gravity)
+        ,movxy,movz,velrhop);
+  }
+}
+
+//==============================================================================
+/// Updates position and velocity using symplectic corrector scheme.
+/// Actualiza la posición y la velocidad utilizando un esquema corrector simpléctico.
+//==============================================================================
+__global__ void KerComputeStepFlexStrucSymplecticCor(unsigned n,const float4* velrhoppre,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* ace,double dtm,double dt,float3 gravity
+    ,double2* movxy,double* movz,float4* velrhop)
+{
+  unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
+  if(p<n){
+    const unsigned p1=flexstrucridp[p]; //-Number of particle.
+    if(CODE_IsFlexStrucFlex(code[p1])){
+      const float4 rvelrhoppre=velrhoppre[p1];
+      const float3 race=ace[p1];
+      //-Calculate velocity. | Calcula velocidad.
+      const float4 rvelrhopnew=make_float4(
+          float(double(rvelrhoppre.x) + (double(race.x)+gravity.x) * dt),
+          float(double(rvelrhoppre.y) + (double(race.y)+gravity.y) * dt),
+          float(double(rvelrhoppre.z) + (double(race.z)+gravity.z) * dt),
+          velrhop[p1].w);
+      //-Calculate displacement. | Calcula desplazamiento.
+      double dx=(double(rvelrhoppre.x)+double(rvelrhopnew.x)) * dtm;
+      double dy=(double(rvelrhoppre.y)+double(rvelrhopnew.y)) * dtm;
+      double dz=(double(rvelrhoppre.z)+double(rvelrhopnew.z)) * dtm;
+      //-Update particle data.
+      movxy[p1]=make_double2(dx,dy);
+      movz[p1]=dz;
+      velrhop[p1]=rvelrhopnew;
+    }
+  }
+}
+
+//==============================================================================
+/// Updates position and velocity using symplectic corrector scheme.
+/// Actualiza la posición y la velocidad utilizando un esquema corrector simpléctico.
+//==============================================================================
+void ComputeStepFlexStrucSymplecticCor(unsigned npfs,const float4* velrhoppre,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* ace,double dtm,double dt,tfloat3 gravity
+    ,double2* movxy,double* movz,float4* velrhop,cudaStream_t stm)
+{
+  if(npfs){
+    dim3 sgrid=GetSimpleGridSize(npfs,SPHBSIZE);
+    KerComputeStepFlexStrucSymplecticCor <<<sgrid,SPHBSIZE,0,stm>>> (npfs,velrhoppre,code,flexstrucridp
+        ,ace,dtm,dt,Float3(gravity)
+        ,movxy,movz,velrhop);
+  }
+}
+//<vs_flexstruc_end>
 
 }
 

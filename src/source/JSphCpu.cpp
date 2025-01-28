@@ -43,6 +43,7 @@
 #include "JSphShiftingAdv.h" //<vs_advshift>
 
 #include <climits>
+#include <numeric>
 
 using namespace std;
 
@@ -120,6 +121,19 @@ void JSphCpu::InitVars(){
   FSNormal_c=NULL;    //-ShiftingAdvanced //<vs_advshift>
   FSMinDist_c=NULL;   //-ShiftingAdvanced //<vs_advshift>
 
+  //<vs_flexstruc_ini>
+  FlexStrucDatac=NULL;
+  FlexStrucRidpc=NULL;
+  Pos0c=NULL;
+  NumPairsc=NULL;
+  PairIdxBufferc=NULL;
+  PairIdxc=NULL;
+  KerCorrc=NULL;
+  DefGradc=NULL;
+  BoundNor0c=NULL;
+  FlexStrucDtMax=0;
+  //<vs_flexstruc_end>
+
   FreeCpuMemoryParticles();
 
   RidpMot=NULL;
@@ -133,6 +147,17 @@ void JSphCpu::InitVars(){
 void JSphCpu::FreeCpuMemoryFixed(){
   MemCpuFixed=0;
   delete[] RidpMot;  RidpMot=NULL;
+  //<vs_flexstruc_ini>
+  delete[] FlexStrucDatac;  FlexStrucDatac=NULL;
+  delete[] FlexStrucRidpc;  FlexStrucRidpc=NULL;
+  delete[] Pos0c;           Pos0c=NULL;
+  delete[] NumPairsc;       NumPairsc=NULL;
+  delete[] PairIdxBufferc;  PairIdxBufferc=NULL;
+  delete[] PairIdxc;        PairIdxc=NULL;
+  delete[] KerCorrc;        KerCorrc=NULL;
+  delete[] DefGradc;        DefGradc=NULL;
+  delete[] BoundNor0c;      BoundNor0c=NULL;
+  //<vs_flexstruc_end>
 }
 
 //==============================================================================
@@ -493,6 +518,7 @@ void JSphCpu::PreInteraction_Forces(TpInterStep interstep){
   const unsigned pini=(DtAllParticles? 0: Npb);
   VelMax=CalcVelMaxOmp(Np-pini,Velrho_c->cptr()+pini);
   ViscDtMax=0;
+  if(FlexStruc)FlexStrucDtMax=0;  //<vs_flexstruc>
   Timersc->TmStop(TMC_CfPreForces);
 }
 
@@ -851,28 +877,25 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 
           //-No Penetration Correction SHABA
           if (boundp2 && mdbc2==MDBC2_NoPen && !ftp2) {//<vs_m2dbcNP_ini>
-              float rrmag = sqrt(rr2);
+              const float rrmag = sqrt(rr2);
               if (rrmag < 1.25f * Dp) { //-if fluid particle is less than 1.25dp from a boundary particle
-                  float norm = sqrt(boundnorm[p2].x * boundnorm[p2].x + boundnorm[p2].y * boundnorm[p2].y + boundnorm[p2].z * boundnorm[p2].z);
-                  float normx = boundnorm[p2].x / norm; float normy = boundnorm[p2].y / norm; float normz = boundnorm[p2].z / norm;
-                  float normdist = (normx * drx + normy * dry + normz * drz);
+                  const float norm = sqrt(boundnorm[p2].x * boundnorm[p2].x + boundnorm[p2].y * boundnorm[p2].y + boundnorm[p2].z * boundnorm[p2].z);
+                  const float normx = boundnorm[p2].x / norm; float normy = boundnorm[p2].y / norm; float normz = boundnorm[p2].z / norm;
+                  const float normdist = (normx * drx + normy * dry + normz * drz);
                   if (normdist < 0.75f * norm && norm < 1.75f * Dp) {//-if normal distance is less than 0.75 boundary normal size and only first layer of bound
                       const tfloat3 movvelp2 = motionvel[p2];
                       dvx = velp1.x - movvelp2.x;
                       dvy = velp1.y - movvelp2.y;
                       dvz = velp1.z - movvelp2.z;
-                      float vfc = dvx * normx + dvy * normy + dvz * normz; //-fluid velocity normal to boundary particle
+                      const float vfc = dvx * normx + dvy * normy + dvz * normz; //-fluid velocity normal to boundary particle
                       if (vfc < 0.f) { //-if fluid particle velocity is pointing towards boundary add correction velocity
+                          const float ratio = max(normdist / norm, 0.25f);
+                          const float factor = -2.f * ratio + 2.5f;
                           nopenshiftp1.w += 1.f; //-boundary particle counter for average
                           //-delta v = sum uij dot (nj cross nj)
-                          nopenshiftp1.x -= (dvx * normx * normx + dvy * normx * normy + dvz * normx * normz);
-                          nopenshiftp1.y -= (dvx * normx * normy + dvy * normy * normy + dvz * normy * normz);
-                          nopenshiftp1.z -= (dvx * normx * normz + dvy * normy * normz + dvz * normz * normz);
-                          if (normdist < 0.25f * norm) {// if normal distanne is less than 0.25 boundary normal size double correction velocity
-                              nopenshiftp1.x -= (dvx * normx * normx + dvy * normx * normy + dvz * normx * normz);
-                              nopenshiftp1.y -= (dvx * normx * normy + dvy * normy * normy + dvz * normy * normz);
-                              nopenshiftp1.z -= (dvx * normx * normz + dvy * normy * normz + dvz * normz * normz);
-                          }
+                          nopenshiftp1.x -= factor * (dvx * normx * normx + dvy * normx * normy + dvz * normx * normz);
+                          nopenshiftp1.y -= factor * (dvx * normx * normy + dvy * normy * normy + dvz * normy * normz);
+                          nopenshiftp1.z -= factor * (dvx * normx * normz + dvy * normy * normz + dvz * normz * normz);
                       }
                   }
               }
@@ -1512,6 +1535,22 @@ void JSphCpu::ComputeVerlet(double dt){
       ,dt,VelrhoM1_c->ptr());
     VerletStep=0;
   }
+
+  //<vs_flexstruc_ini>
+  //-Computes new position and velocity for flexible structures.
+  if(CaseNflexstruc){
+    Timersc->TmStart(TMC_SuFlexStruc);
+    #ifndef MDBC2_KEEPVEL
+      if(MotionVel_c)CopyMotionVelFlexStruc(Velrho_c->ptr());
+    #endif
+    ComputeSemiImplicitEulerFlexStruc(dt,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr());
+    if(!FlexStrucStepIsValid(Npb,Code_c->cptr()))
+      Run_Exceptioon("Issue with FlexStruc particle update step (either naturally moved out of the domain or blew up).");
+    BoundChanged=true;
+    Timersc->TmStop(TMC_SuFlexStruc);
+  }
+  //<vs_flexstruc_end>
+
   //-New values are calculated en VelrhoM1_c. | Los nuevos valores se calculan en VelrhoM1_c.
   Velrho_c->SwapPtr(VelrhoM1_c);  //-Swap Velrho_c & VelrhoM1_c. | Intercambia Velrho_c y VelrhoM1_c.
   Timersc->TmStop(TMC_SuComputeStep);
@@ -1641,6 +1680,22 @@ void JSphCpu::ComputeSymplecticPre(double dt){
   }
   //-Copy previous position of the boundary particles.
   Pos_c->CopyFrom(PosPre_c,Npb);
+
+  //<vs_flexstruc_ini>
+  //-Computes new position and velocity for flexible structures.
+  if(CaseNflexstruc){
+    Timersc->TmStart(TMC_SuFlexStruc);
+    #ifndef MDBC2_KEEPVEL
+      if(MotionVel_c)CopyMotionVelFlexStruc(VelrhoPre_c->ptr());
+    #endif
+    ComputeSymplecticPreFlexStruc(dt05,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr());
+    if(!FlexStrucStepIsValid(Npb,Code_c->cptr()))
+      Run_Exceptioon("Issue with FlexStruc particle update step (either naturally moved out of the domain or blew up).");
+    BoundChanged=true;
+    Timersc->TmStop(TMC_SuFlexStruc);
+  }
+  //<vs_flexstruc_end>
+
   Timersc->TmStop(TMC_SuComputeStep);
 }
 
@@ -1786,6 +1841,18 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
     }
   }
 
+  //<vs_flexstruc_ini>
+  //-Computes new position and velocity for flexible structures.
+  if(CaseNflexstruc){
+    Timersc->TmStart(TMC_SuFlexStruc);
+    ComputeSymplecticCorrFlexStruc(dt05,dt,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr());
+    if(!FlexStrucStepIsValid(Npb,Code_c->cptr()))
+      Run_Exceptioon("Issue with FlexStruc particle update step (either naturally moved out of the domain or blew up).");
+    BoundChanged=true;
+    Timersc->TmStop(TMC_SuFlexStruc);
+  }
+  //<vs_flexstruc_end>
+
   //-Free memory assigned to PRE variables in ComputeSymplecticPre().
   PosPre_c->Free();
   VelrhoPre_c->Free();
@@ -1801,16 +1868,23 @@ double JSphCpu::DtVariable(bool final){
   const double dt1=(AceMax? (sqrt(double(KernelH)/AceMax)): DBL_MAX); 
   //-dt2 combines the Courant and the viscous time-step controls.
   const double dt2=double(KernelH)/(max(Cs0,VelMax*10.)+double(KernelH)*ViscDtMax);
+  //-dt3 uses the maximum speed of sound across all structure particles.
+  const double dt3=(FlexStrucDtMax? double(KernelH)/FlexStrucDtMax: DBL_MAX); //<vs_flexstruc>
   //-dt new value of time step.
-  double dt=CFLnumber*min(dt1,dt2);
+  double dt=CFLnumber*min(dt1,min(dt2,dt3));
   //-Use dt value defined by FixedDt object.
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
   //-Check that the dt is valid.
-  if(fun::IsNAN(dt) || fun::IsInfinity(dt))Run_Exceptioon(fun::PrintStr(
+  if(fun::IsNAN(dt) || fun::IsInfinity(dt)){
+    if(FlexStruc)Run_Exceptioon(fun::PrintStr(
+    "The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f, FlexStrucDtMax=%f) is NaN or infinity at nstep=%u."
+    ,dt,AceMax,VelMax,ViscDtMax,FlexStrucDtMax,Nstep));
+    else         Run_Exceptioon(fun::PrintStr(
     "The computed Dt=%f (from AceMax=%f, VelMax=%f, ViscDtMax=%f) is NaN or infinity at nstep=%u."
     ,dt,AceMax,VelMax,ViscDtMax,Nstep));
+  }
   //-Correct dt with minimum allowed value.
-  if(dt<double(DtMin)){ 
+  if(dt<double(DtMin)){
     dt=double(DtMin); DtModif++;
     if(DtModif>=DtModifWrn){
       Log->PrintfWarning("%d DTs adjusted to DtMin (t:%g, nstep:%u)",DtModif,TimeStep,Nstep);
@@ -1823,7 +1897,7 @@ double JSphCpu::DtVariable(bool final){
     if(PartDtMax<dt)PartDtMax=dt;
     //-Saves detailed information about dt in SaveDt object.
     if(SaveDt)SaveDt->AddValues(TimeStep,dt,dt1*CFLnumber,dt2*CFLnumber
-      ,AceMax,ViscDtMax,VelMax);
+      ,dt3*CFLnumber,AceMax,ViscDtMax,FlexStrucDtMax,VelMax);
   }
   return(dt);
 }
@@ -2066,5 +2140,732 @@ void JSphCpu::RunDamping(double dt){
     ,codeptr,Velrho_c->ptr());
 }
 
+//<vs_flexstruc_ini>
+//==============================================================================
+/// Finds the clamp particles and updates the code.
+/// Encuentra las partículas de abrazadera y actualiza el código.
+//==============================================================================
+void JSphCpu::SetFlexStrucClampCodes(unsigned np,const tdouble3* pos
+  ,const StFlexStrucData* flexstrucdata,typecode* code)const
+{
+  //-Starts execution using OpenMP.
+  const int n=int(np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=0;p<n;p++){
+    const int p1=p;      //-Number of particle.
+    const typecode codep1=code[p1];
 
+    //-If potentially a clamp particle.
+    if((CODE_IsFixed(codep1)||CODE_IsMoving(codep1))&&!CODE_IsFlexStrucAny(codep1)){
 
+      //-Loads particle p1 data.
+      const tdouble3 posp1=pos[p1];
+
+      //-Loop through other boundary particles.
+      for(int p2=0;p2<n;p2++){
+        const typecode codep2=code[p2];
+        if(CODE_IsFlexStrucFlex(codep2)){
+          const unsigned nc=flexstrucdata[CODE_GetIbodyFlexStruc(codep2)].nc;
+          const typecode* clampcode=flexstrucdata[CODE_GetIbodyFlexStruc(codep2)].clampcode;
+          if(std::find(clampcode,clampcode+nc,codep1)!=clampcode+nc){
+            const tdouble3 posp2=pos[p2];
+            const float drx=float(posp1.x-posp2.x);
+            const float dry=float(posp1.y-posp2.y);
+            const float drz=float(posp1.z-posp2.z);
+            const float rr2=drx*drx+dry*dry+drz*drz;
+            if(rr2<=KernelSize2 && rr2>=ALMOSTZERO){
+              code[p1]=CODE_ToFlexStrucClamp(codep1,CODE_GetIbodyFlexStruc(codep2));
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+//==============================================================================
+/// Counts the number of flexible structure particles (includes clamps).
+/// Cuenta el número de partículas de estructura flexible (incluye abrazaderas).
+//==============================================================================
+unsigned JSphCpu::CountFlexStrucParts(unsigned npb,const typecode* code)const{
+  return(unsigned( count_if(code,code+npb,[](const typecode c){return CODE_IsFlexStrucAny(c);}) ));
+}
+
+//==============================================================================
+/// Calculates indices to the main arrays for the flexible structure particles.
+/// Calcula los índices de las matrices principales para las partículas de estructura flexible.
+//==============================================================================
+void JSphCpu::CalcFlexStrucRidp(unsigned npb,const typecode* code,unsigned* flexstrucridp)const{
+  vector<unsigned> idx(npb);
+  iota(idx.begin(),idx.end(),0);
+  copy_if(idx.begin(),idx.end(),flexstrucridp,[code](unsigned i){return CODE_IsFlexStrucAny(code[i]);});
+}
+
+//==============================================================================
+/// Gathers values from a main array into the smaller flexible structure array.
+/// Reúne valores de una matriz principal en la matriz de estructura flexible más pequeña.
+//==============================================================================
+void JSphCpu::GatherToFlexStrucArray(unsigned npfs,const unsigned* flexstrucridp,const tdouble3* fullarray,tdouble3* flexstrucarray)const{
+  //-Starts execution using OpenMP.
+  const int n=int(npfs);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=0;p<n;p++)flexstrucarray[p]=fullarray[flexstrucridp[p]];
+}
+
+//==============================================================================
+/// Gathers values from a main array into the smaller flexible structure array.
+/// Reúne valores de una matriz principal en la matriz de estructura flexible más pequeña.
+//==============================================================================
+void JSphCpu::GatherToFlexStrucArray(unsigned npfs,const unsigned* flexstrucridp,const tfloat3* fullarray,tfloat3* flexstrucarray)const{
+  //-Starts execution using OpenMP.
+  const int n=int(npfs);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=0;p<n;p++)flexstrucarray[p]=fullarray[flexstrucridp[p]];
+}
+
+//==============================================================================
+/// Counts the total number of flexible structure pairs (neighbours).
+/// Cuenta el número total de pares de estructuras flexibles (vecinos).
+//==============================================================================
+unsigned JSphCpu::CountFlexStrucPairs(unsigned np,const tdouble3* pos0,unsigned* numpairs)const{
+  //-Starts execution using OpenMP.
+  const int n=int(np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=0;p<n;p++){
+    const int pfs1=p;      //-Number of particle.
+    unsigned numpairsp1=0;
+
+    //-Loads particle p1 data.
+    const tdouble3 pos0p1=pos0[pfs1];
+
+    //-Loop through other flexible structure particles.
+    for(int pfs2=0;pfs2<n;pfs2++){
+      const tdouble3 pos0p2=pos0[pfs2];
+      const float drx0=float(pos0p1.x-pos0p2.x);
+      const float dry0=float(pos0p1.y-pos0p2.y);
+      const float drz0=float(pos0p1.z-pos0p2.z);
+      const float rr20=drx0*drx0+dry0*dry0+drz0*drz0;
+      if(rr20<=KernelSize2&&rr20>=ALMOSTZERO)numpairsp1++;
+    }
+    numpairs[pfs1]=numpairsp1;
+  }
+  return accumulate(numpairs,numpairs+n,0);
+}
+
+//==============================================================================
+/// Sets the indices for each flexible structure pair.
+/// Establece los índices para cada par de estructuras flexibles.
+//==============================================================================
+void JSphCpu::SetFlexStrucPairs(unsigned np,const tdouble3* pos0,unsigned** pairidx)const{
+  //-Starts execution using OpenMP.
+  const int n=int(np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=0;p<n;p++){
+    const int pfs1=p;      //-Number of particle.
+    unsigned idx=0;
+
+    //-Loads particle p1 data.
+    const tdouble3 pos0p1=pos0[pfs1];
+
+    //-Loop through other flexible structure particles.
+    for(int pfs2=0;pfs2<n;pfs2++){
+      const tdouble3 pos0p2=pos0[pfs2];
+      const float drx0=float(pos0p1.x-pos0p2.x);
+      const float dry0=float(pos0p1.y-pos0p2.y);
+      const float drz0=float(pos0p1.z-pos0p2.z);
+      const float rr20=drx0*drx0+dry0*dry0+drz0*drz0;
+      if(rr20<=KernelSize2&&rr20>=ALMOSTZERO)pairidx[pfs1][idx++]=pfs2;
+    }
+  }
+}
+
+//==============================================================================
+/// Calculates the kernel correction matrix for each flexible structure particle.
+/// Calcula la matriz de corrección del kernel para cada partícula de estructura flexible.
+//==============================================================================
+template<TpKernel tker,bool simulate2d> void JSphCpu::CalcFlexStrucKerCorr(unsigned np,const typecode* code,const StFlexStrucData* flexstrucdata
+        ,const unsigned* flexstrucridp,const tdouble3* pos0,const unsigned* numpairs,const unsigned* const* pairidx
+        ,tmatrix3f* kercorr)const
+{
+  //-Starts execution using OpenMP.
+  const int n=int(np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(n>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=0;p<n;p++){
+    const unsigned pfs1=p;      //-Number of particle.
+
+    //-Get number of pairs for this particle.
+    const unsigned numpairsp1=numpairs[pfs1];
+
+    //-If this particle has pairs.
+    if(numpairsp1){
+      tmatrix3f kercorrp1={0};
+
+      //-Obtains basic data of particle p1.
+      const float vol0p1=flexstrucdata[CODE_GetIbodyFlexStruc(code[flexstrucridp[pfs1]])].vol0;
+      const tdouble3 pos0p1=pos0[pfs1];
+
+      //-Calculate kernel correction matrix.
+      for(unsigned pair=0;pair<numpairsp1;pair++){
+        const unsigned pfs2=pairidx[pfs1][pair];
+        const tdouble3 pos0p2=pos0[pfs2];
+        const float drx0=float(pos0p1.x-pos0p2.x);
+        const float dry0=float(pos0p1.y-pos0p2.y);
+        const float drz0=float(pos0p1.z-pos0p2.z);
+        const float rr20=drx0*drx0+dry0*dry0+drz0*drz0;
+        //-Computes kernel.
+        const float fac0=fsph::GetKernel_Fac<tker>(CSP,rr20);
+        const float frx0=fac0*drx0,fry0=fac0*dry0,frz0=fac0*drz0; //-Gradients.
+        kercorrp1.a11-=vol0p1*drx0*frx0; kercorrp1.a12-=vol0p1*drx0*fry0; kercorrp1.a13-=vol0p1*drx0*frz0;
+        kercorrp1.a21-=vol0p1*dry0*frx0; kercorrp1.a22-=vol0p1*dry0*fry0; kercorrp1.a23-=vol0p1*dry0*frz0;
+        kercorrp1.a31-=vol0p1*drz0*frx0; kercorrp1.a32-=vol0p1*drz0*fry0; kercorrp1.a33-=vol0p1*drz0*frz0;
+      }
+      if(simulate2d){
+        kercorrp1.a12=kercorrp1.a21=kercorrp1.a23=kercorrp1.a32=0.0;
+        kercorrp1.a22=1.0;
+      }
+      kercorr[pfs1]=fmath::InverseMatrix3x3(kercorrp1);
+    }
+  }
+}
+
+//==============================================================================
+/// Calculates the kernel correction matrix for each flexible structure particle.
+/// Calcula la matriz de corrección del kernel para cada partícula de estructura flexible.
+//==============================================================================
+template<TpKernel tker,bool simulate2d> void JSphCpu::CalcFlexStrucKerCorrT()const{
+  if(CaseNflexstruc){
+    CalcFlexStrucKerCorr<tker,simulate2d>
+      (CaseNflexstruc,Code_c->cptr(),FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc);
+  }
+}
+
+//==============================================================================
+/// Calculates the kernel correction matrix for each flexible structure particle.
+/// Calcula la matriz de corrección del kernel para cada partícula de estructura flexible.
+//==============================================================================
+template<TpKernel tker> void JSphCpu::CalcFlexStrucKerCorr_ct0()const{
+  if(Simulate2D)CalcFlexStrucKerCorrT<tker,true> ();
+  else          CalcFlexStrucKerCorrT<tker,false>();
+}
+
+//==============================================================================
+/// Calculates the kernel correction matrix for each flexible structure particle.
+/// Calcula la matriz de corrección del kernel para cada partícula de estructura flexible.
+//==============================================================================
+void JSphCpu::CalcFlexStrucKerCorr()const{
+  if(TKernel==KERNEL_Wendland)  CalcFlexStrucKerCorr_ct0<KERNEL_Wendland>();
+  else if(TKernel==KERNEL_Cubic)CalcFlexStrucKerCorr_ct0<KERNEL_Cubic>   ();
+}
+
+//==============================================================================
+/// Calculates the deformation gradient matrix for each flexible structure particle.
+/// Calcula la matriz de gradiente de deformación para cada partícula de estructura flexible.
+//==============================================================================
+template<TpKernel tker,bool simulate2d> void JSphCpu::CalcFlexStrucDefGrad(unsigned np,const tdouble3* pos,const typecode* code
+    ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
+    ,const tdouble3* pos0,const unsigned* numpairs,const unsigned* const* pairidx,const tmatrix3f* kercorr
+    ,tmatrix3f* defgrad)const
+{
+  //-Starts execution using OpenMP.
+  const int n=int(np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(int p=0;p<n;p++){
+    const int pfs1=p;      //-Number of particle.
+
+    //-Get number of pairs for this particle.
+    const unsigned numpairsp1=numpairs[pfs1];
+
+    //-If this particle has pairs.
+    if(numpairsp1){
+      tmatrix3f defgradp1={0};
+
+      //-Obtains basic data of particle p1.
+      const unsigned p1=flexstrucridp[pfs1];
+      const float vol0p1=flexstrucdata[CODE_GetIbodyFlexStruc(code[p1])].vol0;
+      const tdouble3 posp1=pos[p1];
+      const tdouble3 pos0p1=pos0[pfs1];
+      const tmatrix3f kercorrp1=kercorr[pfs1];
+
+      //-Calculate deformation gradient.
+      for(unsigned pair=0;pair<numpairsp1;pair++){
+        const unsigned pfs2=pairidx[pfs1][pair];
+        const unsigned p2=flexstrucridp[pfs2];
+        const tdouble3 posp2=pos[p2];
+        const tdouble3 pos0p2=pos0[pfs2];
+        const float drx=float(posp1.x-posp2.x);
+        const float dry=float(posp1.y-posp2.y);
+        const float drz=float(posp1.z-posp2.z);
+        const float drx0=float(pos0p1.x-pos0p2.x);
+        const float dry0=float(pos0p1.y-pos0p2.y);
+        const float drz0=float(pos0p1.z-pos0p2.z);
+        const float rr20=drx0*drx0+dry0*dry0+drz0*drz0;
+        const float fac0=fsph::GetKernel_Fac<tker>(CSP,rr20);
+        const float frx0=fac0*drx0,fry0=fac0*dry0,frz0=fac0*drz0; //-Gradients.
+        defgradp1.a11-=vol0p1*drx*frx0; defgradp1.a12-=vol0p1*drx*fry0; defgradp1.a13-=vol0p1*drx*frz0;
+        defgradp1.a21-=vol0p1*dry*frx0; defgradp1.a22-=vol0p1*dry*fry0; defgradp1.a23-=vol0p1*dry*frz0;
+        defgradp1.a31-=vol0p1*drz*frx0; defgradp1.a32-=vol0p1*drz*fry0; defgradp1.a33-=vol0p1*drz*frz0;
+      }
+      if(simulate2d){
+        defgradp1.a12=defgradp1.a21=defgradp1.a23=defgradp1.a32=0.0;
+        defgradp1.a22=1.0;
+      }
+      defgrad[pfs1]=fmath::MulMatrix3x3(defgradp1,kercorrp1);
+    }
+  }
+}
+
+//==============================================================================
+/// Calculates the deformation gradient matrix for each flexible structure particle.
+/// Calcula la matriz de gradiente de deformación para cada partícula de estructura flexible.
+//==============================================================================
+template<TpKernel tker,bool simulate2d> void JSphCpu::CalcFlexStrucDefGradT()const{
+  if(CaseNflexstruc){
+    CalcFlexStrucDefGrad<tker,simulate2d>
+      (CaseNflexstruc,Pos_c->cptr(),Code_c->cptr(),FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc);
+  }
+}
+
+//==============================================================================
+/// Calculates the deformation gradient matrix for each flexible structure particle.
+/// Calcula la matriz de gradiente de deformación para cada partícula de estructura flexible.
+//==============================================================================
+template<TpKernel tker> void JSphCpu::CalcFlexStrucDefGrad_ct0()const{
+  if(Simulate2D)CalcFlexStrucDefGradT<tker,true> ();
+  else          CalcFlexStrucDefGradT<tker,false>();
+}
+
+//==============================================================================
+/// Calculates the surface normal for each flexible structure particle.
+/// Calcula la superficie normal para cada partícula de estructura flexible.
+//==============================================================================
+void JSphCpu::CalcFlexStrucNormals()const
+{
+  const int nflex=int(CaseNflexstruc);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(nflex>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=0;p<nflex;p++){
+    const tfloat3 boundnor0=BoundNor0c[p];
+    if(boundnor0.x!=0 || boundnor0.y!=0 || boundnor0.z!=0){
+      const tmatrix3f rot=fmath::InverseMatrix3x3(fmath::TrasMatrix3x3(DefGradc[p]));
+      tfloat3 boundnornew;
+      boundnornew.x=rot.a11*boundnor0.x+rot.a12*boundnor0.y+rot.a13*boundnor0.z;
+      boundnornew.y=rot.a21*boundnor0.x+rot.a22*boundnor0.y+rot.a23*boundnor0.z;
+      boundnornew.z=rot.a31*boundnor0.x+rot.a32*boundnor0.y+rot.a33*boundnor0.z;
+      const float mag0=sqrt(boundnor0.x*boundnor0.x+boundnor0.y*boundnor0.y+boundnor0.z*boundnor0.z);
+      const float magnew=sqrt(boundnornew.x*boundnornew.x+boundnornew.y*boundnornew.y+boundnornew.z*boundnornew.z);
+      boundnornew.x*=mag0/magnew; boundnornew.y*=mag0/magnew; boundnornew.z*=mag0/magnew;
+      BoundNor_c->ptr()[FlexStrucRidpc[p]]=boundnornew;
+    }
+  }
+}
+
+//==============================================================================
+/// Updates the geometric information for each flexible structure particle.
+/// Actualiza la información geométrica de cada partícula de estructura flexible.
+//==============================================================================
+void JSphCpu::UpdateFlexStrucGeometry()const{
+  if(TKernel==KERNEL_Wendland)  CalcFlexStrucDefGrad_ct0<KERNEL_Wendland>();
+  else if(TKernel==KERNEL_Cubic)CalcFlexStrucDefGrad_ct0<KERNEL_Cubic>   ();
+  if(CaseNflexstruc&&TMdbc2>=MDBC2_Std)CalcFlexStrucNormals();
+}
+
+//==============================================================================
+/// Calculates the PK1 stress matrix for each flexible structure particle.
+/// Calcula la matriz de tensión PK1 para cada partícula de estructura flexible.
+//==============================================================================
+inline tmatrix3f JSphCpu::CalcFlexStrucPK1Stress(const tmatrix3f& defgrad,const tmatrix6f& cmat)const{
+  //-Calculate Green-Lagrange strain from deformation gradient.
+  tmatrix3f gl=fmath::MulMatrix3x3(fmath::TrasMatrix3x3(defgrad),defgrad);
+  gl.a11-=1.0f; gl.a22-=1.0f; gl.a33-=1.0f;
+  gl.a11*=0.5f; gl.a12*=0.5f; gl.a13*=0.5f;
+  gl.a21*=0.5f; gl.a22*=0.5f; gl.a23*=0.5f;
+  gl.a31*=0.5f; gl.a32*=0.5f; gl.a33*=0.5f;
+  //-Convert to Voigt notation.
+  const float gl_1=gl.a11;
+  const float gl_2=gl.a22;
+  const float gl_3=gl.a33;
+  const float gl_4=gl.a23+gl.a32;
+  const float gl_5=gl.a31+gl.a13;
+  const float gl_6=gl.a12+gl.a21;
+  //-Multiply with stiffness tensor to get PK2 stress in Voigt form.
+  const float pk2_1=cmat.a11*gl_1+cmat.a12*gl_2+cmat.a13*gl_3+cmat.a14*gl_4+cmat.a15*gl_5+cmat.a16*gl_6;
+  const float pk2_2=cmat.a21*gl_1+cmat.a22*gl_2+cmat.a23*gl_3+cmat.a24*gl_4+cmat.a25*gl_5+cmat.a26*gl_6;
+  const float pk2_3=cmat.a31*gl_1+cmat.a32*gl_2+cmat.a33*gl_3+cmat.a34*gl_4+cmat.a35*gl_5+cmat.a36*gl_6;
+  const float pk2_4=cmat.a41*gl_1+cmat.a42*gl_2+cmat.a43*gl_3+cmat.a44*gl_4+cmat.a45*gl_5+cmat.a46*gl_6;
+  const float pk2_5=cmat.a51*gl_1+cmat.a52*gl_2+cmat.a53*gl_3+cmat.a54*gl_4+cmat.a55*gl_5+cmat.a56*gl_6;
+  const float pk2_6=cmat.a61*gl_1+cmat.a62*gl_2+cmat.a63*gl_3+cmat.a64*gl_4+cmat.a65*gl_5+cmat.a66*gl_6;
+  //-Convert PK2 stress back to normal notation.
+  const tmatrix3f pk2={pk2_1,pk2_6,pk2_5,pk2_6,pk2_2,pk2_4,pk2_5,pk2_4,pk2_3};
+  //-Convert PK2 to PK1 and return.
+  return fmath::MulMatrix3x3(defgrad,pk2);
+}
+
+//==============================================================================
+/// Interaction forces for the flexible structure particles.
+/// Fuerzas de interacción para las partículas de estructura flexible.
+//==============================================================================
+template<TpKernel tker,TpVisco tvisco,TpMdbc2Mode mdbc2> void JSphCpu::InteractionForcesFlexStruc(unsigned np,float visco
+    ,StDivDataCpu divdata,const unsigned* dcell
+    ,const tdouble3* pos,const tfloat4* velrhop,const float* press,const typecode* code
+    ,const byte* boundmode,const tfloat3* tangenvel
+    ,const StFlexStrucData* flexstrucdata,const unsigned* flexstrucridp
+    ,const tdouble3* pos0,const unsigned* numpairs,const unsigned* const* pairidx,const tmatrix3f* kercorr,const tmatrix3f* defgrad
+    ,float& flexstrucdt,tfloat3* ace)const{
+  //-Initialise flexstructh to calculate max flexstrucdt.
+  float flexstructh[OMP_MAXTHREADS*OMP_STRIDE];
+  for(int th=0;th<OmpThreads;th++)flexstructh[th*OMP_STRIDE]=0;
+  //-Starts execution using OpenMP.
+  const int n=int(np);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (guided)
+  #endif
+  for(int p=0;p<n;p++){
+    const int pfs1=p;      //-Number of particle.
+    const unsigned p1=flexstrucridp[pfs1];
+
+    //-Get codep1.
+    const typecode codep1=code[p1];
+    if(CODE_IsFlexStrucFlex(codep1)){
+      tfloat3 acep1=TFloat3(0);
+
+      //-Obtains basic data of particle p1.
+      const tdouble3 posp1=pos[p1];
+      tfloat4 velrhop1=velrhop[p1];
+      const float pressp1=press[p1];
+      const tdouble3 pos0p1=pos0[pfs1];
+      const tmatrix3f kercorrp1=kercorr[pfs1];
+      const tmatrix3f defgradp1=defgrad[pfs1];
+
+      //-Obtains flexible structure data.
+      const float vol0p1=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].vol0;
+      const float rho0p1=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].rho0;
+      const float youngmod=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].youngmod;
+      const float poissratio=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].poissratio;
+      const float hgfactor=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].hgfactor;
+      const tmatrix6f cmat=flexstrucdata[CODE_GetIbodyFlexStruc(codep1)].cmat;
+      const tmatrix3f pk1p1=CalcFlexStrucPK1Stress(defgradp1,cmat);
+      const tmatrix3f pk1kercorrp1=fmath::MulMatrix3x3(pk1p1,kercorrp1);
+
+      //-Get current mass of flexible structure particle.
+      const float mass0p1=vol0p1*rho0p1;
+      const float rhop1=rho0p1/fmath::Determinant3x3(defgradp1);
+
+      //-Calculate structural speed of sound.
+      const float csp1=float( sqrt(youngmod*(1.0-poissratio)/(rhop1*(1.0+poissratio)*(1.0-2.0*poissratio))) );
+
+      //-Modify values if using mDBC.
+      float massp2=MassFluid;
+      if(mdbc2>=MDBC2_Std){
+        if(boundmode[p1]==BMODE_MDBC2OFF)massp2=0;
+        const tfloat3 tangentvelp1=tangenvel[p1];
+        velrhop1.x=tangentvelp1.x;
+        velrhop1.y=tangentvelp1.y;
+        velrhop1.z=tangentvelp1.z;
+      }
+
+      //-Obtains neighborhood search limits.
+      const StNgSearch ngs=nsearch::Init(dcell[p1],false,divdata);
+
+      //-Flexible structure-Fluid interaction.
+      for(int z=ngs.zini;z<ngs.zfin;z++){
+        for(int y=ngs.yini;y<ngs.yfin;y++){
+          const tuint2 pif=nsearch::ParticleRange(y,z,ngs,divdata);
+          for(unsigned p2=pif.x;p2<pif.y;p2++){
+            if(CODE_IsFluid(code[p2])){
+              const tdouble3 posp2=pos[p2];
+              const float drx=float(posp1.x-posp2.x);
+              const float dry=float(posp1.y-posp2.y);
+              const float drz=float(posp1.z-posp2.z);
+              const float rr2=drx*drx+dry*dry+drz*drz;
+              if(rr2<=KernelSize2&&rr2>=ALMOSTZERO){
+                //-Computes kernel.
+                const float fac=fsph::GetKernel_Fac<tker>(CSP,rr2);
+                const float frx=fac*drx,fry=fac*dry,frz=fac*drz; //-Gradients.
+                //-Obtains velocity of particle p2 and compute difference.
+                const tfloat4 velrhop2=velrhop[p2];
+                const float dvx=velrhop1.x-velrhop2.x,dvy=velrhop1.y-velrhop2.y,dvz=velrhop1.z-velrhop2.z;
+                //-Pressure derivative (Momentum equation).
+                const float pressp2=press[p2];
+                const float prs=(pressp1+pressp2)/(velrhop1.w*velrhop2.w)+(tker==KERNEL_Cubic?fsph::GetKernelCubic_Tensil(CSP,rr2,velrhop1.w,pressp1,velrhop2.w,pressp2):0);
+                const float p_vpm=-prs*massp2*(MassFluid/mass0p1);
+                acep1.x+=p_vpm*frx; acep1.y+=p_vpm*fry; acep1.z+=p_vpm*frz;
+                //-Artificial viscosity.
+                if(tvisco==VISCO_Artificial){
+                  const float dot=drx*dvx+dry*dvy+drz*dvz;
+                  if(dot<0){
+                    const float dot_rr2=dot/(rr2+Eta2);
+                    const float amubar=KernelH*dot_rr2;
+                    const float robar=(velrhop1.w+velrhop2.w)*0.5f;
+                    const float pi_visc=(float)(-visco*Cs0*amubar/robar)*massp2*(MassFluid/mass0p1);
+                    acep1.x-=pi_visc*frx; acep1.y-=pi_visc*fry; acep1.z-=pi_visc*frz;
+                  }
+                }
+                  //-Laminar viscosity.
+                else{
+                  const float robar2=(velrhop1.w+velrhop2.w);
+                  const float temp=4.f*visco/((rr2+Eta2)*robar2);
+                  const float vtemp=massp2*temp*(drx*frx+dry*fry+drz*frz)*(MassFluid/mass0p1);
+                  acep1.x+=vtemp*dvx; acep1.y+=vtemp*dvy; acep1.z+=vtemp*dvz;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      //-Loop through pairs and calculate forces.
+      for(unsigned pair=0;pair<numpairs[pfs1];pair++){
+        const unsigned pfs2=pairidx[pfs1][pair];
+        const tdouble3 pos0p2=pos0[pfs2];
+        const float drx0=float(pos0p1.x-pos0p2.x);
+        const float dry0=float(pos0p1.y-pos0p2.y);
+        const float drz0=float(pos0p1.z-pos0p2.z);
+        const float rr20=drx0*drx0+dry0*dry0+drz0*drz0;
+        const float fac0=fsph::GetKernel_Fac<tker>(CSP,rr20);
+        const float frx0=fac0*drx0,fry0=fac0*dry0,frz0=fac0*drz0; //-Gradients.
+        //-Acceleration due to structure.
+        const tmatrix3f defgradp2=defgrad[pfs2];
+        const tmatrix3f pk1p2=CalcFlexStrucPK1Stress(defgradp2,cmat);
+        const tmatrix3f kercorrp2=kercorr[pfs2];
+        const tmatrix3f pk1kercorrp2=fmath::MulMatrix3x3(pk1p2,kercorrp2);
+        tmatrix3f pk1kercorrp1p2;
+        pk1kercorrp1p2.a11=pk1kercorrp1.a11+pk1kercorrp2.a11; pk1kercorrp1p2.a12=pk1kercorrp1.a12+pk1kercorrp2.a12; pk1kercorrp1p2.a13=pk1kercorrp1.a13+pk1kercorrp2.a13;
+        pk1kercorrp1p2.a21=pk1kercorrp1.a21+pk1kercorrp2.a21; pk1kercorrp1p2.a22=pk1kercorrp1.a22+pk1kercorrp2.a22; pk1kercorrp1p2.a23=pk1kercorrp1.a23+pk1kercorrp2.a23;
+        pk1kercorrp1p2.a31=pk1kercorrp1.a31+pk1kercorrp2.a31; pk1kercorrp1p2.a32=pk1kercorrp1.a32+pk1kercorrp2.a32; pk1kercorrp1p2.a33=pk1kercorrp1.a33+pk1kercorrp2.a33;
+        tfloat3 pk1kercorrdw;
+        pk1kercorrdw.x=pk1kercorrp1p2.a11*frx0+pk1kercorrp1p2.a12*fry0+pk1kercorrp1p2.a13*frz0;
+        pk1kercorrdw.y=pk1kercorrp1p2.a21*frx0+pk1kercorrp1p2.a22*fry0+pk1kercorrp1p2.a23*frz0;
+        pk1kercorrdw.z=pk1kercorrp1p2.a31*frx0+pk1kercorrp1p2.a32*fry0+pk1kercorrp1p2.a33*frz0;
+        acep1.x+=pk1kercorrdw.x*vol0p1/rho0p1; acep1.y+=pk1kercorrdw.y*vol0p1/rho0p1; acep1.z+=pk1kercorrdw.z*vol0p1/rho0p1;
+        //-Hourglass correction.
+        if(hgfactor){
+          const unsigned p2=flexstrucridp[pfs2];
+          const tdouble3 posp2=pos[p2];
+          const float drx=float(posp1.x-posp2.x);
+          const float dry=float(posp1.y-posp2.y);
+          const float drz=float(posp1.z-posp2.z);
+          const float rr2=drx*drx+dry*dry+drz*drz;
+          const float wab=fsph::GetKernel_Wab<tker>(CSP,rr2);
+          const float xijbarx=defgradp1.a11*drx0+defgradp1.a12*dry0+defgradp1.a13*drz0;
+          const float xijbary=defgradp1.a21*drx0+defgradp1.a22*dry0+defgradp1.a23*drz0;
+          const float xijbarz=defgradp1.a31*drx0+defgradp1.a32*dry0+defgradp1.a33*drz0;
+          const float xjibarx=-(defgradp2.a11*drx0+defgradp2.a12*dry0+defgradp2.a13*drz0);
+          const float xjibary=-(defgradp2.a21*drx0+defgradp2.a22*dry0+defgradp2.a23*drz0);
+          const float xjibarz=-(defgradp2.a31*drx0+defgradp2.a32*dry0+defgradp2.a33*drz0);
+          const tfloat3 epsij=TFloat3(drx-xijbarx,dry-xijbary,drz-xijbarz);
+          const tfloat3 epsji=TFloat3(-drx-xjibarx,-dry-xjibary,-drz-xjibarz);
+          const float rr=sqrt(rr2);
+          const float deltaij=(epsij.x*drx+epsij.y*dry+epsij.z*drz)/rr;
+          const float deltaji=-(epsji.x*drx+epsji.y*dry+epsji.z*drz)/rr;
+          const float mulfac=(hgfactor*vol0p1*vol0p1*wab*youngmod/(rr20*rr*mass0p1)*0.5f*(deltaij+deltaji));
+          acep1.x-=mulfac*drx; acep1.y-=mulfac*dry; acep1.z-=mulfac*drz;
+        }
+      }
+
+      //-Store results.
+      if(acep1.x||acep1.y||acep1.z||csp1){
+        ace[p1]=ace[p1]+acep1;
+        const int th=omp_get_thread_num();
+        if(csp1>flexstructh[th*OMP_STRIDE])flexstructh[th*OMP_STRIDE]=csp1;
+      }
+    }
+  }
+  //-Keep max value in flexstrucdt.
+  for(int th=0;th<OmpThreads;th++)if(flexstrucdt<flexstructh[th*OMP_STRIDE])flexstrucdt=flexstructh[th*OMP_STRIDE];
+}
+
+//==============================================================================
+/// Interaction forces for the flexible structure particles.
+/// Fuerzas de interacción para las partículas de estructura flexible.
+//==============================================================================
+template<TpKernel tker,TpVisco tvisco,TpMdbc2Mode mdbc2> void JSphCpu::Interaction_ForcesFlexStrucT(float& flexstrucdtmax)const{
+  if(CaseNflexstruc){
+    InteractionForcesFlexStruc<tker,tvisco,mdbc2>
+      (CaseNflexstruc,Visco*ViscoBoundFactor,DivData,Dcell_c->cptr(),Pos_c->cptr(),Velrho_c->cptr(),Press_c->cptr(),Code_c->cptr(),BoundMode_c->cptr(),TangenVel_c->cptr(),FlexStrucDatac,FlexStrucRidpc,Pos0c,NumPairsc,PairIdxc,KerCorrc,DefGradc,flexstrucdtmax,Ace_c->ptr());
+  }
+}
+
+//==============================================================================
+/// Interaction forces for the flexible structure particles.
+/// Fuerzas de interacción para las partículas de estructura flexible.
+//==============================================================================
+template<TpKernel tker,TpVisco tvisco> void JSphCpu::Interaction_ForcesFlexStruc_ct1(float& flexstrucdtmax)const{
+       if(TMdbc2==MDBC2_None )Interaction_ForcesFlexStrucT<tker,tvisco,MDBC2_None >(flexstrucdtmax);
+  else if(TMdbc2==MDBC2_Std  )Interaction_ForcesFlexStrucT<tker,tvisco,MDBC2_Std  >(flexstrucdtmax);
+  else if(TMdbc2==MDBC2_NoPen)Interaction_ForcesFlexStrucT<tker,tvisco,MDBC2_NoPen>(flexstrucdtmax);
+}
+
+//==============================================================================
+/// Interaction forces for the flexible structure particles.
+/// Fuerzas de interacción para las partículas de estructura flexible.
+//==============================================================================
+template<TpKernel tker> void JSphCpu::Interaction_ForcesFlexStruc_ct0(float& flexstrucdtmax)const{
+       if(TVisco==VISCO_Artificial)Interaction_ForcesFlexStruc_ct1<tker,VISCO_Artificial>(flexstrucdtmax);
+  else if(TVisco==VISCO_Laminar   )Interaction_ForcesFlexStruc_ct1<tker,VISCO_Laminar   >(flexstrucdtmax);
+  else if(TVisco==VISCO_LaminarSPS)Interaction_ForcesFlexStruc_ct1<tker,VISCO_LaminarSPS>(flexstrucdtmax);
+}
+
+//==============================================================================
+/// Interaction forces for the flexible structure particles.
+/// Fuerzas de interacción para las partículas de estructura flexible.
+//==============================================================================
+void JSphCpu::Interaction_ForcesFlexStruc(float& flexstrucdtmax)const{
+  if(TKernel==KERNEL_Wendland)  Interaction_ForcesFlexStruc_ct0<KERNEL_Wendland>(flexstrucdtmax);
+  else if(TKernel==KERNEL_Cubic)Interaction_ForcesFlexStruc_ct0<KERNEL_Cubic>   (flexstrucdtmax);
+}
+
+//==============================================================================
+/// Copy motion velocity of flexible structure particles.
+/// Copie la velocidad de movimiento de partículas de estructura flexible.
+//==============================================================================
+void JSphCpu::CopyMotionVelFlexStruc(tfloat4* velrhop)const
+{
+  const int nflex=int(CaseNflexstruc);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(nflex>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=0;p<nflex;p++){
+    const unsigned p1=FlexStrucRidpc[p]; //-Number of particle.
+    if(CODE_IsFlexStrucFlex(Code_c->cptr()[p1])){
+      const tfloat3 mvel=MotionVel_c->cptr()[p1];
+      velrhop[p1]=TFloat4(mvel.x,mvel.y,mvel.z,velrhop[p1].w);
+    }
+  }
+}
+
+//==============================================================================
+/// Checks if any issues with FlexStruc particle update.
+/// Comprueba si hay algún problema con la actualización de partículas FlexStruc.
+//==============================================================================
+bool JSphCpu::FlexStrucStepIsValid(unsigned npb,const typecode* code)const{
+  return !any_of(code,code+npb,[] (const typecode& code) { return CODE_IsFlexStrucAny(code) && !CODE_IsNotOut(code); });
+}
+
+//==============================================================================
+/// Updates position and velocity using semi-implicit Euler scheme (used with Verlet scheme).
+/// Actualiza la posición y la velocidad usando el esquema de Euler semiimplícito (usado con el esquema de Verlet).
+//==============================================================================
+void JSphCpu::ComputeSemiImplicitEulerFlexStruc(double dt,tdouble3* pos,unsigned* dcell,typecode* code)const
+{
+  const tdouble3 gravity=ToTDouble3(Gravity);
+  const int nflex=int(CaseNflexstruc);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(nflex>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=0;p<nflex;p++){
+    const unsigned p1=FlexStrucRidpc[p]; //-Number of particle.
+    if(CODE_IsFlexStrucFlex(code[p1])){
+      const tfloat4 rvelrhop=Velrho_c->cptr()[p1];
+      const tfloat3 race=Ace_c->cptr()[p1];
+      const double acegrx=double(race.x)+gravity.x;
+      const double acegry=double(race.y)+gravity.y;
+      const double acegrz=double(race.z)+gravity.z;
+      const tfloat4 rvelrhopnew=TFloat4(
+          float(double(rvelrhop.x) + acegrx*dt),
+          float(double(rvelrhop.y) + acegry*dt),
+          float(double(rvelrhop.z) + acegrz*dt),
+          VelrhoM1_c->cptr()[p1].w);
+      //-Calculate displacement. | Calcula desplazamiento.
+      const double dx=double(rvelrhopnew.x)*dt;
+      const double dy=double(rvelrhopnew.y)*dt;
+      const double dz=double(rvelrhopnew.z)*dt;
+      bool outrhop=(rvelrhopnew.w<RhopOutMin || rvelrhopnew.w>RhopOutMax);
+      //-Update particle data.
+      UpdatePos(pos[p1],dx,dy,dz,outrhop,p1,pos,dcell,code);
+      VelrhoM1_c->ptr()[p1]=rvelrhopnew;
+    }
+  }
+}
+
+//==============================================================================
+/// Updates position and velocity using symplectic predictor scheme.
+/// Actualiza la posición y la velocidad utilizando un esquema predictor simpléctico.
+//==============================================================================
+void JSphCpu::ComputeSymplecticPreFlexStruc(double dtm,tdouble3* pos,unsigned* dcell,typecode* code)const
+{
+  const tdouble3 gravity=ToTDouble3(Gravity);
+  const int nflex=int(CaseNflexstruc);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(nflex>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=0;p<nflex;p++){
+    const unsigned p1=FlexStrucRidpc[p]; //-Number of particle.
+    if(CODE_IsFlexStrucFlex(code[p1])){
+      const tfloat4 rvelrhoppre=VelrhoPre_c->cptr()[p1];
+      const tfloat3 race=Ace_c->cptr()[p1];
+      //-Calculate displacement. | Calcula desplazamiento.
+      double dx=double(rvelrhoppre.x)*dtm;
+      double dy=double(rvelrhoppre.y)*dtm;
+      double dz=double(rvelrhoppre.z)*dtm;
+      //-Calculate velocity & density. | Calcula velocidad y densidad.
+      const tfloat4 rvelrhopnew=TFloat4(
+          float(double(rvelrhoppre.x) + (double(race.x)+gravity.x) * dtm),
+          float(double(rvelrhoppre.y) + (double(race.y)+gravity.y) * dtm),
+          float(double(rvelrhoppre.z) + (double(race.z)+gravity.z) * dtm),
+          Velrho_c->cptr()[p1].w);
+      bool outrhop=(rvelrhopnew.w<RhopOutMin || rvelrhopnew.w>RhopOutMax);
+      if(outrhop && CODE_IsNormal(code[p1]))code[p1]=CODE_SetOutRho(code[p1]); //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
+      //-Update particle data.
+      Velrho_c->ptr()[p1]=rvelrhopnew;
+      outrhop=CODE_IsOutRho(code[p1]);
+      const bool flexstruc=CODE_IsFlexStrucFlex(code[p1]);
+      const bool normal=(outrhop || CODE_IsNormal(code[p1]));
+      if(normal && flexstruc)UpdatePos(PosPre_c->cptr()[p1],dx,dy,dz,outrhop,p1,pos,dcell,code);
+    }
+  }
+}
+
+//==============================================================================
+/// Updates position and velocity using symplectic corrector scheme.
+/// Actualiza la posición y la velocidad utilizando un esquema corrector simpléctico.
+//==============================================================================
+void JSphCpu::ComputeSymplecticCorrFlexStruc(double dtm,double dt,tdouble3* pos,unsigned* dcell,typecode* code)const
+{
+  const tdouble3 gravity=ToTDouble3(Gravity);
+  const int nflex=int(CaseNflexstruc);
+  #ifdef OMP_USE
+    #pragma omp parallel for schedule (static) if(nflex>OMP_LIMIT_COMPUTESTEP)
+  #endif
+  for(int p=0;p<nflex;p++){
+    const unsigned p1=FlexStrucRidpc[p]; //-Number of particle.
+    if(CODE_IsFlexStrucFlex(code[p1])){
+      const tfloat4 rvelrhoppre=VelrhoPre_c->cptr()[p1];
+      const tfloat3 race=Ace_c->cptr()[p1];
+      //-Calculate velocity. | Calcula velocidad.
+      const tfloat4 rvelrhopnew=TFloat4(
+          float(double(rvelrhoppre.x) + (double(race.x)+gravity.x) * dt),
+          float(double(rvelrhoppre.y) + (double(race.y)+gravity.y) * dt),
+          float(double(rvelrhoppre.z) + (double(race.z)+gravity.z) * dt),
+          Velrho_c->cptr()[p1].w);
+      //-Calculate displacement. | Calcula desplazamiento.
+      double dx=(double(rvelrhoppre.x)+double(rvelrhopnew.x)) * dtm;
+      double dy=(double(rvelrhoppre.y)+double(rvelrhopnew.y)) * dtm;
+      double dz=(double(rvelrhoppre.z)+double(rvelrhopnew.z)) * dtm;
+      bool outrhop=(rvelrhopnew.w<RhopOutMin || rvelrhopnew.w>RhopOutMax);
+      if(outrhop && CODE_IsNormal(code[p1]))code[p1]=CODE_SetOutRho(code[p1]); //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
+      //-Update particle data.
+      Velrho_c->ptr()[p1]=rvelrhopnew;
+      outrhop=CODE_IsOutRho(code[p1]);
+      const bool flexstruc=CODE_IsFlexStrucFlex(code[p1]);
+      const bool normal=(outrhop || CODE_IsNormal(code[p1]));
+      if(normal && flexstruc)UpdatePos(PosPre_c->cptr()[p1],dx,dy,dz,outrhop,p1,pos,dcell,code);
+    }
+  }
+}
+//<vs_flexstruc_end>

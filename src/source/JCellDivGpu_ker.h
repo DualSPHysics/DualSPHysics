@@ -79,6 +79,9 @@ void SortArrayPeriParent(unsigned np,const unsigned* sortpart,unsigned* rsortpar
   ,const unsigned* a,unsigned* a2);
 
 
+void SortIndices(unsigned* sortpart,unsigned* sortidx,unsigned np,bool stable); //<vs_flexstruc>
+void UpdateIndices(unsigned n,const unsigned* sortidx,unsigned* idx);           //<vs_flexstruc>
+
 //:inline unsigned GetRangeParticlesCellsSizeAux(unsigned celini,unsigned celfin){ unsigned n=2,s=(((celfin-celini)/DIVBSIZE)+1); return((s*n + ((s/DIVBSIZE)+1)*n) + DIVBSIZE); } 
 //:void GetRangeParticlesCells(unsigned celini,unsigned celfin,const int2* begcell,unsigned* aux,unsigned& pmin,unsigned& pmax);
 

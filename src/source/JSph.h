@@ -75,6 +75,7 @@ class JChronoObjects;
 class JDsMooredFloatings;
 class JDsFtForcePoints;
 class JSphInOut;
+class JSphFlexStruc;  //<vs_flexstruc>
 class JDsPartsInit;
 class JDsPips;
 class JLinearValue;
@@ -261,6 +262,7 @@ protected:
   unsigned CaseNfluid;       ///<Number of fluid particles (including the excluded ones). 
   unsigned CaseNbound;       ///<Number of boundary particles ( \ref Nfixed + \ref Nmoving + \ref Nfloat ).
   unsigned CaseNpb;          ///<Number of particles of the boundary block ( \ref Nbound - \ref Nfloat ) or ( \ref Nfixed + \ref Nmoving).
+  unsigned CaseNflexstruc;   ///<Number of flexible structure particles (including clamp particles). //<vs_flexstruc>
 
   JSphMk* MkInfo;            ///<Stores information for the Mk of the particles.
   JDsPartsInit* PartsInit;   ///<Stores initial particles data for automatic configurations.
@@ -309,6 +311,12 @@ protected:
   bool UseChrono;  ///<Use Chrono library for rigid body dynamics.
   JChronoObjects* ChronoObjects;  ///<Object for integration with Chrono Engine.
 
+  //<vs_flexstruc_ini>
+  //-Variables for flexible structures.
+  unsigned FlexStrucCount;      ///<Number of flexible structure bodies.
+  double FlexStrucCs0;          ///<Maximum initial speed of sound across all flexible structures.
+  //<vs_flexstruc_end>
+
   JDsMooredFloatings* Moorings;     ///<Manages floating bodies with moorings. | Gestiona floating bodies con amarres.
   JDsFtForcePoints* ForcePoints; ///<Manages forces to apply on floating bodies.
 
@@ -333,6 +341,8 @@ protected:
   JDsAccInput* AccInput;    ///<Object for variable acceleration functionality.
 
   JSphInOut* InOut;         ///<Object for inlet/outlet conditions.
+
+  JSphFlexStruc* FlexStruc; ///<Object for flexible structures. //<vs_flexstruc>
 
   std::string SvExtraParts;         ///<Part interval (or list) for saving extra data for restart option (default=empty=disabled)
   JDsExtraDataSave* SvExtraDataBi4; ///<To store extra data for restart option (SvExtraParts).
