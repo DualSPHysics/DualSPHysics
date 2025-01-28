@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<case>
+    <casedef>
+        <constantsdef>
+            <gravity x="0" y="0" z="-9.81" comment="Gravitational acceleration" units_comment="m/s^2" />
+            <rhop0 value="997" comment="Reference density of the fluid" units_comment="kg/m^3" />
+            <rhopgradient value="2" comment="Initial density gradient 1:Rhop0, 2:Water column, 3:Max. water height (default=2)" />
+            <hswl value="0" auto="true" comment="Maximum still water level to calculate speedofsound using coefsound" units_comment="metres (m)" />
+            <gamma value="7" comment="Polytropic constant for water used in the state equation" />
+            <speedsystem value="2.8" auto="false" comment="Maximum system speed (by default the dam-break propagation is used)" />
+            <coefsound value="10" comment="Coefficient to multiply speedsystem" />
+            <speedsound value="0" auto="true" comment="Speed of sound to use in the simulation (by default speedofsound=coefsound*speedsystem)" />
+            <coefh value="1.0" comment="Coefficient to calculate the smoothing length (h=coefh*sqrt(3*dp^2) in 3D)" />		
+            <cflnumber value="0.1" comment="Coefficient to multiply dt" />	
+        </constantsdef>	
+        <mkconfig boundcount="240" fluidcount="10" />
+        <geometry>
+            <predefinition>
+                <newvarcte mdbc="false" />
+                <newvarcte dom_padding="0.1" />
+                <newvarcte tank_min_x="0.0" tank_max_x="0.8" tank_min_z="0.0" tank_max_z="0.6" />
+                <newvarcte fluid_min_x="#tank_min_x" fluid_max_x="0.2" fluid_min_z="#tank_min_z" fluid_max_z="0.4" />
+                <newvarcte gate_min_x="0.2" gate_min_z="#tank_min_z" gate_max_z="0.5" />
+                <newvarcte struc_min_x="0.596" struc_max_x="0.606" struc_min_z="tank_min_z" struc_max_z="0.09" />
+            </predefinition>
+            <definition dp="0.002" units_comment="metres (m)">
+                <pointref x="0" y="0" z="0" />
+                <pointmin x="#tank_min_x-dom_padding" y="0.0" z="#tank_min_z-dom_padding" />
+                <pointmax x="#tank_max_x+dom_padding" y="0.0" z="#tank_max_z+dom_padding" />
+            </definition>
+            <commands>
+                <list name="GeometryForNormals">
+                    <setactive drawpoints="0" drawshapes="1"/>
+                    <setshapemode>actual | bound</setshapemode>
+					<setmkbound mk="0" />
+                    <drawextrude closed="false">
+                        <point x="#tank_min_x+Dp/2" y="#-dom_padding" z="#tank_max_z" />
+                        <point x="#tank_min_x+Dp/2" y="#-dom_padding" z="#tank_min_z+Dp/2" />
+                        <point x="#struc_min_x-Dp/2" y="#-dom_padding" z="#tank_min_z+Dp/2" />
+                        <point x="#struc_min_x-Dp/2" y="#-dom_padding" z="#struc_max_z+Dp/2" />
+                        <point x="#struc_max_x+Dp/2" y="#-dom_padding" z="#struc_max_z+Dp/2" />
+                        <point x="#struc_max_x+Dp/2" y="#-dom_padding" z="#tank_min_z+Dp/2" />
+                        <point x="#tank_max_x-Dp/2" y="#-dom_padding" z="#tank_min_z+Dp/2" />
+                        <point x="#tank_max_x-Dp/2" y="#-dom_padding" z="#tank_max_z" />
+                        <extrude x="0" y="#2*dom_padding" z="0" />
+                    </drawextrude>
+                    <setmkbound mk="1" />
+                    <drawbox>
+                        <boxfill>left</boxfill>
+                        <point x="#gate_min_x-Dp/2" y="#-dom_padding" z="#gate_min_z+Dp/2" />
+                        <size x="#8*Dp+Dp" y="#2*dom_padding" z="#gate_max_z-gate_min_z" />
+                    </drawbox>
+                    <shapeout file="hdp" />
+                    <resetdraw />
+                </list>
+                <mainlist>
+                    <runlist name="GeometryForNormals" />
+                    <setdrawmode mode="full" />
+                    <setmkfluid mk="0" />
+                    <drawbox>
+                        <boxfill>solid</boxfill>
+                        <point x="#fluid_min_x" y="#-dom_padding" z="#fluid_min_z" />
+                        <size x="#fluid_max_x-fluid_min_x" y="#2*dom_padding" z="#fluid_max_z-fluid_min_z" />
+                    </drawbox>
+                    <setmkbound mk="0" />
+                    <drawbox>
+                        <boxfill>left | right</boxfill>
+                        <point x="#tank_min_x" y="#-dom_padding" z="#tank_min_z" />
+                        <size x="#tank_max_x-tank_min_x" y="#2*dom_padding" z="#tank_max_z-tank_min_z" />
+                        <layers vdp="0,1,2,3,4" />
+                    </drawbox>
+                    <drawbox>
+                        <boxfill>bottom</boxfill>
+                        <point x="#tank_min_x-4*Dp" y="#-dom_padding" z="#tank_min_z" />
+                        <size x="#tank_max_x-tank_min_x+8*Dp" y="#2*dom_padding" z="#tank_max_z-tank_min_z" />
+                        <layers vdp="0,1,2,3,4,5,6,7,8" />
+                    </drawbox>
+                    <setmkbound mk="1" />
+                    <drawbox>
+                        <boxfill>solid</boxfill>
+                        <point x="#gate_min_x" y="#-dom_padding" z="#gate_min_z+Dp" />
+                        <size x="#8*Dp" y="#2*dom_padding" z="#gate_max_z-gate_min_z-Dp" />
+                    </drawbox>
+                    <setmkbound mk="2" />
+                    <drawbox>
+                        <boxfill>solid</boxfill>
+                        <point x="#struc_min_x" y="#-dom_padding" z="#struc_min_z-4*Dp" />
+                        <size x="#struc_max_x-struc_min_x" y="#2*dom_padding" z="#struc_max_z-struc_min_z+4*Dp" />
+                    </drawbox>
+                </mainlist>
+            </commands>
+        </geometry>
+        <normals active="true">
+            <norgeometry comment="Define initial configuration of normals before applying other configurations">
+                <geometryfile file="[CaseName]_hdp_Actual.vtk" comment="File with boundary geometry (VTK format)" />
+                <distanceh v="2" comment="Maximum orthogonal distance (H*value) to compute normals data (default=2)" />
+                <maxsizeh v="0" comment="Maximum allowed normal size (H*value) (disabled=0, default=0)" />
+                <svshapes v="true" comment="Saves VTK with geometry in triangles and quads with its normals for debug (default=false)" />
+            </norgeometry>
+        </normals>
+        <motion>
+            <objreal ref="1">
+                <begin mov="1" start="0.0" finish="0.12" />
+                <mvfile id="1" duration="0.12">
+                    <file name="DambreakGateTimeSeries.csv" fields="2" fieldtime="0" fieldz="1" />
+                </mvfile>
+            </objreal>
+            <objreal ref="2">
+                <begin mov="1" start="0" />
+                <mvnull id="1" />
+            </objreal>
+        </motion>
+    </casedef>
+    <execution>
+        <special>
+            <flexstrucs>
+                <flexstrucbody mkbound="2" mkclamp="0">
+                    <density value="1161.54" comment="Mass density" units_comment="kg/m^3" />
+                    <youngmod value="8.75e5" comment="Young Modulus" units_comment="Pa" />
+                    <poissratio value="0.49" comment="Poisson ratio" />
+                    <constitmodel value="1" comment="Constitutive model 1:Plane Strain (2D), 2:Plane Stress (2D), 3:St. Venant Kirchhoff (3D)" />
+                    <hgfactor value="0.1" comment="Hourglass correction factor: keep as low as possible (default=0)" />
+                </flexstrucbody>
+            </flexstrucs>
+        </special>
+        <parameters>
+            <parameter key="Boundary" value="#eval(mdbc,2,1)" comment="Boundary method 1:DBC, 2:mDBC (default=1)" />
+            <parameter key="SlipMode" value="2" comment="Slip mode for mDBC 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1)" />
+            <parameter key="NoPenetration" value="1" comment="Prevent particle penetration in mDBC 0:Off, 1:On (default=0)" />
+            <parameter key="StepAlgorithm" value="1" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />
+            <parameter key="Kernel" value="2" comment="Interaction Kernel 1:Cubic Spline, 2:Wendland (default=2)" />
+            <parameter key="ViscoTreatment" value="2" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS (default=1)" />
+            <parameter key="Visco" value="8.92678034e-7" comment="Viscosity value" /> % Note alpha can depend on the resolution. A value of 0.01 is recommended for near irrotational flows.
+            <parameter key="ViscoBoundFactor" value="1" comment="Multiply viscosity value with boundary (default=1)" />
+			<parameter key="DensityDT" value="3" comment="Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)" />
+			<parameter key="DensityDTvalue" value="0.1" comment="DDT value (default=0.1)" />
+            <parameter key="CoefDtMin" value="0.001" comment="Coefficient to calculate minimum time step dtmin=coefdtmin*h/speedsound (default=0.05)" />
+			<parameter key="DtAllParticles" value="1" comment="Velocity of particles used to calculate DT. 1:All, 0:Only fluid/floating (default=0)" />
+            <parameter key="TimeMax" value="1.0" comment="Time of simulation" units_comment="seconds" />
+            <parameter key="TimeOut" value="0.01" comment="Time out data" units_comment="seconds" />
+            <parameter key="MinFluidStop" value="0.5" comment="Minimum proportion of initial fluid particles to continue the simulation 0:Never stops, 0.1:Stops when fluid drops to 10%. (default=0)" />
+            <simulationdomain comment="Defines domain of simulation (default=Uses minimum and maximum position of the generated particles)">
+                <posmin x="default" y="default" z="default" comment="e.g.: x=0.5, y=default-1, z=default-10%" />
+                <posmax x="default" y="default" z="default + 150%" />
+            </simulationdomain>
+        </parameters>
+    </execution>
+</case>

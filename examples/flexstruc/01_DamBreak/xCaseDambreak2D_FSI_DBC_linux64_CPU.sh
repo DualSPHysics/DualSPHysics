@@ -8,7 +8,7 @@ fail () {
 
 # "name" and "dirout" are named according to the testcase
 
-export name=CaseRollingTankHanging
+export name=CaseDambreak2D_FSI_DBC
 export dirout=${name}_out
 export diroutdata=${dirout}/data
 
@@ -69,7 +69,10 @@ if [ $? -ne 0 ] ; then fail; fi
 ${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartTank -onlymk:11
 if [ $? -ne 0 ] ; then fail; fi
 
-${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartStructure -onlymk:12
+${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartGate -onlymk:12
+if [ $? -ne 0 ] ; then fail; fi
+
+${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartStructure -onlymk:13
 if [ $? -ne 0 ] ; then fail; fi
 
 fi
