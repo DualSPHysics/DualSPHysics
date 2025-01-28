@@ -116,7 +116,7 @@ template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod>
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
-  for(unsigned p=0;p<n;p++){
+  for(int p=0;p<n;p++){
 
     const int p1=bufferpart[p];
     tdouble3 pos_p1=posb[p1];
@@ -347,7 +347,7 @@ void InteractionBufferExtrapFlux(const unsigned n,const int pini
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
-  for(unsigned p=0;p<n;p++){
+  for(int p=0;p<n;p++){
 
     const int p1=p+pini;
     tdouble3 pos_p1=ptpoints[p1];
