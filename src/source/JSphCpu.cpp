@@ -1304,8 +1304,8 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco>
   void JSphCpu::Interaction_Forces_ct4(const stinterparmsc& t,StInterResultc& res)const
 {
        if(TDensity==DDT_None)    Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_None    >(t,res);
-  // else if(TDensity==DDT_DDT)     Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT     >(t,res);
-  // else if(TDensity==DDT_DDT2)    Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT2    >(t,res);
+  else if(TDensity==DDT_DDT)     Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT     >(t,res);
+  else if(TDensity==DDT_DDT2)    Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT2    >(t,res);
   else if(TDensity==DDT_DDT2Full)Interaction_Forces_ct5<tker,ftmode,tvisco,DDT_DDT2Full>(t,res);
 }
 //==============================================================================
@@ -1321,13 +1321,13 @@ template<TpKernel tker>
   void JSphCpu::Interaction_Forces_ct2(const stinterparmsc& t,StInterResultc& res)const
 {
        if(FtMode==FTMODE_None)Interaction_Forces_ct3<tker,FTMODE_None>(t,res);
-  // else if(FtMode==FTMODE_Sph )Interaction_Forces_ct3<tker,FTMODE_Sph >(t,res);
-  // else if(FtMode==FTMODE_Ext )Interaction_Forces_ct3<tker,FTMODE_Ext >(t,res);
+  else if(FtMode==FTMODE_Sph )Interaction_Forces_ct3<tker,FTMODE_Sph >(t,res);
+  else if(FtMode==FTMODE_Ext )Interaction_Forces_ct3<tker,FTMODE_Ext >(t,res);
 }
 //==============================================================================
 void JSphCpu::Interaction_Forces_ct(const stinterparmsc& t,StInterResultc& res)const{
        if(TKernel==KERNEL_Wendland)  Interaction_Forces_ct2<KERNEL_Wendland>(t,res);
-  // else if(TKernel==KERNEL_Cubic)     Interaction_Forces_ct2<KERNEL_Cubic   >(t,res);
+  else if(TKernel==KERNEL_Cubic)     Interaction_Forces_ct2<KERNEL_Cubic   >(t,res);
 }
 
 //==============================================================================
@@ -1486,7 +1486,7 @@ void JSphCpu::ComputeVelrhoBound(const tfloat4* velrhoold,const byte* boundmode
   ,const float* ar,double armul,tfloat4* velrhonew)const
 {
   const int npb=int(Npb);
-  if(TMdbc2==MDBC2_None){ //<vs_m2dbc_ini>
+  if(TMdbc2>MDBC2_None){ //<vs_m2dbc_ini>
     #ifdef OMP_USE
       #pragma omp parallel for schedule (static) if(npb>OMP_LIMIT_COMPUTESTEP)
     #endif
@@ -1530,7 +1530,7 @@ void JSphCpu::ComputeVerlet(double dt){
   else{
     ComputeVerletVarsFluid(shift,indirvel,Velrho_c->cptr(),Velrho_c->cptr()
       ,boundmode,dt,dt,Ar_c->cptr(),Ace_c->cptr(),ShiftPosfs_c->cptr()
-      ,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr(),VelrhoM1_c->ptr(),NoPenShift_c->cptr());
+      ,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr(),VelrhoM1_c->ptr(),AC_CPTR(NoPenShift_c));
     ComputeVelrhoBound(Velrho_c->cptr(),boundmode,Ar_c->cptr()
       ,dt,VelrhoM1_c->ptr());
     VerletStep=0;
