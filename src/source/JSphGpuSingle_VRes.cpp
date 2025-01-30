@@ -220,7 +220,7 @@ void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
     if(newnp){			
       if(!CheckGpuParticlesSize(Np+newnp)){ //-Check memory allocation and resize.
         const unsigned ndatacpu=0,ndatagpu=Np;
-        ResizeParticlesSizeData(ndatacpu,ndatagpu,Np+newnp,Np+newnp,0.2,true);
+        ResizeParticlesSizeData(ndatacpu,ndatagpu,Np+newnp,Np+newnp,0.2f,true);
         CellDivSingle->SetIncreaseNp(newnp);
 			}  
       VRes->CreateNewPartGpu(Np,newnp,IdMax+1,Posxy_g->ptr(),Posz_g->ptr()

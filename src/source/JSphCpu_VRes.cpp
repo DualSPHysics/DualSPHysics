@@ -148,7 +148,7 @@ template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod>
     			//-Computes kernel.
     			float fac;
     			float facc;
-    			const double wab=fsph::GetKernel_WabFacFacc<tker>(csp,(rr2),fac,facc);
+    			const double wab=fsph::GetKernel_WabFacFacc<tker>(csp,float(rr2),fac,facc);
     			double frx=drx*fac,fry=dry*fac,frz=drz*fac; //-Gradients.
     			double frxx=facc*(drx*drx)/(rr2)+fac*(dry*dry+drz*drz)/rr2;
           double frzz=facc*(drz*drz)/(rr2)+fac*(dry*dry+drx*drx)/rr2;
@@ -264,14 +264,14 @@ template<TpKernel tker,bool sim2d,TpVresOrder vrorder,TpVresMethod vrmethod>
 
       if (sim2d)
       {      
-        velrhopb[p1].w = sol[0];
-        velrhopb[p1].x = sol[1];
-        velrhopb[p1].z = sol[2];
+        velrhopb[p1].w = static_cast<float>(sol[0]);
+        velrhopb[p1].x = static_cast<float>(sol[1]);
+        velrhopb[p1].z = static_cast<float>(sol[2]);
       } else {
-        velrhopb[p1].w = sol[0];
-        velrhopb[p1].x = sol[1];
-        velrhopb[p1].y = sol[2];
-        velrhopb[p1].z = sol[3];
+        velrhopb[p1].w = static_cast<float>(sol[0]);
+        velrhopb[p1].x = static_cast<float>(sol[1]);
+        velrhopb[p1].y = static_cast<float>(sol[2]);
+        velrhopb[p1].z = static_cast<float>(sol[3]);
       }
          
     }else{
@@ -347,7 +347,7 @@ void InteractionBufferExtrapFlux(const unsigned n,const int pini
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
-  for(int p=0;p<n;p++){
+  for(int p=0;p<int(n);p++){
 
     const int p1=p+pini;
     tdouble3 pos_p1=ptpoints[p1];
@@ -381,7 +381,7 @@ void InteractionBufferExtrapFlux(const unsigned n,const int pini
         if(rr2<=csp.kernelsize2 && rr2>=ALMOSTZERO){//-Only with fluid particles but not inout particles.
     			//-Computes kernel.
     			float fac;
-    			const double wab=fsph::GetKernel_WabFac<tker>(csp,(rr2),fac);
+    			const double wab=fsph::GetKernel_WabFac<tker>(csp,float(rr2),fac);
     			double frx=drx*fac,fry=dry*fac,frz=drz*fac; //-Gradients.
 
           double massp2=csp.massbound;
@@ -407,7 +407,7 @@ void InteractionBufferExtrapFlux(const unsigned n,const int pini
     			//-Computes kernel.
     			float fac=0.f;
     			float facc=0.f;
-    			const double wab=fsph::GetKernel_WabFacFacc<tker>(csp,(rr2),fac,facc);
+    			const double wab=fsph::GetKernel_WabFacFacc<tker>(csp,float(rr2),fac,facc);
     			double frx=drx*fac,fry=dry*fac,frz=drz*fac; //-Gradients.
     			double frxx=facc*(drx*drx)/(rr2)+fac*(dry*dry+drz*drz)/rr2;
           double frzz=facc*(drz*drz)/(rr2)+fac*(dry*dry+drx*drx)/rr2;
@@ -527,12 +527,12 @@ void InteractionBufferExtrapFlux(const unsigned n,const int pini
 
       if (sim2d){
         if((ShiftTFS>1.5 || sqrt(mindist)<mindp) && fluxes[p1]<0.0)
-        fluxes[p1]+=max(0.0,-sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt);
+        fluxes[p1]+=static_cast<float>(max(0.0,-sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt));
         else if((ShiftTFS>1.5 || sqrt(mindist)<mindp))
-        fluxes[p1]+=-sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt;
+        fluxes[p1]+= static_cast<float>(-sol[0]*((-float(velflux[p1].x)+sol[1])*normals[p1].x+(-float(velflux[p1].z)+sol[2])*normals[p1].z)*dp*dt);
       }else{
-        if      ((ShiftTFS>2.75 || sqrt(mindist)<mindp)  &&fluxes[p1]<0.0)  fluxes[p1]+=max(0.0,-sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt);
-        else if ((ShiftTFS>2.75 || sqrt(mindist)<mindp))                    fluxes[p1]+= -sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt;
+        if      ((ShiftTFS>2.75 || sqrt(mindist)<mindp)  &&fluxes[p1]<0.0)  fluxes[p1]+= static_cast<float>(max(0.0,-sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt));
+        else if ((ShiftTFS>2.75 || sqrt(mindist)<mindp))                    fluxes[p1]+= static_cast<float>(-sol[0]*((-velflux[p1].x+sol[1])*normals[p1].x+(-velflux[p1].y+sol[2])*normals[p1].y+(-velflux[p1].z+sol[3])*normals[p1].z)*dp*dp*dt);
           
       }
     } 
@@ -610,7 +610,7 @@ void BufferShiftingCpu(unsigned n,unsigned pinit,const tdouble3 *pos
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
-  for(int p1=int(pinit);p1<n;p1++){
+  for(int p1=int(pinit);p1<int(n);p1++){
     typecode rcode=code[p1];
 	  if(CODE_IsFluidBuffer(rcode)){
 
@@ -629,7 +629,7 @@ void BufferShiftingCpu(unsigned n,unsigned pinit,const tdouble3 *pos
       tfloat4 shiftp1=shiftpos[p1];     
 
       if((fabs(dis.x)>boxsize.x/2.0 )){
-        tfloat3 normal=TFloat3(mat.a11,mat.a21,mat.a31);
+        tfloat3 normal=TFloat3(static_cast<float>(mat.a11), static_cast<float>(mat.a21), static_cast<float>(mat.a31));
         shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
         shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
         shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
@@ -637,7 +637,7 @@ void BufferShiftingCpu(unsigned n,unsigned pinit,const tdouble3 *pos
 
       } 
       if((fabs(dis.y)>boxsize.y/2.0)){
-        tfloat3 normal=TFloat3(mat.a12,mat.a22,mat.a32);
+        tfloat3 normal=TFloat3(static_cast<float>(mat.a12), static_cast<float>(mat.a22), static_cast<float>(mat.a32));
         shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
         shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
         shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
@@ -645,7 +645,7 @@ void BufferShiftingCpu(unsigned n,unsigned pinit,const tdouble3 *pos
 
       }
       if((fabs(dis.z)>boxsize.z/2.0)){
-        tfloat3 normal=TFloat3(mat.a13,mat.a23,mat.a33);
+        tfloat3 normal=TFloat3(static_cast<float>((mat.a13)), static_cast<float>(mat.a23), static_cast<float>(mat.a33));
         shiftpos[p1].x=shiftp1.x-normal.x*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
         shiftpos[p1].y=shiftp1.y-normal.y*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
         shiftpos[p1].z=shiftp1.z-normal.z*(shiftp1.x*normal.x+shiftp1.y*normal.y+shiftp1.z*normal.z);
@@ -683,7 +683,7 @@ void CheckMassFlux(unsigned n,unsigned pinit,const StCteSph csp
   #ifdef OMP_USE
     #pragma omp parallel for schedule (guided)
   #endif
-  for(int p1=int(pinit);p1<n;p1++){
+  for(int p1=int(pinit);p1<int(n);p1++){
 
     tdouble3 posp1=posb[p1];
 
@@ -805,12 +805,12 @@ template<TpKernel tker,bool sim2d> void InteractionComputeFSNormals
         const float dry=float(posp1.y-ry);
         const float drz=float(posp1.z-rz);
         const float rr2=drx*drx+dry*dry+drz*drz;          
-        float rx1=rx; float ry1=ry; float rz1=rz;
+        float rx1 = static_cast<float>(rx); float ry1 = static_cast<float>(ry); float rz1 = static_cast<float>(rz);
         if(vresdata.tracking[izone]){
           tmatrix4d mat=vresdata.matmov[izone].GetMatrix4d();
-          rx1=(rx-mat.a14)*mat.a11+(ry-mat.a24)*mat.a21+(rz-mat.a34)*mat.a31;
-          ry1=(rx-mat.a14)*mat.a12+(ry-mat.a24)*mat.a22+(rz-mat.a34)*mat.a32;
-          rz1=(rx-mat.a14)*mat.a13+(ry-mat.a24)*mat.a23+(rz-mat.a34)*mat.a33;     
+          rx1=static_cast<float>((rx-mat.a14)*mat.a11+(ry-mat.a24)*mat.a21+(rz-mat.a34)*mat.a31);
+          ry1=static_cast<float>((rx-mat.a14)*mat.a12+(ry-mat.a24)*mat.a22+(rz-mat.a34)*mat.a32);
+          rz1=static_cast<float>((rx-mat.a14)*mat.a13+(ry-mat.a24)*mat.a23+(rz-mat.a34)*mat.a33);
         }
         tdouble3 posp2=TDouble3(rx1,ry1,rz1);
         tdouble3 boxmin=vresdata.boxdommin[izone];
@@ -994,12 +994,12 @@ void InteractionCallScanUmbrellaRegion(unsigned np,unsigned pinit,const StCteSph
         const float dry=float(posp1.y-ry);
         const float drz=float(posp1.z-rz);
         const float rr2=drx*drx+dry*dry+drz*drz;          
-        float rx1=rx; float ry1=ry; float rz1=rz;
+        float rx1= static_cast<float>(rx); float ry1= static_cast<float>(ry); float rz1= static_cast<float>(rz);
         if(vresdata.tracking[izone]){
           tmatrix4d mat=vresdata.matmov[izone].GetMatrix4d();
-          rx1=(rx-mat.a14)*mat.a11+(ry-mat.a24)*mat.a21+(rz-mat.a34)*mat.a31;
-          ry1=(rx-mat.a14)*mat.a12+(ry-mat.a24)*mat.a22+(rz-mat.a34)*mat.a32;
-          rz1=(rx-mat.a14)*mat.a13+(ry-mat.a24)*mat.a23+(rz-mat.a34)*mat.a33;     
+          rx1=static_cast<float>((rx-mat.a14)*mat.a11+(ry-mat.a24)*mat.a21+(rz-mat.a34)*mat.a31);
+          ry1=static_cast<float>((rx-mat.a14)*mat.a12+(ry-mat.a24)*mat.a22+(rz-mat.a34)*mat.a32);
+          rz1=static_cast<float>((rx-mat.a14)*mat.a13+(ry-mat.a24)*mat.a23+(rz-mat.a34)*mat.a33);
         }
         tdouble3 posp2=TDouble3(rx1,ry1,rz1);
         tdouble3 boxmin=vresdata.boxdommin[izone];
@@ -1087,12 +1087,12 @@ template<TpKernel tker,bool sim2d> void CorrectShiftBuff
         const float dry=float(posp1.y-ry);
         const float drz=float(posp1.z-rz);
         const float rr2=drx*drx+dry*dry+drz*drz;          
-        float rx1=rx; float ry1=ry; float rz1=rz;
+        float rx1 = static_cast<float>(rx); float ry1 = static_cast<float>(ry); float rz1 = static_cast<float>(rz);
         if(vresdata.tracking[izone]){
           tmatrix4d mat=vresdata.matmov[izone].GetMatrix4d();
-          rx1=(rx-mat.a14)*mat.a11+(ry-mat.a24)*mat.a21+(rz-mat.a34)*mat.a31;
-          ry1=(rx-mat.a14)*mat.a12+(ry-mat.a24)*mat.a22+(rz-mat.a34)*mat.a32;
-          rz1=(rx-mat.a14)*mat.a13+(ry-mat.a24)*mat.a23+(rz-mat.a34)*mat.a33;     
+          rx1=static_cast<float>((rx-mat.a14)*mat.a11+(ry-mat.a24)*mat.a21+(rz-mat.a34)*mat.a31);
+          ry1=static_cast<float>((rx-mat.a14)*mat.a12+(ry-mat.a24)*mat.a22+(rz-mat.a34)*mat.a32);
+          rz1=static_cast<float>((rx-mat.a14)*mat.a13+(ry-mat.a24)*mat.a23+(rz-mat.a34)*mat.a33);     
         }
         tdouble3 posp2=TDouble3(rx1,ry1,rz1);
         tdouble3 boxmin=vresdata.boxdommin[izone];

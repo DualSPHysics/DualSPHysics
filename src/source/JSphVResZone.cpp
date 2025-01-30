@@ -76,7 +76,7 @@ JSphVResZone::~JSphVResZone()
 void JSphVResZone::Config(){    
     
   ComputeInterface();
-  Ntot = Points.size();
+  Ntot = static_cast<int>(Points.size());
   if(!IsSimple){
     tmatrix4d mat=Mat.GetMatrix4d();
     tmatrix4d mat_inv= TMatrix4d(mat.a11,mat.a21,mat.a31,0
@@ -119,7 +119,7 @@ void JSphVResZone::Reset() {
 void JSphVResZone::ComputeInterface() {
     
   tdouble3 length = (Inner ? (BoxLimitMaxOuter - BoxLimitMinOuter) : (BoxLimitMaxInner - BoxLimitMinInner));
-  NPoints = TUint3(std::round(length.x / CSP.dp), std::round(length.y / CSP.dp), std::round(length.z / CSP.dp));
+  NPoints = TUint3(static_cast<unsigned>(std::round(length.x / CSP.dp)),static_cast<unsigned>(std::round(length.y / CSP.dp)), static_cast<unsigned>(std::round(length.z / CSP.dp)));
   tdouble3 shift = TDouble3(length.x - CSP.dp * (NPoints.x - 1), length.y - CSP.dp * (NPoints.y-1), length.z - CSP.dp * (NPoints.z - 1)) / 2.0;
 
   if(CSP.simulate2d){
@@ -144,9 +144,9 @@ void JSphVResZone::ComputeInterface() {
     if(CSP.simulate2d&&(m%3)==1)
             np[1] = 0;
 
-    for(int i=0;i<np[0];i++)
-      for(int j=0;j<np[1];j++)
-        for(int k=0;k<np[2];k++){
+    for(unsigned i=0;i<np[0];i++)
+      for(unsigned j=0;j<np[1];j++)
+        for(unsigned k=0;k<np[2];k++){
           tdouble3 point = TDouble3(startpoint.x + i * CSP.dp + shiftS[0], startpoint.y + j * CSP.dp + shiftS[1], startpoint.z + k * CSP.dp + shiftS[2]);
           tdouble3 normal = TDouble3(colinv[0], colinv[1], colinv[2]);
 

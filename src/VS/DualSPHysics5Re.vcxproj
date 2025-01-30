@@ -261,7 +261,7 @@
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;_WITHMR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <OpenMPSupport>true</OpenMPSupport>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -464,6 +464,7 @@ rem ***Sentencia de compilacion
     </CudaCompile>
     <CudaCompile Include="..\source\JSphGpu_VRes_iker.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
     </CudaCompile>
     <CudaCompile Include="..\source\JSphShifting_ker.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
@@ -691,10 +692,11 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     </ClInclude>
     <ClInclude Include="..\source\JSaveCsv2.h" />
     <ClInclude Include="..\source\JDsSaveDt.h" />
-    <ClInclude Include="..\source\JSphBufferZone.h" />
     <ClInclude Include="..\source\JSphCpuSingle_VRes.h" />
     <ClInclude Include="..\source\JSphCpu_VRes.h" />
-    <ClInclude Include="..\source\JSphGpuSingle_VRes.h" />
+    <ClInclude Include="..\source\JSphGpuSingle_VRes.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="..\source\JSphGpu_cte.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
@@ -720,6 +722,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     </ClInclude>
     <ClInclude Include="..\source\JSphGpu_VRes_iker.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\source\JSphFlexStruc.h" />
     <ClInclude Include="..\source\JSphInOutDef.h" />
@@ -768,6 +771,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JSphVRes.h" />
     <ClInclude Include="..\source\JSphVResDef.h" />
     <ClInclude Include="..\source\JSphVResDriver.h" />
+    <ClInclude Include="..\source\JSphVResZone.h" />
     <ClInclude Include="..\source\JSpVtkData.h" />
     <ClInclude Include="..\source\JSpVtkShape.h" />
     <ClInclude Include="..\source\JTimeControl.h" />
@@ -907,12 +911,13 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JRelaxZonesGpu.cpp" />
     <ClCompile Include="..\source\JSaveCsv2.cpp" />
     <ClCompile Include="..\source\JDsSaveDt.cpp" />
-    <ClCompile Include="..\source\JSphBufferZone.cpp" />
     <ClCompile Include="..\source\JSphCpuSingle_VRes.cpp" />
     <ClCompile Include="..\source\JSphCpu_mdbc.cpp" />
     <ClCompile Include="..\source\JSphCpu_preloop.cpp" />
     <ClCompile Include="..\source\JSphCpu_VRes.cpp" />
-    <ClCompile Include="..\source\JSphGpuSingle_VRes.cpp" />
+    <ClCompile Include="..\source\JSphGpuSingle_VRes.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\source\JSphFlexStruc.cpp" />
     <ClCompile Include="..\source\JSphInOutVel.cpp" />
     <ClCompile Include="..\source\JSphInOutVelAwas.cpp" />
@@ -946,6 +951,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JSphCpuSingle.cpp" />
     <ClCompile Include="..\source\JSphShiftingAdv.cpp" />
     <ClCompile Include="..\source\JSphVRes.cpp" />
+    <ClCompile Include="..\source\JSphVResZone.cpp" />
     <ClCompile Include="..\source\JSpVtkData.cpp" />
     <ClCompile Include="..\source\JSpVtkShape.cpp" />
     <ClCompile Include="..\source\JTimeControl.cpp" />

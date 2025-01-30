@@ -47,6 +47,9 @@
     <Filter Include="Source\FlexStruc">
       <UniqueIdentifier>{28cbd7c1-6f6d-48b8-a805-25a9f8749657}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\VRes">
+      <UniqueIdentifier>{6e810965-d093-4040-8a11-81231cc4f0dd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\JCellDivGpu_ker.h">
@@ -538,6 +541,42 @@
     <ClInclude Include="..\source\JSphFlexStruc.h">
       <Filter>Source\FlexStruc</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JBoxDef.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCaseVRes.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JVResDataLimits.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpuSingle_VRes.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphVRes.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphVResDef.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphVResDriver.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphCpuSingle_VRes.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsVresData.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphCpu_VRes.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_VRes_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphVResZone.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -873,6 +912,33 @@
     <ClCompile Include="..\source\JSphFlexStruc.cpp">
       <Filter>Source\FlexStruc</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\JBoxDef.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCaseVRes.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphGpuSingle_VRes.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphVRes.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JVResDataLimits.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsVresData.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpu_VRes.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpuSingle_VRes.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphVResZone.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuildStep Include="..\source\JSphGpu.h">
@@ -926,6 +992,9 @@
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\JSphGpu_preloop_iker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_VRes_iker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
   </ItemGroup>

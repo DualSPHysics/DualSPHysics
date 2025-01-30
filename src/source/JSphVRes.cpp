@@ -375,7 +375,8 @@ void JSphVRes::Config()
     npt=0;
     for(unsigned i=0;i<NPoints[ci];i++){
       PtPointsIni[NIni[ci]+i]  =List[ci]->getPoints()[i];
-      PtNormalsIni[NIni[ci]+i] =TFloat3(List[ci]->getNormals()[i].x,List[ci]->getNormals()[i].y,List[ci]->getNormals()[i].z);
+      PtNormalsIni[NIni[ci]+i] =TFloat3(static_cast<float>(List[ci]->getNormals()[i].x)
+        , static_cast<float>(List[ci]->getNormals()[i].y), static_cast<float>(List[ci]->getNormals()[i].z));
     }
   }
   
@@ -602,7 +603,7 @@ void JSphVRes::CheckNormals(TpBoundary tboundary,unsigned np
   unsigned nerr=0;
   byte* errpart=new byte[np];
   memset(errpart,0,sizeof(byte)*np);
-  const unsigned nzone=List.size();
+  const unsigned nzone=static_cast<unsigned>(List.size());
   const unsigned pfin=pini+np;
   for(unsigned p=pini;p<pfin;p++){
     const typecode rcode=code[p];
@@ -810,7 +811,7 @@ void JSphVRes::CreateNewPartGpu(unsigned np,unsigned newnp,unsigned idnext,doubl
   ,int *newpart,unsigned nzone)
 {
   cusphvres::CreateNewPart(newnp,NIni[nzone],newpart,np,idnext
-    ,posxy,posz,dcell,code,idp,velrhop,PtNormalsg,CSP.dp,PtPosxyg,PtPoszg,nzone);
+    ,posxy,posz,dcell,code,idp,velrhop,PtNormalsg, static_cast<float>(CSP.dp),PtPosxyg,PtPoszg,nzone);
 }
 #endif
 
@@ -824,12 +825,12 @@ void JSphVRes::MoveBufferZone(double dt,std::vector<JMatrix4d> mat){
     tmatrix4d mat_i=mat[i].GetMatrix();
     if(Tracking[i]){
       if(Cpu){
-        for(int p=nini;p<ntot;p++){
+        for(int p=nini;p<int(ntot);p++){
           const tdouble3 posp=PtPoints[p];
           const tdouble3 normalp=ToTDouble3(PtNormals[p]);
           const tdouble3 pospnew=mat[i].MulPoint(posp);
           const tfloat3 normalpnew=ToTFloat3(mat[i].MulNormal(normalp));
-          if(dt>0) PtVelMot[p]=ToTFloat3(pospnew-posp)/dt;
+          if(dt>0) PtVelMot[p]=ToTFloat3(pospnew-posp)/ static_cast<float>(dt);
           PtPoints[p]=pospnew;
           PtNormals[p]=normalpnew;
         }

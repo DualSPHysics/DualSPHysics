@@ -179,7 +179,7 @@ void JSphCpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
     if(newnp){
       if(!CheckCpuParticlesSize(Np+newnp)){
         const unsigned ndatacpu=Np;
-        ResizeParticlesSizeData(ndatacpu,Np+newnp,Np+newnp, 0.2,true);
+        ResizeParticlesSizeData(ndatacpu,Np+newnp,Np+newnp,0.2f,true);
         CellDivSingle->SetIncreaseNp(newnp);
       }
       VRes->CreateNewPart(IdMax+1,Dcell_c->ptr(),Code_c->ptr()
