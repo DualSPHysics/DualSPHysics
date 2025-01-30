@@ -73,6 +73,8 @@ public:
   void BufferInit(StInterParmsbg *parms);
   double Init2();
 
+  void AddWarningVRes();
+
   double ComputeStepVRes();
   
   void Finish(double dt1);

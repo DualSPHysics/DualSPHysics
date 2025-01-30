@@ -90,7 +90,8 @@ void JSphCpuSingle_VRes::VisuConfigVRes(){
 /// Initialize VRes object.
 //==============================================================================
 void JSphCpuSingle_VRes::VResInit(const JSphCfgRun* cfg, JCaseVRes casemultires, unsigned id){
-   VRes=new JSphVRes(Cpu,CSP,casemultires,id,AppName,DirDataOut,PartBegin,PartBeginDir);
+   VRes=new JSphVRes(Cpu,CSP,casemultires,id,MapRealPosMin
+   ,MapRealPosMax,AppName,DirDataOut,PartBegin,PartBeginDir);
    VRes->Config();
 }
 

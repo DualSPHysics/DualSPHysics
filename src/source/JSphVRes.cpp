@@ -52,9 +52,11 @@
 using namespace std;
 
 JSphVRes::JSphVRes(bool cpu,const StCteSph &csp,const JCaseVRes vreszone,unsigned zoneid
-    ,std::string appname,std::string dirdataout,unsigned partbegin,std::string partbegindir)
-    : Log(AppInfo.LogPtr()),Cpu(cpu),CSP(csp),VresZone(vreszone),ZoneId(zoneid)
-    ,AppName(appname),DirDataOut(dirdataout),PartBegin(partbegin),PartBeginDir(partbegindir)
+  ,tdouble3 maprealposmin,tdouble3 maprealposmax
+  ,std::string appname,std::string dirdataout,unsigned partbegin,std::string partbegindir)
+  : Log(AppInfo.LogPtr()),Cpu(cpu),CSP(csp),VresZone(vreszone),ZoneId(zoneid)
+  ,MapRealPosMin(maprealposmin),MapRealPosMax(maprealposmax)
+  ,AppName(appname),DirDataOut(dirdataout),PartBegin(partbegin),PartBeginDir(partbegindir)
 {
   ClassName = "JSphVRes";
   BoxLimitMin=NULL;  BoxLimitMax=NULL; BoxDomMin=NULL;  BoxDomMax=NULL; 
@@ -284,8 +286,8 @@ void JSphVRes::CreateZones(){
     bool trackingisactive     =zone->TrackingIsActive();
     unsigned trackingmk       =zone->GetTrackingMkBound();
     if(!isSimple)trackingisactive=true;
-    JSphBufferZone *zo = new JSphBufferZone(Cpu, CSP,true ,zoneid, boxlimitmininner, boxlimitmaxinner
-      ,boxlimitminouter, boxlimitmaxouter,boxlimitminmid,boxlimitmaxmid,trackingisactive,trackingmk,mat,isSimple);
+    JSphVResZone *zo = new JSphVResZone(Cpu, CSP,true ,zoneid, boxlimitmininner, boxlimitmaxinner
+      ,boxlimitminouter, boxlimitmaxouter,boxlimitminmid,boxlimitmaxmid,MapRealPosMin,MapRealPosMax,trackingisactive,trackingmk,mat,isSimple);
       List.push_back(zo);
   }
   for(unsigned i=0; i<SubZones_Count; i++){
@@ -303,8 +305,8 @@ void JSphVRes::CreateZones(){
     bool trackingisactive       =subzone->TrackingIsActive();
     unsigned trackingmk         =subzone->GetTrackingMkBound();
     if(!isSimple)trackingisactive=true;
-    JSphBufferZone *zo = new JSphBufferZone(Cpu, CSP,false ,zoneid, boxlimitmininner, boxlimitmaxinner
-      ,boxlimitminouter, boxlimitmaxouter,boxlimitminmid,boxlimitmaxmid,trackingisactive,trackingmk,mat,isSimple);
+    JSphVResZone *zo = new JSphVResZone(Cpu, CSP,false ,zoneid, boxlimitmininner, boxlimitmaxinner
+      ,boxlimitminouter, boxlimitmaxouter,boxlimitminmid,boxlimitmaxmid,MapRealPosMin,MapRealPosMax,trackingisactive,trackingmk,mat,isSimple);
       List.push_back(zo);
   }
   parent=NULL;
@@ -325,12 +327,12 @@ void JSphVRes::Config()
   AllocateMemory(GetCount());
   //-Prepares data for vres zone configurations.
   for(unsigned ci=0;ci<ListSize;ci++){
-    BoxLimitMin   [ci]=List[ci]->getBoxLimitMin();
-    BoxLimitMax   [ci]=List[ci]->getBoxLimitMax();
-    BoxDomMin     [ci]=List[ci]->getBoxDomMin();
-    BoxDomMax     [ci]=List[ci]->getBoxDomMax();
-    Width         [ci]=List[ci]->getWidth();
-    Inner         [ci]=List[ci]->getInner();;
+    BoxLimitMin   [ci]=List[ci]->GetBoxLimitMin();
+    BoxLimitMax   [ci]=List[ci]->GetBoxLimitMax();
+    BoxDomMin     [ci]=List[ci]->GetBoxDomMin();
+    BoxDomMax     [ci]=List[ci]->GetBoxDomMax();
+    Width         [ci]=List[ci]->GetWidth();
+    Inner         [ci]=List[ci]->GetInner();;
     Tracking      [ci]=List[ci]->TrackingIsActive();
     NPoints       [ci]=List[ci]->getCount();
     Matmov        [ci]=JMatrix4d(List[ci]->GetMat());
@@ -641,25 +643,32 @@ void JSphVRes::CheckNormals(TpBoundary tboundary,unsigned np
 }
 
 #ifdef _WITHGPU
-unsigned JSphVRes::CreateListGpuInit(unsigned npf, unsigned pini, const double2 *posxyg, const double *poszg, typecode *codeg, unsigned size, int *inoutpartg, unsigned nzone)
+unsigned JSphVRes::CreateListGpuInit(unsigned npf,unsigned pini,const double2 *posxyg
+  ,const double *poszg,typecode *codeg,unsigned size,int *inoutpartg,unsigned nzone)
 {
   unsigned count = 0;
   tmatrix4f mat=Matmov[nzone].GetMatrix4f();
   tmatrix4f matc=mat;
 
-  bool Stable = false;
-  count = cusphvres::BufferCreateListInit(Stable,npf,pini,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner,List[nzone]->BoxLimitMinOuter
-    ,List[nzone]->BoxLimitMaxOuter,List[nzone]->BoxLimitMinMid,List[nzone]->BoxLimitMaxMid,List[nzone]->Inner,posxyg,poszg,codeg,(unsigned *)inoutpartg
+  const bool Stable=false;
+  count = cusphvres::BufferCreateListInit(Stable,npf,pini
+    ,List[nzone]->GetBoxLimitMinInner(),List[nzone]->GetBoxLimitMaxInner()
+    ,List[nzone]->GetBoxLimitMinOuter(),List[nzone]->GetBoxLimitMaxOuter()
+    ,List[nzone]->GetBoxLimitMinMid(),List[nzone]->GetBoxLimitMaxMid()
+    ,List[nzone]->GetInner(),posxyg,poszg,codeg,(unsigned *)inoutpartg
     ,matc,Tracking[nzone],nzone);
   return (count);
 }
-unsigned JSphVRes::CreateListGpu(unsigned npf, unsigned pini, const double2 *posxyg, const double *poszg, typecode *codeg, unsigned size, int *inoutpartg, unsigned nzone)
+unsigned JSphVRes::CreateListGpu(unsigned npf,unsigned pini,const double2 *posxyg
+  ,const double *poszg,typecode *codeg,unsigned size,int *inoutpartg,unsigned nzone)
 {
   unsigned count = 0;
-  bool Stable = false;
-  count = cusphvres::BufferCreateList(Stable,npf,pini,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner,List[nzone]->BoxLimitMinOuter
-  ,List[nzone]->BoxLimitMaxOuter, List[nzone]->Inner,posxyg,poszg,codeg,(unsigned *)inoutpartg,Matmovg,Tracking[nzone],nzone);
-
+  const bool Stable=false;
+  count = cusphvres::BufferCreateList(Stable,npf,pini
+    ,List[nzone]->GetBoxLimitMinInner(),List[nzone]->GetBoxLimitMaxInner()
+    ,List[nzone]->GetBoxLimitMinOuter(),List[nzone]->GetBoxLimitMaxOuter()
+    ,List[nzone]->GetInner(),posxyg,poszg,codeg,(unsigned *)inoutpartg
+    ,Matmovg,Tracking[nzone],nzone);
   return (count);
 }
 
@@ -775,8 +784,10 @@ void JSphVRes::ComputeStepGpu(unsigned bufferpartcount,int *bufferpart,unsigned 
     ,unsigned *idpg,float4 *velrhopg,byte *newizoneg,const JSphGpuSingle *gp,unsigned nzone)
 {
   //-Checks particle position.
-  cusphvres::BufferComputeStep(bufferpartcount,bufferpart,posxyg,poszg,codeg,List[nzone]->BoxLimitMinInner,List[nzone]->BoxLimitMaxInner
-      ,List[nzone]->BoxLimitMinOuter,List[nzone]->BoxLimitMaxOuter,List[nzone]->Inner,Matmovg,Tracking[nzone],nzone);
+  cusphvres::BufferComputeStep(bufferpartcount,bufferpart,posxyg,poszg,codeg
+    ,List[nzone]->GetBoxLimitMinInner(),List[nzone]->GetBoxLimitMaxInner()
+    ,List[nzone]->GetBoxLimitMinOuter(),List[nzone]->GetBoxLimitMaxOuter()
+    ,List[nzone]->GetInner(),Matmovg,Tracking[nzone],nzone);
 
 }
 

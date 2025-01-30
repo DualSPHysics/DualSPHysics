@@ -94,8 +94,18 @@ void JSphGpuSingle_VRes::VisuConfigVRes(){
 /// Initialize VRes object.
 //==============================================================================
 void JSphGpuSingle_VRes::VResInit(const JSphCfgRun* cfg,JCaseVRes casemultires,unsigned id){
-   VRes=new JSphVRes(Cpu,CSP,casemultires,id,AppName,DirDataOut,PartBegin,PartBeginDir);
+   VRes=new JSphVRes(Cpu,CSP,casemultires,id,MapRealPosMin
+    ,MapRealPosMax,AppName,DirDataOut,PartBegin,PartBeginDir);
    VRes->Config();
+}
+
+//==============================================================================
+/// Initialize VRes object.
+//==============================================================================
+void JSphGpuSingle_VRes::AddWarningVRes(){
+   if(Moorings)Log->PrintWarning("The use of MoorDynPlus with Variable resolution is an experimental feature.");
+   if(UseChrono)Log->PrintWarning("The use of CHRONO with Variable resolution is an experimental feature.");
+   if(FlexStruc)Log->PrintWarning("The use of FlexStruct with Variable resolution is an experimental feature.");
 }
 
 //==============================================================================
@@ -419,6 +429,7 @@ void JSphGpuSingle_VRes::Init(std::string appname,const JSphCfgRun* cfg,JLog2* l
   PrintAllocMemory(GetAllocMemoryCpu(),GetAllocMemoryGpu());
   UpdateMaxValues();
   SaveData(); 
+  AddWarningVRes();
   Arrays_Cpu->FreeUnusedArrays();
   Arrays_Gpu->FreeUnusedArrays();
   Timersg->ResetTimes();

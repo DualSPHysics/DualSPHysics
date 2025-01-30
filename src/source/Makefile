@@ -129,7 +129,7 @@ OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphInOut.o JSphInOutZone.o JSphIn
 OBINOUT:=$(OBINOUT) JSphInOutPoints.o JSphInOutVel.o JSphInOutVelAwas.o JSphInOutZsurf.o JSimpleNeigs.o
 OBINOUTGPU=JSphGpuSingle_InOut.o
 OBMESH=JMeshData.o JMeshTDatas.o JMeshTDatasLoad.o JMeshTDatasSave.o JMeshTDatasDsVel.o JMeshTDatasXml.o
-OBVRES=JSphVRes.o JSphBufferZone.o JSphCpuSingle_VRes.o JSphGpuSingle_VRes.o JSphCpu_VRes.o JCaseVRes.o JVResDataLimits.o JDsVresData.o JBoxDef.o
+OBVRES=JSphVRes.o JSphVResZone.o JSphCpuSingle_VRes.o JSphGpuSingle_VRes.o JSphCpu_VRes.o JCaseVRes.o JVResDataLimits.o JDsVresData.o JBoxDef.o
 OBFLEXSTRUC=JSphFlexStruc.o
 
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)

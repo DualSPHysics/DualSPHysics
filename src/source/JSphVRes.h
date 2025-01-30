@@ -27,7 +27,7 @@
 #include "DualSphDef.h"
 #include "JCellDivDataCpu.h"
 #include "JObject.h"
-#include "JSphBufferZone.h"
+#include "JSphVResZone.h"
 #include "JCaseVRes.h"
 #include "JDsMotion.h"
 #include "JDsMotionDef.h"
@@ -143,8 +143,11 @@ private:
   std::string PartBeginDir;
   JDsVResDataSave* SvVResDataBi4;
 
-  std::vector<JSphBufferZone *> List;   ///<List of buffer zones.        
+  std::vector<JSphVResZone *> List;   ///<List of buffer zones.        
   unsigned ListSize;                    ///<Number of buffer zones.
+
+  const tdouble3 MapRealPosMin;
+  const tdouble3 MapRealPosMax;
 
   tdouble3*	 BoxLimitMin;
   tdouble3*	 BoxLimitMax;
@@ -207,7 +210,8 @@ tdouble3 MovePoint(tdouble3 oldpos,const tmatrix4d& mat);
 
 public: 
   JSphVRes(bool cpu, const StCteSph &csp,const JCaseVRes vreszone,unsigned zoneid
-      ,std::string appname,std::string dirdataout,unsigned partbegin,std::string partbegindir);
+    ,tdouble3 maprealposmin,tdouble3 maprealposmax
+    ,std::string appname,std::string dirdataout,unsigned partbegin,std::string partbegindir);
   ~JSphVRes();
   void Reset();
   void Config();
@@ -223,7 +227,7 @@ public:
   void LoadVResData();
 
   unsigned GetCount()const{ return(unsigned(List.size())); }
-  const JSphBufferZone* GetZone(unsigned ci)const{ return(ci<ListSize? List[ci]: NULL); }
+  const JSphVResZone* GetZone(unsigned ci)const{ return(ci<ListSize? List[ci]: NULL); }
 
   void SaveVtkNormals(std::string filename,int numfile,unsigned np
     ,const tdouble3* pos,const tfloat3* boundnor,const tfloat3* velflux,const float* flux)const;
