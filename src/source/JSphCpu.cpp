@@ -782,7 +782,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
 
     //<vs_advshift_end>
 
-    float psicleanp1;
+    float psicleanp1=0;
     float psicleanr=0;
     float cspsi=0;
     #ifdef AVAILABLE_DIVCLEAN
