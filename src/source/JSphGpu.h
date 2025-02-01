@@ -192,6 +192,14 @@ protected:
   agfloat3* FSNormal_g;   ///<Normals of Free-Surface particles (needed for advanced shifting).
   //<vs_advshift_end>
 
+  //<vs_divclean_ini>
+  agfloat*  PsiClean_g;       ///<Scalar value for divergence cleaning model.
+  agfloat*  PsiCleanPre_g;    ///<Sympletic: in order to keep predictor values.
+  agfloat*  PsiCleanRhs_g;    ///<Sum of Phi value for divergence cleaning.
+  agfloat*  CsPsiClean_g;     ///<Local Speed of sound.
+  float     CsPsiCleanMax;    ///<Max value of the local speed of sound for stability condition.
+  //<vs_divclean_end>
+
   double VelMax;      ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;      ///<Maximum value of Ace[] (ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
   float ViscDtMax;    ///<Maximum value of ViscDt computed in Interaction_Forces().

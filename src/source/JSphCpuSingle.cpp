@@ -554,6 +554,12 @@ void JSphCpuSingle::RunCellDivide(bool updateperiodic){
   }
   if(FlexStruc&&FlexStrucRidpc)CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpc); //<vs_flexstruc>
 
+  #ifdef AVAILABLE_DIVCLEAN
+    if(DivCleaning){
+      CellDivSingle->SortArray(PsiClean_c->ptr());
+    }
+  #endif
+
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
   Npb=CellDivSingle->GetNpbFinal();
@@ -691,6 +697,8 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
     ,ShiftingMode,AC_PTR(ShiftPosfs_c)
     ,AC_PTR(SpsTauRho2_c),AC_PTR(Sps2Strain_c)
     ,AC_PTR(FSType_c),AC_PTR(ShiftVel_c) //<vs_advshift>
+    ,AC_CPTR(PsiClean_c),AC_PTR(PsiCleanRhs_c)    //<vs_divclean>
+    ,DivCleanKp,DivCleaning                       //<vs_divclean>
   );
   StInterResultc res;
   res.viscdt=0;
@@ -728,6 +736,10 @@ void JSphCpuSingle::Interaction_Forces(TpInterStep interstep){
 
   //-Calculates maximum value of ViscDt.
   ViscDtMax=res.viscdt;
+
+  #ifdef AVAILABLE_DIVCLEAN
+  CsPsiCleanMax=res.cspsiclean;
+  #endif
   //-Calculates maximum value of Ace (periodic particles are ignored).
   AceMax=ComputeAceMax();
 

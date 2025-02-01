@@ -317,6 +317,11 @@ protected:
   double FlexStrucCs0;          ///<Maximum initial speed of sound across all flexible structures.
   //<vs_flexstruc_end>
 
+  //<vs_divclean_ini>
+  bool DivCleaning;             ///<Divergence cleaning active.
+  float DivCleanKp ;             ///<Coefficient for local speed of sound.
+  //<vs_divclean_end>
+
   JDsMooredFloatings* Moorings;     ///<Manages floating bodies with moorings. | Gestiona floating bodies con amarres.
   JDsFtForcePoints* ForcePoints; ///<Manages forces to apply on floating bodies.
 

@@ -54,6 +54,10 @@ typedef struct{
   tsymatrix3f*  sps2strain;
   unsigned*     fstype;        //<vs_advshift>
   tfloat4*      shiftvel;      //<vs_advshift>
+  const float*  psiclean;        //<vs_divclean> 
+  float*        psicleanrhs;     //<vs_divclean>
+  float         divcleankp;      //<vs_divclean>
+  bool          divclean;        //<vs_divclean> 
 }stinterparmsc;
 
 ///Collects parameters for particle interaction on CPU.
@@ -71,6 +75,8 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
   ,TpShifting shiftmode,tfloat4* shiftposfs
   ,tsymatrix3f* spstaurho2,tsymatrix3f* sps2strain
   ,unsigned* fstype,tfloat4* shiftvel  //<vs_advshift>
+  ,const float* psiclean,float* psicleanrhs   //<vs_divclean>
+  ,float divcleankp,bool divclean             //<vs_divclean>
 )
 {
   stinterparmsc d={np,npb,npbok,(np-npb)
@@ -84,6 +90,8 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
     ,shiftmode,shiftposfs
     ,spstaurho2,sps2strain
     ,fstype,shiftvel    //<vs_advshift>
+    ,psiclean,psicleanrhs   //<vs_divclean>
+    ,divcleankp,divclean    //<vs_divclean>
   };
   return(d);
 }
@@ -92,6 +100,7 @@ inline stinterparmsc StInterparmsc(unsigned np,unsigned npb,unsigned npbok
 ///Structure to collect interaction results.
 typedef struct{
   float viscdt;
+  float cspsiclean;
 }StInterResultc;
 
 
@@ -176,6 +185,15 @@ protected:
   acfloat3*   FSNormal_c;   ///<Normals of Free-Surface particles (needed for advanced shifting).
   //<vs_advshift_end>
 
+  //<vs_divclean_ini>
+  //-Variable for divergence cleaning.
+  acfloat*  PsiClean_c;       ///<Scalar value for divergence cleaning model.
+  acfloat*  PsiCleanPre_c;    ///<Sympletic: in order to keep predictor values.
+  acfloat*  PsiCleanRhs_c;    ///<Sum of Phi value for divergence cleaning.
+  acfloat*  CsPsiClean_c;     ///<Local Speed of sound.
+  float     CsPsiCleanMax;    ///<Max value of the local speed of sound for stability condition.
+  //<vs_divclean_end>
+
   //<vs_flexstruc_ini>
   //-Variables for flexible structures.
   StFlexStrucData* FlexStrucDatac;  ///<Data for each individual flexible structure body [FlexStruc->GetCount()]
@@ -237,7 +255,7 @@ protected:
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
     ,bool shift,TpMdbc2Mode mdbc2
-    ,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>
+    ,bool shiftadv,bool aleform,bool ncpress,bool divclean> //<vs_advshift>
     void InteractionForcesFluid
     (unsigned n,unsigned pinit,bool boundp2,float visco
     ,StDivDataCpu divdata,const unsigned* dcell
@@ -250,7 +268,8 @@ protected:
     ,TpShifting shiftmode,tfloat4* shiftposfs
     ,tfloat4* nopenshift
     ,unsigned* fstype,tfloat4* shiftvel,tmatrix3d* lcorr                      //<vs_advshift>
-    ,float* fstresh,tfloat3* presssym,tfloat3* pressasym,float* pou)const; //<vs_m2dbcNP> SHABA //<vs_advshift>
+    ,float* fstresh,tfloat3* presssym,tfloat3* pressasym,float* pou           //<vs_advshift>
+    ,const float* psiclean,float* psicleanrhs,float& cspsiclean)const; //<vs_divclean>
 
   void InteractionForcesDEM(unsigned nfloat,StDivDataCpu divdata,const unsigned* dcell
     ,const unsigned* ftridp,const StDemData* demobjs
@@ -258,8 +277,11 @@ protected:
     ,const unsigned* idp,float& viscdt,tfloat3* ace)const;
 
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,TpMdbc2Mode mdbc2
-    ,bool shiftadv,bool aleform,bool ncpress>  //<vs_advshift>
+    ,bool shiftadv,bool aleform,bool ncpress,bool divclean>  //<vs_advshift>
     void Interaction_ForcesCpuT(const stinterparmsc& t,StInterResultc& res)const;
+  template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,TpMdbc2Mode mdbc2
+,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>> 
+  void Interaction_Forces_ct7(const stinterparmsc& t,StInterResultc& res)const;
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,TpMdbc2Mode mdbc2>
     void Interaction_Forces_ct6(const stinterparmsc& t,StInterResultc& res)const;
   template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> 

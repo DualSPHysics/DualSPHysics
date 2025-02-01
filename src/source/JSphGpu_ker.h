@@ -101,6 +101,11 @@ typedef struct StrInterParmsg{
   float4*       shiftposfs;
   unsigned*     fstype;          //<vs_advshift>
   const float4* shiftvel;        //<vs_advshift>
+  const float*  psiclean;        //<vs_divclean> 
+  float*        psicleanrhs;     //<vs_divclean>
+  float*        cspsiclean;      //<vs_divclean>
+  float         divcleankp;      //<vs_divclean>
+  bool          divclean;        //<vs_divclean> 
   //-Other values and objects.
   cudaStream_t stm;
   StKerInfo* kerinfo;
@@ -142,6 +147,8 @@ typedef struct StrInterParmsg{
     ,float4* shiftposfs
     ,unsigned* fstype           //<vs_advshift>
     ,const float4* shiftvel     //<vs_advshift>
+    ,const float* psiclean,float* psicleanrhs,float* cspsiclean   //<vs_divclean>
+    ,float divcleankp,bool divclean                               //<vs_divclean>
     ,cudaStream_t stm
     ,StKerInfo* kerinfo)
   {
@@ -186,6 +193,8 @@ typedef struct StrInterParmsg{
     this->shiftposfs=shiftposfs;
     this->fstype=fstype;      //<vs_advshift>
     this->shiftvel=shiftvel;  //<vs_advshift>
+    this->psiclean=psiclean;  this->psicleanrhs=psicleanrhs; this->cspsiclean=cspsiclean; //<vs_divclean>
+    this->divcleankp=divcleankp; this->divclean=divclean;     //<vs_divclean>
     //-Other values and objects.
     this->stm=stm;
     this->kerinfo=kerinfo;

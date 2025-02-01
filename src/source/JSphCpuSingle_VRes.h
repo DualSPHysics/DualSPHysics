@@ -71,6 +71,7 @@ public:
   void Init(std::string appname,const JSphCfgRun* cfg,JLog2* log
     ,unsigned vrescount,unsigned vresid);
   double Init2();
+  void AddWarningVRes();
   double ComputeStepVRes();
   void Finish(double dt1);
   void Finish2();

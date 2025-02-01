@@ -267,6 +267,9 @@ void JSph::InitVars(){
   FlexStrucCount=0; //<vs_flexstruc>
   FlexStrucCs0=0;   //<vs_flexstruc>
 
+  DivCleaning=false;  //<vs_divclean>
+  DivCleanKp=0;       //<vs_divclean>
+
   AllocMemoryFloating(0,false);
 
   CellMode=CELLMODE_None;
@@ -762,6 +765,19 @@ void JSph::LoadConfigParameters(const JXml* cxml){
       ShiftingAdv->ConfigBasic(shiftcoef,aleform,ncpress);
     } //<vs_advshift_end>
   }
+
+  //<vs_divclean_ini>
+  //Divergence cleaning configuration.
+  if(eparms.Exists("DivCleanKp")){
+    #ifndef AVAILABLE_DIVCLEAN
+      Run_Exceptioon("Divergence cleaning is not available in the current compilation.");
+    #else
+      DivCleanKp=(eparms.GetValueFloat("DivCleanKp",true,0));
+      DivCleaning=DivCleanKp>0;
+      if(DivCleaning && TStep==STEP_Verlet)Run_Exceptioon("Divergence cleaning is not available with Verlet time integrator.");
+    #endif
+  }
+  //<vs_divclean_ini>
 
   WrnPartsOut=(eparms.GetValueInt("WrnPartsOut",true,1)!=0);
   FtPause=eparms.GetValueFloat("FtPause",true,0);
@@ -1604,7 +1620,14 @@ void JSph::VisuConfig(){
   }
   if(TDensity==DDT_DDT2Full && KernelH/Dp>1.5)Log->PrintWarning(
     "It is advised that selected DDT: \'Fourtakas et al 2019 (full)\' is used with several boundary layers of particles when h/dp>1.5 (2h <= layers*Dp)");
-  
+  #ifdef AVAILABLE_DIVCLEAN
+  if(DivCleaning){
+    Log->Print(fun::VarStr("Div Cleaning","true"));
+    Log->Print(fun::VarStr(" Div Cleaning Kp",DivCleanKp));
+  }else{
+    Log->Print(fun::VarStr("Div Cleaning","false"));
+  }
+  #endif
   //-Shifting.
   if(Shifting){
     Shifting->VisuConfig();

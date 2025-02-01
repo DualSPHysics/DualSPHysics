@@ -127,6 +127,9 @@ void JSphGpuSingle::InOutInit(double timestepini){
   if(SpsTauRho2_g)SpsTauRho2_g->CuMemsetOffset(Np,0,newnp);
   if(BoundNor_g)BoundNor_g->CuMemsetOffset(Np,0,newnp);
   if(FSType_g)FSType_g->CuMemsetOffset(Np,3,newnp); //<vs_advshift>
+  #ifdef AVAILABLE_DIVCLEAN
+  if(PsiClean_g)PsiClean_g->CuMemsetOffset(Np,0,newnp);
+  #endif
   if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesGpu("CfgInOut_InletIni.vtk",0,Np,Np+newnp
     ,Posxy_g->cptr(),Posz_g->cptr(),Code_g->cptr(),Idp_g->cptr(),Velrho_g->cptr());
 
@@ -247,6 +250,9 @@ void JSphGpuSingle::InOutComputeStep(double stepdt){
   if(SpsTauRho2_g)SpsTauRho2_g->CuMemsetOffset(Np,0,newnp);
   if(BoundNor_g)BoundNor_g->CuMemsetOffset(Np,0,newnp);
   if(FSType_g)FSType_g->CuMemsetOffset(Np,3,newnp); //<vs_advshift>
+  #ifdef AVAILABLE_DIVCLEAN
+  if(PsiClean_g)PsiClean_g->CuMemsetOffset(Np,0,newnp);
+  #endif
 
   //-Updates number of particles.
   if(newnp){

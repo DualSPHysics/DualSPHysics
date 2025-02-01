@@ -459,6 +459,14 @@ void JSphGpuSingle::RunCellDivide(bool updateperiodic){
   }
   if(FlexStruc&&FlexStrucRidpg)CellDivSingle->UpdateIndices(CaseNflexstruc,FlexStrucRidpg); //<vs_flexstruc>
 
+  #ifdef AVAILABLE_DIVCLEAN
+  if(PsiClean_g){//<vs_divclean>
+    agfloat   psiclean("-",Arrays_Gpu,true);
+    CellDivSingle->SortDataArrays(PsiClean_g->cptr(),psiclean.ptr());
+    PsiClean_g->SwapPtr(&psiclean);
+  }
+  #endif
+
   //-Collect divide data. | Recupera datos del divide.
   Np=CellDivSingle->GetNpFinal();
   Npb=CellDivSingle->GetNpbFinal();
@@ -610,6 +618,7 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
     ,AG_PTR(Sps2Strain_g)
     ,AG_PTR(ShiftPosfs_g)
     ,AG_PTR(FSType_g),AG_CPTR(ShiftVel_g) //<vs_advshift>
+    ,AG_CPTR(PsiClean_g),AG_PTR(PsiCleanRhs_g),AG_PTR(CsPsiClean_g),DivCleanKp,DivCleaning
     ,NULL,NULL);
   cusph::Interaction_Forces(parms);
 
@@ -651,6 +660,11 @@ void JSphGpuSingle::Interaction_Forces(TpInterStep interstep){
   //-Calculates maximum value of Ace (periodic particles are ignored). ViscDtg is used like auxiliary memory.
   AceMax=ComputeAceMax(ViscDt_g->ptr());
 
+  #ifdef AVAILABLE_DIVCLEAN
+  if(DivCleaning){
+    if(Np)CsPsiCleanMax=cusph::ReduMaxFloat(Np,0,CsPsiClean_g->ptr(),CellDivSingle->GetAuxMem(cusph::ReduMaxFloatSize(Np)));
+  }
+  #endif
   //<vs_flexstruc_ini>
   //-Calculates maximum value of FlexStrucDt.
   if(CaseNflexstruc){

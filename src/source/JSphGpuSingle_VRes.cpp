@@ -100,12 +100,18 @@ void JSphGpuSingle_VRes::VResInit(const JSphCfgRun* cfg,JCaseVRes casemultires,u
 }
 
 //==============================================================================
-/// Initialize VRes object.
+/// Add warning for VRes execution.
 //==============================================================================
 void JSphGpuSingle_VRes::AddWarningVRes(){
    if(Moorings)Log->PrintWarning("The use of MoorDynPlus with Variable resolution is an experimental feature.");
    if(UseChrono)Log->PrintWarning("The use of CHRONO with Variable resolution is an experimental feature.");
    if(FlexStruc)Log->PrintWarning("The use of FlexStruct with Variable resolution is an experimental feature.");
+   if(TKernel==KERNEL_Cubic) Run_Exceptioon("Cubic Kernel is not available with Variable resolution execution.");
+   if(TStep==STEP_Verlet) Run_Exceptioon("Verlet Time Integration is not available with Variable resolution execution.");
+   if(Shifting)Log->PrintWarning("Shifting==4 is reccomended with Variable resolution execution.");
+   #ifdef AVAILABLE_DIVCLEAN
+   if(DivCleaning) Run_Exceptioon("Divergence cleaning is not available with Variable resolution execution.");
+   #endif
 }
 
 //==============================================================================
@@ -231,6 +237,9 @@ void JSphGpuSingle_VRes::ComputeStepBuffer(double dt,std::vector<JMatrix4d> mat,
       if(BoundNor_g)    BoundNor_g  ->CuMemsetOffset(Np,0,newnp);
       if(FSType_g)      FSType_g    ->CuMemsetOffset(Np,0,newnp);
       if(ShiftVel_g)    ShiftVel_g  ->CuMemsetOffset(Np,0,newnp);
+      #ifdef AVAILABLE_DIVCLEAN
+      if(PsiClean_g)PsiClean_g->CuMemsetOffset(Np,0,newnp);
+      #endif
       Np+=newnp; 
       TotalNp+=newnp;
       IdMax=unsigned(TotalNp-1);

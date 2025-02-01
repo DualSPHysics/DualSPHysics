@@ -134,6 +134,13 @@ void JSphCpu::InitVars(){
   FlexStrucDtMax=0;
   //<vs_flexstruc_end>
 
+
+  PsiClean_c=NULL;       //<vs_divclean>
+  PsiCleanPre_c=NULL;    //<vs_divclean>
+  PsiCleanRhs_c=NULL;    //<vs_divclean>
+  CsPsiClean_c=NULL;     //<vs_divclean>
+  CsPsiCleanMax=0;       //<vs_divclean>
+
   FreeCpuMemoryParticles();
 
   RidpMot=NULL;
@@ -216,6 +223,11 @@ void JSphCpu::FreeCpuMemoryParticles(){
   delete FSType_c;      FSType_c=NULL;      //-ShiftingAdvanced //<vs_advshift>
   delete FSNormal_c;    FSNormal_c=NULL;    //-ShiftingAdvanced //<vs_advshift>
   delete FSMinDist_c;   FSMinDist_c=NULL;   //-ShiftingAdvanced //<vs_advshift>
+
+  delete PsiClean_c;    PsiClean_c=NULL;    //<vs_divclean>
+  delete PsiCleanPre_c; PsiCleanPre_c=NULL; //<vs_divclean>
+  delete PsiCleanRhs_c; PsiCleanRhs_c=NULL; //<vs_divclean>
+  delete CsPsiClean_c;  CsPsiClean_c=NULL;  //<vs_divclean>
     
   //-Free CPU memory for array objects.
   CpuParticlesSize=0;
@@ -283,6 +295,15 @@ void JSphCpu::AllocCpuMemoryParticles(unsigned np){
       PeriParent_c=new acuint("PeriParentc",Arrays_Cpu,true);
     }
   }//<vs_advshift_end>
+
+  //<vs_divclean_ini>
+  if(DivCleaning){
+    PsiClean_c    =new acfloat("PhiClean_c"   ,Arrays_Cpu,true);
+    PsiCleanPre_c =new acfloat("PhiCleanPre_c",Arrays_Cpu,false);
+    PsiCleanRhs_c =new acfloat("PhiCleanRhs_c",Arrays_Cpu,false);
+    CsPsiClean_c  =new acfloat("CsPhiClean_c" ,Arrays_Cpu,false); 
+  }
+  //<vs_divclean_end>
 
   ////-Shows the allocated memory.
   //PrintSizeNp(CpuParticlesSize,MemCpuParticles,0);
@@ -456,6 +477,8 @@ void JSphCpu::InitRunCpu(){
   if(MotionAce_c)MotionAce_c->Memset(0,Np); //<vs_m2dbc>
   if(ShiftVel_c)ShiftVel_c->Memset(0,Np);   //<vs_advshift>
   if(FSType_c)FSType_c->Memset(3,Np);       //<vs_advshift>
+  if(PsiClean_c)PsiClean_c->Memset(0,Np);   //<vs_divclean>
+
 }
 
 //==============================================================================
@@ -476,6 +499,16 @@ void JSphCpu::PreInteraction_Forces(TpInterStep interstep){
     FSMinDist_c->Reserve();
     FSNormal_c->Reserve();
   } //<vs_advshift_end>
+
+   //<vs_divclean_ini>
+  if(DivCleaning){
+    PsiCleanRhs_c->Reserve(); 
+    CsPsiClean_c->Reserve();
+    PsiCleanRhs_c->Memset(0,Np);
+    CsPsiClean_c->Memset(0,Np);
+    CsPsiCleanMax=0;
+  }  
+  //vs_divclean_end>
 
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
@@ -589,6 +622,8 @@ void JSphCpu::PosInteraction_Forces(){
   if(FSNormal_c)FSNormal_c->Free();
   if(FSMinDist_c)FSMinDist_c->Free();
   //<vs_advshift_end>
+  if(PsiCleanRhs_c)PsiCleanRhs_c->Free();  //<vs_divclean>
+  if(CsPsiClean_c)CsPsiClean_c->Free() ;   //<vs_divclean>
 }
 
 //==============================================================================
@@ -681,7 +716,7 @@ float VanAlbadaLimiter(float beta){
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   ,bool shift,TpMdbc2Mode mdbc2
-  ,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>
+  ,bool shiftadv,bool aleform,bool ncpress,bool divclean> //<vs_advshift>
   void JSphCpu::InteractionForcesFluid(unsigned n,unsigned pinit,bool boundp2
   ,float visco,StDivDataCpu divdata,const unsigned* dcell
   ,const tsymatrix3f* tau,tsymatrix3f* two_strain
@@ -693,11 +728,16 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   ,TpShifting shiftmode,tfloat4* shiftposfs
   ,tfloat4* nopenshift
   ,unsigned* fstype,tfloat4* shiftvel,tmatrix3d* lcorr                      //<vs_advshift>
-  ,float* fstresh,tfloat3* presssym,tfloat3* pressasym,float* pou)const //<vs_m2dbcNP> SHABA  //<vs_advshift>
+  ,float* fstresh,tfloat3* presssym,tfloat3* pressasym,float* pou           //<vs_advshift>
+  ,const float* psiclean,float* psicleanrhs,float& cspsiclean)const  //<vs_divclean>
 {
   //-Initialize viscth to calculate viscdt maximo con OpenMP. | Inicializa viscth para calcular visdt maximo con OpenMP.
   float viscth[OMP_MAXTHREADS*OMP_STRIDE];
   for(int th=0;th<OmpThreads;th++)viscth[th*OMP_STRIDE]=0;
+  #ifdef AVAILABLE_DIVCLEAN
+    float cspsicleanth[OMP_MAXTHREADS*OMP_STRIDE];
+    for(int th=0;th<OmpThreads;th++)cspsicleanth[th*OMP_STRIDE]=0;
+  #endif
   //-Initialise execution with OpenMP. | Inicia ejecucion con OpenMP.
   const int pfin=int(pinit+n);
   #ifdef OMP_USE
@@ -741,6 +781,13 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
     if(aleform && !ftp1)shiftvelp1=shiftvel[p1];
 
     //<vs_advshift_end>
+
+    float psicleanp1;
+    float psicleanr=0;
+    float cspsi=0;
+    #ifdef AVAILABLE_DIVCLEAN
+    if(divclean)psicleanp1=psiclean[p1];
+    #endif
 
     //-Obtain data of particle p1.
     const tdouble3 posp1=pos[p1];
@@ -820,6 +867,16 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
             } //<vs_m2dbc_end>
           #endif
           if(compute)arp1+=massp2*(dvx*frx+dvy*fry+dvz*frz)*(rhop1/velrhop2.w);
+
+           #ifdef AVAILABLE_DIVCLEAN
+            if(divclean && compute){
+              float psicleanp2=psiclean[p2];
+              if(boundp2)psicleanp2=psicleanp1;
+              float dvpsiclean=-(psicleanp1+psicleanp2)*massp2/(velrhop2.w);
+              acep1.x+=dvpsiclean*frx; acep1.y+=dvpsiclean*fry; acep1.z+=dvpsiclean*frz;
+              psicleanr+=(float)Cs0*(float)Cs0*(massp2)*(dvx*frx+dvy*fry+dvz*frz)*(velrhop2.w);
+            }
+          #endif
 
           if(aleform && compute){ //<vs_advshift_ini>
             tfloat4 shiftvelp2=TFloat4(0);
@@ -1007,6 +1064,8 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
     }
     //<vs_advshift_end>
 
+
+
     //-Sum results together. | Almacena resultados.
     if(shift||arp1||acep1.x||acep1.y||acep1.z||visc){
       if(tdensity!=DDT_None){
@@ -1040,9 +1099,23 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
             nopenshift[p1].w = 0;//-correction needed? no
         }
     }//<vs_m2dbcNP_end>
+    #ifdef AVAILABLE_DIVCLEAN
+    //<vs_divclean_ini>
+    if(divclean){
+      float cs1=DivCleanKp*sqrt(fabs(pressp1/rhop1));
+      cspsi=cs1;
+      const int th=omp_get_thread_num();
+      if(cspsi>cspsicleanth[th*OMP_STRIDE])cspsicleanth[th*OMP_STRIDE]=cspsi;
+      psicleanrhs[p1]+=psicleanr-psiclean[p1]*max(cs1,float(Cs0))/KernelH;
+    }
+    //<vs_divclean_end>
+    #endif
   }
   //-Keep max value in viscdt. | Guarda en viscdt el valor maximo.
   for(int th=0;th<OmpThreads;th++)if(viscdt<viscth[th*OMP_STRIDE])viscdt=viscth[th*OMP_STRIDE];
+  #ifdef AVAILABLE_DIVCLEAN
+  for(int th=0;th<OmpThreads;th++)if(cspsiclean<cspsicleanth[th*OMP_STRIDE])cspsiclean=cspsicleanth[th*OMP_STRIDE];
+  #endif
 }
 
 //==============================================================================
@@ -1219,10 +1292,14 @@ void JSphCpu::ComputeSpsTau(unsigned n,unsigned pini,const tfloat4* velrho
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
   ,bool shift,TpMdbc2Mode mdbc2
-  ,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>
+  ,bool shiftadv,bool aleform,bool ncpress,bool divclean> //<vs_advshift> //<vs_divclean>
   void JSphCpu::Interaction_ForcesCpuT(const stinterparmsc& t,StInterResultc& res)const
 {
   float viscdt=res.viscdt;
+  float cspsiclean;
+  #ifdef AVAILABLE_DIVCLEAN
+    cspsiclean=res.cspsiclean;
+  #endif
   if(t.npf){
     acfloat     fstresh   ("-",Arrays_Cpu, shiftadv);
     acmatrix3d  lcorr     ("-",Arrays_Cpu,  ncpress);
@@ -1230,22 +1307,24 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
     acfloat3    pressasym ("-",Arrays_Cpu,  ncpress);
     acfloat     pou       ("-",Arrays_Cpu,  ncpress);
     //-Interaction Fluid-Fluid.
-    InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2,shiftadv,aleform,ncpress> 
+    InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2,shiftadv,aleform,ncpress,divclean> 
       (t.npf,t.npb,false,Visco,t.divdata,t.dcell,t.spstaurho2,t.sps2strain
       ,t.pos,t.velrho,t.code,t.idp,t.press,t.dengradcorr
       ,t.boundmode,t.tangenvel,t.motionvel,t.boundnormal //<vs_m2dbc>
       ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs,t.nopenshift
       ,t.fstype,t.shiftvel,lcorr.ptr(),fstresh.ptr()  //<vs_advshift>
-      ,presssym.ptr(),pressasym.ptr(),pou.ptr());     //<vs_advshift>
+      ,presssym.ptr(),pressasym.ptr(),pou.ptr()       //<vs_advshift>
+      ,t.psiclean,t.psicleanrhs,cspsiclean);     //<vs_diclean>
     //-Interaction Fluid-Bound.
     const float viscb=Visco*ViscoBoundFactor;
-    InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2,shiftadv,aleform,ncpress>
+    InteractionForcesFluid<tker,ftmode,tvisco,tdensity,shift,mdbc2,shiftadv,aleform,ncpress,divclean>
       (t.npf,t.npb,true ,viscb,t.divdata,t.dcell,t.spstaurho2,t.sps2strain
       ,t.pos,t.velrho,t.code,t.idp,t.press,NULL
       ,t.boundmode,t.tangenvel,t.motionvel,t.boundnormal //<vs_m2dbc>
       ,viscdt,t.ar,t.ace,t.delta,t.shiftmode,t.shiftposfs,t.nopenshift
       ,t.fstype,t.shiftvel,lcorr.ptr(),fstresh.ptr()  //<vs_advshift>
-      ,presssym.ptr(),pressasym.ptr(),pou.ptr());     //<vs_advshift>
+      ,presssym.ptr(),pressasym.ptr(),pou.ptr()       //<vs_advshift>
+      ,t.psiclean,t.psicleanrhs,cspsiclean);     //<vs_diclean>
 
     //-Interaction of DEM Floating-Bound & Floating-Floating. //(DEM)
     if(UseDEM)InteractionForcesDEM(CaseNfloat,t.divdata,t.dcell
@@ -1265,7 +1344,24 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       ,t.pos,t.velrho,t.code,t.idp,viscdt,t.ar);
   }
   res.viscdt=viscdt;
+  #ifdef AVAILABLE_DIVCLEAN
+  if(DivCleaning)res.cspsiclean=cspsiclean;
+  #endif
 }
+
+//==============================================================================
+template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,TpMdbc2Mode mdbc2
+,bool shiftadv,bool aleform,bool ncpress> //<vs_advshift>> 
+  void JSphCpu::Interaction_Forces_ct7(const stinterparmsc& t,StInterResultc& res)const
+{
+  #ifdef AVAILABLE_DIVCLEAN
+  if(DivCleaning)Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,shiftadv,aleform,ncpress,true>(t,res);
+  else           Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,shiftadv,aleform,ncpress,false>(t,res);
+  #else
+    Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,shiftadv,aleform,ncpress,false>(t,res);
+  #endif
+}
+
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool shift,TpMdbc2Mode mdbc2> 
   void JSphCpu::Interaction_Forces_ct6(const stinterparmsc& t,StInterResultc& res)const
@@ -1274,15 +1370,15 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity,bool sh
     const bool aleform=ShiftingAdv->GetAleActive();
     const bool ncpress=ShiftingAdv->GetNcPress();
     if(aleform){ const bool ale=true;
-      if(ncpress)Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,ale,true>(t,res);
-      else       Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,ale,false>(t,res);
+      if(ncpress)Interaction_Forces_ct7<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,ale,true>(t,res);
+      else       Interaction_Forces_ct7<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,ale,false>(t,res);
     }
     else{        const bool ale=false;
-      if(ncpress)Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,ale,true>(t,res);
-      else       Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,ale,false>(t,res);
+      if(ncpress)Interaction_Forces_ct7<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,ale,true>(t,res);
+      else       Interaction_Forces_ct7<tker,ftmode,tvisco,tdensity,shift,mdbc2,true,ale,false>(t,res);
     }
   } //<vs_advshift_end>
-  else           Interaction_ForcesCpuT<tker,ftmode,tvisco,tdensity,shift,mdbc2,false,false,false>(t,res);
+  else           Interaction_Forces_ct7<tker,ftmode,tvisco,tdensity,shift,mdbc2,false,false,false>(t,res);
 }
 //==============================================================================
 template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity> 
@@ -1575,6 +1671,11 @@ void JSphCpu::ComputeSymplecticPre(double dt){
   PosPre_c->SwapPtr(Pos_c);       //- PosPre_c[]    <= Pos_c[]
   VelrhoPre_c->SwapPtr(Velrho_c); //- VelrhoPre_c[] <= Velrho_c[]
 
+  #ifdef AVAILABLE_DIVCLEAN
+  if(DivCleaning)PsiCleanPre_c->Reserve();
+  if(DivCleaning)PsiCleanPre_c->SwapPtr(PsiClean_c);
+  #endif
+
   //-Calculate new density for boundary and copy velocity.
   {
     const float*   arc=Ar_c->cptr();
@@ -1607,6 +1708,11 @@ void JSphCpu::ComputeSymplecticPre(double dt){
     tdouble3*       movc=mov_c.ptr();
     tfloat4*        velrhoc=Velrho_c->ptr();
     const byte*     boundmode=AC_CPTR(BoundMode_c); //<vs_m2dbc>
+    #ifdef AVAILABLE_DIVCLEAN
+      float*          psicleanc=AC_PTR(PsiClean_c);         //<vs_divclean>
+      const float*    psicleanprec=AC_CPTR(PsiCleanPre_c);  //<vs_divclean>
+      const float*    psicleanrhsc=AC_CPTR(PsiCleanRhs_c);  //<vs_divclean>
+    #endif
     #ifdef OMP_USE
       #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTESTEP)
     #endif
@@ -1631,6 +1737,13 @@ void JSphCpu::ComputeSymplecticPre(double dt){
           float(double(velrhoprec[p].y) + (double(acec[p].y)+Gravity.y)*  dt05),
           float(double(velrhoprec[p].z) + (double(acec[p].z)+Gravity.z)*  dt05),
           rhonew);
+
+        if(CODE_IsFluidBuffer(rcode)) rvelrhonew=velrhoprec[p]; //-Restore data of vres buffer particles. //<vs_vrres
+
+        #ifdef AVAILABLE_DIVCLEAN
+        float rpsicleannew=0;
+        if(DivCleaning)rpsicleannew=psicleanprec[p]+psicleanrhsc[p]*dt05;
+        #endif
         //-Restore data of inout particles.
         if(InOut && CODE_IsFluidInout(rcode)){
           outrho=false;
@@ -1647,6 +1760,10 @@ void JSphCpu::ComputeSymplecticPre(double dt){
         movc[p]=TDouble3(dx,dy,dz);
         velrhoc[p]=rvelrhonew;
         if(outrho && CODE_IsNormal(rcode))codec2[p]=CODE_SetOutRho(rcode); //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
+        
+        #ifdef AVAILABLE_DIVCLEAN
+          if(DivCleaning)psicleanc[p]=rpsicleannew;
+        #endif
       }
       else{//-Floating Particles.
         velrhoc[p]=velrhoprec[p];
@@ -1746,6 +1863,11 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
     tfloat4*        velrhoc=Velrho_c->ptr();
     const byte*     boundmode=AC_CPTR(BoundMode_c); //<vs_m2dbc>
     const tfloat4*  nopenshift=AC_CPTR(NoPenShift_c); //<vs_m2dbcNP> SHABA 
+    #ifdef AVAILABLE_DIVCLEAN
+      float*          psicleanc=AC_PTR(PsiClean_c);         //<vs_divclean>
+      const float*    psicleanprec=AC_CPTR(PsiCleanPre_c);  //<vs_divclean>
+      const float*    psicleanrhsc=AC_CPTR(PsiCleanRhs_c);  //<vs_divclean>
+    #endif
     #ifdef OMP_USE
       #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTESTEP)
     #endif
@@ -1760,6 +1882,9 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
           float(double(velrhoprec[p].y) + (double(acec[p].y)+Gravity.y)*  dt), 
           float(double(velrhoprec[p].z) + (double(acec[p].z)+Gravity.z)*  dt),
           rhonew);
+        
+          if(CODE_IsFluidBuffer(rcode)) rvelrhonew=velrhoprec[p]; //-Restore data of vres buffer particles. //<vs_vrres
+
         //-Calculate displacement. | Calcula desplazamiento.
         double dx=(double(velrhoprec[p].x)+double(rvelrhonew.x))*  dt05; 
         double dy=(double(velrhoprec[p].y)+double(rvelrhonew.y))*  dt05; 
@@ -1787,6 +1912,12 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
           dy+=double(shiftvel[p].y)*dt;
           dz+=double(shiftvel[p].z)*dt;
         } //<vs_advshift_end>
+
+        #ifdef AVAILABLE_DIVCLEAN
+        float rpsicleannew=0;
+        if(DivCleaning)rpsicleannew=psicleanprec[p]+psicleanrhsc[p]*dt05;
+        #endif
+
         bool outrho=(rhonew<RhopOutMin || rhonew>RhopOutMax);
         //-Restore data of inout particles.
         if(InOut && CODE_IsFluidInout(rcode)){
@@ -1809,6 +1940,10 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
         movc[p]=TDouble3(dx,dy,dz);
         if(outrho && CODE_IsNormal(rcode))codec2[p]=CODE_SetOutRho(rcode); //-Only brands as excluded normal particles (not periodic). | Solo marca como excluidas las normales (no periodicas).
         velrhoc[p]=rvelrhonew;
+
+        #ifdef AVAILABLE_DIVCLEAN
+          if(DivCleaning)psicleanc[p]=rpsicleannew;
+        #endif
       }
       else{//-Floating Particles.
         velrhoc[p]=velrhoprec[p];
@@ -1856,6 +1991,9 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
   //-Free memory assigned to PRE variables in ComputeSymplecticPre().
   PosPre_c->Free();
   VelrhoPre_c->Free();
+  #ifdef AVAILABLE_DIVCLEAN
+    if(DivCleaning)PsiCleanPre_c->Free();
+  #endif
   Timersc->TmStop(TMC_SuComputeStep);
 }
 
@@ -1871,7 +2009,13 @@ double JSphCpu::DtVariable(bool final){
   //-dt3 uses the maximum speed of sound across all structure particles.
   const double dt3=(FlexStrucDtMax? double(KernelH)/FlexStrucDtMax: DBL_MAX); //<vs_flexstruc>
   //-dt new value of time step.
+  #ifdef AVAILABLE_DIVCLEAN
+  //-dt3 uses the maximum local speed of sound across all fluid particles.
+    const double dt4=(DivCleaning? double(KernelH)/CsPsiCleanMax: DBL_MAX); //<vs_divclean>
+    double dt=CFLnumber*min(dt1,min(dt2,min(dt3,dt4)));
+  #else
   double dt=CFLnumber*min(dt1,min(dt2,dt3));
+  #endif
   //-Use dt value defined by FixedDt object.
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
   //-Check that the dt is valid.

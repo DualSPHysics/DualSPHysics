@@ -52,13 +52,15 @@ void ComputeStepSymplecticPre(bool floating,bool shift,bool inout,TpMdbc2Mode md
   ,unsigned np,unsigned npb,const float4* velrhopre,const byte* boundmode
   ,const float* ar,const float3* ace,const float4* shiftposfs,const float3* indirvel
   ,double dtm,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
-  ,typecode* code,double2* movxy,double* movz,float4* velrho,cudaStream_t stm);
+  ,typecode* code,double2* movxy,double* movz,float4* velrho
+  ,float* psiclean,const float* psicleanpre,const float* psicleanrhs,bool divclean,cudaStream_t stm); //<vs_divclean>
 void ComputeStepSymplecticCor(bool floating,bool shift,bool shiftadv,bool inout,TpMdbc2Mode mdbc2
   ,unsigned np,unsigned npb,const float4* velrhopre,const byte* boundmode
   ,const float* ar,const float3* ace,const float4* shiftposfs,const float3* indirvel,const float4* nopenshift // SHABA
   ,const float4* shiftvel //<vs_advshift>
   ,double dtm,double dt,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
-  ,typecode* code,double2* movxy,double* movz,float4* velrho,cudaStream_t stm);
+  ,typecode* code,double2* movxy,double* movz,float4* velrho
+  ,float* psiclean,const float* psicleanpre,const float* psicleanrhs,bool divclean,cudaStream_t stm); //<vs_divclean>
 
 //<vs_flexstruc_ini>
 void CopyMotionVelFlexStruc(unsigned npfs,const typecode* code,const unsigned* flexstrucridp

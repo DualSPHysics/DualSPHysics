@@ -201,6 +201,12 @@ void JSphGpu::InitVars(){
   FlexStrucDtMax=0;
   //<vs_flexstruc_end>
 
+  PsiClean_g=NULL;       //<vs_divclean>
+  PsiCleanPre_g=NULL;    //<vs_divclean>
+  PsiCleanRhs_g=NULL;    //<vs_divclean>
+  CsPsiClean_g=NULL;     //<vs_divclean>
+  CsPsiCleanMax=0;       //<vs_divclean>
+  
   FreeGpuMemoryParticles();
 
   //-Variables for moving and floating bodies (GPU memory).
@@ -397,6 +403,11 @@ void JSphGpu::FreeGpuMemoryParticles(){
   delete FSMinDist_g;   FSMinDist_g=NULL;   //-ShiftingAdvanced //<vs_advshift>
   delete FSNormal_g;    FSNormal_g=NULL;    //-ShiftingAdvanced //<vs_advshift>
 
+  delete PsiClean_g;    PsiClean_g=NULL;    //<vs_divclean>
+  delete PsiCleanPre_g; PsiCleanPre_g=NULL; //<vs_divclean>
+  delete PsiCleanRhs_g; PsiCleanRhs_g=NULL; //<vs_divclean>
+  delete CsPsiClean_g;  CsPsiClean_g=NULL;  //<vs_divclean>
+
   //-Free GPU memory for array objects.
   GpuParticlesSize=0;
   if(Arrays_Gpu)Arrays_Gpu->Reset();
@@ -469,6 +480,15 @@ void JSphGpu::AllocGpuMemoryParticles(unsigned np){
       PeriParent_g=new aguint(  "PeriParentg" ,Arrays_Gpu,true);
     }
   }//<vs_advshift_end>
+
+  //<vs_divclean_ini>
+  if(DivCleaning){
+    PsiClean_g    =new agfloat("PhiClean_g"   ,Arrays_Gpu,true);
+    PsiCleanPre_g =new agfloat("PhiCleanPre_g",Arrays_Gpu,false);
+    PsiCleanRhs_g =new agfloat("PhiCleanRhs_g",Arrays_Gpu,false);
+    CsPsiClean_g  =new agfloat("CsPhiClean_g" ,Arrays_Gpu,false); 
+  }
+  //<vs_divclean_end>
 
   //-Check CUDA errors.
   Check_CudaErroor("Failed GPU memory allocation.");
@@ -710,6 +730,7 @@ void JSphGpu::ConfigBlockSizes(bool usezone,bool useperi){
         ,NULL
         ,NULL // SHABA
         ,NULL,NULL     //<vs_advshift>
+        ,NULL,NULL,NULL,0,false //<vs_divclean>
         ,NULL,&kerinfo);
       cusph::Interaction_Forces(parms);
       if(UseDEM)cusph::Interaction_ForcesDem(BlockSizes.forcesdem,CaseNfloat,divdatag,NULL,NULL,NULL,NULL,0,NULL,NULL,NULL,NULL,NULL,NULL,&kerinfo);
@@ -814,6 +835,7 @@ void JSphGpu::InitRunGpu(){
   if(MotionAce_g)MotionAce_g->CuMemset(0,Np); //<vs_m2dbc>
   if(ShiftVel_g)ShiftVel_g->CuMemset(0,Np);   //<vs_advshift>
   if(ShiftVel_g)FSType_g->CuMemset(3,Np);     //<vs_advshift>
+  if(PsiClean_g)PsiClean_g->CuMemset(0,Np);   //<vs_divclean>
   Check_CudaErroor("Failed initializing variables for execution.");
 }
 
@@ -835,6 +857,16 @@ void JSphGpu::PreInteraction_Forces(TpInterStep interstep){
     FSMinDist_g->Reserve();
     FSNormal_g->Reserve();
   } //<vs_advshift_end>
+
+  //<vs_divclean_ini>
+  if(DivCleaning){
+    PsiCleanRhs_g->Reserve(); 
+    CsPsiClean_g->Reserve();
+    PsiCleanRhs_g->CuMemset(0,Np);
+    CsPsiClean_g->CuMemset(0,Np);
+    CsPsiCleanMax=0;
+  }  
+  //vs_divclean_end>
 
   //-Initialise arrays.
   const unsigned npf=Np-Npb;
@@ -896,6 +928,8 @@ void JSphGpu::PosInteraction_Forces(){
   if(NoPenShift_g)NoPenShift_g->Free(); //<vs_m2dbcNP>
   if(FSMinDist_g)FSMinDist_g->Free(); //<vs_advshift>
   if(FSNormal_g)FSNormal_g->Free();   //<vs_advshift>
+  if(PsiCleanRhs_g)PsiCleanRhs_g->Free();  //<vs_divclean>
+  if(CsPsiClean_g)CsPsiClean_g->Free() ;   //<vs_divclean>
 }
 
 //==============================================================================
@@ -967,10 +1001,12 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   PosxyPre_g->Reserve();
   PoszPre_g->Reserve();
   VelrhoPre_g->Reserve();
+  if(DivCleaning)PsiCleanPre_g->Reserve();  //<vs_divclean>
   //-Move current data to PRE variables for calculating the new data.
   PosxyPre_g->SwapPtr(Posxy_g);   //- PosxyPre_g[]   <= Posxy_g[]
   PoszPre_g->SwapPtr(Posz_g);     //- PoszPre_g[]    <= Posz_g[]
   VelrhoPre_g->SwapPtr(Velrho_g); //- VelrhoPre_g[]  <= Velrho_g[]
+  if(DivCleaning)PsiCleanPre_g->SwapPtr(PsiClean_g); //-PhiCleanPre[]<= PhiClean_g[] //<vs_divclean>
   //-Allocate memory to compute the diplacement.
   agdouble2 movxyg("movxyg",Arrays_Gpu,true);
   agdouble  movzg("movzg",Arrays_Gpu,true);
@@ -981,7 +1017,8 @@ void JSphGpu::ComputeSymplecticPre(double dt){
   cusphs::ComputeStepSymplecticPre(WithFloating,shift,inout,TMdbc2,Np,Npb
     ,VelrhoPre_g->cptr(),boundmode,Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
     ,indirvel,dt05,RhopZero,RhopOutMin,RhopOutMax,Gravity
-    ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
+    ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr()
+    ,AG_PTR(PsiClean_g),AG_CPTR(PsiCleanPre_g),AG_CPTR(PsiCleanRhs_g),DivCleaning,NULL);  //<vs_divclean>
 
   //-Applies displacement to non-periodic fluid particles.
   cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb
@@ -1030,7 +1067,8 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   cusphs::ComputeStepSymplecticCor(WithFloating,shift,shiftadv,inout,TMdbc2,Np,Npb
     ,VelrhoPre_g->cptr(),boundmode,Ar_g->cptr(),Ace_g->cptr(),ShiftPosfs_g->cptr()
     ,indirvel,AG_CPTR(NoPenShift_g),shiftvel,dt05,dt,RhopZero,RhopOutMin,RhopOutMax,Gravity // SHABA
-    ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr(),NULL);
+    ,Code_g->ptr(),movxyg.ptr(),movzg.ptr(),Velrho_g->ptr()
+    ,AG_PTR(PsiClean_g),AG_CPTR(PsiCleanPre_g),AG_CPTR(PsiCleanRhs_g),DivCleaning,NULL);  //<vs_divclean>
 
   //-Applies displacement to non-periodic fluid particles.
   cusph::ComputeStepPos2(PeriActive,WithFloating,Np,Npb
@@ -1054,6 +1092,7 @@ void JSphGpu::ComputeSymplecticCorr(double dt){
   PosxyPre_g->Free();
   PoszPre_g->Free();
   VelrhoPre_g->Free();
+  if(DivCleaning)PsiCleanPre_g->Free();  //<vs_divclean>
   Timersg->TmStop(TMG_SuComputeStep,true);
 }
 
@@ -1070,7 +1109,13 @@ double JSphGpu::DtVariable(bool final){
   //-dt3 uses the maximum speed of sound across all structure particles.
   const double dt3=(FlexStrucDtMax? double(KernelH)/FlexStrucDtMax: DBL_MAX); //<vs_flexstruc>
   //-dt new value of time step.
+  #ifdef AVAILABLE_DIVCLEAN
+    //-dt4 uses the maximum local speed of sound across all fluid particles.
+    const double dt4=(DivCleaning? double(KernelH)/CsPsiCleanMax: DBL_MAX); //<vs_divclean>
+    double dt=CFLnumber*min(dt1,min(dt2,min(dt3,dt4)));
+  #else
   double dt=CFLnumber*min(dt1,min(dt2,dt3));
+  #endif
   //-Use dt value defined by FixedDt object.
   if(FixedDt)dt=FixedDt->GetDt(TimeStep,dt);
   //-Check that the dt is valid.
