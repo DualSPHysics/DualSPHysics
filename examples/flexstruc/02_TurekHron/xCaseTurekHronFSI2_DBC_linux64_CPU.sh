@@ -8,7 +8,7 @@ fail () {
 
 # "name" and "dirout" are named according to the testcase
 
-export name=CaseTurekHronFSI2
+export name=CaseTurekHronFSI2_DBC
 export dirout=${name}_out
 export diroutdata=${dirout}/data
 
@@ -17,8 +17,8 @@ export diroutdata=${dirout}/data
 export dirbin=../../../bin/linux
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${dirbin}
 export gencase="${dirbin}/GenCase_linux64"
-export dualsphysicscpu="${dirbin}/DualSPHysics5.2CPU_linux64"
-export dualsphysicsgpu="${dirbin}/DualSPHysics5.2_linux64"
+export dualsphysicscpu="${dirbin}/DualSPHysics5.4CPU_linux64"
+export dualsphysicsgpu="${dirbin}/DualSPHysics5.4_linux64"
 export boundaryvtk="${dirbin}/BoundaryVTK_linux64"
 export partvtk="${dirbin}/PartVTK_linux64"
 export partvtkout="${dirbin}/PartVTKOut_linux64"

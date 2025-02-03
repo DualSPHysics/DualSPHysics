@@ -8,7 +8,7 @@ fail () {
 
 # "name" and "dirout" are named according to the testcase
 
-export name=CaseDambreak2D_FSI
+export name=CaseDambreak2D_FSI_mDBC
 export dirout=${name}_out
 export diroutdata=${dirout}/data
 
@@ -17,8 +17,8 @@ export diroutdata=${dirout}/data
 export dirbin=../../../bin/linux
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${dirbin}
 export gencase="${dirbin}/GenCase_linux64"
-export dualsphysicscpu="${dirbin}/DualSPHysics5.2CPU_linux64"
-export dualsphysicsgpu="${dirbin}/DualSPHysics5.2_linux64"
+export dualsphysicscpu="${dirbin}/DualSPHysics5.4CPU_linux64"
+export dualsphysicsgpu="${dirbin}/DualSPHysics5.4_linux64"
 export boundaryvtk="${dirbin}/BoundaryVTK_linux64"
 export partvtk="${dirbin}/PartVTK_linux64"
 export partvtkout="${dirbin}/PartVTKOut_linux64"
@@ -55,7 +55,7 @@ ${gencase} ${name}_Def ${dirout}/${name} -save:all
 if [ $? -ne 0 ] ; then fail; fi
 
 # Executes DualSPHysics to simulate SPH method.
-${dualsphysicsgpu} -gpu ${dirout}/${name} ${dirout} -dirdataout data -svres
+${dualsphysicscpu} ${dirout}/${name} ${dirout} -dirdataout data -svres
 if [ $? -ne 0 ] ; then fail; fi
 
 fi
@@ -66,16 +66,13 @@ export dirout2=${dirout}/particles
 ${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartFluid -onlytype:-all,+fluid
 if [ $? -ne 0 ] ; then fail; fi
 
-${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartGate -onlymk:11
+${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartTank -onlymk:11
 if [ $? -ne 0 ] ; then fail; fi
 
-${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartFloor -onlymk:12
+${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartGate -onlymk:12
 if [ $? -ne 0 ] ; then fail; fi
 
 ${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartStructure -onlymk:13
-if [ $? -ne 0 ] ; then fail; fi
-
-${partvtk} -dirin ${diroutdata} -savevtk ${dirout2}/PartWalls -onlymk:14
 if [ $? -ne 0 ] ; then fail; fi
 
 fi
