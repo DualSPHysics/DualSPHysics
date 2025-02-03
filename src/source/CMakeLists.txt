@@ -9,8 +9,9 @@ PROJECT(DualSPHysics)
 #------------------------------------------------------------------
 # Coupling options
 #------------------------------------------------------------------
-option(ENABLE_MOORDYNPLUS "Enable the MoorDynPlus library" ON)
 option(ENABLE_CHRONO "Enable the Chrono Engine library" ON)
+option(ENABLE_WAVEGEN "Enable the WaveGen library" ON)
+option(ENABLE_MOORDYNPLUS "Enable the MoorDynPlus library" ON)
 
 #------------------------------------------------------------------
 # Source files
@@ -38,6 +39,7 @@ set(OBMOORDYNPLUS JDsMooredFloatings.cpp JDsFtForcePoints.cpp)
 set(OBINOUT JSphCpu_InOut.cpp JSphCpuSingle_InOut.cpp JSphInOut.cpp JSphInOutZone.cpp JSphInOutGridData.cpp JSphInOutPoints.cpp JSphInOutVel.cpp JSphInOutVelAwas.cpp JSphInOutZsurf.cpp JSimpleNeigs.cpp)
 set(OBINOUTGPU JSphGpuSingle_InOut.cpp)
 set(OBMESH JMeshData.cpp JMeshTDatas.cpp JMeshTDatasLoad.cpp JMeshTDatasSave.cpp JMeshTDatasDsVel.cpp JMeshTDatasXml.cpp)
+set(OBVRES JSphVRes.cpp JSphVResZone.cpp JSphCpuSingle_VRes.cpp JSphGpuSingle_VRes.cpp JSphCpu_VRes.cpp JCaseVRes.cpp JVResDataLimits.cpp JDsVresData.cpp JBoxDef.cpp)
 set(OBFLEXSTRUC JSphFlexStruc.cpp)
 
 #------------------------------------------------------------------
@@ -47,18 +49,20 @@ find_package(CUDA QUIET)
 
 if(CUDA_FOUND)
   if(CUDA_VERSION VERSION_LESS "7.5")
-    message("Using cuda version <7.5")
-    list(APPEND CUDA_NVCC_FLAGS "-use_fast_math -O3 -gencode=arch=compute_20,code=\"sm_20,compute_20\"")
+    message("Using CUDA version <7.5")
+    list(APPEND CUDA_NVCC_FLAGS "-use_fast_math -O3 -D_WITHMR -D_WITHGPU -gencode=arch=compute_20,code=\"sm_20,compute_20\"")
   elseif(CUDA_VERSION VERSION_GREATER "7.4" AND CUDA_VERSION VERSION_LESS "9.1")
-    message("Using cuda version >=7.5 and <9.1")
-    list(APPEND CUDA_NVCC_FLAGS "-use_fast_math -O3  -gencode=arch=compute_20,code=\"sm_20,compute_20\" -gencode=arch=compute_30,code=\"sm_30,compute_30\" -gencode=arch=compute_35,code=\"sm_35,compute_35\" -gencode=arch=compute_37,code=\"sm_37,compute_37\" -gencode=arch=compute_50,code=\"sm_50,compute_50\" -gencode=arch=compute_52,code=\"sm_52,compute_52\"")
+    message("Using CUDA version >=7.5 and <9.1")
+    list(APPEND CUDA_NVCC_FLAGS "-use_fast_math -O3 -D_WITHMR -D_WITHGPU -gencode=arch=compute_20,code=\"sm_20,compute_20\" -gencode=arch=compute_30,code=\"sm_30,compute_30\" -gencode=arch=compute_35,code=\"sm_35,compute_35\" -gencode=arch=compute_37,code=\"sm_37,compute_37\" -gencode=arch=compute_50,code=\"sm_50,compute_50\" -gencode=arch=compute_52,code=\"sm_52,compute_52\"")
   elseif(CUDA_VERSION VERSION_GREATER "9.1" AND CUDA_VERSION VERSION_LESS "11.0")
-  message("Using cuda version >=9.1 and <11.0")
-    list(APPEND CUDA_NVCC_FLAGS "-use_fast_math -O3  -gencode=arch=compute_30,code=\"sm_30,compute_30\" -gencode=arch=compute_35,code=\"sm_35,compute_35\" -gencode=arch=compute_37,code=\"sm_37,compute_37\" -gencode=arch=compute_50,code=\"sm_50,compute_50\" -gencode=arch=compute_52,code=\"sm_52,compute_52\" -gencode=arch=compute_61,code=\"sm_61,compute_61\" -gencode=arch=compute_70,code=\"sm_70,compute_70\"")
+    message("Using CUDA version >=9.1 and <11.0")
+    list(APPEND CUDA_NVCC_FLAGS "-use_fast_math -O3 -D_WITHMR -D_WITHGPU -gencode=arch=compute_30,code=\"sm_30,compute_30\" -gencode=arch=compute_35,code=\"sm_35,compute_35\" -gencode=arch=compute_50,code=\"sm_50,compute_50\" -gencode=arch=compute_52,code=\"sm_52,compute_52\" -gencode=arch=compute_61,code=\"sm_61,compute_61\" -gencode=arch=compute_70,code=\"sm_70,compute_70\"")
+  elseif(CUDA_VERSION VERSION_GREATER "10.9" AND CUDA_VERSION VERSION_LESS "12.0")
+    message("Using CUDA version >=11.0 and <12.0")
+    list(APPEND CUDA_NVCC_FLAGS "-use_fast_math -O3 -D_WITHMR -D_WITHGPU -gencode=arch=compute_35,code=\"sm_35,compute_35\" -gencode=arch=compute_50,code=\"sm_50,compute_50\" -gencode=arch=compute_52,code=\"sm_52,compute_52\" -gencode=arch=compute_61,code=\"sm_61,compute_61\" -gencode=arch=compute_70,code=\"sm_70,compute_70\" -gencode=arch=compute_75,code=\"sm_75,compute_75\" -gencode=arch=compute_80,code=\"sm_80,compute_80\"")
   else()
-    message("Using cuda version >=11.0")
-	list(APPEND CUDA_NVCC_FLAGS "-Wno-deprecated-gpu-targets") # disable warning for the deprecated sm_35 and sm_37
-    list(APPEND CUDA_NVCC_FLAGS "-use_fast_math -O3 -gencode=arch=compute_35,code=\"sm_35,compute_35\" -gencode=arch=compute_37,code=\"sm_37,compute_37\" -gencode=arch=compute_50,code=\"sm_50,compute_50\" -gencode=arch=compute_52,code=\"sm_52,compute_52\" -gencode=arch=compute_61,code=\"sm_61,compute_61\" -gencode=arch=compute_70,code=\"sm_70,compute_70\"")
+    message("Using CUDA version >=12.0")
+    list(APPEND CUDA_NVCC_FLAGS "-use_fast_math -O3 -D_WITHMR -D_WITHGPU -gencode=arch=compute_50,code=\"sm_50,compute_50\" -gencode=arch=compute_52,code=\"sm_52,compute_52\" -gencode=arch=compute_61,code=\"sm_61,compute_61\" -gencode=arch=compute_70,code=\"sm_70,compute_70\" -gencode=arch=compute_75,code=\"sm_75,compute_75\" -gencode=arch=compute_80,code=\"sm_80,compute_80\" -gencode=arch=compute_86,code=\"sm_86,compute_86\" -gencode=arch=compute_89,code=\"sm_89,compute_89\" -gencode=arch=compute_90,code=\"sm_90,compute_90\"")
   endif()
 else()
   message("CUDA Libraries were not found.")
@@ -97,17 +101,17 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})  
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})           # Debug output directory
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  add_executable(DualSPHysics5.4CPU_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBMESH} ${OBFLEXSTRUC})
+  add_executable(DualSPHysics5.4CPU_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBMESH} ${OBVRES} ${OBFLEXSTRUC})
   install(TARGETS	DualSPHysics5.4CPU_linux64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   if (CUDA_FOUND)
-    cuda_add_executable(DualSPHysics5.4_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBINOUTGPU} ${OBMESH} ${OBFLEXSTRUC})
+    cuda_add_executable(DualSPHysics5.4_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBINOUTGPU} ${OBMESH} ${OBVRES} ${OBFLEXSTRUC})
     install(TARGETS DualSPHysics5.4_linux64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   endif(CUDA_FOUND)
 elseif(MSVC) 
-  add_executable(DualSPHysics5.4CPU_win64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBMESH} ${OBFLEXSTRUC})
+  add_executable(DualSPHysics5.4CPU_win64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBMESH} ${OBVRES} ${OBFLEXSTRUC})
   install(TARGETS	DualSPHysics5.4CPU_win64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   if (CUDA_FOUND)
-    cuda_add_executable(DualSPHysics5.4_win64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBINOUTGPU} ${OBMESH} ${OBFLEXSTRUC})
+    cuda_add_executable(DualSPHysics5.4_win64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBINOUTGPU} ${OBMESH} ${OBVRES} ${OBFLEXSTRUC})
     install(TARGETS DualSPHysics5.4_win64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   endif(CUDA_FOUND)
 endif()
@@ -121,28 +125,10 @@ endforeach(OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )
 # General linker flags
 #------------------------------------------------------------------
 set(LINKER_FLAGS "")
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  set(LINKER_FLAGS ${LINKER_FLAGS} jwavegen_64)
-elseif(MSVC) 
-  set(LINKER_FLAGS ${LINKER_FLAGS} LibJWaveGen_x64_v143_Release)
-endif()
 
 #------------------------------------------------------------------
 # Coupled libraries
 #------------------------------------------------------------------
-# MoorDynPlus
-if(ENABLE_MOORDYNPLUS)
-  message(STATUS "Using MoorDynPlus")
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(LINKER_FLAGS ${LINKER_FLAGS} dsphmoordynplus_64)
-  elseif(MSVC) 
-    set(LINKER_FLAGS ${LINKER_FLAGS} LibDSphMoorDynPlus_x64_v143_Release)
-  endif()
-else()
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_MOORDYNPLUS")
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_MOORDYNPLUS")
-endif(ENABLE_MOORDYNPLUS)
-
 # Chrono Engine
 if(ENABLE_CHRONO)
   message(STATUS "Using ChronoEngine Module")
@@ -156,20 +142,48 @@ else()
   set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_CHRONO")
 endif(ENABLE_CHRONO)
 
+# WaveGen
+if(ENABLE_WAVEGEN)
+  message(STATUS "Using WaveGen module")
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(LINKER_FLAGS ${LINKER_FLAGS} jwavegen_64)
+  elseif(MSVC) 
+    set(LINKER_FLAGS ${LINKER_FLAGS} LibJWaveGen_x64_v143_Release)
+  endif()
+else()
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_WAVEGEN")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_WAVEGEN")
+endif(ENABLE_WAVEGEN)
+
+# MoorDynPlus
+if(ENABLE_MOORDYNPLUS)
+  message(STATUS "Using MoorDynPlus module")
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(LINKER_FLAGS ${LINKER_FLAGS} dsphmoordynplus_64)
+  elseif(MSVC) 
+    set(LINKER_FLAGS ${LINKER_FLAGS} LibDSphMoorDynPlus_x64_v143_Release)
+  endif()
+else()
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDISABLE_MOORDYNPLUS")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDISABLE_MOORDYNPLUS")
+endif(ENABLE_MOORDYNPLUS)
+
+
+
 #------------------------------------------------------------------
 # Linker flags
 #------------------------------------------------------------------
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   target_link_libraries(DualSPHysics5.4CPU_linux64 ${LINKER_FLAGS})
-  set_target_properties(DualSPHysics5.4CPU_linux64 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -fPIC -std=c++0x")
+  set_target_properties(DualSPHysics5.4CPU_linux64 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHMR -fPIC -std=c++0x")
   
   if (CUDA_FOUND)
     target_link_libraries(DualSPHysics5.4_linux64 ${LINKER_FLAGS})
-    set_target_properties(DualSPHysics5.4_linux64 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHGPU -fPIC -std=c++0x -Wno-deprecated-gpu-targets")
+    set_target_properties(DualSPHysics5.4_linux64 PROPERTIES COMPILE_FLAGS "-use_fast_math -O3 -D_WITHMR -D_WITHGPU -fPIC -std=c++0x")
   endif(CUDA_FOUND)
   
 elseif(MSVC)
-  set_target_properties(DualSPHysics5.4_win64 PROPERTIES COMPILE_FLAGS "/D _WITHGPU")
+  set_target_properties(DualSPHysics5.4_win64 PROPERTIES COMPILE_FLAGS "/D _WITHMR /D _WITHGPU")
 
   #if(MSVC_VERSION VERSION_EQUAL 1900)
     # MSVC 2022
