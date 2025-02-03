@@ -83,6 +83,22 @@ elseif(MSVC)
   #endif()
 endif()
 
+#------------------------------------------------------------------
+# Compile MoorDynPlus library using existing Makefile
+#------------------------------------------------------------------
+include(ExternalProject)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  ExternalProject_Add(MoorDynPlus
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Source_DSphMoorDynPlus
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND make -f ${CMAKE_CURRENT_SOURCE_DIR}/Source_DSphMoorDynPlus/Makefile_MoorDynPlus
+    BUILD_IN_SOURCE 1
+    INSTALL_COMMAND /bin/sh -c "rm -rf ${CMAKE_CURRENT_SOURCE_DIR}/*.o ${CMAKE_CURRENT_SOURCE_DIR}/Source_DSphMoorDynPlus/*.o"
+    BUILD_BYPRODUCTS ${CMAKE_CURRENT_SOURCE_DIR}/../lib/linux_gcc/libdsphmoordynplus_64.a
+  )
+endif()
+
+
 #--------------------------------------------
 # OpenMP flags
 #---------------------------------------------
@@ -102,9 +118,11 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})    
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   add_executable(DualSPHysics5.4CPU_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBWAVERZ} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBMESH} ${OBVRES} ${OBFLEXSTRUC})
+  add_dependencies(DualSPHysics5.4CPU_linux64 MoorDynPlus)
   install(TARGETS	DualSPHysics5.4CPU_linux64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   if (CUDA_FOUND)
     cuda_add_executable(DualSPHysics5.4_linux64 ${OBJXML} ${OBJSPHMOTION} ${OBCOMMON} ${OBCOMMONDSPH} ${OBSPH} ${OBSPHSINGLE} ${OBCOMMONGPU} ${OBSPHGPU} ${OBSPHSINGLEGPU} ${OBCUDA} ${OBWAVERZ} ${OBWAVERZCUDA} ${OBCHRONO} ${OBMOORDYNPLUS} ${OBINOUT} ${OBINOUTGPU} ${OBMESH} ${OBVRES} ${OBFLEXSTRUC})
+    add_dependencies(DualSPHysics5.4_linux64 MoorDynPlus)
     install(TARGETS DualSPHysics5.4_linux64 DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   endif(CUDA_FOUND)
 elseif(MSVC) 
