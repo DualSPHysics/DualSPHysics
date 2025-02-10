@@ -176,14 +176,18 @@ template<bool floating,bool shift,bool inout> __global__ void KerComputeStepVerl
           rhonew);
         if(mdbc2==MDBC2_NoPen){//<vs_m2dbcNP_start>
             if (nopenshift[p].w>5.f) { //-check if correction should be applied or not
-                //-Correcting velocity
-                rvelrhonew.x=rvelrho2.x+nopenshift[p].x;
-                rvelrhonew.y=rvelrho2.y+nopenshift[p].y;
-                rvelrhonew.z=rvelrho2.z+nopenshift[p].z;
-                // Adding displacement
-                dx=double(rvelrhonew.x)*dt;
-                dy=double(rvelrhonew.y)*dt;
-                dz=double(rvelrhonew.z)*dt;
+                if (nopenshift[p].x!=0){
+                    rvelrhonew.x=rvel1.x+nopenshift[p].x;//-Correcting velocity
+                    dx=double(rvelrhonew.x)*dt;//-Adding displacement
+                }
+                if (nopenshift[p].y!=0) {
+                    rvelrhonew.y=rvel1.y+nopenshift[p].y;//-Correcting velocity
+                    dy=double(rvelrhonew.y)*dt;//-Adding displacement
+                }
+                if (nopenshift[p].z!=0) {
+                    rvelrhonew.z=rvel1.z+nopenshift[p].z;//-Correcting velocity
+                    dz=double(rvelrhonew.z)*dt;//-Adding displacement
+                }
             }
         }//<vs_m2dbcNP_end>
         //-Restore data of inout particles.
@@ -442,14 +446,18 @@ template<bool floating,bool shift,bool shiftadv,bool inout> __global__ void KerC
         //-Adding no-penetration correction velocity SHABA
         if(mdbc2==MDBC2_NoPen){//<vs_m2dbcNP_start>
             if (nopenshift[p].w>5.f) { //-check if correction should be applied or not
-                //-Correcting velocity
-                rvelrhonew.x=rvelrhopre.x+nopenshift[p].x;
-                rvelrhonew.y=rvelrhopre.y+nopenshift[p].y;
-                rvelrhonew.z=rvelrhopre.z+nopenshift[p].z;
-                // Adding displacement
-                dx=double(rvelrhonew.x)*dt;
-                dy=double(rvelrhonew.y)*dt;
-                dz=double(rvelrhonew.z)*dt;
+                if (nopenshift[p].x!=0) {
+                    rvelrhonew.x=rvelrhopre.x+nopenshift[p].x;//-Adding displacement
+                    dx=double(rvelrhonew.x)*dt;//-Adding displacement
+                }
+                if (nopenshift[p].y!=0) {
+                    rvelrhonew.y=rvelrhopre.y+nopenshift[p].y;//-Adding displacement
+                    dy=double(rvelrhonew.y)*dt;//-Adding displacement
+                }
+                if (nopenshift[p].z!=0) {
+                    rvelrhonew.z=rvelrhopre.z+nopenshift[p].z;//-Adding displacement
+                    dz=double(rvelrhonew.z)*dt;//-Adding displacement
+                }
             }
         }//<vs_m2dbcNP_end>
         if(shift){
