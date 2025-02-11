@@ -934,53 +934,53 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
           }
 
           //-No Penetration Correction SHABA
-          if (boundp2 && mdbc2==MDBC2_NoPen && !ftp2) {//<vs_m2dbcNP_ini>
-              const float rrmag = sqrt(rr2);
-              if (rrmag<1.25f*Dp) { //-if fluid particle is less than 1.25dp from a boundary particle
-                  const float norm=sqrt(boundnorm[p2].x*boundnorm[p2].x+boundnorm[p2].y*boundnorm[p2].y+boundnorm[p2].z*boundnorm[p2].z);
-                  const float normx=boundnorm[p2].x/norm; float normy=boundnorm[p2].y/norm; float normz=boundnorm[p2].z/norm;
-                  const float normdist=(normx*drx+normy*dry+normz*drz);
-                  if (normdist<0.75f*norm && norm<1.75f*Dp) {//-if normal distance is less than 0.75 boundary normal size and only first layer of bound
-                      const tfloat3 movvelp2=motionvel[p2];
-                      float absx=abs(boundnorm[p2].x);
-                      float absy=abs(boundnorm[p2].y);
-                      float absz=abs(boundnorm[p2].z);
-                      // decompose the normal and apply correction in each direction seperately
-                      if (drx*boundnorm[p2].x<0.75f*absx && absx>0.f) {
-                          dvx=velp1.x-movvelp2.x;
-                          const float vfcx =dvx*boundnorm[p2].x/absx;
-                          if (vfcx<0.f) {//-fluid particle moving towards boundary?
-                              const float ratiox=max(abs(drx/absx), 0.25f);
-                              const float factorx=-2.f*ratiox+2.5f;
-                              nopencount.x+=1.f; //-boundary particle counter for average
-                              //-delta v = sum uij dot (nj cross nj)
-                              nopenshiftp1.x-=factorx*dvx*(boundnorm[p2].x/absx)*(boundnorm[p2].x/absx);
-                          }
-                      }
-                      if (dry*boundnorm[p2].y< 0.75f*absy && absy>0.f) {
-                          dvy=velp1.y-movvelp2.y;
-                          const float vfcy=dvy*boundnorm[p2].y/absy;
-                          if (vfcy<0.f) {//-fluid particle moving towards boundary?
-                              const float ratioy=max(abs(dry/absy), 0.25f);
-                              const float factory=-2.f*ratioy+2.5f;
-                              nopencount.y+=1.f; //-boundary particle counter for average
-                              //-delta v = sum uij dot (nj cross nj)
-                              nopenshiftp1.y-=factory*dvy*(boundnorm[p2].y/absy)*(boundnorm[p2].y/absy);
-                          }
-                      }
-                      if (drz*boundnorm[p2].z<0.75f*absz && absz>0.f) {
-                          dvz=velp1.z-movvelp2.z;
-                          const float vfcz=dvz*boundnorm[p2].z/absz;
-                          if (vfcz<0.f) {//-fluid particle moving towards boundary?
-                              const float ratioz=max(abs(drz/absz), 0.25f);
-                              const float factorz=-2.f*ratioz+2.5f;
-                              nopencount.z+=1.f; //-boundary particle counter for average
-                              //-delta v = sum uij dot (nj cross nj)
-                              nopenshiftp1.z-=factorz*dvz*(boundnorm[p2].z/absz)*(boundnorm[p2].z/absz);
-                          }
-                      }
+          if(boundp2 && mdbc2==MDBC2_NoPen && !ftp2){//<vs_m2dbcNP_ini>
+            const float rrmag = sqrt(rr2);
+            if(rrmag<1.25f*Dp){ //-if fluid particle is less than 1.25dp from a boundary particle
+              const float norm=sqrt(boundnorm[p2].x*boundnorm[p2].x+boundnorm[p2].y*boundnorm[p2].y+boundnorm[p2].z*boundnorm[p2].z);
+              const float normx=boundnorm[p2].x/norm; float normy=boundnorm[p2].y/norm; float normz=boundnorm[p2].z/norm;
+              const float normdist=(normx*drx+normy*dry+normz*drz);
+              if(normdist<0.75f*norm && norm<1.75f*float(Dp)){//-if normal distance is less than 0.75 boundary normal size and only first layer of bound
+                const tfloat3 movvelp2=motionvel[p2];
+                float absx=abs(normx);
+                float absy=abs(normy);
+                float absz=abs(normz);
+                // decompose the normal and apply correction in each direction seperately
+                if(drx*normx<0.75f && absx>0.001f*float(Dp)){
+                  dvx=velp1.x-movvelp2.x;
+                  const float vfcx=dvx*normx;
+                  if(vfcx<0.f){//-fluid particle moving towards boundary?
+                    const float ratiox=max(abs(drx/normx),0.25f);
+                    const float factorx=-2.f*ratiox+2.5f;
+                    nopencount.x+=1.f; //-boundary particle counter for average
+                    //-delta v = sum uij dot (nj cross nj)
+                    nopenshiftp1.x-=factorx*dvx*normx*normx;
                   }
+                }
+                if(dry * normy < 0.75f && absy>0.001f*float(Dp)){
+                  dvy=velp1.y-movvelp2.y;
+                  const float vfcy=dvy*normy;
+                  if(vfcy<0.f){//-fluid particle moving towards boundary?
+                    const float ratioy=max(abs(dry/normy),0.25f);
+                    const float factory=-2.f*ratioy+2.5f;
+                    nopencount.y+=1.f; //-boundary particle counter for average
+                    //-delta v = sum uij dot (nj cross nj)
+                    nopenshiftp1.y-=factory*dvy*normy*normy;
+                  }
+                }
+                if(drz*normz<0.75f && absz>0.001f*float(Dp)){
+                  dvz=velp1.z-movvelp2.z;
+                  const float vfcz=dvz*normz;
+                  if(vfcz<0.f){//-fluid particle moving towards boundary?
+                    const float ratioz=max(abs(drz/normz),0.25f);
+                    const float factorz=-2.f*ratioz+2.5f;
+                    nopencount.z+=1.f; //-boundary particle counter for average
+                    //-delta v = sum uij dot (nj cross nj)
+                    nopenshiftp1.z-=factorz*dvz*normz*normz;
+                  }
+                }
               }
+            }
           }//<vs_m2dbcNP_end>
 
           //-Advanced shifting. //<vs_advshift_ini>
@@ -1112,23 +1112,25 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       if(shift)shiftposfs[p1]=shiftposfsp1;
     }
     //-No-Penetration correction SHABA
-    if (mdbc2==MDBC2_NoPen) { //<vs_m2dbcNP_end>
+    if(mdbc2==MDBC2_NoPen){ //<vs_m2dbcNP_end>
+      if(nopencount.x>0.f || nopencount.y>0.f || nopencount.z>0.f){
         //-Average correction velocity over number of boundary particles
-        if (nopencount.x>0.f) {//-if correction required x
+        if(nopencount.x>0.f){//-if correction required x
             nopenshift[p1].x=nopenshiftp1.x/nopencount.x;
             nopenshift[p1].w= 10; //-correction needed? yes
         }
-        else if (nopencount.y>0.f) {//-if correction required y
+        if(nopencount.y>0.f){//-if correction required y
             nopenshift[p1].y=nopenshiftp1.y/nopencount.y;
             nopenshift[p1].w=10; //-correction needed? yes
         }
-        else if (nopencount.z>0.f) {//-if correction required z
+        if(nopencount.z>0.f){//-if correction required z
             nopenshift[p1].z=nopenshiftp1.z/nopencount.z;
             nopenshift[p1].w=10; //-correction needed? yes
         }
-        else {
-            nopenshift[p1].w=0;//-correction needed? no
-        }
+      }
+      else{
+        nopenshift[p1].w=0;//-correction needed? no
+      }
     }//<vs_m2dbcNP_end>
     #ifdef AVAILABLE_DIVCLEAN
     //<vs_divclean_ini>
@@ -1540,69 +1542,69 @@ void JSphCpu::ComputeVerletVarsFluid(bool shift,const tfloat3* indirvel
   #ifdef OMP_USE
     #pragma omp parallel for schedule (static) if(npf>OMP_LIMIT_COMPUTESTEP)
   #endif
-  for (int p = pini; p < pfin; p++) {
-      //-Calculate density. | Calcula densidad.
-      const float rhonew = float(double(velrho2[p].w) + dt2 * ar[p]);
-      if (!WithFloating || CODE_IsFluid(code[p])) {//-Fluid Particles.
-          const tdouble3 acegr = ToTDouble3(ace[p]) + gravity; //-Adds gravity.
-          //-Calculate displacement. | Calcula desplazamiento.
-          double dx = double(velrho1[p].x) * dt + acegr.x * dt205;
-          double dy = double(velrho1[p].y) * dt + acegr.y * dt205;
-          double dz = double(velrho1[p].z) * dt + acegr.z * dt205;
-          if (shift) {
-              dx += double(shiftposfs[p].x);
-              dy += double(shiftposfs[p].y);
-              dz += double(shiftposfs[p].z);
-          }
-          bool outrho = (rhonew<RhopOutMin || rhonew>RhopOutMax);
-          //-Calculate velocity & density. | Calcula velocidad y densidad.
-          tfloat4 rvelrhonew = TFloat4(
-              float(double(velrho2[p].x) + acegr.x * dt2),
-              float(double(velrho2[p].y) + acegr.y * dt2),
-              float(double(velrho2[p].z) + acegr.z * dt2),
-              rhonew);
-          if (TMdbc2==MDBC2_NoPen) {//<vs_m2dbcNP_start>
-              if (nopenshift[p].w>5.f) { //-check if correction should be applied or not
-                  if (nopenshift[p].x!=0) {
-                      rvelrhonew.x=velrho1[p].x+nopenshift[p].x;//-Correcting velocity
-                      dx=double(rvelrhonew.x)*dt;//-Adding displacement
-                  }
-                  if (nopenshift[p].y!=0) {
-                      rvelrhonew.y=velrho1[p].y+nopenshift[p].y;//-Correcting velocity
-                      dy=double(rvelrhonew.y)*dt;//-Adding displacement
-                  }
-                  if (nopenshift[p].z!=0) {                                            
-                      rvelrhonew.z=velrho1[p].z+nopenshift[p].z;//-Correcting velocity                      
-                      dz=double(rvelrhonew.z)*dt;//-Adding displacement
-                  }
-              }
-          }//<vs_m2dbcNP_end>
-        //-Restore data of inout particles.
-          if (InOut && CODE_IsFluidInout(code[p])) {
-              outrho = false;
-              rvelrhonew = velrho2[p];
-              const tfloat3 vd = indirvel[CODE_GetIzoneFluidInout(code[p])];
-              if (vd.x != FLT_MAX) {
-                  const float v = velrho1[p].x * vd.x + velrho1[p].y * vd.y + velrho1[p].z * vd.z;
-                  dx = double(v * vd.x) * dt;
-                  dy = double(v * vd.y) * dt;
-                  dz = double(v * vd.z) * dt;
-              }
-              else {
-                  dx = double(velrho1[p].x) * dt;
-                  dy = double(velrho1[p].y) * dt;
-                  dz = double(velrho1[p].z) * dt;
-              }
-          }
-          //-Update particle data.
-          UpdatePos(pos[p], dx, dy, dz, outrho, p, pos, dcell, code);
-          velrhonew[p] = rvelrhonew;
+  for (int p=pini;p<pfin;p++){
+    //-Calculate density. | Calcula densidad.
+    const float rhonew=float(double(velrho2[p].w)+dt2*ar[p]);
+    if (!WithFloating || CODE_IsFluid(code[p])){//-Fluid Particles.
+      const tdouble3 acegr=ToTDouble3(ace[p])+gravity; //-Adds gravity.
+      //-Calculate displacement. | Calcula desplazamiento.
+      double dx=double(velrho1[p].x)*dt+acegr.x*dt205;
+      double dy=double(velrho1[p].y)*dt+acegr.y*dt205;
+      double dz=double(velrho1[p].z)*dt+acegr.z*dt205;
+      if (shift){
+        dx+=double(shiftposfs[p].x);
+        dy+=double(shiftposfs[p].y);
+        dz+=double(shiftposfs[p].z);
       }
-      else {//-Floating Particles.
-          velrhonew[p] = velrho1[p];
-          if (!boundmode || boundmode[p] < BMODE_MDBC2) //<vs_m2dbc>
-              velrhonew[p].w = (rhonew < RhopZero ? RhopZero : rhonew); //-Avoid fluid particles being absorved by floating ones. | Evita q las floating absorvan a las fluidas.
+      bool outrho=(rhonew<RhopOutMin || rhonew>RhopOutMax);
+      //-Calculate velocity & density. | Calcula velocidad y densidad.
+      tfloat4 rvelrhonew=TFloat4(
+        float(double(velrho2[p].x)+acegr.x*dt2),
+        float(double(velrho2[p].y)+acegr.y*dt2),
+        float(double(velrho2[p].z)+acegr.z*dt2),
+        rhonew);
+      if(TMdbc2==MDBC2_NoPen){//<vs_m2dbcNP_start>
+        if(nopenshift[p].w>5.f){ //-check if correction should be applied or not
+          if(nopenshift[p].x!=0){
+            rvelrhonew.x=velrho1[p].x+nopenshift[p].x;//-Correcting velocity
+            dx=double(rvelrhonew.x)*dt;//-Adding displacement
+          }
+          if(nopenshift[p].y!=0){
+            rvelrhonew.y=velrho1[p].y+nopenshift[p].y;//-Correcting velocity
+            dy=double(rvelrhonew.y)*dt;//-Adding displacement
+          }
+          if(nopenshift[p].z!=0){                                            
+            rvelrhonew.z=velrho1[p].z+nopenshift[p].z;//-Correcting velocity                      
+            dz=double(rvelrhonew.z)*dt;//-Adding displacement
+          }
+        }
+      }//<vs_m2dbcNP_end>
+      //-Restore data of inout particles.
+      if (InOut && CODE_IsFluidInout(code[p])) {
+        outrho=false;
+        rvelrhonew=velrho2[p];
+        const tfloat3 vd=indirvel[CODE_GetIzoneFluidInout(code[p])];
+        if (vd.x!=FLT_MAX) {
+          const float v=velrho1[p].x*vd.x+velrho1[p].y*vd.y+velrho1[p].z*vd.z;
+          dx=double(v*vd.x)*dt;
+          dy=double(v*vd.y)*dt;
+          dz=double(v*vd.z)*dt;
+        }
+        else {
+          dx=double(velrho1[p].x)*dt;
+          dy=double(velrho1[p].y)*dt;
+          dz=double(velrho1[p].z)*dt;
+        }
       }
+      //-Update particle data.
+      UpdatePos(pos[p],dx,dy,dz,outrho,p,pos,dcell,code);
+      velrhonew[p] = rvelrhonew;
+    }
+    else {//-Floating Particles.
+      velrhonew[p]=velrho1[p];
+      if (!boundmode || boundmode[p] < BMODE_MDBC2) //<vs_m2dbc>
+        velrhonew[p].w=(rhonew<RhopZero ? RhopZero:rhonew); //-Avoid fluid particles being absorved by floating ones. | Evita q las floating absorvan a las fluidas.
+    }
   }
 }
 
@@ -1926,24 +1928,21 @@ void JSphCpu::ComputeSymplecticCorr(double dt){
         double dy=(double(velrhoprec[p].y)+double(rvelrhonew.y))*  dt05; 
         double dz=(double(velrhoprec[p].z)+double(rvelrhonew.z))*  dt05;
         //-Adding no-penetration correction velocity SHABA
-        if (TMdbc2==MDBC2_NoPen) {//<vs_m2dbcNP_start>
-            if (nopenshift[p].w>5.f) { //-check if correction should be applied or not
-
-                if (nopenshift[p].x!=0) {
-                    rvelrhonew.x=velrhoprec[p].x+nopenshift[p].x;//-Correcting velocity 
-                    dx=double(rvelrhonew.x)*dt;//-Adding displacement
-                }
-                if (nopenshift[p].y!= 0) {
-                    rvelrhonew.y=velrhoprec[p].y+nopenshift[p].y;//-Correcting velocity 
-                    dy=double(rvelrhonew.y)*dt;//-Adding displacement
-                }
-                if (nopenshift[p].z!= 0) {
-                    rvelrhonew.z=velrhoprec[p].z+nopenshift[p].z;//-Correcting velocity 
-                    dz=double(rvelrhonew.z)*dt;//-Adding displacement
-                }
-
-
+        if(TMdbc2==MDBC2_NoPen){//<vs_m2dbcNP_start>
+          if(nopenshift[p].w>5.f){ //-check if correction should be applied or not
+            if (nopenshift[p].x!=0){
+              rvelrhonew.x=velrhoprec[p].x+nopenshift[p].x;//-Correcting velocity 
+              dx=double(rvelrhonew.x)*dt;//-Adding displacement
             }
+            if(nopenshift[p].y!= 0){
+              rvelrhonew.y=velrhoprec[p].y+nopenshift[p].y;//-Correcting velocity 
+              dy=double(rvelrhonew.y)*dt;//-Adding displacement
+            }
+            if(nopenshift[p].z!= 0){
+              rvelrhonew.z=velrhoprec[p].z+nopenshift[p].z;//-Correcting velocity 
+              dz=double(rvelrhonew.z)*dt;//-Adding displacement
+            }
+          }
         }//<vs_m2dbcNP_end>
         if(shift){
           dx+=double(shiftposfc[p].x);

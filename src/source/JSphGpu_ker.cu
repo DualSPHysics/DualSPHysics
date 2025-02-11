@@ -668,51 +668,53 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
       }
 
       //-No-Penetration correction SHABA
-      if (boundp2 && mdbc2==MDBC2_NoPen && !ftp2) {//<vs_m2dbcNP_ini>
-          const float rrmag=sqrt(rr2);
-          if (rrmag<1.25f*CTE.dp) { //-if fluid particle is less than 1.25dp from a boundary particle
-              const float norm=sqrt(boundnorm[p2].x*boundnorm[p2].x+boundnorm[p2].y*boundnorm[p2].y+boundnorm[p2].z*boundnorm[p2].z);
-              const float normx=boundnorm[p2].x/norm; float normy=boundnorm[p2].y/norm; float normz=boundnorm[p2].z/norm;
-              const float normdist=(normx*drx+normy*dry+normz*drz);
-             if (normdist<0.75f*norm &&norm<1.75f*CTE.dp) {//-if normal distance is less than 0.75 boundary normal size and only first layer of bound
-                  const float3 movvelp2=motionvel[p2];
-                  float absx=abs(boundnorm[p2].x);float absy=abs(boundnorm[p2].y);float absz=abs(boundnorm[p2].z);
-                  // decompose the normal and apply correction in each direction seperately
-                  if (drx*boundnorm[p2].x<0.75f*absx && absx>0.f) {
-                      dvx=velrhop1.x-movvelp2.x;
-                      const float vfcx=dvx*boundnorm[p2].x/absx;
-                      if (vfcx<0.f) { //-fluid particle moving towards boundary?
-                          const float ratiox=max(abs(drx/absx),0.25f);
-                          const float factorx=-2.f*ratiox+2.5f;
-                          nopencount.x+=1.f; //-boundary particle counter for average
-                          //-delta v = sum uij dot (nj cross nj)
-                          nopenshift.x-=factorx*dvx*(boundnorm[p2].x/absx)*(boundnorm[p2].x/absx);
-                      }
-                  }
-                  if (dry*boundnorm[p2].y<0.75f*absy && absy>0.f) {
-                      dvy=velrhop1.y-movvelp2.y;
-                      const float vfcy=dvy*boundnorm[p2].y/absy;
-                      if (vfcy<0.f) {//-fluid particle moving towards boundary?
-                          const float ratioy=max(abs(dry/absy),0.25f);
-                          const float factory=-2.f*ratioy+2.5f;
-                          nopencount.y+=1.f; //-boundary particle counter for average
-                          //-delta v = sum uij dot (nj cross nj)
-                          nopenshift.y-=factory*dvy*(boundnorm[p2].y/absy)*(boundnorm[p2].y/absy);
-                      }
-                  }
-                  if (drz*boundnorm[p2].z<0.75f*absz && absz>0.f) {
-                      dvz=velrhop1.z-movvelp2.z;
-                      const float vfcz = dvz*boundnorm[p2].z/absz;
-                      if (vfcz<0.f) {//-fluid particle moving towards boundary?
-                          const float ratioz=max(abs(drz/absz),0.25f);
-                          const float factorz=-2.f*ratioz+2.5f;
-                          nopencount.z+=1.f; //-boundary particle counter for average
-                          //-delta v = sum uij dot (nj cross nj)
-                          nopenshift.z-=factorz*dvz*(boundnorm[p2].z/absz)*(boundnorm[p2].z/absz);
-                      }
-                  }
+      if(boundp2 && mdbc2==MDBC2_NoPen && !ftp2){//<vs_m2dbcNP_ini>
+        const float rrmag=sqrt(rr2);
+        if(rrmag<1.25f*CTE.dp){ //-if fluid particle is less than 1.25dp from a boundary particle
+          const float norm=sqrt(boundnorm[p2].x*boundnorm[p2].x+boundnorm[p2].y*boundnorm[p2].y+boundnorm[p2].z*boundnorm[p2].z);
+          const float normx=boundnorm[p2].x/norm; float normy=boundnorm[p2].y/norm; float normz=boundnorm[p2].z/norm;
+          const float normdist=(normx*drx+normy*dry+normz*drz);
+          if(normdist<0.75f*norm && norm<1.75f*float(CTE.dp)) {//-if normal distance is less than 0.75 boundary normal size and only first layer of bound
+            const float3 movvelp2=motionvel[p2];
+            float absx = abs(normx);
+            float absy = abs(normy);
+            float absz = abs(normz);
+            // decompose the normal and apply correction in each direction seperately
+            if(drx*normx<0.75f && absx>0.001f*float(CTE.dp)) {
+              dvx=velrhop1.x-movvelp2.x;
+              const float vfcx=dvx*normx;
+              if(vfcx<0.f){//-fluid particle moving towards boundary?
+                const float ratiox=max(abs(drx/normx),0.25f);
+                const float factorx=-2.f*ratiox+2.5f;
+                nopencount.x+=1.f; //-boundary particle counter for average
+                //-delta v = sum uij dot (nj cross nj)
+                nopenshift.x-=factorx*dvx*normx*normx;
               }
+            }
+            if(dry*normy<0.75f && absy>0.001f*float(CTE.dp)) {
+              dvy=velrhop1.y-movvelp2.y;
+              const float vfcy=dvy*normy;
+              if(vfcy<0.f){//-fluid particle moving towards boundary?
+                const float ratioy=max(abs(dry/normy),0.25f);
+                const float factory=-2.f*ratioy+2.5f;
+                nopencount.y+=1.f; //-boundary particle counter for average
+                //-delta v = sum uij dot (nj cross nj)
+                nopenshift.y-=factory*dvy*normy*normy;
+              }
+            }
+            if(drz*normz<0.75f && absz>0.001f*float(CTE.dp)) {
+              dvz=velrhop1.z-movvelp2.z;
+              const float vfcz=dvz*normz;
+              if(vfcz<0.f){//-fluid particle moving towards boundary?
+                const float ratioz=max(abs(drz/normz),0.25f);
+                const float factorz=-2.f*ratioz+2.5f;
+                nopencount.z+=1.f; //-boundary particle counter for average
+                //-delta v = sum uij dot (nj cross nj)
+                nopenshift.z-=factorz*dvz*normz*normz;
+              }
+            }
           }
+        }
       }//<vs_m2dbcNP_end>
 
       //-Advanced shifting. //<vs_advshift_ini>
@@ -966,20 +968,20 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
     }
     //-No-Penetration correction SHABA
     if (mdbc2==MDBC2_NoPen){ //<vs_m2dbcNP_end>
-      if (nopencountp1.x>0.f){//-if correction required x
+      if(nopencountp1.x>0.f|| nopencountp1.y>0.f|| nopencountp1.z>0.f){
         //-Average correction velocity over number of boundary particles
-        nopenshift[p1].x=nopenshiftp1.x/nopencountp1.x;
+        if (nopencountp1.x>0.f){//-if correction required x
+        nopenshift[p1].x=nopenshiftp1.x/ nopencountp1.x;
         nopenshift[p1].w=10; //-correction needed? yes
-      }
-      else if (nopencountp1.y>0.f) {//-if correction required y
-          //-Average correction velocity over number of boundary particles
-          nopenshift[p1].y=nopenshiftp1.y/nopencountp1.y;
-          nopenshift[p1].w=10; //-correction needed? yes
-      }
-      else if (nopencountp1.z>0.f) {//-if correction required z
-          //-Average correction velocity over number of boundary particles
-          nopenshift[p1].z=nopenshiftp1.z/nopencountp1.z;
-          nopenshift[p1].w=10; //-correction needed? yes
+        }
+        if (nopencountp1.y>0.f){//-if correction required y
+            nopenshift[p1].y=nopenshiftp1.y/ nopencountp1.y;
+            nopenshift[p1].w=10; //-correction needed? yes
+        }
+        if (nopencountp1.z>0.f){//-if correction required z
+            nopenshift[p1].z=nopenshiftp1.z/ nopencountp1.z;
+            nopenshift[p1].w=10; //-correction needed? yes
+        }
       }
       else{
         nopenshift[p1].w=0;//-correction needed? no
