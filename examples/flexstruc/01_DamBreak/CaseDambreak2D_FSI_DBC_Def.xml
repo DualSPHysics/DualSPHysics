@@ -127,7 +127,7 @@
             <parameter key="Boundary" value="#eval(mdbc,2,1)" comment="Boundary method 1:DBC, 2:mDBC (default=1)" />
             <parameter key="SlipMode" value="2" comment="Slip mode for mDBC 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1)" />
             <parameter key="NoPenetration" value="1" comment="Prevent particle penetration in mDBC 0:Off, 1:On (default=0)" />
-            <parameter key="StepAlgorithm" value="1" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />
+            <parameter key="StepAlgorithm" value="2" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />
             <parameter key="Kernel" value="2" comment="Interaction Kernel 1:Cubic Spline, 2:Wendland (default=2)" />
             <parameter key="ViscoTreatment" value="2" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS (default=1)" />
             <parameter key="Visco" value="8.92678034e-7" comment="Viscosity value" /> % Note alpha can depend on the resolution. A value of 0.01 is recommended for near irrotational flows.
