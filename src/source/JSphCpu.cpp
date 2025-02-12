@@ -951,7 +951,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
                   const float vfcx=dvx*normx;
                   if(vfcx<0.f){//-fluid particle moving towards boundary?
                     const float ratiox=max(abs(drx/normx),0.25f);
-                    const float factorx=-2.f*ratiox+2.5f;
+                    const float factorx=-4.f*ratiox+3.f;
                     nopencount.x+=1.f; //-boundary particle counter for average
                     //-delta v = sum uij dot (nj cross nj)
                     nopenshiftp1.x-=factorx*dvx*normx*normx;
@@ -962,7 +962,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
                   const float vfcy=dvy*normy;
                   if(vfcy<0.f){//-fluid particle moving towards boundary?
                     const float ratioy=max(abs(dry/normy),0.25f);
-                    const float factory=-2.f*ratioy+2.5f;
+                    const float factory=-4.f*ratioy+3.f;
                     nopencount.y+=1.f; //-boundary particle counter for average
                     //-delta v = sum uij dot (nj cross nj)
                     nopenshiftp1.y-=factory*dvy*normy*normy;
@@ -973,7 +973,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
                   const float vfcz=dvz*normz;
                   if(vfcz<0.f){//-fluid particle moving towards boundary?
                     const float ratioz=max(abs(drz/normz),0.25f);
-                    const float factorz=-2.f*ratioz+2.5f;
+                    const float factorz=-4.f*ratioz+3.f;
                     nopencount.z+=1.f; //-boundary particle counter for average
                     //-delta v = sum uij dot (nj cross nj)
                     nopenshiftp1.z-=factorz*dvz*normz*normz;
