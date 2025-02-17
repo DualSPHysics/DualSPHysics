@@ -16,7 +16,7 @@ EXECS_DIRECTORY=../../bin/linux
 
 # -std=c++0x ---> Used to avoid errors for calls to enums
 ifeq ($(USE_DEBUG), YES)
-  CCFLAGS=-c -Ofast -g -Wall -fopenmp -D_WITHGPU -std=c++0x -D_WITHMR 
+  CCFLAGS=-c -O0 -g -Wall -fopenmp -D_WITHGPU -std=c++0x -D_WITHMR 
 else
   CCFLAGS=-c -O3 -fopenmp -D_WITHGPU -std=c++0x -D_WITHMR
   ifeq ($(USE_FAST_MATH), YES)
@@ -40,7 +40,7 @@ ifeq ($(COMPILE_MOORDYNPLUS), NO)
 endif
 
 #=============== CUDA selection ===============
-CUDAVER=00
+CUDAVER=12
 
 #=============== CUDA toolkit directory (make appropriate for local CUDA installation) ===============
 ifeq ($(CUDAVER),00)
@@ -57,6 +57,9 @@ ifeq ($(CUDAVER),92)
 endif
 ifeq ($(CUDAVER),11)
   DIRTOOLKIT=/exports/opt/NVIDIA/cuda-11.7
+endif
+ifeq ($(CUDAVER),12)
+  DIRTOOLKIT=/exports/opt/NVIDIA/cuda-12
 endif
 
 #=============== Select GPU architectures ===============
@@ -95,6 +98,16 @@ ifeq ($(CUDAVER),11)
   GENCODE:=$(GENCODE) -gencode=arch=compute_35,code=\"sm_35,compute_35\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_61,code=\"sm_61,compute_61\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_86,code=\"sm_86,compute_86\"
+endif
+ifeq ($(CUDAVER),12)
+  # module load cuda/11.7
+  # GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
+  # GENCODE:=$(GENCODE) -gencode=arch=compute_35,code=\"sm_35,compute_35\"
+  # GENCODE:=$(GENCODE) -gencode=arch=compute_50,code=\"sm_50,compute_50\"
+  # GENCODE:=$(GENCODE) -gencode=arch=compute_52,code=\"sm_52,compute_52\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_61,code=\"sm_61,compute_61\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_70,code=\"sm_70,compute_70\"
   GENCODE:=$(GENCODE) -gencode=arch=compute_86,code=\"sm_86,compute_86\"
@@ -166,12 +179,12 @@ ifeq ($(CUDAVER),11)
 endif
 
 all:compile_libs $(EXECS_DIRECTORY)/$(EXECNAME)
-#	rm -rf *.o
+	rm -rf *.o
 ifeq ($(USE_DEBUG), NO)
 	@echo "  --- Compiled Release GPU version ---"
 else
 	@echo "  --- Compiled Debug GPU version ---"
-#	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECNAME)_debug
+	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECNAME)_debug
 endif
 
 compile_libs:

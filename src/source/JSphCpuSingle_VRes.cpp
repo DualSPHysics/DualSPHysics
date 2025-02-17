@@ -262,7 +262,7 @@ void JSphCpuSingle_VRes::PreLoopProcedureVRes(TpInterStep interstep){
       }
     }
     //-Saves VTK for debug.
-    if(1 && runshift && TimeStep+LastDt>=TimePartNext)DgSaveVtkParticlesCpu("Compute_FreeSurface_",Part,0,Np,Pos_c->cptr()
+    if(0 && runshift && TimeStep+LastDt>=TimePartNext)DgSaveVtkParticlesCpu("Compute_FreeSurface_",Part,0,Np,Pos_c->cptr()
       ,Code_c->cptr(),FSType_c->cptr(),ShiftVel_c->cptr(),FSNormal_c->cptr());
     Timersc->TmStop(TMC_SuShifting);
   }

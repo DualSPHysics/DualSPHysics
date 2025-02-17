@@ -39,7 +39,7 @@
 #include "JSphGpu.h"
 #endif
 
-#define VRES_DG_SAVEVTK 1
+#define VRES_DG_SAVEVTK 0
 
 class JXml;
 class TiXmlElement;

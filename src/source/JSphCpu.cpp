@@ -710,6 +710,22 @@ float VanAlbadaLimiter(float beta){
   return(beta>0? (beta2+beta)/(1+beta2): 0);
 }
 
+//------------------------------------------------------------------------------
+/// Helper function for No penetration algorithm.
+//------------------------------------------------------------------------------
+void ComputeNoPenVel(const float dv,const float norm,const float dr
+  ,float& nopencount,float& nopenshift)
+{
+  const float vfc=dv*norm;
+  if(vfc<0.f){//-fluid particle moving towards boundary?
+    const float ratio=max(abs(dr/norm),0.25f);
+    const float factor=-4.f*ratio+3.f;
+    nopencount+=1.f; //-boundary particle counter for average
+                //-delta v = sum uij dot (nj cross nj)
+    nopenshift-=factor*dv*norm*norm;
+  }
+}
+
 //==============================================================================
 /// Perform interaction between particles: Fluid/Float-Fluid/Float or Fluid/Float-Bound
 /// Realiza interaccion entre particulas: Fluid/Float-Fluid/Float or Fluid/Float-Bound
@@ -946,39 +962,12 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
                 float absy=abs(normy);
                 float absz=abs(normz);
                 // decompose the normal and apply correction in each direction seperately
-                if(drx*normx<0.75f && absx>0.001f*float(Dp)){
-                  dvx=velp1.x-movvelp2.x;
-                  const float vfcx=dvx*normx;
-                  if(vfcx<0.f){//-fluid particle moving towards boundary?
-                    const float ratiox=max(abs(drx/normx),0.25f);
-                    const float factorx=-4.f*ratiox+3.f;
-                    nopencount.x+=1.f; //-boundary particle counter for average
-                    //-delta v = sum uij dot (nj cross nj)
-                    nopenshiftp1.x-=factorx*dvx*normx*normx;
-                  }
-                }
-                if(dry * normy < 0.75f && absy>0.001f*float(Dp)){
-                  dvy=velp1.y-movvelp2.y;
-                  const float vfcy=dvy*normy;
-                  if(vfcy<0.f){//-fluid particle moving towards boundary?
-                    const float ratioy=max(abs(dry/normy),0.25f);
-                    const float factory=-4.f*ratioy+3.f;
-                    nopencount.y+=1.f; //-boundary particle counter for average
-                    //-delta v = sum uij dot (nj cross nj)
-                    nopenshiftp1.y-=factory*dvy*normy*normy;
-                  }
-                }
-                if(drz*normz<0.75f && absz>0.001f*float(Dp)){
-                  dvz=velp1.z-movvelp2.z;
-                  const float vfcz=dvz*normz;
-                  if(vfcz<0.f){//-fluid particle moving towards boundary?
-                    const float ratioz=max(abs(drz/normz),0.25f);
-                    const float factorz=-4.f*ratioz+3.f;
-                    nopencount.z+=1.f; //-boundary particle counter for average
-                    //-delta v = sum uij dot (nj cross nj)
-                    nopenshiftp1.z-=factorz*dvz*normz*normz;
-                  }
-                }
+                if(drx*normx<0.75f && absx>0.001f*float(Dp)) ComputeNoPenVel(velp1.x-movvelp2.x,normx,drx,
+                  nopencount.x,nopenshiftp1.x);
+                if(dry*normy<0.75f && absy>0.001f*float(Dp)) ComputeNoPenVel(velp1.y-movvelp2.y,normy,dry,
+                  nopencount.y,nopenshiftp1.y);
+                if(drz*normz<0.75f && absz>0.001f*float(Dp)) ComputeNoPenVel(velp1.z-movvelp2.z,normz,drz,
+                  nopencount.z,nopenshiftp1.z);
               }
             }
           }//<vs_m2dbcNP_end>

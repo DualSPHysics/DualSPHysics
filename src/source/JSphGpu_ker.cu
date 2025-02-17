@@ -422,6 +422,22 @@ __device__ double3 KerUpdatePeriodicPos(double3 ps)
   return(ps);
 }
 
+//------------------------------------------------------------------------------
+/// Helper function for No penetration algorithm.
+//------------------------------------------------------------------------------
+__device__ void ComputeNoPenVel(const float dv,const float norm,const float dr
+  ,float& nopencount,float& nopenshift)
+{
+  const float vfc=dv*norm;
+  if(vfc<0.f){//-fluid particle moving towards boundary?
+    const float ratio=max(abs(dr/norm),0.25f);
+    const float factor=-4.f*ratio+3.f;
+    nopencount+=1.f; //-boundary particle counter for average
+                //-delta v = sum uij dot (nj cross nj)
+    nopenshift-=factor*dv*norm*norm;
+  }
+}
+
 
 //##############################################################################
 //# Kernels for calculating forces (Pos-Double).
@@ -680,39 +696,12 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
             float absy=abs(normy);
             float absz=abs(normz);
             // decompose the normal and apply correction in each direction seperately
-            if(drx*normx<0.75f && absx>0.001f*float(CTE.dp)) {
-              dvx=velrhop1.x-movvelp2.x;
-              const float vfcx=dvx*normx;
-              if(vfcx<0.f){//-fluid particle moving towards boundary?
-                const float ratiox=max(abs(drx/normx),0.25f);
-                const float factorx=-4.f*ratiox+3.f;
-                nopencount.x+=1.f; //-boundary particle counter for average
-                //-delta v = sum uij dot (nj cross nj)
-                nopenshift.x-=factorx*dvx*normx*normx;
-              }
-            }
-            if(dry*normy<0.75f && absy>0.001f*float(CTE.dp)) {
-              dvy=velrhop1.y-movvelp2.y;
-              const float vfcy=dvy*normy;
-              if(vfcy<0.f){//-fluid particle moving towards boundary?
-                const float ratioy=max(abs(dry/normy),0.25f);
-                const float factory=-4.f*ratioy+3.f;
-                nopencount.y+=1.f; //-boundary particle counter for average
-                //-delta v = sum uij dot (nj cross nj)
-                nopenshift.y-=factory*dvy*normy*normy;
-              }
-            }
-            if(drz*normz<0.75f && absz>0.001f*float(CTE.dp)) {
-              dvz=velrhop1.z-movvelp2.z;
-              const float vfcz=dvz*normz;
-              if(vfcz<0.f){//-fluid particle moving towards boundary?
-                const float ratioz=max(abs(drz/normz),0.25f);
-                const float factorz=-4.f*ratioz+3.f;
-                nopencount.z+=1.f; //-boundary particle counter for average
-                //-delta v = sum uij dot (nj cross nj)
-                nopenshift.z-=factorz*dvz*normz*normz;
-              }
-            }
+            if(drx*normx<0.75f && absx>0.001f*CTE.dp)cusph::ComputeNoPenVel(velrhop1.x-movvelp2.x,normx,drx,
+                                                              nopencount.x,nopenshift.x);
+            if(dry*normy<0.75f && absy>0.001f*CTE.dp)cusph::ComputeNoPenVel(velrhop1.y-movvelp2.y,normy,dry,
+                                                              nopencount.y,nopenshift.y);
+            if(drz*normz<0.75f && absz>0.001f*CTE.dp)cusph::ComputeNoPenVel(velrhop1.z-movvelp2.z,normz,drz,
+                                                            nopencount.z,nopenshift.z);
           }
         }
       }//<vs_m2dbcNP_end>
