@@ -23,7 +23,7 @@
     <RootNamespace>DualSPHysics</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <ProjectName>DualSPHysics</ProjectName>
-    <CudaToolkitCustomDir>$(CUDA_PATH_V11_7)</CudaToolkitCustomDir>
+    <CudaToolkitCustomDir>$(CUDA_PATH_V12_3)</CudaToolkitCustomDir>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -144,7 +144,7 @@
       </OmitFramePointers>
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(CUDA_PATH_V11_7)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V12_3)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WITHGPU;WIN32;_CONSOLE;_WITHMR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -161,7 +161,7 @@
     <Link>
       <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
-      <AdditionalLibraryDirectories>$(CUDA_PATH_V11_7)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V12_3)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -199,7 +199,7 @@
       </OmitFramePointers>
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(CUDA_PATH_V11_7)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V12_3)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WITHGPU;WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -218,7 +218,7 @@
     <Link>
       <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
-      <AdditionalLibraryDirectories>$(CUDA_PATH_V11_7)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V12_3)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>
@@ -356,7 +356,7 @@
     </CudaCompile>
     <CudaCompile Include="..\source\JCellDivGpu_ker.cu">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V11_7)
+set CudaPath=$(CUDA_PATH_V12_3)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -371,7 +371,7 @@ rem ***Sentencia de compilacion
 %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension)
 </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V11_7)
+set CudaPath=$(CUDA_PATH_V12_3)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -393,7 +393,7 @@ rem ***Sentencia de compilacion
     </CudaCompile>
     <CudaCompile Include="..\source\JCellDivGpuSingle_ker.cu">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V11_7)
+set CudaPath=$(CUDA_PATH_V12_3)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -409,7 +409,7 @@ rem ***Sentencia de compilacion
 %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension)
 </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V11_7)
+set CudaPath=$(CUDA_PATH_V12_3)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -482,7 +482,7 @@ rem ***Sentencia de compilacion
     </CudaCompile>
     <CudaCompile Include="..\source\JSphGpu_ker.cu">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V11_7)
+set CudaPath=$(CUDA_PATH_V12_3)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -500,7 +500,7 @@ rem ***Sentencia de compilacion con salida _ptxasinfo
 rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension) -D _CRT_SECURE_NO_DEPRECATE 1&gt;$(OutDir)$(ProjectName)_$(Configuration)64_ptxasinfo
 </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V11_7)
+set CudaPath=$(CUDA_PATH_V12_3)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
