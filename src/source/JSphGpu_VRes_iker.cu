@@ -605,13 +605,13 @@ void Interaction_BufferExtrapT(unsigned bufferpartcount,const int *bufferpart,co
     if(vrmethod==VrMethod_Liu){
       if(fastsingle)  KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,VrMethod_Liu,float> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
         ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);
-      // else            KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,VrMethod_Liu,double> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
-      //   ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);     
+      else            KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,VrMethod_Liu,double> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
+        ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);     
     }else{
       if(fastsingle)  KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,VrMethod_Mls,float> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
         ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);
-      // else            KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,VrMethod_Mls,double> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
-      //   ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);       
+      else            KerInteractionBufferExtrap_Single<tker,sim2d,vrorder,VrMethod_Mls,double> <<<sgrid,bsize>>> (bufferpartcount,bufferpart,dvd.scelldiv,dvd.nc,dvd.cellzero
+        ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,velrhop,code1,mrthreshold);       
     }  
   }
 }
@@ -906,13 +906,13 @@ void Interaction_BufferExtrapFluxT(const StInterParmsbg &t,StrDataVresGpu &vres
     if(vrmethod==VrMethod_Liu){
       if(fastsingle)  KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,VrMethod_Liu,float> <<<sgrid,bsize>>> (vres.ntot,vres.nini,dvd.scelldiv,dvd.nc,dvd.cellzero
         ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,vres.ptposxy,vres.ptposz,vres.normals,vres.mass,vres.velmot,dp,dt,mrthreshold,dvd.cellfluid);
-      // else KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,VrMethod_Liu,double> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero
-      //   ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);    
+      else KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,VrMethod_Liu,double> <<<sgrid,bsize>>> (vres.ntot,vres.nini,dvd.scelldiv,dvd.nc,dvd.cellzero
+        ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,vres.ptposxy,vres.ptposz,vres.normals,vres.mass,vres.velmot,dp,dt,mrthreshold,dvd.cellfluid);    
     }else{
       if(fastsingle)  KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,VrMethod_Mls,float> <<<sgrid,bsize>>> (vres.ntot,vres.nini,dvd.scelldiv,dvd.nc,dvd.cellzero
         ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,vres.ptposxy,vres.ptposz,vres.normals,vres.mass,vres.velmot,dp,dt,mrthreshold,dvd.cellfluid);
-      // else KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,VrMethod_Mls,double> <<<sgrid,bsize>>> (bufferpartcount,pini,dvd.scelldiv,dvd.nc,dvd.cellzero
-      //   ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,posxyb,poszb,normals,fluxes,dp,dt,velflux,mrthreshold,dvd.cellfluid);    
+      else KerInteractionBufferExtrap_SingleFlux<tker,sim2d,vrorder,VrMethod_Mls,double> <<<sgrid,bsize>>> (vres.ntot,vres.nini,dvd.scelldiv,dvd.nc,dvd.cellzero
+        ,beginendcellfluid,t.poscell,Double3(t.mapposmin),t.posxy,t.posz,t.code,t.idp,t.velrho,vres.ptposxy,vres.ptposz,vres.normals,vres.mass,vres.velmot,dp,dt,mrthreshold,dvd.cellfluid);    
     }
   }
 }
@@ -1890,8 +1890,8 @@ __device__ void KerComputeNormalsBox(bool boundp2,unsigned p1
       }
       
       //-Check if free-surface particle interact with bound or has high-curvature.
-      if(fsp1==2 && (bound_inter||maxarccos>0.52)) fstype[p1]=3;
-
+      if(fsp1==2 && (bound_inter||maxarccos>0.52)) shiftposp1=make_float4(0,0,0,shiftposp1.w);
+      if(fstype[p1]>0 && CODE_IsFluidBuffer(code[p1])) shiftposp1=make_float4(0,0,0,shiftposp1.w);
 
       //-Compute shifting when <shiftImproved> true
       shiftvel[p1]=shiftposp1;

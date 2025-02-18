@@ -400,7 +400,7 @@ template<TpKernel tker,bool sim2d,bool shiftadv> void JSphCpu::PreLoopInteractio
         if(bound_inter)fstype[p1]=3;
       }
       //-Check if free-surface particle interact with bound or has high-curvature.
-      if(fsp1==2 && (bound_inter||maxarccos>0.52f))fstype[p1]=3;
+      if(fsp1==2 && (bound_inter||maxarccos>0.52f))shiftvelp1=TFloat4(0,0,0,shiftvelp1.w);
       //-Compute shifting when <shiftImproved> true
       shiftvel[p1]=shiftvelp1;
     }

@@ -537,7 +537,7 @@ __global__ void KerPreLoopInteraction(unsigned n,unsigned pinit,int scelldiv
         if(bound_inter) fstype[p1]=3;
       }
       //-Check if free-surface particle interact with bound or has high-curvature.
-      if(fsp1==2 && (bound_inter||maxarccos>0.52)) fstype[p1]=3;
+      if(fsp1==2 && (bound_inter||maxarccos>0.52)) shiftposp1=make_float4(0,0,0,shiftposp1.w);
       //-Compute shifting when <shiftImproved> true
       shiftvel[p1]=shiftposp1;
     }
