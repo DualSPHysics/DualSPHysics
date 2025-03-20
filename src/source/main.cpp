@@ -4,7 +4,7 @@
  Dr Georgios Fourtakas, Prof. Benedict Rogers, 
  Dr Renato Vacondio, Dr Corrado Altomare, 
  Dr Angelo Tafuni, Dr Orlando Garcia Feal, 
- Ivan Martinez Estevez, Dr Joseph O'Connor, 
+ Dr Ivan Martinez Estevez, Dr Joseph O'Connor, 
  Dr Aaron English, Dr Francesco Ricci,
  Prof. Moncho Gomez Gesteira, Prof. Peter Stansby
 
@@ -38,7 +38,7 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
 \version 5.4.354
-\date 17-12-2024
+\date 20-03-2025
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -69,7 +69,7 @@ Please download source files and documentation from <a href="http://dual.sphysic
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.4.354","17-12-2024");
+JAppInfo AppInfo("DualSPHysics5","v5.4.354","20-03-2025");
 //JAppInfo AppInfo("DualSPHysics5","v5.4.353","ShiftAdv","v0.32","11-12-2024"); //-for user versions.
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
@@ -78,12 +78,12 @@ JAppInfo AppInfo("DualSPHysics5","v5.4.354","17-12-2024");
 //==============================================================================
 std::string getlicense_lgpl(const std::string& name,bool simple){
   std::string tx=(simple? "": "\n");
-  tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2024 by"; 
+  tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2025 by"; 
   tx=tx+"\n Dr Jose M. Dominguez Alonso, Prof. Alejandro Crespo,";
   tx=tx+"\n Dr Georgios Fourtakas, Prof. Benedict Rogers,";
   tx=tx+"\n Dr Renato Vacondio, Dr Corrado Altomare,";
   tx=tx+"\n Dr Angelo Tafuni, Dr Orlando Garcia Feal,";
-  tx=tx+"\n Ivan Martinez Estevez, Dr Joseph O'Connor,";
+  tx=tx+"\n Dr Ivan Martinez Estevez, Dr Joseph O'Connor,";
   tx=tx+"\n Dr Aaron English, Dr Francesco Ricci,";
   tx=tx+"\n Prof. Moncho Gomez Gesteira, Prof. Peter Stansby\n";
   if(!simple){

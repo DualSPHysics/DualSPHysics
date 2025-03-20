@@ -23,7 +23,7 @@
     <RootNamespace>DualSPHysics</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <ProjectName>DualSPHysics</ProjectName>
-    <CudaToolkitCustomDir>$(CUDA_PATH_V11_7)</CudaToolkitCustomDir>
+    <CudaToolkitCustomDir>$(CUDA_PATH_V12_3)</CudaToolkitCustomDir>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -141,8 +141,8 @@
       </OmitFramePointers>
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(CUDA_PATH_V11_7)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_WITHGPU;WIN32;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V12_3)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WITHGPU;WIN32;_CONSOLE;_WITHMR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <GenerateXMLDocumentationFiles>false</GenerateXMLDocumentationFiles>
@@ -153,11 +153,12 @@
       <RuntimeTypeInfo>
       </RuntimeTypeInfo>
       <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
-      <AdditionalLibraryDirectories>$(CUDA_PATH_V11_7)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V12_3)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -195,7 +196,7 @@
       </OmitFramePointers>
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>$(CUDA_PATH_V11_7)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CUDA_PATH_V12_3)/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WITHGPU;WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -214,7 +215,7 @@
     <Link>
       <AdditionalDependencies>cudart_static.lib;dsphchrono.lib;LibJWaveGen_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;LibDSphMoorDynPlus_$(PlatformName)_$(PlatformToolset)_$(Configuration).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(TargetPath)</OutputFile>
-      <AdditionalLibraryDirectories>$(CUDA_PATH_V11_7)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CUDA_PATH_V12_3)/lib/$(PlatformName);../lib/vs2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>
@@ -258,7 +259,7 @@
       <EnableFiberSafeOptimizations>false</EnableFiberSafeOptimizations>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CONSOLE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_CONSOLE;_WITHMR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <OpenMPSupport>true</OpenMPSupport>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -269,6 +270,7 @@
       <RuntimeTypeInfo>
       </RuntimeTypeInfo>
       <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <OutputFile>$(TargetPath)</OutputFile>
@@ -351,7 +353,7 @@
     </CudaCompile>
     <CudaCompile Include="..\source\JCellDivGpu_ker.cu">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V11_7)
+set CudaPath=$(CUDA_PATH_V12_3)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -366,7 +368,7 @@ rem ***Sentencia de compilacion
 %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension)
 </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V11_7)
+set CudaPath=$(CUDA_PATH_V12_3)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -388,7 +390,7 @@ rem ***Sentencia de compilacion
     </CudaCompile>
     <CudaCompile Include="..\source\JCellDivGpuSingle_ker.cu">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V11_7)
+set CudaPath=$(CUDA_PATH_V12_3)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -404,7 +406,7 @@ rem ***Sentencia de compilacion
 %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension)
 </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V11_7)
+set CudaPath=$(CUDA_PATH_V12_3)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -459,6 +461,10 @@ rem ***Sentencia de compilacion
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_VRes_iker.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </CudaCompile>
     <CudaCompile Include="..\source\JSphShifting_ker.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
@@ -473,7 +479,7 @@ rem ***Sentencia de compilacion
     </CudaCompile>
     <CudaCompile Include="..\source\JSphGpu_ker.cu">
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V11_7)
+set CudaPath=$(CUDA_PATH_V12_3)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -491,7 +497,7 @@ rem ***Sentencia de compilacion con salida _ptxasinfo
 rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -DWIN32 -D_CONSOLE -D_MBCS -Xcompiler /EHsc,/W3,/nologo,/O2,/Zi,/MT -m 64 -I%CudaInc% -I./ -o Intermediate\$(Configuration)\%(Filename).obj ..\%(Filename)%(Extension) -D _CRT_SECURE_NO_DEPRECATE 1&gt;$(OutDir)$(ProjectName)_$(Configuration)64_ptxasinfo
 </Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rem ***Vars de compilacion
-set CudaPath=$(CUDA_PATH_V11_7)
+set CudaPath=$(CUDA_PATH_V12_3)
 set CudaNvcc="%CudaPath%\bin\nvcc.exe"
 set CudaInc="%CudaPath%\include"
 rem ***Seleccion de GPU hardware para compilacion
@@ -555,6 +561,8 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JAppInfoDef.h" />
     <ClInclude Include="..\source\JArraysCpu.h" />
     <ClInclude Include="..\source\JBinaryData.h" />
+    <ClInclude Include="..\source\JBoxDef.h" />
+    <ClInclude Include="..\source\JCaseVRes.h" />
     <ClInclude Include="..\source\JCellDivCpu.h" />
     <ClInclude Include="..\source\JCellDivCpuSingle.h" />
     <ClInclude Include="..\source\JCellDivDataCpu.h" />
@@ -619,6 +627,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JDsTimers.h" />
     <ClInclude Include="..\source\JDsTimersCpu.h" />
     <ClInclude Include="..\source\JDsTimersGpu.h" />
+    <ClInclude Include="..\source\JDsVresData.h" />
     <ClInclude Include="..\source\JException.h" />
     <ClInclude Include="..\source\JArraysGpu.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
@@ -682,6 +691,11 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     </ClInclude>
     <ClInclude Include="..\source\JSaveCsv2.h" />
     <ClInclude Include="..\source\JDsSaveDt.h" />
+    <ClInclude Include="..\source\JSphCpuSingle_VRes.h" />
+    <ClInclude Include="..\source\JSphCpu_VRes.h" />
+    <ClInclude Include="..\source\JSphGpuSingle_VRes.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="..\source\JSphGpu_cte.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
@@ -704,6 +718,10 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JSphGpu_preloop_iker.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_VRes_iker.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\source\JSphFlexStruc.h" />
     <ClInclude Include="..\source\JSphInOutDef.h" />
@@ -749,6 +767,10 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClInclude Include="..\source\JDsViscoInput.h" />
     <ClInclude Include="..\source\JDsPartsOut.h" />
     <ClInclude Include="..\source\JSphCpuSingle.h" />
+    <ClInclude Include="..\source\JSphVRes.h" />
+    <ClInclude Include="..\source\JSphVResDef.h" />
+    <ClInclude Include="..\source\JSphVResDriver.h" />
+    <ClInclude Include="..\source\JSphVResZone.h" />
     <ClInclude Include="..\source\JSpVtkData.h" />
     <ClInclude Include="..\source\JSpVtkShape.h" />
     <ClInclude Include="..\source\JTimeControl.h" />
@@ -759,6 +781,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     </ClInclude>
     <ClInclude Include="..\source\JTrianglesMesh.h" />
     <ClInclude Include="..\source\JViscosityDef.h" />
+    <ClInclude Include="..\source\JVResDataLimits.h" />
     <ClInclude Include="..\source\JWaveGen.h" />
     <ClInclude Include="..\source\JWaveGenUndef.h" />
     <ClInclude Include="..\source\JWaveOrder2_ker.h">
@@ -810,6 +833,8 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JAppInfo.cpp" />
     <ClCompile Include="..\source\JArraysCpu.cpp" />
     <ClCompile Include="..\source\JBinaryData.cpp" />
+    <ClCompile Include="..\source\JBoxDef.cpp" />
+    <ClCompile Include="..\source\JCaseVRes.cpp" />
     <ClCompile Include="..\source\JCellDivCpu.cpp" />
     <ClCompile Include="..\source\JCellDivCpuSingle.cpp" />
     <ClCompile Include="..\source\JCellDivGpu.cpp">
@@ -847,6 +872,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JDsphConfig.cpp" />
     <ClCompile Include="..\source\JDsPips.cpp" />
     <ClCompile Include="..\source\JDsTimers.cpp" />
+    <ClCompile Include="..\source\JDsVresData.cpp" />
     <ClCompile Include="..\source\JException.cpp" />
     <ClCompile Include="..\source\JDsGaugeItem.cpp" />
     <ClCompile Include="..\source\JDsGaugeSystem.cpp" />
@@ -884,8 +910,13 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JRelaxZonesGpu.cpp" />
     <ClCompile Include="..\source\JSaveCsv2.cpp" />
     <ClCompile Include="..\source\JDsSaveDt.cpp" />
+    <ClCompile Include="..\source\JSphCpuSingle_VRes.cpp" />
     <ClCompile Include="..\source\JSphCpu_mdbc.cpp" />
     <ClCompile Include="..\source\JSphCpu_preloop.cpp" />
+    <ClCompile Include="..\source\JSphCpu_VRes.cpp" />
+    <ClCompile Include="..\source\JSphGpuSingle_VRes.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseCPU|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\source\JSphFlexStruc.cpp" />
     <ClCompile Include="..\source\JSphInOutVel.cpp" />
     <ClCompile Include="..\source\JSphInOutVelAwas.cpp" />
@@ -918,6 +949,8 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
     <ClCompile Include="..\source\JDsPartsOut.cpp" />
     <ClCompile Include="..\source\JSphCpuSingle.cpp" />
     <ClCompile Include="..\source\JSphShiftingAdv.cpp" />
+    <ClCompile Include="..\source\JSphVRes.cpp" />
+    <ClCompile Include="..\source\JSphVResZone.cpp" />
     <ClCompile Include="..\source\JSpVtkData.cpp" />
     <ClCompile Include="..\source\JSpVtkShape.cpp" />
     <ClCompile Include="..\source\JTimeControl.cpp" />
@@ -933,6 +966,7 @@ rem %CudaNvcc% -ccbin "$(VCInstallDir)bin" %gpuhw% -use_fast_math -c %ptxinfo% -
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugCPU|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\source\JTrianglesMesh.cpp" />
+    <ClCompile Include="..\source\JVResDataLimits.cpp" />
     <ClCompile Include="..\source\JWaveSpectrumGpu.cpp" />
     <ClCompile Include="..\source\JXml.cpp" />
     <ClCompile Include="..\source\main.cpp" />

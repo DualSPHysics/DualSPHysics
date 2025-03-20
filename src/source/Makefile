@@ -64,8 +64,8 @@ endif
 
 #=============== Select GPU architectures ===============
 ifeq ($(CUDAVER),00)
-#  GENCODE:=$(GENCODE) -gencode=arch=compute_20,code=\"sm_20,compute_20\"
-#  GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+  GENCODE:=$(GENCODE) -gencode=arch=compute_30,code=\"sm_30,compute_30\"
 endif
 ifeq ($(CUDAVER),75)
   GENCODE:=$(GENCODE) -gencode=arch=compute_20,code=\"sm_20,compute_20\"

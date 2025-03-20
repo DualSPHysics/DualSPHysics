@@ -81,12 +81,12 @@ endif
 
 #=============== CPU Code Compilation ===============
 all:compile_libs $(EXECS_DIRECTORY)/$(EXECNAME)
-#	rm -rf *.o
+	rm -rf *.o
 ifeq ($(USE_DEBUG), NO)
 	@echo "  --- Compiled Release CPU version ---"
 else
 	@echo "  --- Compiled Debug CPU version ---"
-#	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECNAME)_debug
+	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECNAME)_debug
 endif
 
 compile_libs:
