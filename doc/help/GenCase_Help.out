@@ -1,6 +1,6 @@
 
 
- <GENCASE>  Copyright (c) 2024 by Dr Jose M. Dominguez
+ <GENCASE>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  GenCase is a free tool for DualSPHysics simulations.
@@ -31,7 +31,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-GenCase v5.4.352 (02-12-2024)
+GenCase v5.4.354 (20-03-2025)
 ==============================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Execution parameters information:
