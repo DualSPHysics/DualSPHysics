@@ -1,6 +1,6 @@
 
 
- <MEASURETOOL>  Copyright (c) 2024 by Dr Jose M. Dominguez
+ <MEASURETOOL>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  MeasureTool is a free tool for DualSPHysics simulations.
@@ -31,7 +31,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-MeasureTool v5.4.257 (12-09-2024)
+MeasureTool v5.4.266 (20-03-2025)
 ==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
