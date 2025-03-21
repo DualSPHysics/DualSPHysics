@@ -1,5 +1,5 @@
 /*===================================================================================
-<MOORDYNPLUS> Copyright (c) 2024 by Ivan Martinez-Estevez
+<MOORDYNPLUS> Copyright (c) 2025 by Ivan Martinez-Estevez
 
 Ivan Martinez-Estevez and Jose M. Dominguez (Universidade de Vigo, Spain)
 Matt Hall (github.com/mattEhall)
@@ -49,7 +49,7 @@ public:
 
 static std::string GetLicense() {
   std::string tx="";
-  tx=tx+"\n\n<MOORDYNPLUS> Copyright (c) 2024 by Ivan Martinez-Estevez";
+  tx=tx+"\n\n<MOORDYNPLUS> Copyright (c) 2025 by Ivan Martinez-Estevez";
   tx=tx+"\n\nIvan Martinez-Estevez and Jose M. Dominguez (Universidade de Vigo, Spain)";
   tx=tx+"\nMatt Hall (github.com/mattEhall)\n";
   tx=tx+"\nThis file is part of MoorDynPlus. MoorDynPlus is free software: you can";

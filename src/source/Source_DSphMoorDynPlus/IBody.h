@@ -1,5 +1,5 @@
 /*===================================================================================
-<MOORDYNPLUS> Copyright (c) 2024 by Ivan Martinez-Estevez
+<MOORDYNPLUS> Copyright (c) 2025 by Ivan Martinez-Estevez
 
 Ivan Martinez-Estevez and Jose M. Dominguez (Universidade de Vigo, Spain)
 Matt Hall (github.com/mattEhall)

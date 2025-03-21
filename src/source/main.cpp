@@ -1,5 +1,5 @@
 /*
- <DUALSPHYSICS>  Copyright (c) 2024, 
+ <DUALSPHYSICS>  Copyright (c) 2025, 
  Dr Jose M. Dominguez Alonso, Prof. Alejandro Crespo, 
  Dr Georgios Fourtakas, Prof. Benedict Rogers, 
  Dr Renato Vacondio, Dr Corrado Altomare, 

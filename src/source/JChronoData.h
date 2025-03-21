@@ -1,5 +1,5 @@
 /*
- <DSPHCHRONOLIB> Copyright (c) 2023 by I. Martinez-Estevez et al. (see https://doi.org/10.1016/j.cpc.2022.108581). 
+ <DSPHCHRONOLIB> Copyright (c) 2025 by I. Martinez-Estevez et al. (see https://doi.org/10.1016/j.cpc.2022.108581). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
 
