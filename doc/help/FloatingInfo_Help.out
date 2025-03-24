@@ -1,20 +1,20 @@
 
 
- <FLOATINGINFO>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <FLOATINGINFO>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  FloatingInfo is a free tool for DualSPHysics simulations.
  DualSPHysics project is an international collaboration between
  University of Vigo (Spain) and University of Manchester (UK).
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- * Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+ Redistribution and use in binary form, without modification, are
+ permitted provided that the following conditions are met:
  * Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
+ * Redistributions or modifications of source code are not permitted 
+   unless expressly authorised, and must retain the above copyright 
+   notice, this list of conditions and the following disclaimer.
  * Neither the name of the FloatingInfo nor the names of its contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
@@ -31,7 +31,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-FloatingInfo v5.0.206 (12-04-2023)
+FloatingInfo v5.4.266 (20-03-2025)
 ===================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -44,8 +44,11 @@ Information about parameters of execution:
     -opt <file>    Loads configuration from a file
 
   Define input data:
-    -dirin <dir>     Directory with particles data
-    -filein <file>   Input file name (PartFloat.fbi4 by default)
+    -dirdata <dir>   Directory with floating data (PartFloatInfo.ibi4)
+                     or main output directory for VRes simulations
+    -dirdatax <dir>  Same as -dirdata option but loads data with extra
+                     frequency (PartFloatInfo2.ibi4)
+
     -first:<int>     Indicates the first file to be computed
     -last:<int>      Indicates the last file to be computed
     -files:<values>  Indicates the number of files to be processed
@@ -68,10 +71,10 @@ Information about parameters of execution:
     sway [m]............: Displacement of the centre of mass in Y.
     heave [m]...........: Displacement of the centre of mass in Z.
     roll [deg]..........: Rotation on the X-axis.
-    pitch [deg].........: Rotation on the X-axis.
-    yaw [deg]...........: Rotation on the X-axis.
-    face [m/s^2]........: Linear acceleration (calculated as (v_t1-v_t0)/dt).
-    faceomega [rad/s^2].: Angular acceleration (calculated as (v_t1-v_t0)/dt).
+    pitch [deg].........: Rotation on the Y-axis.
+    yaw [deg]...........: Rotation on the Z-axis.
+    face [m/s^2]........: Linear acceleration (calculated from linear velocity (v_t1-v_t0)/dt).
+    faceomega [rad/s^2].: Angular acceleration (calculated from angular velocity (v_t1-v_t0)/dt).
     extforcelin [N].....: External linear forces (moorings and imposed forces).
     extforceang [Nm]....: External angular forces (moorings and imposed forces).
     fluidforcelin [N]...: Linear forces from fluid (sum in eq.48, Dominguez et al 2022).
@@ -82,6 +85,6 @@ Information about parameters of execution:
 
   Examples:
     FloatingInfo -savedata results
-    FloatingInfo -dirin . -onlymk:61-65 -savemotion:0
-    FloatingInfo -dirin . -filein PartFloatMotion.fbi4 -savedata results
+    FloatingInfo -dirdata . -onlymk:61-65 -savemotion:0
+    FloatingInfo -dirdatax . -savedata results
 

@@ -1,20 +1,20 @@
 
 
- <COMPUTEFORCES>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <COMPUTEFORCES>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  ComputeForces is a free tool for DualSPHysics simulations.
  DualSPHysics project is an international collaboration between
  University of Vigo (Spain) and University of Manchester (UK).
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- * Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+ Redistribution and use in binary form, without modification, are
+ permitted provided that the following conditions are met:
  * Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
+ * Redistributions or modifications of source code are not permitted 
+   unless expressly authorised, and must retain the above copyright 
+   notice, this list of conditions and the following disclaimer.
  * Neither the name of the ComputeForces nor the names of its contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
@@ -31,7 +31,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-ComputeForces v5.0.206 (12-04-2023)
+ComputeForces v5.4.266 (20-03-2025)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -44,7 +44,7 @@ Information about parameters of execution:
     -opt <file>    Loads configuration of a file
 
   Define input file:
-    -dirin <dir>       Directory with particle data
+    -dirdata <dir>     Directory with particle data (Part_XXXX.bi4)
     -filexml file.xml  Loads xml file with information of mk and
                        and other information. The word 'AUTO' can
                        be used to load the xml used in the simulation
@@ -62,7 +62,7 @@ Information about parameters of execution:
     -viscoauto       Viscosity config. is load from BI4 files (default option)
     -gravity:<float:float:float> Gravity value
 
-    -balancex                Compute mass and center.x for floating balance
+    -balance         Compute mass and center.x/y for floating balance
 
   Define axis for moment calculation:
     -momentaxis:x1:y1:z1:x2:y2:z2  Axis for intrinsic moment calculation (old)
@@ -74,20 +74,30 @@ Information about parameters of execution:
            (Intrinsic: axis moves and rotates with the body)
            (Extrinsic: axis moves but does not rotate)
 
-  Define filter options:
+  Define filter options for BOUNDARY particles:
+
+    *** Note that when generating CSV/ASCII output the filter cannot include
+        particles from one floating body with particles from another
+        floating body or another type of boundary particles.
+
+    -onlypos:xmin:ymin:zmin:xmax:ymax:zmax  Indicates limits of particles
     -onlypos:xmin:ymin:zmin:xmax:ymax:zmax  Indicates limits of particles
     -onlyposfile filters.xml  Indicates XML file with filters to apply
     -onlymk:<values>     Indicates the mk of selected particles
     -onlyid:<values>     Indicates the id of selected particles
     -onlyidfile <file>   Indicates the id of selected particles by TXT file
+    -onlyzone:<values>   Indicates the VRes zone of selected particles
     -fixedfilter         The initial particle selection is maintained.
 
   Define output file:
     -savecsv <file.csv>   Generates one CSV file with the time history
-                          of the obtained values
-    -saveascii <file.asc> Generates one ASCII file without headers
-                          with the time history of the obtained values
+                          of the obtained values. Check above for filter
+                          restrictions when generating CSV output.
+    -saveascii <file.asc> Generates one ASCII file (without headers) with
+                          the time history of the obtained values. Check above
+                          for filter restrictions when generating ASCII output.
     -savevtk <file.vtk>   Generates VTK files with selected particles
+
 
     -createdirs:<0/1>    Creates full path for output files
                          (value by default is read from DsphConfig.xml or 1)

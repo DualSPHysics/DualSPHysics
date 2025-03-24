@@ -1,20 +1,20 @@
 
 
- <BOUNDARYVTK>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <BOUNDARYVTK>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  BoundaryVTK is a free tool for DualSPHysics simulations.
  DualSPHysics project is an international collaboration between
  University of Vigo (Spain) and University of Manchester (UK).
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- * Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+ Redistribution and use in binary form, without modification, are
+ permitted provided that the following conditions are met:
  * Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
+ * Redistributions or modifications of source code are not permitted 
+   unless expressly authorised, and must retain the above copyright 
+   notice, this list of conditions and the following disclaimer.
  * Neither the name of the BoundaryVTK nor the names of its contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
@@ -31,7 +31,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-BoundaryVTK v5.0.206 (12-04-2023)
+BoundaryVTK v5.4.266 (20-03-2025)
 ==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -77,18 +77,11 @@ Information about parameters of execution:
                          simulation are loaded for the mobile boundary
                          Can not be used with -motiontime and -motiondata
 
-    -motiondata <dir>    Indicates the directory where position of particles
-                         are loaded to generate the mobile boundary
+    -motiondata <dir>    Indicates the directory where motion reference data of
+                         moving and floating objects is (PartMotionRef.ibi4)
                          Can not be used with -motiontime and -motiondatatime
-
-    -motiondata0 <dir>   It is only for restart simulations. Indicates the
-                         directory where is the file Part_0000.bi4 to load
-                         initial positions of particles.
-                         Can not be used with -motiontime and -motiondatatime
-
-    -motionfile file.fbi4  Indicates the file where reference position of
-                         particles are loaded to generate the floating body
-                         Can not be used with -motiontime and -motiondatatime
+    -motiondatax <dir>   Same as -motiondata option but loads data with extra
+                         frequency (PartMotionRef2.ibi4)
 
     -motionfocus:<mk>    Indicates the mk to fix this body and move the rest
                          around. This option is only available when motion is
@@ -103,14 +96,14 @@ Information about parameters of execution:
 
     -savemotion <file>   Generates CSV file with matrix movement from the beginning
     -saveposmotion:<mk>:x:y:z <file>   Generates CSV file with updated position
-       according movement of mk boundary
-    -saveposmotion:mk=<mk>,<def>  Generates CSV file with updated position
+       according movement of mk boundary (simple configuration for one point)
+    -saveposmotion:mk=<mk>,<def> <file>  Generates CSV file with updated position
        according movement of mk boundary where points are defined using:
            pt=<x>:<y>:<z>,pt=<x>:<y>:<z>...    for a simple list of points
            ptls[x=<x0>:<dx>:<nx>,y=<y0>:<dy>:<ny>,z=<z0>:<dz>:<nz>]...
            ptels[x=<x0>:<dx>:<xf>,y=<y0>:<dy>:<yf>,z=<z0>:<dz>:<zf>]...
        ptls and ptels are point grid definitions equivalent to POINTSLIST and
-       POINTSENDLIST respectively
+       POINTSENDLIST respectively (advanced configuration for several points)
 
     -onlytype:<values>   Indicates the type of selected mk of the shapes to be
                          stored, affects only the previous out option and cannot be
@@ -126,7 +119,6 @@ Information about parameters of execution:
     -onlyid:<values>     Indicates the code of the object of the shapes to be
                          stored, affects only the previous out option and cannot
                          be combined with other filters
-    -filemove <file>     Loads file with displacement
 
     -createdirs:<0/1>    Creates full path for output files
                          (value by default is read from DsphConfig.xml or 1)
@@ -141,4 +133,7 @@ Information about parameters of execution:
                 -saveply motion.ply
     BoundaryVTK -loadvtk AutoActual -motionfile data/PartFloatMotion.fbi4
                 -savevtk motion -onlytype:-all,floating 
+
+    BoundaryVTK -motiondata data -saveposmotion:10:0:0:0 result_mk10
+    BoundaryVTK -motiondata data -saveposmotion:mk=20,pt=0:0:0 result_mk20
 

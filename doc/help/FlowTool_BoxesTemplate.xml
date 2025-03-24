@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<flowtool_boxes app="FlowTool v5.4.266 (20-03-2025)" date="20-03-2025 01:22:20">
+    <config>
+        <units v="l/s" comment="Define units for volume or flow and saves extra flow data between control boxes (empty by default, l/s, gal/s, gal/min)"/>
+        <mainoutput filter="Nok_.*|Nout_.*|OutFlow_.*|.*_Domain5b" comment="Regular expression for filtering fields in main output file (empty by default)"/>
+        <flowoutput filter="Domain5._from_.*" comment="Regular expression for filtering fields in flow output files (empty by default)"/>
+    </config>
+    <box8pt name="Domain1">
+        <point x="0.0" y="0.2" z="0.0" />
+        <point x="0.0" y="0.0" z="0.0" />
+        <point x="0.1" y="0.0" z="0.0" />
+        <point x="0.1" y="0.2" z="0.0" />
+        <point x="0.0" y="0.2" z="0.4" />
+        <point x="0.0" y="0.0" z="0.4" />
+        <point x="0.1" y="0.0" z="0.4" />
+        <point x="0.1" y="0.2" z="0.4" />
+    </box8pt>
+    <box2pt name="Domain2">
+        <point x="1.2783" y="-0.7755" z="1.1631" />
+        <point x="1.3" y="-0.7" z="1.2" />
+    </box2pt>
+    <boxsize name="Domain3">
+        <point x="1.2783" y="-0.7755" z="1.1631" />
+        <size x="0.0792" y="0.1135" z="0.0621" />
+    </boxsize>
+    <boxangle name="Domain4">
+        <point x="1.2783" y="-0.7755" z="1.1631" />
+        <angle x="3" y="-4" z="5" />
+        <size x="0.0792" y="0.1135" z="0.0621" />
+    </boxangle>
+    <boxanglediv name1="Domain5a" name2="Domain5b">
+        <divide axis="y" />
+        <point x="1.2783" y="-0.7755" z="1.1631" />
+        <angle x="3" y="-4" z="5" />
+        <size x="0.0792" y="0.1135" z="0.0621" />
+    </boxanglediv>
+</flowtool_boxes>
+<!-- Results in CSV: -->
+<!-- ---------------- -->
+<!-- Nok......: particles not excluded from PART in the domain -->
+<!-- Nout.....: excluded particles that in previous PART where in inside the domain -->
+<!-- Input....: number of particles that enter into the domain -->
+<!-- Output...: number of particles that leave the domain -->
+<!-- InVel....: average of velocity magnitude of the Input particles (not excluded) -->
+<!-- InVolume.: volume of fluid that enters into the domain (Input*dp*dp*dp in 3D and Input*dp*dp in 2D) -->
+<!-- InFlow...: flow that enters into the domain (Involume/interval) -->
+<!-- OutVolume: volume of fluid that leaves the domain (Output*dp*dp*dp in 3D and Output*dp*dp in 2D) -->
+<!-- OutFlow..: flow that leaves the domain (OutVolume/interval) -->
