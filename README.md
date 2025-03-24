@@ -39,9 +39,9 @@ We appreciate your efforts! But please, if you are trying to develop/implement a
 
 ## Microsoft Windows
 
-This application is being developed in Visual Studio Community 2022 since it is free and compatible with CUDA 11.7 (<a href="https://www.visualstudio.com/vs/older-downloads/" target="_blank">download web</a>). The repository contains project files.
+This application is being developed in Visual Studio Community 2022 since it is free and compatible with CUDA 12.3 (<a href="https://www.visualstudio.com/vs/older-downloads/" target="_blank">download web</a>). The repository contains project files.
 
-Make sure that you install the CUDA SDK beforehand if you want to compile the GPU version, and configure the Visual Studio project to point to the CUDA libraries directory to compile (now prepared for CUDA 11.7).
+Make sure that you install the CUDA SDK beforehand if you want to compile the GPU version, and configure the Visual Studio project to point to the CUDA libraries directory to compile (now prepared for CUDA 12.3).
 
 You can also use the [Makefile](src/source/Makefile). It is possible that you'll need to edit it. Check the GNU/Linux guide on how to compile if you're using the makefile, as it is mostly the same, just installing the things manually by yourself.
 
@@ -55,7 +55,7 @@ You can build the project in GNU/Linux using the [Makefile](src/source/Makefile)
 2. In a terminal, go to the folder `cd DualSPHysics/src/source/`
 3. Edit the `Makefile` file with a text editor and then:
    * Set the `DIRTOOLKIT` variable with the path to CUDA in your system e.g. `DIRTOOLKIT=/opt/cuda`
-   * Make sure that your `G++` compiler version is compatible with the CUDA version installed in your system (e.g. CUDA 11.7 supports G++ versions up to 11.x). If you want to use an specific version, you should modify the variable `CC`, for example: `CC=/usr/local/bin/g++-11`
+   * Make sure that your `G++` compiler version is compatible with the CUDA version installed in your system (e.g. CUDA 12.3 supports G++ versions up to 11.x). If you want to use an specific version, you should modify the variable `CC`, for example: `CC=/usr/local/bin/g++-11`
 4. Execute `make clean` to make sure the environment is clean and ready to compile.
 5. Execute `make`
 
