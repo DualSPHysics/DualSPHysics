@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -32,32 +32,49 @@ namespace cusphs{
 //-Kernels to prepare data before Interaction_Forces().
 //-------------------------------------------------------
 void UpdatePosCell(unsigned np,tdouble3 posmin,float poscellsize
-  ,const double2 *posxy,const double *posz,float4 *poscell,cudaStream_t stm);
-void InitAceGravity(unsigned np,unsigned npb,tfloat3 gravity,float3 *ace,cudaStream_t stm);
+  ,const double2* posxy,const double* posz,float4* poscell,cudaStream_t stm);
+void InitAceGravity(unsigned np,unsigned npb,tfloat3 gravity,float3* ace,cudaStream_t stm);
 
 
 //-Kernels to run after Interaction_Forces().
 //---------------------------------------------
-void Resety(unsigned n,unsigned ini,float3 *v,cudaStream_t stm);
+void Resety(unsigned n,unsigned ini,float3* v,cudaStream_t stm);
 
 
-//-Kernels for ComputeStep (vel & rhop).
+//-Kernels for ComputeStep (vel & rho).
 //----------------------------------------
-void ComputeStepVerlet(bool floating,bool shift,bool inout,unsigned np,unsigned npb
-  ,const float4 *velrhop1,const float4 *velrhop2
-  ,const float *ar,const float3 *ace,const float4 *shiftposfs,const float3 *indirvel
-  ,double dt,double dt2,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
-  ,typecode *code,double2 *movxy,double *movz,float4 *velrhopnew,cudaStream_t stm);
-void ComputeStepSymplecticPre(bool floating,bool shift,bool inout,unsigned np,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
-  ,const float3 *indirvel,double dtm,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
-  ,typecode *code,double2 *movxy,double *movz,float4 *velrhop,cudaStream_t stm);
-void ComputeStepSymplecticCor(bool floating,bool shift,bool inout,unsigned np,unsigned npb
-  ,const float4 *velrhoppre,const float *ar,const float3 *ace,const float4 *shiftposfs
-  ,const float3 *indirvel,double dtm,double dt,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
-  ,typecode *code,double2 *movxy,double *movz,float4 *velrhop,cudaStream_t stm);
+void ComputeStepVerlet(bool floating,bool shift,bool inout,TpMdbc2Mode mdbc2
+  ,unsigned np,unsigned npb,const float4* velrho1,const float4* velrho2,const byte* boundmode
+  ,const float* ar,const float3* ace,const float4* shiftposfs,const float3* indirvel,const float4* nopenshift
+  ,double dt,double dt2,float rhopzero,float rhopoutmin,float rhopoutmax
+  ,tfloat3 gravity,typecode* code,double2* movxy,double* movz,float4* velrhonew,cudaStream_t stm);
+void ComputeStepSymplecticPre(bool floating,bool shift,bool inout,TpMdbc2Mode mdbc2
+  ,unsigned np,unsigned npb,const float4* velrhopre,const byte* boundmode
+  ,const float* ar,const float3* ace,const float4* shiftposfs,const float3* indirvel
+  ,double dtm,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
+  ,typecode* code,double2* movxy,double* movz,float4* velrho
+  ,float* psiclean,const float* psicleanpre,const float* psicleanrhs,bool divclean,cudaStream_t stm); //<vs_divclean>
+void ComputeStepSymplecticCor(bool floating,bool shift,bool shiftadv,bool inout,TpMdbc2Mode mdbc2
+  ,unsigned np,unsigned npb,const float4* velrhopre,const byte* boundmode
+  ,const float* ar,const float3* ace,const float4* shiftposfs,const float3* indirvel,const float4* nopenshift // SHABA
+  ,const float4* shiftvel //<vs_advshift>
+  ,double dtm,double dt,float rhopzero,float rhopoutmin,float rhopoutmax,tfloat3 gravity
+  ,typecode* code,double2* movxy,double* movz,float4* velrho
+  ,float* psiclean,const float* psicleanpre,const float* psicleanrhs,bool divclean,cudaStream_t stm); //<vs_divclean>
 
-
+//<vs_flexstruc_ini>
+void CopyMotionVelFlexStruc(unsigned npfs,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* motionvel,float4* velrhop);
+void ComputeStepFlexStrucSemiImplicitEuler(unsigned npfs,const float4* velrhop,const typecode* code,const unsigned* flexstrucridp
+      ,const float3* ace,double dt,tfloat3 gravity
+      ,double2* movxy,double* movz,float4* velrhopnew,cudaStream_t stm);
+void ComputeStepFlexStrucSymplecticPre(unsigned npfs,const float4* velrhoppre,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* ace,double dtm,tfloat3 gravity
+    ,double2* movxy,double* movz,float4* velrhop,cudaStream_t stm);
+void ComputeStepFlexStrucSymplecticCor(unsigned npfs,const float4* velrhoppre,const typecode* code,const unsigned* flexstrucridp
+    ,const float3* ace,double dtm,double dt,tfloat3 gravity
+    ,double2* movxy,double* movz,float4* velrhop,cudaStream_t stm);
+//<vs_flexstruc_end>
 }
 
 

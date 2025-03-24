@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -34,11 +34,12 @@ class JDsTimersGpu;
 class JCellDivGpuSingle : public JCellDivGpu
 {
 protected:
-  void CalcCellDomain(const unsigned *dcellg,const typecode *codeg);
-  void MergeMapCellBoundFluid(const tuint3 &celbmin,const tuint3 &celbmax,const tuint3 &celfmin,const tuint3 &celfmax,tuint3 &celmin,tuint3 &celmax)const;
+  void CalcCellDomain(const unsigned* dcellg,const typecode* codeg);
+  void MergeMapCellBoundFluid(const tuint3& celbmin,const tuint3& celbmax
+    ,const tuint3& celfmin,const tuint3& celfmax,tuint3& celmin,tuint3& celmax)const;
   void PrepareNct();
 
-  void PreSort(const unsigned *dcellg,const typecode *codeg);
+  void PreSort(const unsigned* dcellg,const typecode* codeg);
 
 public:
   JCellDivGpuSingle(bool stable,bool floating,byte periactive
@@ -48,16 +49,16 @@ public:
     ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout);
 
   void Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2
-    ,bool boundchanged,const unsigned *dcellg,const typecode *codeg
-    ,const double2 *posxy,const double *posz,const unsigned *idp
-    ,JDsTimersGpu *timersg);
+    ,bool boundchanged,const unsigned* dcellg,const typecode* codeg
+    ,const double2* posxy,const double* posz,const unsigned* idp
+    ,JDsTimersGpu* timersg);
 
   StDivDataGpu GetCellDivData()const;
 
-  ullong GetAllocMemoryCpu()const{ return(JCellDivGpu::GetAllocMemoryCpu()); }
-  ullong GetAllocMemoryGpu()const{ return(JCellDivGpu::GetAllocMemoryGpu()); }
-  ullong GetAllocMemoryGpuNp()const{ return(JCellDivGpu::GetAllocMemoryGpuNp()); };
-  ullong GetAllocMemoryGpuNct()const{ return(JCellDivGpu::GetAllocMemoryGpuNct()); };
+  llong GetAllocMemoryCpu()const{ return(JCellDivGpu::GetAllocMemoryCpu()); }
+  llong GetAllocMemoryGpu()const{ return(JCellDivGpu::GetAllocMemoryGpu()); }
+  llong GetAllocMemoryGpuNp()const{ return(JCellDivGpu::GetAllocMemoryGpuNp()); };
+  llong GetAllocMemoryGpuNct()const{ return(JCellDivGpu::GetAllocMemoryGpuNct()); };
 };
 
 #endif

@@ -1,5 +1,5 @@
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -56,7 +56,7 @@
 class JLog2;
 class JSphMk;
 class JXml;
-class JVtkLib;
+class JSpVtkShape;
 class TiXmlElement;
 class JChronoData;
 class JChValues;
@@ -76,7 +76,7 @@ class JLinearValue;
 class JChronoObjects : protected JObject
 {
 protected:
-  JLog2 *Log;
+  JLog2* Log;
   std::string DirData;
   std::string CaseName;
   const double Dp;
@@ -84,9 +84,11 @@ protected:
   const bool Simulate2D;
   const double FtPause;
 
-  bool UseVariableCoeff; ///<Indicates the use of variable coefficients
+  bool UseVarLinkCoeff; ///<Indicates the use of variable coefficients
+  bool UseVarScaleForce; ///<Indicates the use of variable coefficients
   std::vector<JLinearValue*> StiffnessV; ///<For variable stiffness
   std::vector<JLinearValue*> DampingV;   ///<For variable damping
+  std::vector<JLinearValue*> ScaleForceV;   ///<For variable scaling forces
 
   int OmpThreads;        ///<Max number of OpenMP threads in execution on CPU host (minimum 1).
   const bool UseDVI;     ///<Uses Differential Variational Inequality (DVI) method.
@@ -96,11 +98,8 @@ protected:
   bool WithMotion;       ///<Some Chrono object with geometry is a moving object.
   const tfloat3 Gravity; ///<Gravity acceleration. | Aceleracion por gravedad.
 
-  void* Ptr_VtkSimple_AutoActual;
-  void* Ptr_VtkSimple_AutoDp;
-
-  JChronoData *ChronoDataXml; ///<Chrono data loaded from XML. | Datos de Chrono cargados del XML.
-  DSPHChronoLib *ChronoLib;   ///<Object for the integrarion with Chrono Engine library. | Objeto para integracion con libreria de Chrono Engine.
+  JChronoData* ChronoDataXml; ///<Chrono data loaded from XML. | Datos de Chrono cargados del XML.
+  DSPHChronoLib* ChronoLib;   ///<Object for the integrarion with Chrono Engine library. | Objeto para integracion con libreria de Chrono Engine.
 
   float CollisionDp;        ///<Allowed collision overlap according Dp (default=0.5).
   double SchemeScale;       ///<Scale value to create initial scheme of configuration.
@@ -110,34 +109,32 @@ protected:
   double NextTime;
   double LastTimeOk;
 
-  void LoadPtrAutoActual(const JXml *sxml,std::string xmlrow);
-  void LoadPtrAutoDp(const JXml *sxml,std::string xmlrow);
-  
-  unsigned CreateObjFiles(std::string idname,const std::vector<unsigned> &mkbounds
+  unsigned CreateObjFiles(std::string idname,const std::vector<unsigned>& mkbounds
     ,std::string datadir,std::string mfile,byte normalmode,std::string diroutobj,std::string xmlrow);
 
-  void LoadXml(const JXml *sxml, const std::string &place);
-  void ReadXml(const JXml *sxml, TiXmlElement* lis);
-  void ReadXmlValues(const JXml *sxml,TiXmlElement* lis,JChValues* values);
-  std::string ReadXmlModelFile(const JXml *sxml,TiXmlElement* ele)const;
+  void LoadXml(const JXml* sxml,const std::string& place);
+  void ReadXml(const JXml* sxml,TiXmlElement* lis);
+  void ReadXmlValues(const JXml* sxml,TiXmlElement* lis,JChValues* values);
+  std::string ReadXmlModelFile(const JXml* sxml,TiXmlElement* ele)const;
   void ConfigMovingBodies(const JSphMk* mkinfo);
   void ConfigOmp();
 
-  void CheckParams(const JChBody *body)const;
-  void VisuValues(const JChValues *values)const;
-  void VisuBody(const JChBody *body)const;
-  void VisuLink(const JChLink *link)const;
-  void SaveVtkScheme_Spring(JVtkLib *sh,word mk,word mk1,tdouble3 pt0,tdouble3 pt1
+  void CheckParams(const JChBody* body)const;
+  void VisuValues(const JChValues* values)const;
+  void VisuBody(const JChBody* body)const;
+  void VisuLink(const JChLink* link)const;
+  void SaveVtkScheme_Spring(JSpVtkShape* ss,word mk,word mk1,tdouble3 pt0,tdouble3 pt1
     ,double restlength,double radius,double revlength,int nside)const;
   void SaveVtkScheme()const;
 
-  void SetVariableCoeff(const double timestep);
-  void ReadCoeffs(JChLink *link,const JXml *sxml,TiXmlElement* ele);
-  void ReadScaleForces(const JXml *sxml,TiXmlElement* lis);
+  void SetVarLinkCoeff(const double timestep);
+  void SetVarScaleForce(const double timestep);
+  void ReadLinkCoeffs(JChLink* link,const JXml* sxml,TiXmlElement* ele,bool islinklock=false);
+  void ReadScaleForces(const JXml* sxml,TiXmlElement* lis);
 
 public:
-  JChronoObjects(const std::string &dirdata,const std::string &casename
-    ,const JXml *sxml,const std::string &place,double dp,word mkboundfirst
+  JChronoObjects(const std::string& dirdata,const std::string& casename
+    ,const JXml* sxml,const std::string& place,double dp,word mkboundfirst
 	,tfloat3 g,const bool simulate2d,const double ftpause);
   ~JChronoObjects();
   void Reset();
@@ -147,9 +144,9 @@ public:
   bool GetUseCollision()const{ return(UseCollision); }
   unsigned GetCollisionShapes()const{ return(CollisionShapes); }
 
-  bool ConfigBodyFloating(word mkbound,double mass,const tdouble3 &center
-    ,const tmatrix3d &inertia,const tint3 &translationfree,const tint3 &rotationfree
-    ,const tfloat3 &linvelini,const tfloat3 &angvelini);
+  bool ConfigBodyFloating(word mkbound,double mass,const tdouble3& center
+    ,const tmatrix3d& inertia,const tint3& translationfree,const tint3& rotationfree
+    ,const tfloat3& linvelini,const tfloat3& angvelini);
 
   void ConfigDataBodyFloating(word mkbound,float kfric,float sfric,float restitu,float young,float poisson);
   void ConfigDataBodyMoving  (word mkbound,float kfric,float sfric,float restitu,float young,float poisson);
@@ -160,11 +157,11 @@ public:
 
   bool GetWithMotion()const{ return(WithMotion); }
 
-  void SetFtData(word mkbound,const tfloat3 &face,const tfloat3 &fomegaace);
-  void SetFtDataVel(word mkbound,const tfloat3 &vlin,const tfloat3 &vang);
-  void GetFtData(word mkbound,tdouble3 &fcenter,tfloat3 &fvel,tfloat3 &fomega)const;
+  void SetFtData(word mkbound,const tfloat3& face,const tfloat3& fomegaace);
+  void SetFtDataVel(word mkbound,const tfloat3& vlin,const tfloat3& vang);
+  void GetFtData(word mkbound,tdouble3& fcenter,tfloat3& fvel,tfloat3& fomega)const;
 
-  void SetMovingData(word mkbound,bool simple,const tdouble3 &msimple,const tmatrix4d &mmatrix,double stepdt);
+  void SetMovingData(word mkbound,bool simple,const tdouble3& msimple,const tmatrix4d& mmatrix,double stepdt);
 
   void RunChrono(unsigned nstep,double timestep,double dt,bool predictor);
 

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -20,7 +20,7 @@
 //:# Cambios:
 //:# =========
 //:# - Clase para gestionar zonas de shifting. (24-11-2019)
-//:# - Improved exception managment. (19-03-2020)  
+//:# - Improved exception management. (19-03-2020)  
 //:# - Objeto JXml pasado como const para operaciones de lectura. (19-03-2020)  
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //:# - Nuevo metodo GetConfigInfo(). (03-06-2020)  
@@ -76,7 +76,8 @@ private:
 
 public:
   const unsigned Id;
-  JSphShiftingZone(unsigned id,const tdouble3 &posref,const tdouble3 &vx,const tdouble3 &vy,const tdouble3 &vz);
+  JSphShiftingZone(unsigned id,const tdouble3& posref,const tdouble3& vx
+    ,const tdouble3& vy,const tdouble3& vz);
   ~JSphShiftingZone();
   void Reset();
 
@@ -116,8 +117,8 @@ private:
   unsigned ZonesPosmax;  ///<Number of zones defined by position min-max.
   std::vector<JSphShiftingZone*> Zones;
 
-  JMatrix4d ReadRotate3D(const JXml *sxml,TiXmlElement* ele);
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
+  JMatrix4d ReadRotate3D(const JXml* sxml,TiXmlElement* ele);
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
 
   template<bool first,bool dbl> void InitCpuPosMax(unsigned n,unsigned pini
     ,const tdouble3& pmin1,const tdouble3& pmax1,const tdouble3& pmin2,const tdouble3& pmax2
@@ -134,8 +135,9 @@ public:
   void Reset();
 
   void ConfigBasic(TpShifting shiftmode,float shiftcoef=-2.f,float shifttfs=0);
-  void LoadXml(const JXml *sxml,const std::string &place);
-  void AddZone(bool fromxml,const tdouble3 &posref,const tdouble3 &vx,const tdouble3 &vy,const tdouble3 &vz);
+  void LoadXml(const JXml* sxml,const std::string& place);
+  void AddZone(bool fromxml,const tdouble3& posref,const tdouble3& vx
+    ,const tdouble3& vy,const tdouble3& vz);
 
   void VisuConfig(std::string txhead="",std::string txfoot="");
   std::string GetConfigInfo()const;

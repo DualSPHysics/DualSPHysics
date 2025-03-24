@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -33,15 +33,20 @@ class JDsTimersCpu;
 class JCellDivCpuSingle : public JCellDivCpu
 {
 protected:
-  void CalcCellDomain(const unsigned *dcellc,const typecode *codec);
-  void MergeMapCellBoundFluid(const tuint3 &celbmin,const tuint3 &celbmax,const tuint3 &celfmin,const tuint3 &celfmax,tuint3 &celmin,tuint3 &celmax)const;
+  void CalcCellDomain(const unsigned* dcellc,const typecode* codec);
+  void MergeMapCellBoundFluid(const tuint3& celbmin,const tuint3& celbmax
+    ,const tuint3& celfmin,const tuint3& celfmax,tuint3& celmin,tuint3& celmax)const;
   void PrepareNct();
 
-  void PreSortFull(unsigned np,const unsigned *dcellc,const typecode *codec,unsigned* cellpart,unsigned* partsincell)const;
-  void PreSortFluid(unsigned np,unsigned pini,const unsigned *dcellc,const typecode *codec,unsigned* cellpart,unsigned* partsincell)const;
-  void MakeSortFull(const unsigned* cellpart,unsigned* begincell,unsigned* partsincell,unsigned* sortpart)const;
-  void MakeSortFluid(unsigned np,unsigned pini,const unsigned* cellpart,unsigned* begincell,unsigned* partsincell,unsigned* sortpart)const;
-  void PreSort(const unsigned* dcellc,const typecode *codec);
+  void PreSortFull(unsigned np,const unsigned* dcellc,const typecode* codec
+    ,unsigned* cellpart,unsigned* partsincell)const;
+  void PreSortFluid(unsigned np,unsigned pini,const unsigned* dcellc
+    ,const typecode* codec,unsigned* cellpart,unsigned* partsincell)const;
+  void MakeSortFull(const unsigned* cellpart,unsigned* begincell
+    ,unsigned* partsincell,unsigned* sortpart)const;
+  void MakeSortFluid(unsigned np,unsigned pini,const unsigned* cellpart
+    ,unsigned* begincell,unsigned* partsincell,unsigned* sortpart)const;
+  void PreSort(const unsigned* dcellc,const typecode* codec);
 
 public:
   JCellDivCpuSingle(bool stable,bool floating,byte periactive
@@ -50,12 +55,12 @@ public:
     ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout);
 
   void Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2,bool boundchanged
-    ,const unsigned *dcellc,const typecode* codec,const unsigned* idpc,const tdouble3* posc
-    ,JDsTimersCpu *timersc);
+    ,const unsigned* dcellc,const typecode* codec,const unsigned* idpc,const tdouble3* posc
+    ,JDsTimersCpu* timersc);
 
-  ullong GetAllocMemory()const{ return(JCellDivCpu::GetAllocMemory()); }
-  ullong GetAllocMemoryNp()const{ return(JCellDivCpu::GetAllocMemoryNp()); };
-  ullong GetAllocMemoryNct()const{ return(JCellDivCpu::GetAllocMemoryNct()); };
+  llong GetAllocMemory()const{ return(JCellDivCpu::GetAllocMemory()); }
+  llong GetAllocMemoryNp()const{ return(JCellDivCpu::GetAllocMemoryNp()); };
+  llong GetAllocMemoryNct()const{ return(JCellDivCpu::GetAllocMemoryNct()); };
 };
 
 #endif

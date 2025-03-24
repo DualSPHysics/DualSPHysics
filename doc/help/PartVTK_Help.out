@@ -1,20 +1,20 @@
 
 
- <PARTVTK>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <PARTVTK>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  PartVTK is a free tool for DualSPHysics simulations.
  DualSPHysics project is an international collaboration between
  University of Vigo (Spain) and University of Manchester (UK).
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- * Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+ Redistribution and use in binary form, without modification, are
+ permitted provided that the following conditions are met:
  * Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
+ * Redistributions or modifications of source code are not permitted 
+   unless expressly authorised, and must retain the above copyright 
+   notice, this list of conditions and the following disclaimer.
  * Neither the name of the PartVTK nor the names of its contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
@@ -31,7 +31,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-PartVTK v5.0.206 (12-04-2023)
+PartVTK v5.4.266 (20-03-2025)
 ==============================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -44,19 +44,19 @@ Information about parameters of execution:
     -opt <file>    Loads configuration of a file
 
   Define input file:
-    -dirin <dir>       Directory with particle data
-    -casein <casename> Name of case file with particle data
-
+    -dirdata <dir>     Directory with particle data (Part_XXXX.bi4)
+                       or main output directory for VRes simulations
+    -filedata <file>   File with particle data (file.bi4)
     -filexml file.xml  Loads xml file with information of mk and
                        and other information. The word 'AUTO' can
                        be used to load the xml used in the simulation.
-    -first:<int>     Indicates the first file to be computed
-    -last:<int>      Indicates the last file to be computed
-    -files:<values>  Indicates the number of files to be processed
+    -first:<int>       Indicates the first file to be computed
+    -last:<int>        Indicates the last file to be computed
+    -files:<values>    Indicates the number of files to be processed
 
-    -continue:<0/1>  Process only new VTK files (default=false)
+    -continue:<0/1>    Process only new VTK files (default=false)
 
-    -move:x:y:z      Particles are moved using this offset
+    -move:x:y:z        Particles are moved using this offset
 
     -threads:<int>   Indicates the number of threads for parallel execution of
      the interpolation, it takes the number of cores of the device by default
@@ -104,6 +104,8 @@ Information about parameters of execution:
        +/-floating:  Floating body particles
        +/-fluid:     Fluid particles (no excluded)
        (Preselected types: all)
+    -onlyzone:<values>   Indicates the VRes zone of selected particles
+    -addbuffzone:<0/1>   Buffer particles in zone are included (0 by default)
 
     -vars:<values>  Indicates the variables to be computed and stored
        (+ means include, - means do not include)
@@ -112,23 +114,20 @@ Information about parameters of execution:
        +/-vel:       Velocity
        +/-rhop:      Density
        +/-press:     Pressure
-       +/-pressh:    Hydrostatic pressure (computed from depth data)
        +/-mass:      Mass
        +/-vol:       Volume
        +/-type:      Type (fixed,moving,floating,fluid)
        +/-mk:        Value of mk associated to the particles
        +/-ace:       Acceleration
        +/-vor:       Vorticity
-       +/-depth:     Depth (computed from depth data files by IsoSurface)
        +/-energy:    Energy variables: kinectic, potential, internal and total
        +/-enkin:     Kinetic energy
        +/-enpot:     Potential energy (use -enpotzero to define zero-position)
        +/-enint:     Internal energy
        +/-entot:     Total energy (kinectic + potential + internal)
+       +/-zone:      Zone when variable-resolution is applied
        +/-XXX:       Variable defined by the user
-       (Preselected variables: idp,vel,rhop,type)
-
-    -depthdir <dir>  Directory with depth data (PartDepth_xxxx.bin4)
+       (Preselected variables: idp,vel,rhop,press,type)
 
     -enpotzero:<x0,y0,z0>  Indicates the zero position for potential energy
                            calculation (default value = 0,0,0)

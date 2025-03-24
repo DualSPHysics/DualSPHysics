@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -44,7 +44,7 @@ JCellDivGpuSingle::JCellDivGpuSingle(bool stable,bool floating,byte periactive
 /// Computes cell domains adjusting to the fluid (CellDomainMin/Max). 
 /// Calcula limites del dominio en celdas ajustando al fluido (CellDomainMin/Max). 
 //==============================================================================
-void JCellDivGpuSingle::CalcCellDomain(const unsigned *dcellg,const typecode *codeg){
+void JCellDivGpuSingle::CalcCellDomain(const unsigned* dcellg,const typecode* codeg){
   //-Define maximum cell domain.
   if(CellDomFixed){
     CellDomainMin=TUint3(0,0,0);
@@ -83,8 +83,8 @@ void JCellDivGpuSingle::CalcCellDomain(const unsigned *dcellg,const typecode *co
 /// fluido y contorno.
 /// En caso de que el dominio sea nulo CellDomainMin=CellDomainMax=(0,0,0).
 //==============================================================================
-void JCellDivGpuSingle::MergeMapCellBoundFluid(const tuint3 &celbmin,const tuint3 &celbmax
-  ,const tuint3 &celfmin,const tuint3 &celfmax,tuint3 &celmin,tuint3 &celmax)const
+void JCellDivGpuSingle::MergeMapCellBoundFluid(const tuint3& celbmin,const tuint3& celbmax
+  ,const tuint3& celfmin,const tuint3& celfmax,tuint3& celmin,tuint3& celmax)const
 {
   const unsigned scelldiv=unsigned(ScellDiv);
   celmin=TUint3(max(min(celbmin.x,celfmin.x),(celfmin.x>=scelldiv? celfmin.x-scelldiv: 0))
@@ -133,7 +133,7 @@ void JCellDivGpuSingle::PrepareNct(){
 /// particulas excluidas ya fueron marcadas en code[].
 /// Asigna valores consecutivos a SortPart[].
 //==============================================================================
-void JCellDivGpuSingle::PreSort(const unsigned *dcellg,const typecode *codeg){
+void JCellDivGpuSingle::PreSort(const unsigned* dcellg,const typecode* codeg){
   if(DivideFull)cudiv::PreSortFull(Nptot,DomCellCode,dcellg,codeg,CellDomainMin,TUint3(Ncx,Ncy,Ncz),CellPart,SortPart);
   else cudiv::PreSortFluid(Npf1,Npb1,DomCellCode,dcellg,codeg,CellDomainMin,TUint3(Ncx,Ncy,Ncz),CellPart,SortPart);
 }
@@ -150,8 +150,8 @@ void JCellDivGpuSingle::PreSort(const unsigned *dcellg,const typecode *codeg){
 /// Las floating se tratan como si fuesen fluido (tanto al ser excluidas como ignoradas).
 //==============================================================================
 void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigned npf2
-  ,bool boundchanged,const unsigned *dcellg,const typecode *codeg
-  ,const double2 *posxy,const double *posz,const unsigned *idp,JDsTimersGpu *timersg)
+  ,bool boundchanged,const unsigned* dcellg,const typecode* codeg
+  ,const double2* posxy,const double* posz,const unsigned* idp,JDsTimersGpu* timersg)
 {
   DivideFull=false;
   timersg->TmStart(TMG_NlLimits,false);
@@ -168,7 +168,7 @@ void JCellDivGpuSingle::Divide(unsigned npb1,unsigned npf1,unsigned npb2,unsigne
   //-Comprueba si hay memoria reservada y si es suficiente para Nptot.
   CheckMemoryNp(Nptot);
 
-  //-If the boundary postion changes or there are periodic conditions it is necessary to recalculate the limits and reorder every particle.
+  //-If the boundary position changes or there are periodic conditions it is necessary to recalculate the limits and reorder every particle.
   //-Si la posicion del contorno cambia o hay condiciones periodicas es necesario recalcular limites y reordenar todas las particulas. 
   if(boundchanged || PeriActive){
     BoundLimitOk=BoundDivideOk=false;

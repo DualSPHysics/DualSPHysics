@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -66,14 +66,19 @@ inline const char* TpPeriName(TpPeri tperi){
 #define PERI_Axis_Z(periactive) ((periactive&4)!=0)
 
 /// Returns PeriActive value according periodic axes.
-inline byte DefPeriActive(bool perix,bool periy,bool periz){ return(byte((perix? 1: 0)+(periy? 2: 0)+(periz? 4: 0))); }
+inline byte DefPeriActive(bool perix,bool periy,bool periz){ 
+  return(byte((perix? 1: 0)+(periy? 2: 0)+(periz? 4: 0))); 
+}
 
 /// Returns PeriActive value according periodic axes.
-inline byte DefPeriActive(TpPeri tperi){ return(tperi==PERI_Unknown? 0: byte(tperi)); }
+inline byte DefPeriActive(TpPeri tperi){ 
+  return(tperi==PERI_Unknown? 0: byte(tperi)); 
+}
 
 /// Returns TpPeri value according periactive value.
 inline TpPeri TpPeriFromPeriActive(byte periactive){
-  return(periactive==DefPeriActive(PERI_Axis_X(periactive),PERI_Axis_Y(periactive),PERI_Axis_Z(periactive))? TpPeri(periactive): PERI_Unknown);
+  return(periactive==DefPeriActive(PERI_Axis_X(periactive),PERI_Axis_Y(periactive)
+    ,PERI_Axis_Z(periactive))? TpPeri(periactive): PERI_Unknown);
 }
 
 
@@ -99,7 +104,6 @@ typedef struct StrPeriodic{
     PeriXinc=PeriYinc=PeriZinc=TDouble3(0);
   }
 }StPeriodic;
-
 
 
 #endif

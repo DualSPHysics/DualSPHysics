@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -21,6 +21,7 @@
 #include "JException.h"
 #include "Functions.h"
 #include <cstdio>
+#include <iostream>
 
 //==============================================================================
 /// Constructor.
@@ -29,8 +30,8 @@
 /// \param text Text of the exception.
 /// \param file Name of the file related to the exception.
 //==============================================================================
-JException::JException(const std::string &classname,const std::string &method
-  ,const std::string &text,const std::string &file)
+JException::JException(const std::string& classname,const std::string& method
+  ,const std::string& text,const std::string& file)
 {
   ExName="JException";
   SrcFile="";
@@ -51,9 +52,9 @@ JException::JException(const std::string &classname,const std::string &method
 /// \param text Text of the exception.
 /// \param file Name of the file related to the exception.
 //==============================================================================
-JException::JException(const std::string &srcfile,int srcline
-  ,const std::string &classname,const std::string &method
-  ,const std::string &text,const std::string &file)
+JException::JException(const std::string& srcfile,int srcline
+  ,const std::string& classname,const std::string& method
+  ,const std::string& text,const std::string& file)
 {
   ExName="JException";
   #ifdef RunExceptSrc
@@ -85,8 +86,9 @@ std::string JException::ToStr()const{
 /// Visualises the exception message in console.
 //==============================================================================
 void JException::Print()const{
-  printf("%s\n",ToStr().c_str());
+  //printf("%s\n",ToStr().c_str());
   fflush(stdout);
+  std::cerr << ToStr() << std::endl;
 }
 
 

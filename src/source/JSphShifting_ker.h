@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -46,7 +46,7 @@ void InitGpuPlanes(bool tfirst,bool tdbl,unsigned n,unsigned pini
 
 void RunShifting(unsigned n,unsigned pini,double dt
   ,double coefumagn,float shifttfs,double coeftfs,float maxdist
-  ,const float4 *velrhop,float4 *shiftposfs,cudaStream_t stm);
+  ,const float4* velrhop,float4* shiftposfs,cudaStream_t stm);
 
 }
 

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2021 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -58,7 +58,7 @@ void JDsTimers::Reset(){
 /// Initialisation of variables.
 //==============================================================================
 void JDsTimers::ResetTimer(unsigned c){
-  StDsTimer &t=List[c];
+  StDsTimer& t=List[c];
   t.active=false;
   t.timer.Reset();
   t.time=0;
@@ -71,7 +71,7 @@ void JDsTimers::ResetTimer(unsigned c){
 //==============================================================================
 void JDsTimers::AddTimer(unsigned c,std::string name,unsigned level,bool active){
   if(c>=TIMERSIZE)Run_Exceptioon("Timer Id exceeds the allowed limit.");
-  StDsTimer &t=List[c];
+  StDsTimer& t=List[c];
   if(!t.name.empty())Run_Exceptioon("Timer Id is already defined.");
   t.name=name;
   t.level=level;
@@ -91,7 +91,7 @@ void JDsTimers::ResetTimes(){
 //==============================================================================
 std::string JDsTimers::TimerToText(unsigned c,unsigned maxlen)const{
   string ret;
-  const StDsTimer &t=List[c];
+  const StDsTimer& t=List[c];
   if(t.active){
     ret=t.name;
     for(unsigned cv=0;cv<t.level;cv++)ret=string("  ")+ret;
@@ -106,7 +106,7 @@ std::string JDsTimers::TimerToText(unsigned c,unsigned maxlen)const{
 //==============================================================================
 /// Shows active timers.
 //==============================================================================
-void JDsTimers::ShowTimes(std::string title,JLog2 *log,bool onlyfile)const{
+void JDsTimers::ShowTimes(std::string title,JLog2* log,bool onlyfile)const{
   JLog2::TpMode_Out mode=(onlyfile? JLog2::Out_File: JLog2::Out_ScrFile);
   if(!title.empty())log->Print(title,mode);
   if(!SvTimers)log->Print("none",mode);
@@ -124,7 +124,7 @@ void JDsTimers::ShowTimes(std::string title,JLog2 *log,bool onlyfile)const{
 /// Return string with names and values of active timers.
 /// Devuelve string con nombres y valores de los timers activos.
 //==============================================================================
-void JDsTimers::GetTimersInfo(std::string &hinfo,std::string &dinfo)const{
+void JDsTimers::GetTimersInfo(std::string& hinfo,std::string& dinfo)const{
   for(unsigned c=0;c<=CtMax;c++)if(List[c].active){
     hinfo=hinfo+";"+List[c].name;
     dinfo=dinfo+";"+fun::DoubleStr(List[c].time/1000.);

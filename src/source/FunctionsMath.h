@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -77,7 +77,9 @@ inline float InterpolationLinear(float x,float x0,float x1,float v0,float v1){
 /// Devuelve la interpolacion bilineal de cuatro valores que forman un cuadrado.
 /// Returns the bilinear interpolation of four values that form a square.
 //==============================================================================
-inline double InterpolationBilinear(double x,double y,double px,double py,double dx,double dy,double vxy,double vxyy,double vxxy,double vxxyy){
+inline double InterpolationBilinear(double x,double y,double px,double py
+  ,double dx,double dy,double vxy,double vxyy,double vxxy,double vxxyy)
+{
   double vy0=InterpolationLinear(x,px,px+dx,vxy,vxxy);
   double vy1=InterpolationLinear(x,px,px+dx,vxyy,vxxyy);
   return(InterpolationLinear(y,py,py+dy,vy0,vy1));
@@ -88,23 +90,25 @@ inline double InterpolationBilinear(double x,double y,double px,double py,double
 /// Calcula el determinante de una matriz de 3x3.
 /// Returns the determinant of a 3x3 matrix.
 //==============================================================================
-inline double Determinant3x3(const tmatrix3d &d){
-  return(d.a11 * d.a22 * d.a33 + d.a12 * d.a23 * d.a31 + d.a13 * d.a21 * d.a32 - d.a31 * d.a22 * d.a13 - d.a32 * d.a23 * d.a11 - d.a33 * d.a21 * d.a12);
+inline double Determinant3x3(const tmatrix3d& d){
+  return(d.a11 * d.a22 * d.a33 + d.a12 * d.a23 * d.a31 + d.a13 * d.a21 * d.a32
+       - d.a31 * d.a22 * d.a13 - d.a32 * d.a23 * d.a11 - d.a33 * d.a21 * d.a12);
 }
 
 //==============================================================================
 /// Calcula el determinante de una matriz de 3x3.
 /// Returns the determinant of a 3x3 matrix.
 //==============================================================================
-inline float Determinant3x3(const tmatrix3f &d){
-  return(d.a11 * d.a22 * d.a33 + d.a12 * d.a23 * d.a31 + d.a13 * d.a21 * d.a32 - d.a31 * d.a22 * d.a13 - d.a32 * d.a23 * d.a11 - d.a33 * d.a21 * d.a12);
+inline float Determinant3x3(const tmatrix3f& d){
+  return(d.a11 * d.a22 * d.a33 + d.a12 * d.a23 * d.a31 + d.a13 * d.a21 * d.a32
+       - d.a31 * d.a22 * d.a13 - d.a32 * d.a23 * d.a11 - d.a33 * d.a21 * d.a12);
 }
 
 //==============================================================================
 /// Calcula el determinante de una matriz simetrica de 3x3.
 /// Returns the determinant of a 3x3 symmetric matrix.
 //==============================================================================
-inline float Determinant3x3(const tsymatrix3f &d){
+inline float Determinant3x3(const tsymatrix3f& d){
   return(d.xx * (d.yy*d.zz - d.yz*d.yz)+
          d.xy * (d.yz*d.xz - d.xy*d.zz)+
          d.xz * (d.xy*d.yz - d.yy*d.xz));
@@ -114,7 +118,7 @@ inline float Determinant3x3(const tsymatrix3f &d){
 /// Calcula el determinante de una matriz simetrica de 4x4.
 /// Returns the determinant of a 4x4 symmetric matrix.
 //==============================================================================
-inline float Determinant4x4(const tsymatrix4f &d){
+inline float Determinant4x4(const tsymatrix4f& d){
   return(d.a11 * (d.a22*d.a33*d.a44 + d.a23*d.a34*d.a24 + d.a24*d.a23*d.a34 - d.a22*d.a34*d.a34 - d.a23*d.a23*d.a44 - d.a24*d.a33*d.a24)+
          d.a12 * (d.a12*d.a34*d.a34 + d.a23*d.a13*d.a44 + d.a24*d.a33*d.a14 - d.a12*d.a33*d.a44 - d.a23*d.a34*d.a14 - d.a24*d.a13*d.a34)+
          d.a13 * (d.a12*d.a23*d.a44 + d.a22*d.a34*d.a14 + d.a24*d.a13*d.a24 - d.a12*d.a34*d.a24 - d.a22*d.a13*d.a44 - d.a24*d.a23*d.a14)+
@@ -125,7 +129,7 @@ inline float Determinant4x4(const tsymatrix4f &d){
 /// Devuelve la matriz inversa de una matriz de 3x3.
 /// Returns the inverse matrix of a 3x3 matrix.
 //==============================================================================
-inline tmatrix3f InverseMatrix3x3(const tmatrix3f &d,const float det){
+inline tmatrix3f InverseMatrix3x3(const tmatrix3f& d,const float det){
   tmatrix3f inv;
   if(det){
     inv.a11= (d.a22*d.a33-d.a23*d.a32)/det;
@@ -146,7 +150,7 @@ inline tmatrix3f InverseMatrix3x3(const tmatrix3f &d,const float det){
 /// Devuelve la matriz inversa de una matriz de 3x3.
 /// Returns the inverse matrix of a 3x3 matrix.
 //==============================================================================
-inline tmatrix3f InverseMatrix3x3(const tmatrix3f &d){
+inline tmatrix3f InverseMatrix3x3(const tmatrix3f& d){
   return(InverseMatrix3x3(d,Determinant3x3(d)));
 }
 
@@ -154,7 +158,7 @@ inline tmatrix3f InverseMatrix3x3(const tmatrix3f &d){
 /// Devuelve la matriz inversa de una matriz de 3x3.
 /// Returns the inverse matrix of a 3x3 matrix.
 //==============================================================================
-inline tmatrix3d InverseMatrix3x3(const tmatrix3d &d,const double det){
+inline tmatrix3d InverseMatrix3x3(const tmatrix3d& d,const double det){
   tmatrix3d inv;
   if(det){
     inv.a11= (d.a22*d.a33-d.a23*d.a32)/det;
@@ -175,15 +179,35 @@ inline tmatrix3d InverseMatrix3x3(const tmatrix3d &d,const double det){
 /// Devuelve la matriz inversa de una matriz de 3x3.
 /// Returns the inverse matrix of a 3x3 matrix.
 //==============================================================================
-inline tmatrix3d InverseMatrix3x3(const tmatrix3d &d){
+inline tmatrix3d InverseMatrix3x3(const tmatrix3d& d){
   return(InverseMatrix3x3(d,Determinant3x3(d)));
+}
+
+//==============================================================================
+/// Funcion para calcular el producto de un vector fila (v1) y 
+/// un vector de columna (v2) y lo almacenamos en una matriz de 3x3
+/// Function to compute the product of a row vector (v1) and 
+/// a column vector (v2) and store it in a 3x3 matrix
+//==============================================================================
+inline tmatrix3d ProductMatrix3x3(const tdouble3& v1,const tdouble3& v2){
+  tmatrix3d mat;
+  mat.a11=v1.x*v2.x;
+  mat.a12=v1.x*v2.y;
+  mat.a13=v1.x*v2.z;
+  mat.a21=v1.y*v2.x;
+  mat.a22=v1.y*v2.y;
+  mat.a23=v1.y*v2.z;
+  mat.a31=v1.z*v2.x;
+  mat.a32=v1.z*v2.y;
+  mat.a33=v1.z*v2.z;
+  return mat;
 }
 
 //==============================================================================
 /// Calcula el determinante de una matriz de 4x4.
 /// Returns the determinant of a 4x4 matrix.
 //==============================================================================
-inline double Determinant4x4(const tmatrix4d &d){
+inline double Determinant4x4(const tmatrix4d& d){
   return(d.a14*d.a23*d.a32*d.a41 - d.a13*d.a24*d.a32*d.a41-
          d.a14*d.a22*d.a33*d.a41 + d.a12*d.a24*d.a33*d.a41+
          d.a13*d.a22*d.a34*d.a41 - d.a12*d.a23*d.a34*d.a41-
@@ -202,7 +226,7 @@ inline double Determinant4x4(const tmatrix4d &d){
 /// Calcula el determinante de una matriz de 4x4.
 /// Returns the determinant of a 4x4 matrix.
 //==============================================================================
-inline float Determinant4x4(const tmatrix4f &d){
+inline float Determinant4x4(const tmatrix4f& d){
   return(d.a14*d.a23*d.a32*d.a41 - d.a13*d.a24*d.a32*d.a41-
          d.a14*d.a22*d.a33*d.a41 + d.a12*d.a24*d.a33*d.a41+
          d.a13*d.a22*d.a34*d.a41 - d.a12*d.a23*d.a34*d.a41-
@@ -221,7 +245,7 @@ inline float Determinant4x4(const tmatrix4f &d){
 /// Devuelve la matriz inversa de una matriz de 4x4.
 /// Returns the inverse matrix of a 4x4 matrix.
 //==============================================================================
-inline tmatrix4f InverseMatrix4x4(const tmatrix4f &d,const float det){
+inline tmatrix4f InverseMatrix4x4(const tmatrix4f& d,const float det){
   tmatrix4f inv;
   if(det){
     inv.a11=(d.a22*(d.a33*d.a44-d.a34*d.a43)+d.a23*(d.a34*d.a42-d.a32*d.a44)+d.a24*(d.a32*d.a43-d.a33*d.a42))/det;
@@ -249,7 +273,7 @@ inline tmatrix4f InverseMatrix4x4(const tmatrix4f &d,const float det){
 /// Devuelve la matriz inversa de una matriz de 4x4.
 /// Returns the inverse matrix of a 4x4 matrix.
 //==============================================================================
-inline tmatrix4f InverseMatrix4x4(const tmatrix4f &d){
+inline tmatrix4f InverseMatrix4x4(const tmatrix4f& d){
   return(InverseMatrix4x4(d,Determinant4x4(d)));
 }
 
@@ -257,7 +281,7 @@ inline tmatrix4f InverseMatrix4x4(const tmatrix4f &d){
 /// Devuelve la matriz inversa de una matriz de 4x4.
 /// Returns the inverse matrix of a 4x4 matrix.
 //==============================================================================
-inline tmatrix4d InverseMatrix4x4(const tmatrix4d &d,const double det){
+inline tmatrix4d InverseMatrix4x4(const tmatrix4d& d,const double det){
   tmatrix4d inv;
   if(det){
     inv.a11=(d.a22*(d.a33*d.a44-d.a34*d.a43)+d.a23*(d.a34*d.a42-d.a32*d.a44)+d.a24*(d.a32*d.a43-d.a33*d.a42))/det;
@@ -285,7 +309,7 @@ inline tmatrix4d InverseMatrix4x4(const tmatrix4d &d,const double det){
 /// Devuelve la matriz inversa de una matriz de 4x4.
 /// Returns the inverse matrix of a 4x4 matrix.
 //==============================================================================
-inline tmatrix4d InverseMatrix4x4(const tmatrix4d &d){
+inline tmatrix4d InverseMatrix4x4(const tmatrix4d& d){
   return(InverseMatrix4x4(d,Determinant4x4(d)));
 }
 
@@ -294,7 +318,7 @@ inline tmatrix4d InverseMatrix4x4(const tmatrix4d &d){
 /// Devuelve producto de 2 matrices de 3x3.
 /// Returns the product of 2 matrices of 3x3.
 //==============================================================================
-inline tmatrix3f MulMatrix3x3(const tmatrix3f &a,const tmatrix3f &b){
+inline tmatrix3f MulMatrix3x3(const tmatrix3f& a,const tmatrix3f& b){
   return(TMatrix3f(
     a.a11*b.a11 + a.a12*b.a21 + a.a13*b.a31, a.a11*b.a12 + a.a12*b.a22 + a.a13*b.a32, a.a11*b.a13 + a.a12*b.a23 + a.a13*b.a33,
     a.a21*b.a11 + a.a22*b.a21 + a.a23*b.a31, a.a21*b.a12 + a.a22*b.a22 + a.a23*b.a32, a.a21*b.a13 + a.a22*b.a23 + a.a23*b.a33,
@@ -306,7 +330,7 @@ inline tmatrix3f MulMatrix3x3(const tmatrix3f &a,const tmatrix3f &b){
 /// Devuelve traspuesta de matriz 3x3.
 /// Returns the transpose from matrix 3x3.
 //==============================================================================
-inline tmatrix3f TrasMatrix3x3(const tmatrix3f &a){
+inline tmatrix3f TrasMatrix3x3(const tmatrix3f& a){
   return(TMatrix3f(
     a.a11, a.a21, a.a31,
     a.a12, a.a22, a.a32,
@@ -318,7 +342,7 @@ inline tmatrix3f TrasMatrix3x3(const tmatrix3f &a){
 /// Devuelve la matriz de rotacion.
 /// Returns the rotation matrix.
 //==============================================================================
-inline tmatrix3f RotMatrix3x3(const tfloat3 &ang){
+inline tmatrix3f RotMatrix3x3(const tfloat3& ang){
   const float cosx=cos(ang.x),cosy=cos(ang.y),cosz=cos(ang.z);
   const float sinx=sin(ang.x),siny=sin(ang.y),sinz=sin(ang.z);
   return(TMatrix3f(

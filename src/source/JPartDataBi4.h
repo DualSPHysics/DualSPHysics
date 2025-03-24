@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -52,6 +52,9 @@
 //:# - Mejora la gestion de excepciones. (06-05-2020)
 //:# - Option NoRtimes to removes execution dependent values from bi4 files. (28-02-2022)
 //:# - Option NoRtimes is enabled by default. (08-05-2022)
+//:# - Updated for JBinaryData with 64-bit size. (20-06-2023)
+//:# - Nuevo metodo GetFileLoaded(). (09-02-2024)
+//:# - Nuevo metodo LoadFilename(). (13-04-2024)
 //:#############################################################################
 
 /// \file JPartDataBi4.h \brief Declares the class \ref JPartDataBi4.
@@ -81,22 +84,26 @@ class JPartDataBi4 : protected JObject
   typedef enum{ DIV_None=0,DIV_X=1,DIV_Y=2,DIV_Z=3,DIV_Unknown=99 }TpAxisDiv; 
 
  private:
-  JBinaryData *Data;      ///<Almacena la informacion general de los datos (constante para cada PART). Stores general information of data (constant for each PART).
-  JBinaryData *Part;      ///<Pertenece a Data y almacena informacion de un part (incluyendo datos de particulas). It belongs to Data, and stores information about a part (including data of particles).
+  JBinaryData* Data;      ///<Almacena la informacion general de los datos (constante para cada PART). Stores general information of data (constant for each PART).
+  JBinaryData* Part;      ///<Pertenece a Data y almacena informacion de un part (incluyendo datos de particulas). It belongs to Data, and stores information about a part (including data of particles).
 
   //-Variables de gestion.
   static const unsigned FormatVerDef=130825;    ///<Version de formato by default. Version of format by default.
   unsigned FormatVer;    ///<Version de formato. Version of format.
   bool NoRtimes;         ///<Removes execution times and other execution-only dependent values.
 
-  std::string Dir;   ///<Directorio de datos. Data Directory.
-  unsigned Piece;    ///<Numero de parte. Part number.
-  unsigned Npiece;   ///<Numero total de partes. Number of total parts.
-  unsigned Cpart;    ///<Numero de PART. PART number.
+  std::string Dir;        ///<Directorio de datos. Data Directory.
+  unsigned Piece;         ///<Numero de parte. Part number.
+  unsigned Npiece;        ///<Numero total de partes. Number of total parts.
+  unsigned Cpart;         ///<Numero de PART. PART number.
+  std::string FileLoaded; ///<Path and filename of loaded file.
 
   static std::string GetNamePart(unsigned cpart);
-  void AddPartData(unsigned npok,const unsigned *idp,const ullong *idpd,const tfloat3 *pos,const tdouble3 *posd,const tfloat3 *vel,const float *rhop,bool externalpointer=true);
-  void AddPartDataVar(const std::string &name,JBinaryDataDef::TpData type,unsigned npok,const void *v,bool externalpointer=true);
+  void AddPartData(unsigned npok,const unsigned* idp,const ullong* idpd
+    ,const tfloat3* pos,const tdouble3* posd,const tfloat3* vel
+    ,const float* rhop,bool externalpointer=true);
+  void AddPartDataVar(const std::string& name,JBinaryDataDef::TpData type
+    ,unsigned npok,const void* v,bool externalpointer=true);
 
   void SaveFileData(std::string fname);
   unsigned GetPiecesFile(std::string file)const;
@@ -111,20 +118,26 @@ class JPartDataBi4 : protected JObject
 
   long long GetAllocMemory()const;
   static std::string GetFileNamePart(unsigned cpart,unsigned piece=0,unsigned npiece=1);
-  static std::string GetFileNameCase(const std::string &casename,unsigned piece=0,unsigned npiece=1);
+  static std::string GetFileNameCase(const std::string& casename,unsigned piece=0,unsigned npiece=1);
   static std::string GetFileNameInfo(unsigned piece=0,unsigned npiece=1);
-  static std::string GetFileData(std::string casename,std::string dirname,unsigned cpart,byte &npiece);
+  static std::string GetFileData(std::string casename,std::string dirname,unsigned cpart,byte& npiece);
 
   //Grabacion de datos:
   //Recording of data
   //====================
   //-Object configuration from JPartDataHead object.
-  void Config(bool nortimes,unsigned piece,unsigned npiece,std::string dir,const JPartDataHead* parthead);
+  void Config(bool nortimes,unsigned piece,unsigned npiece,std::string dir
+    ,const JPartDataHead* parthead);
 
   //-Object configuration.
-  void ConfigBasic(unsigned piece,unsigned npiece,std::string runcode,std::string appname,std::string casename,bool data2d,double data2dposy,const std::string &dir);
-  void ConfigParticles(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid,tdouble3 caseposmin,tdouble3 caseposmax,bool npdynamic=false,bool reuseids=false);
-  void ConfigCtes(double dp,double h,double b,double rhop0,double gamma,double massbound,double massfluid);
+  void ConfigBasic(unsigned piece,unsigned npiece,std::string runcode
+    ,std::string appname,std::string casename,bool data2d,double data2dposy
+    ,const std::string& dir);
+  void ConfigParticles(ullong casenp,ullong casenfixed,ullong casenmoving
+    ,ullong casenfloat,ullong casenfluid,tdouble3 caseposmin,tdouble3 caseposmax
+    ,bool npdynamic=false,bool reuseids=false);
+  void ConfigCtes(double dp,double h,double b,double rhop0,double gamma
+    ,double massbound,double massfluid);
   void ConfigSimMap(tdouble3 mapposmin,tdouble3 mapposmax);
   void ConfigSimPeri(TpPeri tperi,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
   void ConfigSymmetry(bool symmetry);
@@ -134,30 +147,30 @@ class JPartDataBi4 : protected JObject
 
   //-Configuracion de parts. Configuration of parts.
   JBinaryData* AddPartInfo(unsigned cpart,double timestep,unsigned npok,unsigned nout,unsigned step,double runtime,tdouble3 domainmin,tdouble3 domainmax,ullong nptotal=0,ullong idmax=0);
-  void AddPartData(unsigned npok,const unsigned *idp, const tfloat3  *pos, const tfloat3 *vel,const float *rhop,bool externalpointer=true){  AddPartData(npok,idp ,NULL,pos ,NULL,vel,rhop,externalpointer);  }
-  void AddPartData(unsigned npok,const unsigned *idp, const tdouble3 *posd,const tfloat3 *vel,const float *rhop,bool externalpointer=true){  AddPartData(npok,idp ,NULL,NULL,posd,vel,rhop,externalpointer);  }
-  void AddPartData(unsigned npok,const ullong   *idpd,const tfloat3  *pos, const tfloat3 *vel,const float *rhop,bool externalpointer=true){  AddPartData(npok,NULL,idpd,pos ,NULL,vel,rhop,externalpointer);  }
-  void AddPartData(unsigned npok,const ullong   *idpd,const tdouble3 *posd,const tfloat3 *vel,const float *rhop,bool externalpointer=true){  AddPartData(npok,NULL,idpd,NULL,posd,vel,rhop,externalpointer);  }
-  void AddPartDataSplitting(unsigned npok,const float *mass,const float *hvar,bool externalpointer=true);
+  void AddPartData(unsigned npok,const unsigned* idp, const tfloat3*  pos, const tfloat3* vel,const float* rhop,bool externalpointer=true){  AddPartData(npok,idp ,NULL,pos ,NULL,vel,rhop,externalpointer);  }
+  void AddPartData(unsigned npok,const unsigned* idp, const tdouble3* posd,const tfloat3* vel,const float* rhop,bool externalpointer=true){  AddPartData(npok,idp ,NULL,NULL,posd,vel,rhop,externalpointer);  }
+  void AddPartData(unsigned npok,const ullong*   idpd,const tfloat3*  pos, const tfloat3* vel,const float* rhop,bool externalpointer=true){  AddPartData(npok,NULL,idpd,pos ,NULL,vel,rhop,externalpointer);  }
+  void AddPartData(unsigned npok,const ullong*   idpd,const tdouble3* posd,const tfloat3* vel,const float* rhop,bool externalpointer=true){  AddPartData(npok,NULL,idpd,NULL,posd,vel,rhop,externalpointer);  }
+  void AddPartDataSplitting(unsigned npok,const float* mass,const float* hvar,bool externalpointer=true);
 
-  void AddPartData(const std::string &name,unsigned npok,const float    *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatFloat  ,npok,(const void *)v,externalpointer);  }
-  void AddPartData(const std::string &name,unsigned npok,const double   *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatDouble ,npok,(const void *)v,externalpointer);  }
-  void AddPartData(const std::string &name,unsigned npok,const int      *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatInt    ,npok,(const void *)v,externalpointer);  }
-  void AddPartData(const std::string &name,unsigned npok,const unsigned *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatUint   ,npok,(const void *)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const float*    v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatFloat  ,npok,(const void*)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const double*   v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatDouble ,npok,(const void*)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const int*      v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatInt    ,npok,(const void*)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const unsigned* v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatUint   ,npok,(const void*)v,externalpointer);  }
 
-  void AddPartData(const std::string &name,unsigned npok,const tfloat3  *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatFloat3 ,npok,(const void *)v,externalpointer);  }
-  void AddPartData(const std::string &name,unsigned npok,const tdouble3 *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatDouble3,npok,(const void *)v,externalpointer);  }
-  void AddPartData(const std::string &name,unsigned npok,const tint3    *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatInt3   ,npok,(const void *)v,externalpointer);  }
-  void AddPartData(const std::string &name,unsigned npok,const tuint3   *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatUint3  ,npok,(const void *)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const tfloat3*  v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatFloat3 ,npok,(const void*)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const tdouble3* v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatDouble3,npok,(const void*)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const tint3*    v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatInt3   ,npok,(const void*)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const tuint3*   v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatUint3  ,npok,(const void*)v,externalpointer);  }
 
-  void AddPartData(const std::string &name,unsigned npok,const llong    *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatLlong  ,npok,(const void *)v,externalpointer);  }
-  void AddPartData(const std::string &name,unsigned npok,const ullong   *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatUllong ,npok,(const void *)v,externalpointer);  }
-  void AddPartData(const std::string &name,unsigned npok,const short    *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatShort  ,npok,(const void *)v,externalpointer);  }
-  void AddPartData(const std::string &name,unsigned npok,const word     *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatUshort ,npok,(const void *)v,externalpointer);  }
-  void AddPartData(const std::string &name,unsigned npok,const char     *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatChar   ,npok,(const void *)v,externalpointer);  }
-  void AddPartData(const std::string &name,unsigned npok,const byte     *v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatUchar  ,npok,(const void *)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const llong*    v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatLlong  ,npok,(const void*)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const ullong*   v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatUllong ,npok,(const void*)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const short*    v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatShort  ,npok,(const void*)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const word*     v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatUshort ,npok,(const void*)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const char*     v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatChar   ,npok,(const void*)v,externalpointer);  }
+  void AddPartData(const std::string& name,unsigned npok,const byte*     v,bool externalpointer=true){  AddPartDataVar(name,JBinaryDataDef::DatUchar  ,npok,(const void*)v,externalpointer);  }
 
-  void AddPartData(const std::string &name,unsigned npok,const void     *v,TpTypeData type,bool externalpointer=true);
+  void AddPartData(const std::string& name,unsigned npok,const void*     v,TpTypeData type,bool externalpointer=true);
 
   //-Grabacion de fichero. File recording.
   void SaveFileCase(std::string casename);
@@ -172,6 +185,8 @@ class JPartDataBi4 : protected JObject
   unsigned GetPiecesFilePart(std::string dir,unsigned cpart)const;
   void LoadFileCase(std::string dir,std::string casename,unsigned piece=0,unsigned npiece=1);
   void LoadFilePart(std::string dir,unsigned cpart,unsigned piece=0,unsigned npiece=1);
+  void LoadFilename(std::string filename);
+  std::string GetFileLoaded()const{ return(FileLoaded); }
 
   //Obtencion de datos basicos:
   //Obtaining basic data:
@@ -240,17 +255,18 @@ class JPartDataBi4 : protected JObject
   bool ArrayExists(std::string name)const;
   JBinaryDataArray* GetArray(std::string name)const;
   JBinaryDataArray* GetArray(std::string name,JBinaryDataDef::TpData type)const;
-  unsigned Get_ArrayCount(std::string name)const{ return(GetArray(name)->GetCount()); }
+  unsigned Get_ArrayCount(std::string name)const{ return((unsigned)GetArray(name)->GetCount()); }
   bool Get_IdpSimple()const{ return(ArrayExists("Idp")); }
   bool Get_PosSimple()const{ return(ArrayExists("Pos")); }
-  unsigned Get_Idp  (unsigned size,unsigned *data)const{ return(GetArray("Idp" ,JBinaryDataDef::DatUint   )->GetDataCopy(size,data)); }
-  unsigned Get_Idpd (unsigned size,ullong   *data)const{ return(GetArray("Idpd",JBinaryDataDef::DatUllong )->GetDataCopy(size,data)); }
-  unsigned Get_Pos  (unsigned size,tfloat3  *data)const{ return(GetArray("Pos" ,JBinaryDataDef::DatFloat3 )->GetDataCopy(size,data)); }
-  unsigned Get_Posd (unsigned size,tdouble3 *data)const{ return(GetArray("Posd",JBinaryDataDef::DatDouble3)->GetDataCopy(size,data)); }
-  unsigned Get_Vel  (unsigned size,tfloat3  *data)const{ return(GetArray("Vel" ,JBinaryDataDef::DatFloat3 )->GetDataCopy(size,data)); }
-  unsigned Get_Rhop (unsigned size,float    *data)const{ return(GetArray("Rhop",JBinaryDataDef::DatFloat  )->GetDataCopy(size,data)); }
-  unsigned Get_Mass (unsigned size,float    *data)const{ return(GetArray("Mass",JBinaryDataDef::DatFloat  )->GetDataCopy(size,data)); }
-  unsigned Get_Hvar (unsigned size,float    *data)const{ return(GetArray("Hvar",JBinaryDataDef::DatFloat  )->GetDataCopy(size,data)); }
+  unsigned Get_Idp     (unsigned size,unsigned* data)const{ return((unsigned)GetArray("Idp"     ,JBinaryDataDef::DatUint   )->GetDataCopy(size,data)); }
+  unsigned Get_Idpd    (unsigned size,ullong*   data)const{ return((unsigned)GetArray("Idpd"    ,JBinaryDataDef::DatUllong )->GetDataCopy(size,data)); }
+  unsigned Get_Pos     (unsigned size,tfloat3*  data)const{ return((unsigned)GetArray("Pos"     ,JBinaryDataDef::DatFloat3 )->GetDataCopy(size,data)); }
+  unsigned Get_Posd    (unsigned size,tdouble3* data)const{ return((unsigned)GetArray("Posd"    ,JBinaryDataDef::DatDouble3)->GetDataCopy(size,data)); }
+  unsigned Get_Vel     (unsigned size,tfloat3*  data)const{ return((unsigned)GetArray("Vel"     ,JBinaryDataDef::DatFloat3 )->GetDataCopy(size,data)); }
+  unsigned Get_Rhop    (unsigned size,float*    data)const{ return((unsigned)GetArray("Rhop"    ,JBinaryDataDef::DatFloat  )->GetDataCopy(size,data)); }
+  unsigned Get_Mass    (unsigned size,float*    data)const{ return((unsigned)GetArray("Mass"    ,JBinaryDataDef::DatFloat  )->GetDataCopy(size,data)); }
+  unsigned Get_Hvar    (unsigned size,float*    data)const{ return((unsigned)GetArray("Hvar"    ,JBinaryDataDef::DatFloat  )->GetDataCopy(size,data)); }
+  unsigned Get_BoundNor(unsigned size,tfloat3*  data)const{ return((unsigned)GetArray("BoundNor",JBinaryDataDef::DatFloat3 )->GetDataCopy(size,data)); }
 
   double Get_Particles2dPosY()const;
 };

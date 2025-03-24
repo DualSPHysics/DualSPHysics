@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -24,14 +24,15 @@
 #include "DualSphDef.h"
 #include "JDsTimersGpu.h"
 #include "JCellDivDataGpu.h"
+#include "JSphGpu_cte.h"
 #include "JSph.h"
-
+#include "JArraysCpu.h"
+#include "JArraysGpu.h"
 #include <string>
 
 
 class JDsGpuInfo;
 class JDsPartsOut;
-class JArraysGpu;
 class JCellDivGpu;
 
 //##############################################################################
@@ -44,17 +45,17 @@ class JSphGpu : public JSph
   friend class JDebugSphGpu;
 
 protected:
-  static void RunExceptioonCudaStatic(const std::string &srcfile,int srcline
-    ,const std::string &method
+  static void RunExceptioonCudaStatic(const std::string& srcfile,int srcline
+    ,const std::string& method
     ,cudaError_t cuerr,std::string msg);
-  static void CheckCudaErroorStatic(const std::string &srcfile,int srcline
-    ,const std::string &method
+  static void CheckCudaErroorStatic(const std::string& srcfile,int srcline
+    ,const std::string& method
     ,std::string msg);
-  void RunExceptioonCuda(const std::string &srcfile,int srcline
-    ,const std::string &classname,const std::string &method
+  void RunExceptioonCuda(const std::string& srcfile,int srcline
+    ,const std::string& classname,const std::string& method
     ,cudaError_t cuerr,std::string msg)const;
-  void CheckCudaErroor(const std::string &srcfile,int srcline
-    ,const std::string &classname,const std::string &method
+  void CheckCudaErroor(const std::string& srcfile,int srcline
+    ,const std::string& classname,const std::string& method
     ,std::string msg)const;
 
 private:
@@ -69,10 +70,10 @@ public:
   }StBlockSizes;
 
 protected:
-  StBlockSizes BlockSizes;        ///<Stores configuration of BlockSizes. | Almacena configuracion de BlockSizes.
-  std::string BlockSizesStr;      ///<Stores configuration of BlockSizes in text form. | Almacena configuracion de BlockSizes en texto.
+  StBlockSizes BlockSizes;    ///<Stores configuration of BlockSizes. | Almacena configuracion de BlockSizes.
+  std::string BlockSizesStr;  ///<Stores configuration of BlockSizes in text form. | Almacena configuracion de BlockSizes en texto.
 
-  JDsGpuInfo *GpuInfo;    ///<Main information of selected GPU.
+  JDsGpuInfo* GpuInfo;    ///<Main information of selected GPU.
 
   const TpMgDivMode DivAxis;  ///<Axis used in current division. It is used to sort particle data. MGDIV_Z is used for single GPU.
 
@@ -82,7 +83,7 @@ protected:
   //-Numero de particulas del dominio.
   unsigned Np;        ///<Total number of particles (including duplicate periodic particles). | Numero total de particulas (incluidas las duplicadas periodicas). 
   unsigned Npb;       ///<Number of boundary particles (including periodic boundaries). | Numero de particulas contorno (incluidas las contorno periodicas). 
-  unsigned NpbOk;     ///<Number of boundary particles interacting the fluid (including the periodic bounaries). | Numero de particulas contorno cerca del fluido (incluidas las contorno periodicas). 
+  unsigned NpbOk;     ///<Number of boundary particles interacting the fluid (including the periodic boundaries). | Numero de particulas contorno cerca del fluido (incluidas las contorno periodicas). 
 
   unsigned NpfPer;    ///<Number of periodic particles (fluid-floating). | Numero de particulas fluidas-floating periodicas. 
   unsigned NpbPer;    ///<Number of periodic boundary particles. | Numero de particulas contorno periodicas. 
@@ -91,101 +92,123 @@ protected:
 
   bool BoundChanged;  ///<Indicates if a selected boundary particle has changed since the last time step. | Indica si el contorno seleccionado a cambiado desde el ultimo divide.
 
-  unsigned CpuParticlesSize; ///<Number of particles for which CPU memory was allocated. | Numero de particulas para las cuales se reservo memoria en cpu. 
+  //-CPU memory allocated.
+  unsigned CpuParticlesSize; ///<Number of particles for which CPU memory was allocated.
   llong MemCpuFixed;         ///<Allocated memory in AllocCpuMemoryFixed. | Mermoria reservada en AllocCpuMemoryFixed. 
-  llong MemCpuParticles;     ///<Allocated CPU memory for arrays with particle data. | Mermoria reservada para vectores de datos de particulas. 
 
-  //-Variables holding particle data for the execution (size=ParticlesSize).
-  //-Variables con datos de las particulas para ejecucion (size=ParticlesSize).
-  unsigned *Idp;      ///<Identifier of particle | Identificador de particula.
-  typecode *Code;     ///<Indicator of group of particles & other special markers. | Indica el grupo de las particulas y otras marcas especiales.
-  unsigned *Dcell;    ///<Cells inside DomCells coded with DomCellCode. | Celda dentro de DomCells codificada con DomCellCode.
-  tdouble2 *Posxy;
-  double *Posz;
-  tfloat4 *Velrhop;
+  //-List of particle arrays on CPU [CpuParticlesSize=GpuParticlesSize].
+  JArraysCpu* Arrays_Cpu;
 
-  //-Auxiliary variables for the conversion (size=ParticlesSize).
-  //-Variables auxiliares para conversion (size=ParticlesSize).
-  tdouble3 *AuxPos;
-  tfloat3 *AuxVel; 
-  float *AuxRhop;
+  //-Execution Variables for particles [CpuParticlesSize].
+  acuint*     Idp_c;    ///<Identifier of particle.
+  actypecode* Code_c;   ///<Indicator of group of particles & other special markers.
+  acuint*     Dcell_c;  ///<Cells inside DomCells coded with DomCellCode.
+  acdouble2*  Posxy_c;  ///<Position (x,y).
+  acdouble*   Posz_c;   ///<Position (z).
+  acfloat4*   Velrho_c; ///<Velocity (x,y,z) and density (w).
 
-  unsigned GpuParticlesAllocs;///<Number of allocations.
+  //-Auxiliary variables for the conversion [CpuParticlesSize].
+  acdouble3*  AuxPos_c;
+  acfloat3*   AuxVel_c; 
+  acfloat*    AuxRho_c;
+
+
   unsigned GpuParticlesSize;  ///<Number of particles for which GPU memory was allocated. | Numero de particulas para las cuales se reservo memoria en gpu.
-  llong MemGpuParticles;      ///<Allocated GPU memory for arrays with particle data. | Mermoria reservada para vectores de datos de particulas.
   llong MemGpuFixed;          ///<Allocated memory in AllocGpuMemoryFixed. | Memoria reservada en AllocGpuMemoryFixed. 
 
-  //-Particle position according to the identifier for the motion.
-  //-Posicion de particula segun id para motion.
-  unsigned *RidpMoveg;  ///<Only for moving boundary particles [CaseNmoving] and when CaseNmoving!=0 | Solo para boundary moving particles [CaseNmoving] y cuando CaseNmoving!=0 
+  unsigned* RidpMotg;  ///<Particle index according to Idp (only for moving and floating particles and updated after RunCellDivide) [CaseNmoving+CaseNfloat]. 
 
-  //-List of particle arrays on GPU. | Lista de arrays en GPU para particulas.
-  JArraysGpu* ArraysGpu;
-  //-Variables holding particle data for the execution (size=ParticlesSize).
-  //-Variables con datos de las particulas para ejecucion (size=ParticlesSize).
-  unsigned *Idpg;   ///<Identifier of particle | Identificador de particula.
-  typecode *Codeg;  ///<Indicator of group of particles & other special markers. | Indica el grupo de las particulas y otras marcas especiales.
-  unsigned *Dcellg; ///<Cells inside DomCells coded with DomCellCode. | Celda dentro de DomCells codificada con DomCellCode.
-  double2 *Posxyg;
-  double *Poszg;
-  float4 *PosCellg; ///<Relative position and cell coordiantes for particle interaction {posx,posy,posz,cellxyz}
-  float4 *Velrhopg;
+  //-List of particle arrays on GPU [GpuParticlesSize=CpuParticlesSize].
+  JArraysGpu* Arrays_Gpu;
+  
+  //-Execution Variables for particles on GPU [GpuParticlesSize].
+  aguint*     Idp_g;     ///<Identifier of particle.
+  agtypecode* Code_g;    ///<Indicator of group of particles & other special markers.
+  aguint*     Dcell_g;   ///<Cells inside DomCells coded with DomCellCode.
+  agdouble2*  Posxy_g;
+  agdouble*   Posz_g;
+  agfloat4*   PosCell_g; ///<Relative position and cell coordinates for particle interaction {posx,posy,posz,cellxyz}
+  agfloat4*   Velrho_g;
 
-  float3 *BoundNormalg;  ///<Normal (x,y,z) pointing from boundary particles to ghost nodes.
-  float3 *MotionVelg;    ///<Velocity of a moving boundary particle.
+  aguint*     PeriParent_g; ///<Particle index to access to the parent of periodic particles (Opt).
+
+  //-Variables for mDBC (Opt).
+  agfloat3*   BoundNor_g;   ///<Normal (x,y,z) pointing from boundary particles to ghost nodes (Opt).
+  agfloat3*   MotionVel_g;  ///<Velocity of a moving boundary particle (Opt).                  //<vs_m2dbc>
+  agfloat3*   MotionAce_g;  ///<Acceleration of a moving boundary (Opt).                       //<vs_m2dbc>
+  agbyte*     BoundMode_g;  ///<Boundary particle on off switch to multiply massp2 (Opt,Null). //<vs_m2dbc>
+  agfloat3*   TangenVel_g;  ///<Velocity tangent to boundary (Opt,Null).                       //<vs_m2dbc>
     
-  //-Variables for compute step: VERLET.
-  float4 *VelrhopM1g;  ///<Verlet: in order to keep previous values. | Verlet: para guardar valores anteriores.
+  //-Variables for compute step VERLET (Opt).
+  agfloat4*   VelrhoM1_g;  ///<Verlet: in order to keep previous values (Opt).
 
-  //-Variables for compute step: SYMPLECTIC.
-  double2 *PosxyPreg;  ///<Sympletic: in order to keep previous values. | Sympletic: para guardar valores en predictor.
-  double *PoszPreg;
-  float4 *VelrhopPreg;
+  //-Variables for compute step SYMPLECTIC (Opt,Null).
+  agdouble2*  PosxyPre_g;  ///<Sympletic: in order to keep predictor values (Opt,Null).
+  agdouble*   PoszPre_g;   ///<Sympletic: in order to keep predictor values (Opt,Null).
+  agfloat4*   VelrhoPre_g; ///<Sympletic: in order to keep predictor values (Opt,Null).
 
-  //-Variables for floating bodies.
-  unsigned *FtRidpg;      ///<Identifier to access to the particles of the floating object [CaseNfloat].
-  float *FtoMasspg;       ///<Mass of the particle for each floating body [FtCount] in GPU (used in interaction forces).
+  //-Variables for floating bodies (GPU memory).
+  float*    FtoMasspg;   ///<Mass of the particle for each floating body [FtCount] in GPU (used in interaction forces).
+  float4*   FtoDatpg;    ///<Constant data of floatings {pini_u,np_u,radius_f,massp_f} [FtCount] //__device__ int __float_as_int(float x) //__device__ float __int_as_float(int x).
+  double3*  FtoCenterg;  ///<Auxiliary to store the center in floaging calculations. [FtCount].   
+  float3*   FtoAceg;     ///<Auxiliary to compute sum of linear and angular acceleration of floating bodies {acelin_f3,aceang_f3} [2*FtCount].
+  static const unsigned MaxNStmFloatings=18;
+  cudaStream_t StmFloatings[MaxNStmFloatings];
+  unsigned NStmFloatings;
+  //-Variables for floating bodies (CPU memory).
+  tdouble3* FtoCenterc;   ///<Auxiliary CPU Memory to swap floating center with GPU [FtCount].
 
-  float4 *FtoDatpg;        ///<Constant data of floatings {pini_u,np_u,radius_f,massp_f} [FtCount] //__device__ int __float_as_int(float x) //__device__ float __int_as_float(int x).
-  float  *FtoMassg;        ///<Constant data of floatings (mass_f) [FtCount] 
-  byte   *FtoConstraintsg; ///<Constant value to define motion constraints.
-  float3 *FtoForcesg;      ///<Stores forces for the floating bodies {face_f3,fomegaace_f3} equivalent to JSphCpu::FtoForces [FtCount]. | Almacena fuerzas de floatings {face_f3,fomegaace_f3} equivalente a JSphCpu::FtoForces [FtCount]. 
-  float3 *FtoForcesResg;   ///<Stores data to update floatings {fomegares_f3,fvelres_f3} equivalent to JSphCpu::FtoForcesRes. [FtCount]. | Almacena datos para actualizar floatings {fomegares_f3,fvelres_f3} equivalente a JSphCpu::FtoForcesRes. [FtCount].
-  double3 *FtoCenterResg;  ///<Stores centre to update floatings. [Ftcount]. | Almacena centro para actualizar floatings. [FtCount]. 
+  //-Variables for DEM.
+  float4*   DemDatag;  ///<Data of the object {mass, (1-poisson^2)/young, kfric, restitu} in GPU [DemObjsSize].
 
-  tdouble3 *FtoAuxDouble6; ///<Memory to swap floating data with GPU. [2*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [2*FtCount].
-  tfloat3  *FtoAuxFloat15; ///<Memory to swap floating data with GPU. [5*FtCount]. | Memoria para intercambiar datos de floatings con GPU. [5*FtCount].
+  //<vs_flexstruc_ini>
+  //-Variables for flexible structures.
+  StFlexStrucData* FlexStrucDatag;  ///<Data for each individual flexible structure body [FlexStruc->GetCount()]
+  unsigned* FlexStrucRidpg;         ///<Identifier to access the particles of the flexible structures [CaseNflexstruc].
+  float4* PosCell0g;                ///<Relative initial position and cell coordinates {posx,posy,posz,cellxyz} [CaseNflexstruc].
+  unsigned* NumPairsg;              ///<Number of initial neighbours [CaseNflexstruc].
+  unsigned* PairIdxBufferg;         ///<Raw buffer to particle indices [NumPairsTot].
+  unsigned** PairIdxg;              ///<List of indices to each initial neighbour [CaseNflexstruc].
+  tmatrix3f* KerCorrg;              ///<Kernel correction [CaseNflexstruc].
+  tmatrix3f* DefGradg;              ///<Deformation gradient tensor [CaseNflexstruc].
+  float3* BoundNor0g;               ///<Initial boundary normals for mDBC [CaseNflexstruc].
+  float* FlexStrucDtg;              ///<Structural speed of sound for each flexible structure particle [CaseNflexstruc].
+  float FlexStrucDtMax;             ///<Maximum value of FlexStrucDt computed in Interaction_ForcesFlexStruc().
+  //<vs_flexstruc_end>
 
-  double3 *FtoCenterg;      ///<Maintains centre of floating bodies [Ftcount].   | Mantiene centro de floating. [FtCount].   
-  float3  *FtoAnglesg;      ///<Maintains rotation angles from center (angle xz, angle yz, angle xy) (units:Rad) [FtCount].   
-  float3  *FtoVelAceg;      ///<Maintains velocity and acceleration (linear and angular) of floating bodies (vellin,velang,acelin,aceang)  [FtCount*4].
-  //float3  *FtoVelg;         ///<Maintains velocity of floating bodies [FtCount]. | Mantiene vel de floating. [FtCount].
-  //float3  *FtoOmegag;       ///<Maintains omega of floating bodies [FtCount].    | Mantiene omega de floating. [FtCount].
-  float4  *FtoInertiaini8g; ///<Initial state inertia tensor in world coordinates (computed or user-given) (a11,...,a21,a22,...,a32) [Ftcount*2].
-  float   *FtoInertiaini1g; ///<Initial state inertia tensor in world coordinates (computed or user-given) (a33) [Ftcount].
+  //-Variables for computing forces (Null).
+  agfloat*  ViscDt_g;     ///< (Null).
+  agfloat3* Ace_g;        ///<Sum of interaction acceleration (Null).
+  agfloat*  Ar_g;         ///<Sum of density variation (Null). 
+  agfloat*  Delta_g;      ///<Sum of Delta-SPH value when DELTA_DynamicExt (Null).
+  agfloat4* ShiftPosfs_g; ///<Particle displacement and free surface detection for Shifting (Null).
+  agfloat4* NoPenShift_g; ///<Particle velocity correction to prevent particle penetrating boundary (Null). //<vs_m2dbcNP>
 
-  bool FtObjsOutdated;      ///<FtObjs[] was not updated with new GPU values.
+  //<vs_advshift_ini>
+  //-Variable for advanced shifting formulation.
+  agfloat4* ShiftVel_g;   ///<Shifting Velocity vector for advanced shifting.
+  aguint*   FSType_g;     ///<Free-surface identification.
+  agfloat*  FSMinDist_g;  ///<Distance from the Free-Surface (needed for advanced shifting).
+  agfloat3* FSNormal_g;   ///<Normals of Free-Surface particles (needed for advanced shifting).
+  //<vs_advshift_end>
 
-  //-Variables for DEM. (DEM)
-  float4 *DemDatag;       ///<Data of the object {mass, (1-poisson^2)/young, kfric, restitu} in GPU [DemObjsSize].
-
-  //-Variables for computing forces
-  float *ViscDtg;
-  float3 *Aceg;      ///<Accumulates acceleration of the particles. | Acumula fuerzas de interaccion.
-  float *Arg; 
-  float *Deltag;     ///<Accumulates adjustment of Delta-SPH with DELTA_DynamicExt. | Acumula ajuste de Delta-SPH con DELTA_DynamicExt.
-
-  float4 *ShiftPosfsg;  ///<Particle displacement and free surface detection for Shifting.
+  //<vs_divclean_ini>
+  agfloat*  PsiClean_g;       ///<Scalar value for divergence cleaning model.
+  agfloat*  PsiCleanPre_g;    ///<Sympletic: in order to keep predictor values.
+  agfloat*  PsiCleanRhs_g;    ///<Sum of Phi value for divergence cleaning.
+  agfloat*  CsPsiClean_g;     ///<Local Speed of sound.
+  float     CsPsiCleanMax;    ///<Max value of the local speed of sound for stability condition.
+  //<vs_divclean_end>
 
   double VelMax;      ///<Maximum value of Vel[] sqrt(vel.x^2 + vel.y^2 + vel.z^2) computed in PreInteraction_Forces().
   double AceMax;      ///<Maximum value of Ace[] (ace.x^2 + ace.y^2 + ace.z^2) computed in Interaction_Forces().
   float ViscDtMax;    ///<Maximum value of ViscDt computed in Interaction_Forces().
 
-  //-Variables for Laminar+SPS viscosity.  
-  tsymatrix3f *SpsTaug;       ///<SPS sub-particle stress tensor.
-  tsymatrix3f *SpsGradvelg;   ///<Velocity gradients.
+  //-Variables for Laminar+SPS viscosity (Opt) & (Opt,Null).  
+  agsymatrix3f* SpsTauRho2_g; ///<SPS sub-particle stress tensor divided by rho^2 (tau/rho^2) (Opt).
+  agsymatrix3f* Sps2Strain_g; ///<Two times strain tensor for SPS (2S^ij) (Opt,Null).
 
-  JDsTimersGpu *Timersg;  ///<Manages timers for GPU execution.
+  JDsTimersGpu* Timersg;  ///<Manages timers for GPU execution.
 
   void InitVars();
 
@@ -196,52 +219,33 @@ protected:
   void FreeCpuMemoryParticles();
   void AllocCpuMemoryParticles(unsigned np);
   void FreeGpuMemoryParticles();
-  void AllocGpuMemoryParticles(unsigned np,float over);
+  void AllocGpuMemoryParticles(unsigned np);
 
-  void ResizeGpuMemoryParticles(unsigned np);
-  void ReserveBasicArraysGpu();
-
-  bool CheckGpuParticlesSize(unsigned requirednp){ return(requirednp+PARTICLES_OVERMEMORY_MIN<=GpuParticlesSize); }
-
-  template<class T> T* TSaveArrayGpu(unsigned np,const T *datasrc)const;
-  word*        SaveArrayGpu(unsigned np,const word        *datasrc)const{ return(TSaveArrayGpu<word>       (np,datasrc)); }
-  unsigned*    SaveArrayGpu(unsigned np,const unsigned    *datasrc)const{ return(TSaveArrayGpu<unsigned>   (np,datasrc)); }
-  int*         SaveArrayGpu(unsigned np,const int         *datasrc)const{ return(TSaveArrayGpu<int>        (np,datasrc)); }
-  float*       SaveArrayGpu(unsigned np,const float       *datasrc)const{ return(TSaveArrayGpu<float>      (np,datasrc)); }
-  float3*      SaveArrayGpu(unsigned np,const float3      *datasrc)const{ return(TSaveArrayGpu<float3>     (np,datasrc)); }
-  float4*      SaveArrayGpu(unsigned np,const float4      *datasrc)const{ return(TSaveArrayGpu<float4>     (np,datasrc)); }
-  double*      SaveArrayGpu(unsigned np,const double      *datasrc)const{ return(TSaveArrayGpu<double>     (np,datasrc)); }
-  double2*     SaveArrayGpu(unsigned np,const double2     *datasrc)const{ return(TSaveArrayGpu<double2>    (np,datasrc)); }
-  tsymatrix3f* SaveArrayGpu(unsigned np,const tsymatrix3f *datasrc)const{ return(TSaveArrayGpu<tsymatrix3f>(np,datasrc)); }
-  template<class T> void TRestoreArrayGpu(unsigned np,T *data,T *datanew)const;
-  void RestoreArrayGpu(unsigned np,word        *data,word        *datanew)const{ TRestoreArrayGpu<word>       (np,data,datanew); }
-  void RestoreArrayGpu(unsigned np,unsigned    *data,unsigned    *datanew)const{ TRestoreArrayGpu<unsigned>   (np,data,datanew); }
-  void RestoreArrayGpu(unsigned np,int         *data,int         *datanew)const{ TRestoreArrayGpu<int>        (np,data,datanew); }
-  void RestoreArrayGpu(unsigned np,float       *data,float       *datanew)const{ TRestoreArrayGpu<float>      (np,data,datanew); }
-  void RestoreArrayGpu(unsigned np,float3      *data,float3      *datanew)const{ TRestoreArrayGpu<float3>     (np,data,datanew); }
-  void RestoreArrayGpu(unsigned np,float4      *data,float4      *datanew)const{ TRestoreArrayGpu<float4>     (np,data,datanew); }
-  void RestoreArrayGpu(unsigned np,double      *data,double      *datanew)const{ TRestoreArrayGpu<double>     (np,data,datanew); }
-  void RestoreArrayGpu(unsigned np,double2     *data,double2     *datanew)const{ TRestoreArrayGpu<double2>    (np,data,datanew); }
-  void RestoreArrayGpu(unsigned np,tsymatrix3f *data,tsymatrix3f *datanew)const{ TRestoreArrayGpu<tsymatrix3f>(np,data,datanew); }
+  void ResizeGpuMemoryParticlesData(unsigned ndatagpu,unsigned np,unsigned npmin);
+  bool CheckGpuParticlesSize(unsigned requirednp)const{
+    return(requirednp+PARTICLES_OVERMEMORY_MIN<=GpuParticlesSize);
+  }
 
   llong GetAllocMemoryCpu()const;
   llong GetAllocMemoryGpu()const;
   void PrintAllocMemory(llong mcpu,llong mgpu)const;
 
+  void GetConstantData(StCteInteraction& ctes)const;
   void ConstantDataUp();
-  void ParticlesDataUp(unsigned n,const tfloat3 *boundnormal);
-  unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code,bool onlynormal);
+  void ParticlesDataUp(unsigned n,const tfloat3* boundnor);
+  unsigned ParticlesDataDown(unsigned n,unsigned pini,bool code
+    ,bool onlynormal,const byte* filterg,unsigned& npfilterdel);
   
-  void SelecDevice(int gpuid);
+  int SelecDevice(int gpuid);
   void ConfigBlockSizes(bool usezone,bool useperi);
 
   void ConfigRunMode();
   void ConfigCellDiv(JCellDivGpu* celldiv){ CellDiv=celldiv; }
-  void InitFloating();
+  void InitFloatingsGpu(float* ftomasspg,float4* ftodatag
+    ,double3* ftocenterg,float4* demdatag)const;
   void InitRunGpu();
 
-  void PreInteractionVars_Forces(unsigned np,unsigned npb);
-  void PreInteraction_Forces();
+  void PreInteraction_Forces(TpInterStep interstep);
   void PosInteraction_Forces();
   
   void ComputeVerlet(double dt);
@@ -254,10 +258,10 @@ protected:
   void CalcMotion(double stepdt);
   void RunMotion(double stepdt);
   void RunRelaxZone(double dt);
-  void RunDamping(double dt,unsigned np,unsigned npb,const double2 *posxy,const double *posz,const typecode *code,float4 *velrhop);
+  void RunDamping(double dt);
 
   void SaveVtkNormalsGpu(std::string filename,int numfile,unsigned np,unsigned npb
-    ,const double2 *posxyg,const double *poszg,const unsigned *idpg,const float3 *boundnormalg);
+    ,const double2* posxyg,const double* poszg,const unsigned* idpg,const float3* boundnorg);
 
 public:
   JSphGpu(bool withmpi);
@@ -266,13 +270,38 @@ public:
 //-Functions for debug.
 //----------------------
 public:
-  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg,const float4 *velrhopg)const;
-  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,unsigned cellcode,const double2 *posxyg,const double *poszg,const unsigned *idpg,const unsigned *dcelg,const typecode *codeg,const float4 *velrhopg,const float4 *velrhopm1g,const float3 *aceg);
-  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,bool idp,bool vel,bool rhop,bool code);
-  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,const float3 *posg,const byte *checkg=NULL,const unsigned *idpg=NULL,const float3 *velg=NULL,const float *rhopg=NULL);
-  void DgSaveCsvParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const float3 *posg=NULL,const unsigned *idpg=NULL,const float3 *velg=NULL,const float *rhopg=NULL,const float *arg=NULL,const float3 *aceg=NULL,const float3 *vcorrg=NULL);
-  void DgSaveCsvParticlesGpu2(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const float3 *posg=NULL,const unsigned *idpg=NULL,const float3 *velg=NULL,const float *rhopg=NULL,const float4 *pospres=NULL,const float4 *velrhop=NULL);
-  void DgSaveCsvParticles2(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string head,const tfloat3 *pos=NULL,const unsigned *idp=NULL,const tfloat3 *vel=NULL,const float *rhop=NULL,const tfloat4 *pospres=NULL,const tfloat4 *velrhop=NULL);
+  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,const double2* posxyg,const double* poszg,const typecode* codeg,const unsigned* idpg
+    ,const float4* velrhog,const float3* fsnormal)const;
+  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,const double2* posxyg,const double* poszg,const typecode* codeg,const unsigned* idpg
+    ,const float4* velrhog)const;
+  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,unsigned cellcode,const double2* posxyg,const double* poszg,const unsigned* idpg
+    ,const unsigned* dcelg,const typecode* codeg,const float4* velrhog
+    ,const float4* velrhom1g,const float3* aceg);
+  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,bool idp,bool vel,bool rho,bool code);
+  void DgSaveVtkParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,const float3* posg,const byte* checkg=NULL,const unsigned* idpg=NULL
+    ,const float3* velg=NULL,const float* rhog=NULL);
+  void DgSaveCsvParticlesGpu(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,std::string head,const float3* posg=NULL,const unsigned* idpg=NULL
+    ,const float3* velg=NULL,const float* rhog=NULL,const float* arg=NULL
+    ,const float3* aceg=NULL,const float3* vcorrg=NULL);
+  void DgSaveCsvParticlesGpu2(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,std::string head,const float3* posg=NULL,const unsigned* idpg=NULL
+    ,const float3* velg=NULL,const float* rhog=NULL,const float4* pospres=NULL
+    ,const float4* velrho=NULL);
+  void DgSaveCsvParticles2(std::string filename,int numfile,unsigned pini,unsigned pfin
+    ,std::string head,const tfloat3* pos=NULL,const unsigned* idp=NULL
+    ,const tfloat3* vel=NULL,const float* rho=NULL,const tfloat4* pospres=NULL
+    ,const tfloat4* velrho=NULL);
+    
+#ifdef _WITHMR //<vs_vrres_ini>
+  void DgSaveVtkParticlesGpuMultiRes(std::string filename,int numfile,unsigned pini,unsigned pfin,const double2 *posxyg
+  ,const double *poszg,const typecode *codeg,const unsigned *idpg,const float4 *velrhopg, const double* rcond=NULL,const float4 *shiftposg=NULL)const;
+#endif        //<vs_vrres_end>
 };
 
 #endif

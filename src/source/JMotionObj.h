@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -41,8 +41,19 @@ class TiXmlNode;
 class JMotionMovActive : protected JObject
 {
 public:
+  ///Type of motion data in time.
+  typedef enum{ 
+    TpDfNull=0     ///<None.
+   ,TpDfMov=1      ///<Position data.
+   ,TpDfRotAxis=2  ///<Rotation angle.
+   ,TpDfRotEuler=3 ///<Euler rotation angles.
+   ,TpDfPath=4     ///<Position and Euler rotation angles.
+  }TpDfType; 
+
+public:
   const double EventFinish;
-  double Start,Finish;
+  double Start;
+  double Finish;
   bool Flash;
   tdouble3 Vel;    //-Solo se usa para el RectilinearAce
   double VelAng;   //-Solo se usa para el RotationAce
@@ -51,14 +62,16 @@ public:
 
   //-Vars para el MovRectFile y MovRotFile
   static const unsigned DFSIZEMAX=104857600; ///<Maximum file size (100mb).
-  bool DfPosType;    //-Indica que se almacenan posiciones.
+  TpDfType DfType;   ///<Type of motio data in time.
   unsigned DfCount;  //-Numero de posiciones
   unsigned DfIndex;  //-Indice de posicionamiento temporal
   tdouble3 DfLastPos;
   double DfLastAng;
-  const double *DfTimes;   //-Tiempos
-  const tdouble3 *DfPos;   //-Posiciones
-  const double *DfAng;     //-Angulos, siemgre en grados.
+  const double*   DfTimes; //-Tiempos
+  const tdouble3* DfPos;   //-Posiciones
+  const double*   DfAng;   //-Angulos siemgre en grados.
+  const tdouble3* DfAngXYZ;//-Angulos XYZ siempre en grados.
+  tdouble3 DfLastAngXYZ;//-Angulos XYZ siempre en grados
 
   JMotionMov* Mov;
   bool Del;
@@ -70,11 +83,12 @@ public:
   void NextMov();
 
   void DfReset();
-  void DfConfig(bool postype);
+  void DfConfig(TpDfType dftype);
 
-  static unsigned BinarySearch(unsigned size,const double *times,double t);
+  static unsigned BinarySearch(unsigned size,const double* times,double t);
   tdouble3 DfGetNewPos(double t);
-  double DfGetNewAng(double t);
+  double   DfGetNewAng(double t);
+  tdouble3 DfGetNewAngXYZ(double t);
 };
 
 
@@ -99,7 +113,7 @@ private:
   std::vector<JMotionMovActive*> ActiveMovs;  //-Movimientos activos
 
   int GetPosMov(JMotionMov* mv)const;
-  void WriteXml(TiXmlNode* node,const JMotionEvent &evt)const;
+  void WriteXml(TiXmlNode* node,const JMotionEvent& evt)const;
 public:
   const unsigned Id; //-Identificador de objeto
   const int Ref;     //-Referencia a objeto real (ref<0 lo trata como un obj virtual)
@@ -112,7 +126,7 @@ public:
   JMotionObj* ObjGetPointer(unsigned id);
   JMotionObj* ObjGetPointerByRef(int ref);
   JMotionMov* MovGetPointer(unsigned id)const;
-  JMotionAxis* AxisGetPointer(const tdouble3 &p1,const tdouble3 &p2)const;
+  JMotionAxis* AxisGetPointer(const tdouble3& p1,const tdouble3& p2)const;
   void AddChild(JMotionObj* obj);
   void AddMov(JMotionMov* mov);
   void AddAxis(JMotionAxis* axis);
@@ -122,14 +136,14 @@ public:
   void BeginEvent(double start,double eventfinish,JMotionMov* mov);
  
   void ResetTime();
-  bool ProcesTime(double timestep,double dt,JMotionObj** lismov,unsigned &lismovcount,JMotionObj** lisstop,unsigned &lisstopcount);
-  bool GetMov(unsigned &ref,tdouble3 &mvsimple,JMatrix4d &mvmatrix)const;
+  bool ProcesTime(double timestep,double dt,JMotionObj** lismov,unsigned& lismovcount,JMotionObj** lisstop,unsigned& lisstopcount);
+  bool GetMov(unsigned& ref,tdouble3& mvsimple,JMatrix4d& mvmatrix)const;
   int GetMaxRef()const;
-  void GetRefs(std::vector<int> &refs)const;
+  void GetRefs(std::vector<int>& refs)const;
 
-  void CopyConfigMovs(JMotion &mot)const;
-  void CopyConfig(JMotion &mot)const;
-  void CopyChangeRef(JMotion &mot,const int* ref,const int* refnew,unsigned refcount)const;
+  void CopyConfigMovs(JMotion& mot)const;
+  void CopyConfig(JMotion& mot)const;
+  void CopyChangeRef(JMotion& mot,const int* ref,const int* refnew,unsigned refcount)const;
   bool ExistsObj(JMotionObj* obj)const;
   bool Optimize();
 

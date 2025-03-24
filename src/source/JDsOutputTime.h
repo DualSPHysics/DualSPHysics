@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -24,7 +24,7 @@
 //:# - GetNextTime() guarda entrada y salida para evitar calculos con llamadas 
 //:#   consecutivas iguales. (29-08-2019)
 //:# - Objeto JXml pasado como const para operaciones de lectura. (18-03-2020)  
-//:# - Improved exception managment. (18-03-2020)
+//:# - Improved exception management. (18-03-2020)
 //:# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //:# - Cambio de nombre de J.TimeOut a J.DsOutputTime. (28-06-2020)
 //:# - Elimina uso interno de JLog. (06-12-2020)
@@ -36,6 +36,7 @@
 #define _JDsTimeOut_
 
 #include "JObject.h"
+#include "TypesDef.h"
 #include <string>
 #include <vector>
 
@@ -65,8 +66,11 @@ protected:
 
   bool SpecialConfig; ///<Configuration loaded from XML file in special section.
 
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void LoadXml(const JXml *sxml,const std::string &place);
+  double SimpleTout;
+  ullong SimpleToutNum;
+
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  void LoadXml(const JXml* sxml,const std::string& place);
   unsigned GetCount()const{ return(unsigned(Times.size())); }
   bool AddTimeOut(double t,double tout);
   void CopyFrom(const JDsOutputTime* tout);
@@ -79,10 +83,10 @@ public:
   ~JDsOutputTime();
   void Reset();
   void Config(double timeoutdef);
-  void Config(std::string filexml,const std::string &place,double timeoutdef);
+  void Config(std::string filexml,const std::string& place,double timeoutdef);
   bool UseSpecialConfig()const{ return(SpecialConfig); }
   void VisuConfig(std::string txhead,std::string txfoot)const;
-  void GetConfig(std::string txhead,std::string txfoot,std::vector<std::string> &lines)const;
+  void GetConfig(std::string txhead,std::string txfoot,std::vector<std::string>& lines)const;
   double GetNextTime(double t);
 };
 

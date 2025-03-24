@@ -1,26 +1,24 @@
-#DualSPHysics CPU v5.2.251 23-09-2022
+#DualSPHysics CPU v5.4.351 07-12-2024
 
 #=============== Compilation Options (YES/NO) ===============
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
-COMPILE_VTKLIB=YES
-COMPILE_NUMEXLIB=YES
 COMPILE_CHRONO=YES
 COMPILE_WAVEGEN=YES
-COMPILE_MOORDYN=YES
+COMPILE_MOORDYNPLUS=YES
 
 LIBS_DIRECTORIES=-L./
 LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
 
-EXECNAME=DualSPHysics5.2CPU_linux64
+EXECNAME=DualSPHysics5.4CPU_linux64
 EXECS_DIRECTORY=../../bin/linux
 
 # -std=c++0x ---> Used to avoid errors for calls to enums
 ifeq ($(USE_DEBUG), YES)
-  CCFLAGS=-c -O0 -g -Wall -fopenmp -std=c++0x
+  CCFLAGS=-c -O0 -g -Wall -fopenmp -std=c++0x -D_WITHMR
 else
-  CCFLAGS=-c -O3 -fopenmp -std=c++0x
+  CCFLAGS=-c -O3 -fopenmp -std=c++0x -D_WITHMR
   ifeq ($(USE_FAST_MATH), YES)
     CCFLAGS+= -ffast-math
   endif
@@ -31,65 +29,69 @@ endif
 CC=g++
 CCLINKFLAGS=-fopenmp -lgomp
 
-ifeq ($(COMPILE_VTKLIB), NO)
-  CCFLAGS:=$(CCFLAGS) -DDISABLE_VTKLIB
-endif
-ifeq ($(COMPILE_NUMEXLIB), NO)
-  CCFLAGS:=$(CCFLAGS) -DDISABLE_NUMEXLIB
-endif
 ifeq ($(COMPILE_CHRONO), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_CHRONO
 endif
 ifeq ($(COMPILE_WAVEGEN), NO)
   CCFLAGS:=$(CCFLAGS) -DDISABLE_WAVEGEN
 endif
-ifeq ($(COMPILE_MOORDYN), NO)
-  CCFLAGS:=$(CCFLAGS) -DDISABLE_MOORDYN
+ifeq ($(COMPILE_MOORDYNPLUS), NO)
+  CCFLAGS:=$(CCFLAGS) -DDISABLE_MOORDYNPLUS
 endif
 
 #=============== Files to compile ===============
 OBJXML=JXml.o tinystr.o tinyxml.o tinyxmlerror.o tinyxmlparser.o
-OBJSPHMOTION=JMotion.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JDsMotion.o
-OBCOMMON=Functions.o FunGeo3d.o FunSphKernelsCfg.o JAppInfo.o JBinaryData.o JCfgRunBase.o JDataArrays.o JException.o JLinearValue.o JLog2.o JObject.o JOutputCsv.o JRadixSort.o JRangeFilter.o JReadDatafile.o JSaveCsv2.o JTimeControl.o randomc.o
-OBCOMMONDSPH=JDsphConfig.o JDsPips.o JPartDataBi4.o JPartDataHead.o JPartFloatBi4.o JPartOutBi4Save.o JCaseCtes.o JCaseEParms.o JCaseParts.o JCaseProperties.o JCaseUserVars.o JCaseVtkOut.o
-OBSPH=JArraysCpu.o JCellDivCpu.o JSphCfgRun.o JComputeMotionRef.o JDsDcell.o JDsDamping.o JDsExtraData.o JDsGaugeItem.o JDsGaugeSystem.o JDsPartsOut.o JDsSaveDt.o JSphShifting.o JSph.o JDsAccInput.o JSphCpu.o JDsInitialize.o JFtMotionSave.o JSphMk.o JDsPartsInit.o JDsFixedDt.o JDsViscoInput.o JDsOutputTime.o JDsTimers.o JWaveSpectrumGpu.o main.o
+OBJSPHMOTION=JMotion.o JMotionData.o JMotionList.o JMotionMov.o JMotionObj.o JMotionPos.o JDsMotion.o
+OBCOMMON=Functions.o FunGeo3d.o FunSphKernelsCfg.o JAppInfo.o JBinaryData.o JCfgRunBase.o JDataArrays.o
+OBCOMMON:=$(OBCOMMON) JException.o JLinearValue.o JLog2.o JObject.o JOutputCsv.o JRadixSort.o
+OBCOMMON:=$(OBCOMMON) JRangeFilter.o JReadDatafile.o JSaveCsv2.o JSpVtkData.o JSpVtkShape.o
+OBCOMMON:=$(OBCOMMON) JTimeControl.o JTrianglesMesh.o randomc.o
+OBCOMMONDSPH=JDsphConfig.o JDsPips.o JPartDataBi4.o JPartDataHead.o JDsPartFloatSave.o JDsPartMotionSave.o
+OBCOMMONDSPH:=$(OBCOMMONDSPH) JPartFloatInfoBi4.o JPartMotRefBi4Save.o JPartOutBi4Save.o JCaseCtes.o
+OBCOMMONDSPH:=$(OBCOMMONDSPH) JCaseEParms.o JCaseParts.o JCaseProperties.o
+OBSPH=JArraysCpu.o JCellDivCpu.o JDebugSphCpu.o JSphCfgRun.o JComputeMotionRef.o JDsDcell.o JDsDamping.o
+OBSPH:=$(OBSPH) JDsExtraData.o JDsGaugeItem.o JDsGaugeSystem.o JDsPartsOut.o JDsSaveDt.o JSphShifting.o
+OBSPH:=$(OBSPH) JSphShiftingAdv.o JSph.o JDsAccInput.o JSphCpu.o JSphCpu_mdbc.o JSphCpu_preloop.o
+OBSPH:=$(OBSPH) JDsInitialize.o JSphMk.o JDsOutputParts.o JDsPartsInit.o JDsFixedDt.o JDsViscoInput.o
+OBSPH:=$(OBSPH) JDsOutputTime.o JDsTimers.o JWaveSpectrumGpu.o main.o
 OBSPHSINGLE=JCellDivCpuSingle.o JPartsLoad4.o JSphCpuSingle.o
-
 OBWAVERZ=JMLPistonsGpu.o JRelaxZonesGpu.o
-OBCHRONO=JChronoObjects.o
-OBMOORDYN=JDsMooredFloatings.o JDsFtForcePoints.o
-OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphInOut.o JSphInOutZone.o JSphInOutGridData.o JSphInOutPoints.o JSphInOutVel.o JSphInOutVelAwas.o JSphInOutZsurf.o JSimpleNeigs.o
-OBMDBC=JPartNormalData.o
+OBCHRONO=JChronoGeoObj.o JChronoObjects.o
+OBMOORDYNPLUS=JDsMooredFloatings.o JDsFtForcePoints.o
+OBINOUT=JSphCpu_InOut.o JSphCpuSingle_InOut.o JSphInOut.o JSphInOutZone.o JSphInOutGridData.o
+OBINOUT:=$(OBINOUT) JSphInOutPoints.o JSphInOutVel.o JSphInOutVelAwas.o JSphInOutZsurf.o JSimpleNeigs.o
+OBMESH=JMeshData.o JMeshTDatas.o JMeshTDatasLoad.o JMeshTDatasSave.o JMeshTDatasDsVel.o JMeshTDatasXml.o
+OBVRES=JSphVRes.o JSphVResZone.o JSphCpuSingle_VRes.o JSphCpu_VRes.o JCaseVRes.o JVResDataLimits.o JDsVresData.o JBoxDef.o
+OBFLEXSTRUC=JSphFlexStruc.o
 
 OBJECTS=$(OBJXML) $(OBJSPHMOTION) $(OBCOMMON) $(OBCOMMONDSPH) $(OBSPH) $(OBSPHSINGLE)
-OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBCHRONO) $(OBMOORDYN) $(OBINOUT) $(OBMDBC)
+OBJECTS:=$(OBJECTS) $(OBWAVERZ) $(OBCHRONO) $(OBMOORDYNPLUS) $(OBINOUT) $(OBMESH) $(OBVRES) $(OBFLEXSTRUC)
 
 #=============== DualSPHysics libs to be included ===============
 JLIBS=${LIBS_DIRECTORIES}
-ifeq ($(COMPILE_VTKLIB), YES)
-  JLIBS:=$(JLIBS) -ljvtklib_64
-endif
-ifeq ($(COMPILE_NUMEXLIB), YES)
-  JLIBS:=$(JLIBS) -ljnumexlib_64
-endif
 ifeq ($(COMPILE_CHRONO), YES)
   JLIBS:=$(JLIBS) -ldsphchrono -lChronoEngine 
 endif
 ifeq ($(COMPILE_WAVEGEN), YES)
   JLIBS:=$(JLIBS) -ljwavegen_64
 endif
-ifeq ($(COMPILE_MOORDYN), YES)
-  JLIBS:=$(JLIBS) -ldsphmoordyn_64
+ifeq ($(COMPILE_MOORDYNPLUS), YES)
+  JLIBS:=$(JLIBS) -ldsphmoordynplus_64
 endif
 
 #=============== CPU Code Compilation ===============
-all:$(EXECS_DIRECTORY)/$(EXECNAME)
+all:compile_libs $(EXECS_DIRECTORY)/$(EXECNAME)
 	rm -rf *.o
 ifeq ($(USE_DEBUG), NO)
 	@echo "  --- Compiled Release CPU version ---"
 else
 	@echo "  --- Compiled Debug CPU version ---"
 	mv $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECNAME)_debug
+endif
+
+compile_libs:
+ifeq ($(COMPILE_MOORDYNPLUS), YES)
+	$(MAKE) -C Source_DSphMoorDynPlus -f Makefile_MoorDynPlus $(MAKEFLAGS)
 endif
 
 $(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)
@@ -99,4 +101,7 @@ $(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)
 	$(CC) $(CCFLAGS) $< 
 
 clean:
+ifeq ($(COMPILE_MOORDYNPLUS), YES)
+	$(MAKE) -C Source_DSphMoorDynPlus -f Makefile_MoorDynPlus clean
+endif
 	rm -rf *.o $(EXECNAME) $(EXECNAME)_debug

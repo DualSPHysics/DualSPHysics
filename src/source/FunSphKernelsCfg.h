@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -28,12 +28,12 @@
 
 /// Implements a set of basic/general functions related to SPH.
 namespace fsph{
-void RunExceptioonFun(const std::string &srcfile,int srcline,const std::string &fun
-  ,const std::string &msg,const std::string &file="");
+void RunExceptioonFun(const std::string& srcfile,int srcline,const std::string& fun
+  ,const std::string& msg,const std::string& file="");
 
 float GetKernelFactor(TpKernel tkernel);
 std::string GetKernelName(TpKernel tkernel);
-void GetKernelConfig(const StCteSph &CSP,std::vector<std::string> &lines);
+void GetKernelConfig(const StCteSph& CSP,std::vector<std::string>& lines);
 
 }
 

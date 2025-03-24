@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -65,26 +65,26 @@ private:
 
   double TimeMod;          ///<Modifies the timestep for motion | Modificador del TimeStep para Motion.
   unsigned ObjCount;       ///<Number of moving objects.
-  StMotionData *ObjMotion; ///<Motion data of moving objects.
+  StMotionData* ObjMotion; ///<Motion data of moving objects.
   StMotionData MotionNull;
 
-  //unsigned *ObjBegin;   ///<Initial particle of each moving object. [ObjCount+1]
-  //word     *ObjMkBound; ///<MkBound of each moving object. [ObjCount]
+  //unsigned* ObjBegin;   ///<Initial particle of each moving object. [ObjCount+1]
+  //word*     ObjMkBound; ///<MkBound of each moving object. [ObjCount]
 
-  //byte      *ObjTpmov;     ///<Type of motion (0:none, 1:linear, 2:matrix, 3:ignore). [ObjCount]
-  //tdouble3  *ObjLinMov;    ///<Linear motion. [ObjCount]
-  //tmatrix4d *ObjMatMov;    ///<Matrix motion. [ObjCount]
+  //byte*      ObjTpmov;     ///<Type of motion (0:none, 1:linear, 2:matrix, 3:ignore). [ObjCount]
+  //tdouble3*  ObjLinMov;    ///<Linear motion. [ObjCount]
+  //tmatrix4d* ObjMatMov;    ///<Matrix motion. [ObjCount]
 
-  JMotion *Mot;
+  JMotion* Mot;
   bool ActiveMotion;    ///<Indicates active motions after executing ProcesTime().
   double LastDt;        ///<Dt used in last call to ProcesTime().
-  void ConfigObjects(const JCaseParts *parts);
+  void ConfigObjects(const JCaseParts* parts);
 
 public:
   JDsMotion(bool simulate2d);
   ~JDsMotion();
   void Reset();
-  void Init(const JCaseParts *parts,JXml *jxml,const std::string &path,const std::string &dirdata);
+  void Init(const JCaseParts* parts,JXml* jxml,const std::string& path,const std::string& dirdata);
 
   unsigned GetNumObjects()const{ return(ObjCount); };
 
@@ -100,8 +100,8 @@ public:
   void SetMotionDataAce(const StMotionData& d);
 
   void SetMotionDataNone(unsigned idx);
-  void SetMotionDataLin (unsigned idx,const tdouble3 &linmov);
-  void SetMotionDataMat (unsigned idx,const tmatrix4d &matmov);
+  void SetMotionDataLin (unsigned idx,const tdouble3& linmov);
+  void SetMotionDataMat (unsigned idx,const tmatrix4d& matmov);
 
 };
 

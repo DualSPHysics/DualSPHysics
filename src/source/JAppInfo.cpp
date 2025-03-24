@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
-<DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+<DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
 EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
 School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -97,7 +97,7 @@ void JAppInfo::AddNameExtra(std::string extra){
 //==============================================================================
 // Adds extra name.
 //==============================================================================
-void JAppInfo::SetMainName(const std::string &mname){ 
+void JAppInfo::SetMainName(const std::string& mname){ 
   MainName=mname; 
 }
 
@@ -133,7 +133,7 @@ void JAppInfo::LogInit(std::string fname,bool mpirun,int mpirank,int mpilaunch){
   }
   //-Creates object for log.
   Log=new JLog2;
-  Log->Init(fname);
+  Log->Init(fname,mpirun,mpirank,mpilaunch);
 }
 #endif
 
@@ -158,7 +158,7 @@ std::string JAppInfo::GetFullName()const{
 //==============================================================================
 // Create directory path when necessary.
 //==============================================================================
-int JAppInfo::MkdirPath(const std::string &dir)const{
+int JAppInfo::MkdirPath(const std::string& dir)const{
   int ret=0;
   if(AppInfo.GetCreateDirs())ret=fun::MkdirPath(dir);
   return(ret);
@@ -167,7 +167,7 @@ int JAppInfo::MkdirPath(const std::string &dir)const{
 //==============================================================================
 // Create file path when necessary.
 //==============================================================================
-int JAppInfo::MkdirPathFile(const std::string &file)const{
+int JAppInfo::MkdirPathFile(const std::string& file)const{
   int ret=0;
   if(AppInfo.GetCreateDirs())ret=fun::MkdirPath(fun::GetDirParent(file));
   return(ret);

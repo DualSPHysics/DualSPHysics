@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -21,14 +21,6 @@
 #include "FunSphKernelsCfg.h"
 #include "FunSphKernel.h"
 #include "Functions.h"
-//#include <limits>
-//#include <cstdio>
-//#include <cstdlib>
-//#include <cstring>
-//#include <cfloat>
-//#include <cmath>
-//#include <climits>
-//#include <algorithm>
 
 using namespace std;
 
@@ -37,8 +29,8 @@ namespace fsph{
 //==============================================================================
 /// Throws an exception related to a file or not.
 //==============================================================================
-void RunExceptioonFun(const std::string &srcfile,int srcline,const std::string &fun
-  ,const std::string &msg,const std::string &file)
+void RunExceptioonFun(const std::string& srcfile,int srcline,const std::string& fun
+  ,const std::string& msg,const std::string& file)
 { 
   fun::RunExceptioonFun(srcfile,srcline,fun,msg,file);
 }
@@ -68,11 +60,11 @@ std::string GetKernelName(TpKernel tkernel){
 //==============================================================================
 /// Returns strings with Kernel configuration.
 //==============================================================================
-void GetKernelConfig(const StCteSph &CSP,std::vector<std::string> &lines){
+void GetKernelConfig(const StCteSph& CSP,std::vector<std::string>& lines){
   lines.push_back(fun::VarStr("Kernel",GetKernelName(CSP.tkernel)));
   switch(CSP.tkernel){
     case KERNEL_Cubic:{
-      const StKCubicCte &kc=CSP.kcubic;
+      const StKCubicCte& kc=CSP.kcubic;
       lines.push_back(fun::VarStr("  Cubic.a1" ,kc.a1));
       lines.push_back(fun::VarStr("  Cubic.aa" ,kc.aa));
       lines.push_back(fun::VarStr("  Cubic.a24",kc.a24));
@@ -82,9 +74,9 @@ void GetKernelConfig(const StCteSph &CSP,std::vector<std::string> &lines){
       lines.push_back(fun::VarStr("  Cubic.od_wdeltap",kc.od_wdeltap));
     }break;
     case KERNEL_Wendland:{
-      const StKWendlandCte &kc=CSP.kwend;
+      const StKWendlandCte& kc=CSP.kwend;
       lines.push_back(fun::VarStr("  Wendland.awen" ,kc.awen));
-      lines.push_back(fun::VarStr("  Wendland.bwen" ,kc.bwen));
+      lines.push_back(fun::VarStr("  Wendland.bwenh",kc.bwenh));
     }break;
     default: Run_ExceptioonFun("Kernel unknown.");
   }

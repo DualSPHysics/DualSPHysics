@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -34,6 +34,7 @@
 //:# - No reordena paraticulas para reducir diferencias usando restart. (23-04-2018)
 //:# - Improved definition of the periodic conditions. (27-04-2018)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
+//:# - Loads BoundNor data for mDBC. (26-11-2024)
 //:#############################################################################
 
 /// \file JPartsLoad4.h \brief Declares the class \ref JPartsLoad4.
@@ -56,11 +57,13 @@ class JPartsLoad4 : protected JObject
 protected:
   const bool UseOmp;
 
+  std::string FileLoaded;  ///<Path and filename of loaded file.
   unsigned Npiece;
   bool Simulate2D;         ///<Indicates 2D simulation.
   double Simulate2DPosY;   ///<Y value in 2D simulations.
   bool NpDynamic;          ///<CaseNp can increase.
   bool PosSingle;          ///<Particles position in single precision.
+  double CaseH;            ///<SPH constant h. 
 
   ullong CaseNp;           ///<Number of total particles.  
   ullong CaseNfixed;       ///<Number of fixed boundary particles. 
@@ -73,27 +76,30 @@ protected:
   tdouble3 PeriYinc;
   tdouble3 PeriZinc;
 
-  bool MapSize;                  ///<Indicates whether MapPosMin and MapPosMax are valid. | Indica si MapPosMin y MapPosMax son validos.
-  tdouble3 MapPosMin,MapPosMax;  ///<Domain limits that already include the border. | Limites del dominio que ya incluyen el borde.
-
-  tdouble3 CasePosMin,CasePosMax;
+  bool MapSize;            ///<Indicates whether MapPosMin and MapPosMax are valid. | Indica si MapPosMin y MapPosMax son validos.
+  tdouble3 MapPosMin;      ///<Domain limits that already include the border. | Limites del dominio que ya incluyen el borde.
+  tdouble3 MapPosMax;      ///<Domain limits that already include the border. | Limites del dominio que ya incluyen el borde.
+  tdouble3 CasePosMin;
+  tdouble3 CasePosMax;
 
   unsigned PartBegin;
   double PartBeginTimeStep;
-  ullong PartBeginTotalNp;        ///<Total number of simulated particles.
+  ullong PartBeginTotalNp;    ///<Total number of simulated particles.
 
   //-Variables to restart.
-  double SymplecticDtPre;        ///<Previous Dt to use with Symplectic.
-  double DemDtForce;             ///<Dt for tangencial acceleration in DEM calculations.
+  double SymplecticDtPre;     ///<Previous Dt to use with Symplectic.
+  double DemDtForce;          ///<Dt for tangencial acceleration in DEM calculations.
 
   //-Variables for particles.
-  unsigned Count;    //-Number of particles.
-  unsigned *Idp;
-  tdouble3 *Pos;
-  tfloat4 *VelRhop;
+  unsigned Count;      ///<Total number of particles.
+  unsigned BoundCount; ///<Number of boundary particles.
+  unsigned* Idp;       ///<Identifier of particle [Count].
+  tdouble3* Pos;       ///<Position of particle [Count].
+  tfloat4*  VelRho;    ///<Velocity + density of particle [Count].
+  tfloat3*  BoundNor;  ///<Normal (x,y,z) pointing from boundary particles to boundary limit [BoundCount].
 
-  void AllocMemory(unsigned count);
-  template<typename T> T* SortParticles(const unsigned *vsort,unsigned count,T *v)const;
+  void AllocMemory(unsigned count,unsigned boundcount);
+  template<typename T> T* SortParticles(const unsigned* vsort,unsigned count,T* v)const;
   void CheckSortParticles();
   void SortParticles();
   void CalculateCasePos();
@@ -103,7 +109,7 @@ public:
   ~JPartsLoad4();
   void Reset();
 
-  void LoadParticles(const std::string &casedir,const std::string &casename,unsigned partbegin,const std::string &casedirbegin);
+  void LoadParticles(const std::string& casedir,const std::string& casename,unsigned partbegin,const std::string& casedirbegin);
   void CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid,bool simulate2d,double simulate2dposy,TpPeri tperi)const;
   void CheckConfig(ullong casenp,ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid)const;
   void RemoveBoundary();
@@ -111,18 +117,29 @@ public:
   unsigned GetCount()const{ return(Count); }
 
   bool MapSizeLoaded()const{ return(MapSize); }
-  void GetMapSize(tdouble3 &mapmin,tdouble3 &mapmax)const;
-  void CalculeLimits(double border,double borderperi,bool perix,bool periy,bool periz,tdouble3 &mapmin,tdouble3 &mapmax);
+  void GetMapSize(tdouble3& mapmin,tdouble3& mapmax)const;
+  void CalculeLimits(double border,double borderperi
+    ,bool perix,bool periy,bool periz,tdouble3& mapmin,tdouble3& mapmax);
+  void CalculeLimitsPos(tdouble3 posmin,tdouble3 posmax,double border,double borderperi
+    ,bool perix,bool periy,bool periz,tdouble3& mapmin,tdouble3& mapmax)const;
 
+  std::string GetFileLoaded()const{ return(FileLoaded); }
   bool GetSimulate2D()const{ return(Simulate2D); }
   double GetSimulate2DPosY()const{ return(Simulate2DPosY); }
   bool GetPosSingle()const{ return(PosSingle); }
   double GetPartBeginTimeStep()const{ return(PartBeginTimeStep); }
   ullong GetPartBeginTotalNp()const{ return(PartBeginTotalNp); }
 
+  double GetCaseH()const{ return(CaseH); }
+  ullong GetCaseNfixed() const{ return(CaseNfixed); }
+  ullong GetCaseNmoving()const{ return(CaseNmoving); }
+  ullong GetCaseNfloat() const{ return(CaseNfloat); }
+  ullong GetCaseNfluid() const{ return(CaseNfluid); }
+
   const unsigned* GetIdp(){ return(Idp); }
   const tdouble3* GetPos(){ return(Pos); }
-  const tfloat4* GetVelRhop(){ return(VelRhop); }
+  const tfloat4*  GetVelRho(){ return(VelRho); }
+  const tfloat3*  GetBoundNor(){ return(BoundNor); }
 
   tdouble3 GetCasePosMin()const{ return(CasePosMin); }
   tdouble3 GetCasePosMax()const{ return(CasePosMax); }

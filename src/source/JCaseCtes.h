@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -145,25 +145,27 @@ private:
   //-Computed values:
   double Dp;              ///<Inter-particle distance.
 
-  void ReadXmlElementAuto(JXml *sxml,TiXmlElement* node,bool optional,std::string name,double &value,bool &valueauto);
-  void WriteXmlElementAuto(JXml *sxml,TiXmlElement* node,std::string name,double value,bool valueauto,std::string comment="",std::string unitscomment="")const;
+  void ReadXmlElementAuto(JXml* sxml,TiXmlElement* node,bool optional
+    ,std::string name,double& value,bool& valueauto);
+  void WriteXmlElementAuto(JXml* sxml,TiXmlElement* node,std::string name
+    ,double value,bool valueauto,std::string comment="",std::string unitscomment="")const;
 
   void WriteXmlElementComment(TiXmlElement* ele,std::string comment="",std::string unitscomment="")const;
 
-  void ReadXmlDef(JXml *sxml,TiXmlElement* ele);
-  void WriteXmlDef(JXml *sxml,TiXmlElement* ele,bool svtemplate)const;
-  void ReadXmlRun(const JXml *sxml,TiXmlElement* ele);
-  void WriteXmlRun(JXml *sxml,TiXmlElement* ele)const;
+  void ReadXmlDef(JXml* sxml,TiXmlElement* ele);
+  void WriteXmlDef(JXml* sxml,TiXmlElement* ele,bool svtemplate)const;
+  void ReadXmlRun(const JXml* sxml,TiXmlElement* ele);
+  void WriteXmlRun(JXml* sxml,TiXmlElement* ele)const;
 
 public:
   //static StConstants CalcConstans(StConstants cte);
   JCaseCtes();
   void Reset();
   void LoadDefault();
-  void LoadXmlDef(JXml *sxml,const std::string &place);
-  void SaveXmlDef(JXml *sxml,const std::string &place,bool svtemplate=false)const;
-  void LoadXmlRun(const JXml *sxml,const std::string &place);
-  void SaveXmlRun(JXml *sxml,const std::string &place)const;
+  void LoadXmlDef(JXml* sxml,const std::string& place);
+  void SaveXmlDef(JXml* sxml,const std::string& place,bool svtemplate=false)const;
+  void LoadXmlRun(const JXml* sxml,const std::string& place);
+  void SaveXmlRun(JXml* sxml,const std::string& place)const;
 
   bool GetData2D()const{ return(Data2D); }
   double GetData2DPosY()const{ return(Data2DPosY); }

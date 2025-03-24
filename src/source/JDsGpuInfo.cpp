@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2021 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -58,7 +58,7 @@ void JDsGpuInfo::Reset(){
 //==============================================================================
 /// Shows information on available GPUs.
 //==============================================================================
-int JDsGpuInfo::ShowGpusInfo(JLog2 *log){
+int JDsGpuInfo::ShowGpusInfo(JLog2* log){
   //log->Print("[Available CUDA devices]");
   vector<string> gpuinfo;
   vector<fcuda::StGpuInfo> gpuprops;
@@ -88,7 +88,7 @@ int JDsGpuInfo::SelectGpu(int gpuid){
     //-GPU selection.
     AutoSelect=(gpuid<0);
     if(AutoSelect){
-      unsigned *ptr=NULL;
+      unsigned* ptr=NULL;
       cudaMalloc((void**)&ptr,sizeof(unsigned)*100);
       cudaFree(ptr);
     }
@@ -113,10 +113,10 @@ int JDsGpuInfo::SelectGpu(int gpuid){
 //==============================================================================
 /// Shows main information on selected GPU.
 //==============================================================================
-void JDsGpuInfo::ShowSelectGpusInfo(JLog2 *log){
+void JDsGpuInfo::ShowSelectGpusInfo(JLog2* log){
   log->Printf("Device %s: %d \"%s\"",(AutoSelect? "default": "selected"),GpuId,Name.c_str());
   log->Printf("Compute capability: %.1f",float(Compute)/10);
-  log->Printf("Memory global: %d MB",int(GlobalMem/(1024*1024)));
+  log->Printf("Memory global: %d MiB",int(GlobalMem/MEBIBYTE));
   log->Printf("Memory shared: %u Bytes",SharedMem);
   log->Print(" ");
 }

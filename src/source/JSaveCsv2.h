@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -35,6 +35,7 @@
 //:# - Nuevo metodo AddHead3() y clase Head3 para cabeceras de datos triples. (02-11-2020)
 //:# - Soporta tipo tmatrix4d. (04-02-2021)
 //:# - Mejora de rendimiento para volumenes grandes usando append. (05-03-2023)
+//:# - Error corregido en uso de vsnprintf(). (24-07-2024)
 //:# =========
 //:# To defnine output format use: 
 //:#   jcsv::JSaveCsv2 scsv( );
@@ -91,7 +92,7 @@ public:
   const TpFormat TypeFmt;
   const std::string Format;
   Fmt(TpFormat typefmt):TypeFmt(typefmt),Format(""){};
-  Fmt(TpFormat typefmt,const std::string &format):TypeFmt(typefmt),Format(format){};
+  Fmt(TpFormat typefmt,const std::string& format):TypeFmt(typefmt),Format(format){};
 };
 
 
@@ -162,7 +163,7 @@ private:
   const bool App;          ///<Append mode enabled.
   const bool CsvSepComa;   ///<Separator character in CSV files (0=semicolon, 1=coma).
 
-  std::fstream *Pf;
+  std::fstream* Pf;
   bool AppendMode;         ///<File already exists and was opened to append data.
   bool FirstSaveData;
 
@@ -184,13 +185,13 @@ private:
   void AddEndl();
   void AddHead3(std::string headtx);
 
-  void Save(const std::string &tx);
-  void SetSeparators(std::string &tx)const;
+  void Save(const std::string& tx);
+  void SetSeparators(std::string& tx)const;
   void OpenFile();
-  //void R unException(const std::string &method,const std::string &msg){
+  //void R unException(const std::string& method,const std::string& msg){
   //  ExceptionThrown=true; JObject::R unException(method,msg);
   //}
-  //void R unException(const std::string &method,const std::string &msg,const std::string &file){
+  //void R unException(const std::string& method,const std::string& msg,const std::string& file){
   //  ExceptionThrown=true; JObject::R unException(method,msg,file);
   //}
 
@@ -204,21 +205,21 @@ public:
 
   const std::string& GetFmtDefault(TpFormat tfmt)const{ return(FmtDefault[tfmt]); };
   const std::string& GetFmtCurrent(TpFormat tfmt)const{ return(FmtCurrent[tfmt]); };
-  void SetFmtCurrent(TpFormat tfmt,const std::string &fmt){ FmtCurrent[tfmt]=fmt; };
+  void SetFmtCurrent(TpFormat tfmt,const std::string& fmt){ FmtCurrent[tfmt]=fmt; };
 
   void SetHead(){ DataSelected=false; }
   void SetData(){ DataSelected=true;  }
 
-  std::string ToStr(const char *format,...)const;
+  std::string ToStr(const char* format,...)const;
 
-  JSaveCsv2& operator <<(const Sep &obj);
-  JSaveCsv2& operator <<(const AutoSepOn &obj);
-  JSaveCsv2& operator <<(const AutoSepOff &obj);
-  JSaveCsv2& operator <<(const Endl &obj);
-  JSaveCsv2& operator <<(const Fmt &obj);
-  JSaveCsv2& operator <<(const Head3 &obj);
+  JSaveCsv2& operator <<(const Sep& obj);
+  JSaveCsv2& operator <<(const AutoSepOn& obj);
+  JSaveCsv2& operator <<(const AutoSepOff& obj);
+  JSaveCsv2& operator <<(const Endl& obj);
+  JSaveCsv2& operator <<(const Fmt& obj);
+  JSaveCsv2& operator <<(const Head3& obj);
 
-  JSaveCsv2& operator <<(const std::string &v){ AddStr(v); return(*this); }
+  JSaveCsv2& operator <<(const std::string& v){ AddStr(v); return(*this); }
 
   JSaveCsv2& operator <<(char     v){ AddStr(ToStr(FmtCurrent[TpSigned1  ].c_str(),v)); return(*this); }
   JSaveCsv2& operator <<(short    v){ AddStr(ToStr(FmtCurrent[TpSigned1  ].c_str(),v)); return(*this); }
@@ -233,23 +234,23 @@ public:
   JSaveCsv2& operator <<(float    v){ AddStr(ToStr(FmtCurrent[TpFloat1   ].c_str(),v)); return(*this); }
   JSaveCsv2& operator <<(double   v){ AddStr(ToStr(FmtCurrent[TpDouble1  ].c_str(),v)); return(*this); }
 
-  JSaveCsv2& operator <<(const tint2   &v){ AddStr(ToStr(FmtCurrent[TpSigned2  ].c_str(),v.x,v.y));         return(*this); }
-  JSaveCsv2& operator <<(const tint3   &v){ AddStr(ToStr(FmtCurrent[TpSigned3  ].c_str(),v.x,v.y,v.z));     return(*this); }
-  JSaveCsv2& operator <<(const tint4   &v){ AddStr(ToStr(FmtCurrent[TpSigned4  ].c_str(),v.x,v.y,v.z,v.w)); return(*this); }
+  JSaveCsv2& operator <<(const tint2&    v){ AddStr(ToStr(FmtCurrent[TpSigned2  ].c_str(),v.x,v.y));         return(*this); }
+  JSaveCsv2& operator <<(const tint3&    v){ AddStr(ToStr(FmtCurrent[TpSigned3  ].c_str(),v.x,v.y,v.z));     return(*this); }
+  JSaveCsv2& operator <<(const tint4&    v){ AddStr(ToStr(FmtCurrent[TpSigned4  ].c_str(),v.x,v.y,v.z,v.w)); return(*this); }
 
-  JSaveCsv2& operator <<(const tuint2  &v){ AddStr(ToStr(FmtCurrent[TpUnsigned2].c_str(),v.x,v.y));         return(*this); }
-  JSaveCsv2& operator <<(const tuint3  &v){ AddStr(ToStr(FmtCurrent[TpUnsigned3].c_str(),v.x,v.y,v.z));     return(*this); }
-  JSaveCsv2& operator <<(const tuint4  &v){ AddStr(ToStr(FmtCurrent[TpUnsigned4].c_str(),v.x,v.y,v.z,v.w)); return(*this); }
+  JSaveCsv2& operator <<(const tuint2&   v){ AddStr(ToStr(FmtCurrent[TpUnsigned2].c_str(),v.x,v.y));         return(*this); }
+  JSaveCsv2& operator <<(const tuint3&   v){ AddStr(ToStr(FmtCurrent[TpUnsigned3].c_str(),v.x,v.y,v.z));     return(*this); }
+  JSaveCsv2& operator <<(const tuint4&   v){ AddStr(ToStr(FmtCurrent[TpUnsigned4].c_str(),v.x,v.y,v.z,v.w)); return(*this); }
 
-  JSaveCsv2& operator <<(const tfloat2  &v){ AddStr(ToStr(FmtCurrent[TpFloat2  ].c_str(),v.x,v.y));         return(*this); }
-  JSaveCsv2& operator <<(const tfloat3  &v){ AddStr(ToStr(FmtCurrent[TpFloat3  ].c_str(),v.x,v.y,v.z));     return(*this); }
-  JSaveCsv2& operator <<(const tfloat4  &v){ AddStr(ToStr(FmtCurrent[TpFloat4  ].c_str(),v.x,v.y,v.z,v.w)); return(*this); }
+  JSaveCsv2& operator <<(const tfloat2&  v){ AddStr(ToStr(FmtCurrent[TpFloat2  ].c_str(),v.x,v.y));         return(*this); }
+  JSaveCsv2& operator <<(const tfloat3&  v){ AddStr(ToStr(FmtCurrent[TpFloat3  ].c_str(),v.x,v.y,v.z));     return(*this); }
+  JSaveCsv2& operator <<(const tfloat4&  v){ AddStr(ToStr(FmtCurrent[TpFloat4  ].c_str(),v.x,v.y,v.z,v.w)); return(*this); }
 
-  JSaveCsv2& operator <<(const tdouble2 &v){ AddStr(ToStr(FmtCurrent[TpDouble2 ].c_str(),v.x,v.y));         return(*this); }
-  JSaveCsv2& operator <<(const tdouble3 &v){ AddStr(ToStr(FmtCurrent[TpDouble3 ].c_str(),v.x,v.y,v.z));     return(*this); }
-  JSaveCsv2& operator <<(const tdouble4 &v){ AddStr(ToStr(FmtCurrent[TpDouble4 ].c_str(),v.x,v.y,v.z,v.w)); return(*this); }
+  JSaveCsv2& operator <<(const tdouble2& v){ AddStr(ToStr(FmtCurrent[TpDouble2 ].c_str(),v.x,v.y));         return(*this); }
+  JSaveCsv2& operator <<(const tdouble3& v){ AddStr(ToStr(FmtCurrent[TpDouble3 ].c_str(),v.x,v.y,v.z));     return(*this); }
+  JSaveCsv2& operator <<(const tdouble4& v){ AddStr(ToStr(FmtCurrent[TpDouble4 ].c_str(),v.x,v.y,v.z,v.w)); return(*this); }
 
-  JSaveCsv2& operator <<(const tmatrix4d &v){ 
+  JSaveCsv2& operator <<(const tmatrix4d& v){ 
     AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a11)); 
     AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a12)); 
     AddStr(ToStr(FmtCurrent[TpDouble1].c_str(),v.a13)); 

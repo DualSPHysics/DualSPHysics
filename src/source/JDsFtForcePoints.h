@@ -1,6 +1,6 @@
 //HEAD_DSTOOLS
 /* 
- <DualSPHysics codes>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <DualSPHysics codes>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between:
@@ -28,8 +28,8 @@
 //:# =========
 //:# - Gestiona la aplicacion de fuerzas externas a floatings. (07-02-2017)
 //:# - Inclusion en codigo DualSPHysics v4.2.073. (13-08-2018)
-//:# - Cambia uso de JFormatFiles2 por JVtkLib. (12-12-2019)
-//:# - Actualiza coupling con MoorDyn. (23-12-2019)
+//:# - Cambia uso de JFormatFiles2 por JVtk Lib. (12-12-2019)
+//:# - Actualiza coupling con MoorDynPlus. (23-12-2019)
 //:# - Saves VTK files in MooringsVtk directory. (24-12-2019)
 //:# - Cambio de nombre de J.SphFtForcePoints a J.DsFtForcePoints. (28-06-2020)
 //:# - Se proporcionan datos de fuerzas en lugar de aceleraciones. (24-11-2021)
@@ -57,7 +57,7 @@ class JSphMk;
 class JDsFtForcePoints : protected JObject
 {
 private:
-  JLog2 *Log;
+  JLog2* Log;
   const bool Cpu;
   const double Dp;     ///<Initial distance between particles [m].
 
@@ -73,35 +73,35 @@ private:
   tdouble3 PeriZinc;   ///<Value that is added at the outer limit to modify the position.
 
   const word FtCount; ///<Number of floating objects.
-  float *FtRadius;    ///<Maximum distance between particles and center [FtCount].
-  float *FtMass;      ///<Mass of the floating object [FtCount].
+  float* FtRadius;    ///<Maximum distance between particles and center [FtCount].
+  float* FtMass;      ///<Mass of the floating object [FtCount].
 
-  word *FtCountPt;    ///<Number of points for each floating [FtCount].
-  word *FtBeginPt;    ///<Begin of points for each floating [FtCount].
+  word* FtCountPt;    ///<Number of points for each floating [FtCount].
+  word* FtBeginPt;    ///<Begin of points for each floating [FtCount].
 
   //-Variables to apply forces on floating bodies.
   word PtCount;       ///<Total number of points.
-  word  *PtId;        ///<Id for points (for initialization) [PtCount].
-  word  *PtFtid;      ///<Id of floating (for initialization) [PtCount].
-  word  *PtMkBound;   ///<MkBound of floating [PtCount].
-  float *PartDist;    ///<Initial distance to nearest particle [PtCount].
+  word*  PtId;        ///<Id for points (for initialization) [PtCount].
+  word*  PtFtid;      ///<Id of floating (for initialization) [PtCount].
+  word*  PtMkBound;   ///<MkBound of floating [PtCount].
+  float* PartDist;    ///<Initial distance to nearest particle [PtCount].
 
   double TimeStep;    ///<Current instant of the simulation.
-  tdouble3 *PtPos;    ///<Application position [PtCount].
-  tfloat3 *PtVel;     ///<Velocity [PtCount].
-  tfloat3 *PtForce;   ///<Force [PtCount].
+  tdouble3* PtPos;    ///<Application position [PtCount].
+  tfloat3*  PtVel;    ///<Velocity [PtCount].
+  tfloat3*  PtForce;  ///<Force [PtCount].
 
   word SelFtCount;      ///<Number of floating objects with force points.  
-  word *SelFtIndex;     ///<Index to selected floatings. Uses USHRT_MAX when index is invalid [FtCount].
-  word *SelFtid;        ///<Id of floating [SelFtCount].
-  tdouble3 *SelFtCenter;   ///<Center of the selected floating [SelFtCount].
-  tfloat3  *SelFtForceLin; ///<Total sum of linear forces of each selected floating [SelFtCount].
-  tfloat3  *SelFtForceAng; ///<Total sum of angular forces of each selected floating [SelFtCount].
+  word* SelFtIndex;     ///<Index to selected floatings. Uses USHRT_MAX when index is invalid [FtCount].
+  word* SelFtid;        ///<Id of floating [SelFtCount].
+  tdouble3* SelFtCenter;   ///<Center of the selected floating [SelFtCount].
+  tfloat3*  SelFtForceLin; ///<Total sum of linear forces of each selected floating [SelFtCount].
+  tfloat3*  SelFtForceAng; ///<Total sum of angular forces of each selected floating [SelFtCount].
 
   void AllocMemoryFt(word ftcount);
   void AllocMemorySelFt(word selftcount);
   void ResizeMemoryPt(word ptcount);
-  inline tfloat3 FtPeriodicDist(const tdouble3 &pos,const tdouble3 &center,float radius)const;
+  inline tfloat3 FtPeriodicDist(const tdouble3& pos,const tdouble3& center,float radius)const;
   void ConfigPeri(byte periactive,bool perix,bool periy,bool periz,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
   void SaveVtkPoints(unsigned numfile)const;
   void SaveCsvPoints(unsigned numfile)const;
@@ -113,14 +113,15 @@ public:
   llong GetAllocMemory()const;
 
   void SetSaveData(bool savecsv,bool savevtk){ SvCsvPoints|=savecsv; SvVtkPoints|=savevtk; }
-  word AddPoint(unsigned ftid,word ftmkb,const tdouble3 &pos);
+  word AddPoint(unsigned ftid,word ftmkb,const tdouble3& pos);
   word GetIdx(word ptid)const;
 
-  void Config(unsigned ftcount,const StFloatingData *ftdata,byte periactive,bool perix,bool periy,bool periz,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
-  void CheckPoints(const JSphMk *mkinfo,unsigned np,const unsigned *idp,const tdouble3 *pos);
-  void VisuConfig(std::string txhead,std::string txfoot,unsigned ftcount,const StFloatingData *ftdata)const;
+  void Config(unsigned ftcount,const StFloatingData* ftdata,byte periactive
+    ,bool perix,bool periy,bool periz,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
+  void CheckPoints(const JSphMk* mkinfo,unsigned np,const unsigned* idp,const tdouble3* pos);
+  void VisuConfig(std::string txhead,std::string txfoot,unsigned ftcount,const StFloatingData* ftdata)const;
 
-  void UpdatePoints(double timestep,double dt,const StFloatingData *ftdata);
+  void UpdatePoints(double timestep,double dt,bool ftpaused,const StFloatingData* ftdata);
 
   tdouble3 GetPos(word idx)const{ return(PtPos[idx]); }
   tfloat3 GetVel(word idx)const{ return(PtVel[idx]); }
@@ -130,9 +131,9 @@ public:
   const tdouble3* GetPtPos    ()const{ return(PtPos);     }
   const tfloat3*  GetPtForce  ()const{ return(PtForce);   }
 
-  void SetForce(word idx,const tfloat3 &force){ PtForce[idx]=force; }
+  void SetForce(word idx,const tfloat3& force){ PtForce[idx]=force; }
   void ComputeForcesSum();
-  void GetFtForcesSum(StFtoForces *ftoforces)const;
+  void GetFtForcesSum(tfloat6* ftoforces)const;
 
   void SaveData(unsigned numfile)const;
 };

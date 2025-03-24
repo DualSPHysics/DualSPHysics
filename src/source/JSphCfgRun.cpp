@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -21,9 +21,13 @@
 #include "JSphCfgRun.h"
 #include "JAppInfo.h"
 #include "JDsphConfig.h"
+#include <cfloat>
 
 using namespace std;
 
+//##############################################################################
+//# JSphCfgRun
+//##############################################################################
 //==============================================================================
 /// Constructor.
 //==============================================================================
@@ -36,26 +40,38 @@ JSphCfgRun::JSphCfgRun():JCfgRunBase(){
 /// Initialisation of variables.
 //==============================================================================
 void JSphCfgRun::Reset(){
-  PrintInfo=false; DirsDef=0;
+  PrintInfo=false;
+  DirsDef=0;
   Cpu=true;
-  Gpu=false; GpuId=-1; GpuFree=false;
+  Gpu=false;
+  GpuId=-1;
   Stable=false;
   SvPosDouble=-1;
   SvExtraParts="undefined";
   OmpThreads=0;
   SvTimers=true;
-  CellDomFixed=false;
   CellMode=CELLMODE_Full;
-  TBoundary=0; SlipMode=0; MdbcFastSingle=-1; MdbcThreshold=-1;
+  CellDomFixed=false;
+  TBoundary=-1;
+  SlipMode=-1;
+  NoPenetration=false;
   DomainMode=0;
   DomainFixedMin=DomainFixedMax=TDouble3(0);
-  TStep=STEP_None; VerletSteps=-1;
+  TStep=STEP_None;
+  VerletSteps=-1;
   TKernel=KERNEL_None;
-  TVisco=VISCO_None; Visco=0; ViscoBoundFactor=-1;
+  TVisco=VISCO_None;
+  Visco=0;
+  ViscoBoundFactor=-1;
+  TimeMax=-1;
+  TimePart=-1;
+  TimePartExtra=DBL_MAX;
   TDensity=-1;
   DDTValue=-1;
   DDTValueTRamp=DDTValueTMax=DDTValueMax=0;  //<vs_ddramp>
   Shifting=-1;
+  ShiftAdvALE=false; //<vs_advshift>
+  ShiftAdvNCP=false; //<vs_advshift>
   Sv_Binx=true; 
   Sv_Info=true;
   Sv_Vtk=false;
@@ -63,12 +79,18 @@ void JSphCfgRun::Reset(){
   SvNormals=false; 
   SvRes=true; 
   SvDomainVtk=false;
-  CaseName=""; RunName=""; DirOut=""; DirDataOut=""; 
-  PartBegin=0; PartBeginFirst=0; PartBeginDir="";
+  CaseName="";
+  RunName="";
+  DirOut="";
+  DirDataOut="data"; 
+  PartBegin=0;
+  PartBeginFirst=0;
+  PartBeginDir="";
   RestartChrono=false;
-  TimeMax=-1; TimePart=-1;
   CFLnumber=-1;
-  RhopOutModif=false; RhopOutMin=700; RhopOutMax=1300;
+  RhopOutModif=false;
+  RhopOutMin=700;
+  RhopOutMax=1300;
   FtPause=-1;
   NstepsBreak=0;
   SvAllSteps=false;
@@ -76,52 +98,68 @@ void JSphCfgRun::Reset(){
   PipsMode=0; PipsSteps=100;
   CreateDirs=true;
   CsvSepComa=false;
+  #ifdef _WITHMR //<vs_vrres_ini>
+    VRes=false;
+    VResOrder=-1;
+    VResMethod=-1;
+    MRFastSingle=true;
+    VResThreshold=-1;
+  #endif         //<vs_vrres_end>
+
 }
 
 //==============================================================================
 /// Shows information about execution parameters.
 //==============================================================================
 void JSphCfgRun::VisuInfo()const{
+  if(!FeatureList.empty())printf("Available features: %s.\n",FeatureList.c_str());
+  printf("\n");
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
-  printf("Information about execution parameters:\n\n");
-  printf("  DualSPHysics [name_case [dir_out]] [options]\n\n");
+  printf("Information about execution parameters:\n");
+  printf("\n");
+  printf("  DualSPHysics [name_case [dir_out]] [options]\n");
+  printf("\n");
   printf("  General options:\n");
-//  printf("  Options:\n");
   printf("    -h          Shows information about parameters\n");
   printf("    -ver        Shows version information\n");
   printf("    -info       Shows version features in JSON format\n");
   printf("    -opt <file> Loads a file configuration\n");
   printf("\n");
 
-  printf("  Execution options:\n");
+  printf("  Execution options for CPU:\n");
   printf("    -cpu        Execution on CPU (option by default)\n");
-  printf("    -gpu[:id]   Execution on GPU and id of the device\n");
+#ifdef OMP_USE
+  printf("    -ompthreads:<int>  Only for CPU execution, indicates the number of threads\n");
+  printf("                by host for parallel execution, this takes the number of cores\n");
+  printf("                of the device by default (or using zero value)\n");
+#endif
   printf("\n");
+
+#ifdef _WITHGPU
+  printf("  Execution options for Single-GPU:\n");
+  printf("    -gpu[:id]   Execution on GPU and optional id of the device\n");
+  printf("\n");
+#endif
+
+  printf("  General execution options:\n");
   printf("    -stable     The result is always the same but the execution is slower\n");
   printf("    -saveposdouble:<0/1>  Saves position using double precision (default=0)\n");
   printf("    -svextraparts:<int>  PART interval for saving extra data (default=0)\n");
   printf("    -svextraparts:<list> List of PARTs for saving extra data (default=0)\n");
   printf("\n");
-#ifdef OMP_USE
-  printf("    -ompthreads:<int>  Only for CPU execution, indicates the number of threads\n");
-  printf("                   by host for parallel execution, this takes the number of \n");
-  printf("                   cores of the device by default (or using zero value)\n");
-  printf("\n");
-#endif
   printf("    -cellmode:<mode>  Specifies the cell division mode\n");
   printf("        full      Lowest and the least expensive in memory (by default)\n");
   printf("        half      Fastest and the most expensive in memory\n");
   printf("    -cellfixed:<0/1>  Cell domain is fixed according maximum domain size\n");
+  printf("                      (default=0)\n");
   printf("\n");
 
   printf("  Formulation options:\n");
-  printf("    -dbc           Dynamic Boundary Condition DBC (by default)\n");
-  printf("    -mdbc          Modified Dynamic Boundary Condition mDBC (mode: vel=0)\n");
-  printf("    -mdbc_noslip   Modified Dynamic Boundary Condition mDBC (mode: no-slip)\n");
-  printf("    -mdbc_freeslip Modified Dynamic Boundary Condition mDBC (mode: free-slip)\n");
+  printf("    -dbc                    Dynamic Boundary Condition DBC (by default)\n");
+  printf("    -mdbc                   Modified Dynamic Boundary Condition mDBC (vel=0 mode)\n");
+  printf("    -mdbc_noslip[:nopen]    Modified Dynamic Boundary Condition mDBC (no-slip mode)\n");
+  printf("    -mdbc_freeslip[:nopen]  Modified Dynamic Boundary Condition mDBC (free-slip mode)\n");
 /////////|---------1---------2---------3---------4---------5---------6---------7--------X8
-  printf("    -mdbc_fast:<0/1>        Fast single precision calculation on GPU (default=1)\n");
-  printf("    -mdbc_threshold:<float> Kernel support limit to apply mDBC correction [0-1]\n");
   printf("\n");
   printf("    -initnorpla:<inlinecfg>  Initialize definition for <boundnormal_plane>\n");
   printf("    -initnorpart:<inlinecfg> Initialize definition for <boundnormal_parts>\n");
@@ -136,6 +174,7 @@ void JSphCfgRun::VisuInfo()const{
 #endif
   printf("\n");
   printf("    -viscoart:<float>          Artificial viscosity [0-1]\n");
+  printf("    -viscolam:<float>          Laminar viscosity [order of 1E-6]\n");  
   printf("    -viscolamsps:<float>       Laminar+SPS viscosity [order of 1E-6]\n");  
   printf("    -viscoboundfactor:<float>  Multiplies the viscosity value of boundary\n");
   printf("\n");
@@ -147,18 +186,20 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -ddtvalue:<float> Constant for DDT (0.1 by default)\n");
   printf("    -ddtramp:tramp:tmax:maxvalue  Total time of DDT ramp and time for maxvalue\n"); //<vs_ddramp>
   printf("\n");
-  printf("    -shifting:<mode> Specifies the use of Shifting correction\n");
+  printf("    -shifting:<mode> Set Shifting correction (with default paramters)\n");
   printf("        none       Shifting is disabled (by default)\n");
   printf("        nobound    Shifting is not applied near boundary\n");
   printf("        nofixed    Shifting is not applied near fixed boundary\n");
   printf("        full       Shifting is always applied\n");
+  printf("        fulladv    Advanced shifting for free-surface (mode:ale:ncp)\n"); //<vs_advshift>
   printf("\n");
 
   printf("  Simulation options:\n");
   printf("    -name <string>      Specifies path and name of the case \n");
   printf("    -runname <string>   Specifies name for case execution\n");
   printf("    -dirout <dir>       Specifies the general output directory \n");
-  printf("    -dirdataout <dir>   Specifies the output subdirectory for binary data \n");
+  printf("    -dirdataout <dir>   Specifies the output subdirectory for binary data\n");
+  printf("                        files (default=data) \n");
   printf("\n");
   printf("    -partbegin:begin[:first] dir \n");
   printf("     Specifies the beginning of the simulation starting from a given PART\n");
@@ -168,6 +209,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("\n");
   printf("    -tmax:<float>   Maximum time of simulation\n");
   printf("    -tout:<float>   Time between output files\n");
+  printf("    -toutx:<float>  Time between extra output files on motion and floatings\n");
   printf("\n");
   printf("    -cfl:<float> CFL number coefficient to multiply dt\n");
   printf("    -ftpause:<float> Time to start floating bodies movement. By default 0\n");
@@ -203,6 +245,13 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -nortimes:<0/1> Removes execution dependent values from bi4 files\n");
   printf("\n");
 
+  printf("  Variable resolution options:\n");
+  printf("    -vres                     Execution with variable resolution algorithm\n");
+  printf("    -vres_fast:<0/1>          Precision of variable resolution interpolation (0=double, 1=single)\n");
+  printf("    -vres_order:<uint>        Maximum order vres interpolation (0=0th, 1:1st, 2:2nd)\n");
+  printf("    -vres_threshold:<float>   Threshold for vres interpolation\n");
+  printf("\n");
+
   printf("  Examples:\n");
   printf("    DualSPHysics case out_case -sv:binx,csv \n");
   printf("    DualSPHysics -name case -dirout out_case -sv:binx,csv \n");
@@ -223,7 +272,6 @@ void JSphCfgRun::VisuConfig()const{
   fun::PrintVar("  PartBeginDir",PartBeginDir,ln);
   fun::PrintVar("  Cpu",Cpu,ln);
   printf("  %s  %s\n",fun::VarStr("Gpu",Gpu).c_str(),fun::VarStr("GpuId",GpuId).c_str());
-  fun::PrintVar("  GpuFree",GpuFree,ln);
   fun::PrintVar("  Stable",Stable,ln);
   fun::PrintVar("  SvPosDouble",SvPosDouble,ln);
   fun::PrintVar("  OmpThreads",OmpThreads,ln);
@@ -261,7 +309,9 @@ void JSphCfgRun::VisuConfig()const{
 //==============================================================================
 /// Loads execution parameters.
 //==============================================================================
-void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file){
+void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
+  ,const std::string& file)
+{
   if(lv>=10)Run_Exceptioon("No more than 10 levels of recursive configuration.");
   for(int c=0;c<optn;c++){
     const string opt=optlis[c];
@@ -272,14 +322,20 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
     }
     else if(opt[0]=='-'){
       //-Splits options in txoptfull, txopt1, txopt2, txopt3 and txopt4.
-      string txword,txoptfull,txopt1,txopt2,txopt3;
-      SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3);
+      string txword,txoptfull,txopt1,txopt2,txopt3,txopt4;
+      SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3,txopt4);
       //-Checks keywords in commands.
-      if(txword=="CPU"){ Cpu=true; Gpu=false; }
-      else if(txword=="GPU"){ Gpu=true; Cpu=false;
+      if(txword=="CPU"){
+        Cpu=Gpu=false; 
+        Cpu=true;
+      }
+      else if(txword=="GPU"){ 
+        Cpu=Gpu=false; 
+        Gpu=true;
         if(txoptfull!="")GpuId=atoi(txoptfull.c_str()); 
       }
-      else if(txword=="STABLE")Stable=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+
+      else if(txword=="STABLE")Stable=OptIsEnabled(txoptfull);
       else if(txword=="SAVEPOSDOUBLE"){
         const int v=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
         SvPosDouble=(!v? 0: 1);
@@ -287,7 +343,8 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
       else if(txword=="SVEXTRAPARTS")SvExtraParts=txoptfull;
 #ifdef OMP_USE
       else if(txword=="OMPTHREADS"){ 
-        OmpThreads=atoi(txoptfull.c_str()); if(OmpThreads<0)OmpThreads=0;
+        OmpThreads=atoi(txoptfull.c_str());
+        if(OmpThreads<0)OmpThreads=0;
       } 
 #endif
       else if(txword=="CELLMODE"){
@@ -301,22 +358,28 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         else ok=false;
         if(!ok)ErrorParm(opt,c,lv,file);
       }
-      else if(txword=="CELLFIXED")CellDomFixed=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
-      else if(txword=="DBC")          { TBoundary=1; SlipMode=0; }
-      else if(txword=="MDBC")         { TBoundary=2; SlipMode=1; }
-      else if(txword=="MDBC_NOSLIP")  { TBoundary=2; SlipMode=2; }
-      else if(txword=="MDBC_FREESLIP"){ TBoundary=2; SlipMode=3; }
-      else if(txword=="MDBC_FAST")MdbcFastSingle=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
-      else if(txword=="MDBC_THRESHOLD"){ 
-        MdbcThreshold=float(atof(txoptfull.c_str())); 
-        if(MdbcThreshold<0 || MdbcThreshold>1.f)ErrorParm(opt,c,lv,file);
+      else if(txword=="CELLFIXED")CellDomFixed=OptIsEnabled(txoptfull);
+      else if(txword=="DBC"){
+        TBoundary=int(BC_DBC);
+        SlipMode=int(SLIP_None);
       }
-      else if(txword=="INITNORPLA"){
-        InitParms.push_back(opt); //if(TBoundary==1){ TBoundary=2; SlipMode=1; }//-Activates mDBC.
+      else if(txword=="MDBC"){
+        TBoundary=int(BC_MDBC);
+        SlipMode=int(SLIP_Vel0);
       }
-      else if(txword=="INITNORPART"){ InitParms.push_back(opt); }
+      else if(txword=="MDBC_NOSLIP"){
+        TBoundary=int(BC_MDBC);
+        SlipMode=int(SLIP_NoSlip);
+       if(txoptfull!="")NoPenetration=OptIsEnabled(txoptfull);
+      }
+      else if(txword=="MDBC_FREESLIP"){
+        TBoundary=int(BC_MDBC);
+        SlipMode=int(SLIP_FreeSlip);
+        if(txoptfull!="")NoPenetration=OptIsEnabled(txoptfull);
+      }
       else if(txword=="SYMPLECTIC")TStep=STEP_Symplectic;
-      else if(txword=="VERLET"){ TStep=STEP_Verlet; 
+      else if(txword=="VERLET"){
+        TStep=STEP_Verlet; 
         if(txoptfull!="")VerletSteps=atoi(txoptfull.c_str()); 
       }
       else if(txword=="WENDLAND")TKernel=KERNEL_Wendland;
@@ -326,9 +389,14 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         if(Visco>10)ErrorParm(opt,c,lv,file);
         TVisco=VISCO_Artificial;
       }
+      else if(txword=="VISCOLAM"){ 
+        Visco=float(atof(txoptfull.c_str())); 
+        if(Visco>0.001f)ErrorParm(opt,c,lv,file);
+        TVisco=VISCO_Laminar;
+      }
       else if(txword=="VISCOLAMSPS"){ 
         Visco=float(atof(txoptfull.c_str())); 
-        if(Visco>0.001)ErrorParm(opt,c,lv,file);
+        if(Visco>0.001f)ErrorParm(opt,c,lv,file);
         TVisco=VISCO_LaminarSPS;
       }
       else if(txword=="VISCOBOUNDFACTOR"){ 
@@ -336,8 +404,9 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         if(ViscoBoundFactor<0)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="DDT"){
-        TDensity=atoi(txoptfull.c_str()); 
-        if(TDensity<0 || TDensity>3)ErrorParm(opt,c,lv,file);
+        const int v=atoi(txoptfull.c_str());
+        if(v>=0 && v<=3)TDensity=TpDensity(v);
+        else ErrorParm(opt,c,lv,file);
       }
       else if(txword=="DDTVALUE"){
         DDTValue=float(atof(txoptfull.c_str())); 
@@ -353,17 +422,22 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         if(DDTValueTMax>DDTValueTRamp)DDTValueTMax=DDTValueTRamp;
       } //<vs_ddramp_end>
       else if(txword=="SHIFTING"){
-        const string tx=fun::StrUpper(txoptfull);
+        const string tx=fun::StrUpper(txopt1);
         if(tx=="NONE")Shifting=0;
         else if(tx=="NOBOUND")Shifting=1;
         else if(tx=="NOFIXED")Shifting=2;
-        else if(tx=="FULL")Shifting=3;
+        else if(tx=="FULL"   )Shifting=3;
+        else if(tx=="FULLADV"){ //<vs_advshift_ini>
+          Shifting=4;
+          if(!txopt2.empty())ShiftAdvALE=OptIsEnabled(txopt2);
+          if(!txopt3.empty())ShiftAdvNCP=OptIsEnabled(txopt3);
+        } //<vs_advshift_end>
         else ErrorParm(opt,c,lv,file);
       }
-      else if(txword=="SVNORMALS")SvNormals=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
-      else if(txword=="SVRES")SvRes=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
-      else if(txword=="SVTIMERS")SvTimers=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
-      else if(txword=="SVDOMAINVTK")SvDomainVtk=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+      else if(txword=="SVNORMALS")SvNormals=OptIsEnabled(txoptfull);
+      else if(txword=="SVRES")SvRes=OptIsEnabled(txoptfull);
+      else if(txword=="SVTIMERS")SvTimers=OptIsEnabled(txoptfull);
+      else if(txword=="SVDOMAINVTK")SvDomainVtk=OptIsEnabled(txoptfull);
       else if(txword=="SV"){
         string txop=fun::StrUpper(txoptfull);
         while(!txop.empty()){
@@ -376,23 +450,26 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
           else ErrorParm(opt,c,lv,file);
         }
       }
-      else if(txword=="CREATEDIRS")CreateDirs=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
-      else if(txword=="CSVSEP")CsvSepComa=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
-      else if(txword=="NAME"&&c+1<optn){ CaseName=optlis[c+1]; c++; }
-      else if(txword=="RUNNAME"&&c+1<optn){ RunName=optlis[c+1]; c++; }
-      else if(txword=="DIROUT"&&c+1<optn){ DirOut=optlis[c+1]; c++; }
-      else if(txword=="DIRDATAOUT" && c+1<optn){ DirDataOut=optlis[c+1]; c++; }
-      else if(txword=="PARTBEGIN"&&c+1<optn){ 
+      else if(txword=="CREATEDIRS")CreateDirs=OptIsEnabled(txoptfull);
+      else if(txword=="CSVSEP")CsvSepComa=OptIsEnabled(txoptfull);
+      else if(txword=="NAME" && c+1<optn){ CaseName=optlis[c+1]; c++; }
+      else if(txword=="RUNNAME" && c+1<optn){ RunName=optlis[c+1]; c++; }
+      else if(txword=="DIROUT" && c+1<optn){ DirOut=optlis[c+1]; c++; }
+      else if(txword=="DIRDATAOUT" && c+1<optn){ 
+        DirDataOut=optlis[c+1]; c++;
+        if(DirDataOut==".")DirDataOut="";
+      }
+      else if(txword=="PARTBEGIN" && c+1<optn){ 
         int v1=atoi(txopt1.c_str());
         int v2=atoi(txopt2.c_str());
-        if(v1<0||v2<0)ErrorParm(opt,c,lv,file);
+        if(v1<0 || v2<0)ErrorParm(opt,c,lv,file);
         else{
           PartBegin=unsigned(v1);
           PartBeginFirst=(txopt2.empty()? PartBegin: unsigned(v2));
         }
         PartBeginDir=optlis[c+1]; c++; 
       }
-      else if(txword=="RESTARTCHRONO")RestartChrono=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+      else if(txword=="RESTARTCHRONO")RestartChrono=OptIsEnabled(txoptfull);
       else if(txword=="RHOPOUT"){ 
         RhopOutMin=float(atof(txopt1.c_str())); 
         RhopOutMax=float(atof(txopt2.c_str())); 
@@ -407,12 +484,15 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         if(FtPause<0)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="TMAX"){ 
-        TimeMax=float(atof(txoptfull.c_str())); 
+        TimeMax=atof(txoptfull.c_str()); 
         if(TimeMax<0)ErrorParm(opt,c,lv,file);
       }
       else if(txword=="TOUT"){ 
-        TimePart=float(atof(txoptfull.c_str())); 
+        TimePart=atof(txoptfull.c_str()); 
         if(TimePart<0)ErrorParm(opt,c,lv,file);
+      }
+      else if(txword=="TOUTX"){ 
+        TimePartExtra=atof(txoptfull.c_str()); 
       }
       else if(txword=="DOMAIN_FIXED"){
         LoadDouble6(txoptfull,0,DomainFixedMin,DomainFixedMax);
@@ -423,17 +503,25 @@ void JSphCfgRun::LoadOpts(string *optlis,int optn,int lv,const std::string &file
         if(NstepsBreak)NoRtimes=true;
       }
       else if(txword=="SVSTEPS"){
-        SvAllSteps=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+        SvAllSteps=OptIsEnabled(txoptfull);
         if(SvAllSteps)NoRtimes=true;
       }
-      else if(txword=="NORTIMES")NoRtimes=(txoptfull!=""? atoi(txoptfull.c_str()): 1)!=0;
+      else if(txword=="NORTIMES")NoRtimes=OptIsEnabled(txoptfull);
       else if(txword=="SVPIPS"){
         PipsMode=(unsigned)atoi(txopt1.c_str());
         if(PipsMode>2)ErrorParm(opt,c,lv,file);
         if(!txopt2.empty())PipsSteps=(unsigned)atoi(txopt2.c_str());
       }
-      else if(txword=="OPT"&&c+1<optn){ LoadFile(optlis[c+1],lv+1); c++; }
-      else if(txword=="H"||txword=="HELP"||txword=="?")PrintInfo=true;
+#ifdef _WITHMR //<vs_vrres_ini>
+      else if(txword=="VRES")VRes=true;
+      else if(txword=="VRES_FAST")MRFastSingle=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
+      else if(txword=="VRES_ORDER")VResOrder=(txoptfull!=""? atoi(txoptfull.c_str()): -1);
+      else if(txword=="VRES_METHOD")VResMethod=(txoptfull!=""? atoi(txoptfull.c_str()): -1);
+      else if(txword=="VRES_THRESHOLD")VResThreshold=float(txoptfull!=""?atof(txoptfull.c_str()): -1); 
+      
+#endif         //<vs_vrres_end>
+      else if(txword=="OPT" && c+1<optn){ LoadFile(optlis[c+1],lv+1); c++; }
+      else if(txword=="H" || txword=="HELP" || txword=="?")PrintInfo=true;
       else ErrorParm(opt,c,lv,file);
     }
   }

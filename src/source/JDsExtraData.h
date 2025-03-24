@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2021 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -46,10 +46,10 @@ protected:
   const unsigned CaseNfloat;   ///<Number of floating boundary particles. 
 
   int SvParts; ///<Part interval (or list) for saving extra data for restart option (default=empty=disabled)
-  JRangeFilter *FilterParts;
+  JRangeFilter* FilterParts;
 
   int Cpart;
-  JBinaryData *Data;
+  JBinaryData* Data;
 
 public:
   JDsExtraDataSave(std::string appname,std::string dir
@@ -64,7 +64,7 @@ public:
 
   void InitPartData(int cpart,double timestep,int nstep);
   void AddNormals(bool usenormalsft,unsigned np,unsigned npb
-    ,const unsigned *idp,const typecode *code,const tfloat3 *boundnormal);
+    ,const unsigned* idp,const typecode* code,const tfloat3* boundnor);
   void SavePartData();
 };
 
@@ -86,7 +86,7 @@ protected:
   std::string Dir;   ///<Data Directory.
   int Cpart;
   std::string FileData;
-  JBinaryData *Data;
+  JBinaryData* Data;
 
 public:
   JDsExtraDataLoad(unsigned casenbound,unsigned casenfloat,JLog2* log);
@@ -97,7 +97,7 @@ public:
   static bool ExistsPartData(std::string dir,int cpart);
   void LoadPartData(std::string dir,int cpart);
 
-  bool LoadNormals(unsigned np,unsigned npb,const unsigned *idp,tfloat3 *boundnormal);
+  bool LoadNormals(unsigned np,unsigned npb,const unsigned* idp,tfloat3* boundnor);
 
 };
 

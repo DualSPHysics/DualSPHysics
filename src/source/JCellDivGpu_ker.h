@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -39,30 +39,54 @@ inline tfloat3 ToTFloat3(const float3& v){ return(TFloat3(v.x,v.y,v.z)); }
 
 void Sort(unsigned* keys,unsigned* values,unsigned size,bool stable);
 
-void ReduPosLimits(unsigned nblocks,float *aux,tfloat3 &pmin,tfloat3 &pmax);
+void ReduPosLimits(unsigned nblocks,float* aux,tfloat3& pmin,tfloat3& pmax);
 
 
-inline unsigned LimitsPosSize(unsigned ndata){ ndata=(ndata>DIVBSIZE? ndata: DIVBSIZE); unsigned n=6,s=((ndata/DIVBSIZE)+1); return((s*n + ((s/DIVBSIZE)+1)*n) + DIVBSIZE); }
+inline unsigned LimitsPosSize(unsigned ndata){ 
+  ndata=(ndata>DIVBSIZE? ndata: DIVBSIZE); unsigned n=6,s=((ndata/DIVBSIZE)+1);
+  return((s*n + ((s/DIVBSIZE)+1)*n) + DIVBSIZE);
+}
 
 
-void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcell
-  ,const typecode *code,unsigned *aux,tuint3 &celmin,tuint3 &celmax);
+void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned* dcell
+  ,const typecode* code,unsigned* aux,tuint3& celmin,tuint3& celmax);
 void CalcBeginEndCell(bool full,unsigned np,unsigned npb,unsigned sizebegcell
-  ,unsigned cellfluid,const unsigned *cellpart,int2 *begcell);
+  ,unsigned cellfluid,const unsigned* cellpart,int2* begcell);
 
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const unsigned *idp,const typecode *code,const unsigned *dcell,const double2 *posxy,const double *posz,const float4 *velrhop,unsigned *idp2,typecode *code2,unsigned *dcell2,double2 *posxy2,double *posz2,float4 *velrhop2);
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float4 *a,float4 *a2);
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float *a,const float *b,float *a2,float *b2);
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const double2 *a,const double *b,const float4 *c,double2 *a2,double *b2,float4 *c2);
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const tsymatrix3f *a,tsymatrix3f *a2);
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float3 *a,float3 *a2);
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float *a,float *a2);
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const unsigned* idp,const typecode* code,const unsigned* dcell
+  ,const double2* posxy,const double* posz,const float4* velrhop
+  ,unsigned* idp2,typecode* code2,unsigned* dcell2,double2* posxy2
+  ,double* posz2,float4* velrhop2);
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const float4* a,float4* a2);
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const float* a,const float* b,float* a2,float* b2);
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const double2* a,const double* b,const float4* c,double2* a2,double* b2,float4* c2);
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const float3* a,const float3* b,const float3* c,float3* a2,float3* b2,float3* c2);
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const tsymatrix3f* a,tsymatrix3f* a2);
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const float3* a,float3* a2);
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const float* a,float* a2);
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const unsigned* a,const float4* b,unsigned* a2,float4* b2);
+
+void SortArrayPeriParent(unsigned np,const unsigned* sortpart,unsigned* rsortpart
+  ,const unsigned* a,unsigned* a2);
+
+
+void SortIndices(unsigned* sortpart,unsigned* sortidx,unsigned np,bool stable); //<vs_flexstruc>
+void UpdateIndices(unsigned n,const unsigned* sortidx,unsigned* idx);           //<vs_flexstruc>
 
 //:inline unsigned GetRangeParticlesCellsSizeAux(unsigned celini,unsigned celfin){ unsigned n=2,s=(((celfin-celini)/DIVBSIZE)+1); return((s*n + ((s/DIVBSIZE)+1)*n) + DIVBSIZE); } 
-//:void GetRangeParticlesCells(unsigned celini,unsigned celfin,const int2 *begcell,unsigned *aux,unsigned &pmin,unsigned &pmax);
+//:void GetRangeParticlesCells(unsigned celini,unsigned celfin,const int2* begcell,unsigned* aux,unsigned& pmin,unsigned& pmax);
 
 //:inline unsigned GetParticlesCellsSizeAux(unsigned celini,unsigned celfin){ unsigned n=1,s=(((celfin-celini)/DIVBSIZE)+1); return((s*n + ((s/DIVBSIZE)+1)*n) + DIVBSIZE); }  
-//:unsigned GetParticlesCells(unsigned celini,unsigned celfin,const int2 *begcell,unsigned *aux);
+//:unsigned GetParticlesCells(unsigned celini,unsigned celfin,const int2* begcell,unsigned* aux);
 
 }
 

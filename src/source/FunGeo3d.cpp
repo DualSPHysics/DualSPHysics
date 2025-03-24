@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -32,7 +32,9 @@ namespace fgeo{
 /// Devuelve proyeccion ortogonal del punto en la linea (pr1,pr2).
 /// Returns orthogonal projection of the point in the line (pr1,pr2).
 //==============================================================================
-tdouble3 LineOrthogonalPoint(const tdouble3 &pt,const tdouble3 &pr1,const tdouble3 &pr2){
+tdouble3 LineOrthogonalPoint(const tdouble3& pt,const tdouble3& pr1
+  ,const tdouble3& pr2)
+{
   return(PlaneLineIntersec(PlanePtVec(pt,pr2-pr1),pr1,pr2));
 }
 
@@ -40,7 +42,9 @@ tdouble3 LineOrthogonalPoint(const tdouble3 &pt,const tdouble3 &pr1,const tdoubl
 /// Devuelve proyeccion ortogonal del punto en la linea (pr1,pr2).
 /// Returns orthogonal projection of the point in the line (pr1,pr2).
 //==============================================================================
-tfloat3 LineOrthogonalPoint(const tfloat3 &pt,const tfloat3 &pr1,const tfloat3 &pr2){
+tfloat3 LineOrthogonalPoint(const tfloat3& pt,const tfloat3& pr1
+  ,const tfloat3& pr2)
+{
   return(PlaneLineIntersec(PlanePtVec(pt,pr2-pr1),pr1,pr2));
 }
 
@@ -49,7 +53,7 @@ tfloat3 LineOrthogonalPoint(const tfloat3 &pt,const tfloat3 &pr1,const tfloat3 &
 /// Devuelve el plano formado por 3 puntos. La normal es (a,b,c)
 /// Returns the plane defined by 3 points. The normal is (a,b,c)
 //==============================================================================
-tplane3d Plane3Pt(const tdouble3 &p1,const tdouble3 &p2,const tdouble3 &p3){ 
+tplane3d Plane3Pt(const tdouble3& p1,const tdouble3& p2,const tdouble3& p3){ 
   tplane3d plano={0,0,0,0};
   if(p1!=p2 && p1!=p3 && p2!=p3){
     const tdouble3 v1=TDouble3(p2.x-p1.x,p2.y-p1.y,p2.z-p1.z);
@@ -65,7 +69,7 @@ tplane3d Plane3Pt(const tdouble3 &p1,const tdouble3 &p2,const tdouble3 &p3){
 /// Devuelve el plano formado por 3 puntos. La normal es (a,b,c)
 /// Returns the plane defined by 3 points. The normal is (a,b,c)
 //==============================================================================
-tplane3f Plane3Pt(const tfloat3 &p1,const tfloat3 &p2,const tfloat3 &p3){ 
+tplane3f Plane3Pt(const tfloat3& p1,const tfloat3& p2,const tfloat3& p3){ 
   tplane3f plano={0,0,0,0};
   if(p1!=p2 && p1!=p3 && p2!=p3){
     const tfloat3 v1=TFloat3(p2.x-p1.x,p2.y-p1.y,p2.z-p1.z);
@@ -82,7 +86,9 @@ tplane3f Plane3Pt(const tfloat3 &p1,const tfloat3 &p2,const tfloat3 &p3){
 /// Devuelve true cuando todos los puntos estan en el plano.
 /// Returns true when all points are in the plane.
 //==============================================================================
-bool PlanePointsIn(const tplane3d &pla,unsigned np,const tdouble3 *vpt,double tolerance){
+bool PlanePointsIn(const tplane3d& pla,unsigned np,const tdouble3* vpt
+  ,double tolerance)
+{
   bool ret=true;
   for(unsigned p=0;p<np && ret;p++)ret=(fgeo::PlaneDist(pla,vpt[p])<=tolerance);
   return(ret);
@@ -92,7 +98,9 @@ bool PlanePointsIn(const tplane3d &pla,unsigned np,const tdouble3 *vpt,double to
 /// Devuelve true cuando todos los puntos estan en el plano.
 /// Returns true when all points are in the plane.
 //==============================================================================
-bool PlanePointsIn(const tplane3f &pla,unsigned np,const tfloat3 *vpt,float tolerance){
+bool PlanePointsIn(const tplane3f& pla,unsigned np,const tfloat3* vpt
+  ,float tolerance)
+{
   bool ret=true;
   for(unsigned p=0;p<np && ret;p++)ret=(fgeo::PlaneDist(pla,vpt[p])<=tolerance);
   return(ret);
@@ -105,7 +113,9 @@ bool PlanePointsIn(const tplane3f &pla,unsigned np,const tfloat3 *vpt,float tole
 /// Returns point of intersection of three non-parallel planes using
 /// Cramer's rule (for determinants of compatible systems).
 //==============================================================================
-tdouble3 PlanesIntersec(const tplane3d &pla1,const tplane3d &pla2,const tplane3d &pla3){
+tdouble3 PlanesIntersec(const tplane3d& pla1,const tplane3d& pla2
+  ,const tplane3d& pla3)
+{
   tdouble3 res=TDouble3(0);
   const double dm=fmath::Determinant3x3(TMatrix3d(pla1.a,pla1.b,pla1.c,pla2.a,pla2.b,pla2.c,pla3.a,pla3.b,pla3.c));
   if(dm){
@@ -123,7 +133,9 @@ tdouble3 PlanesIntersec(const tplane3d &pla1,const tplane3d &pla2,const tplane3d
 /// Returns point of intersection of three non-parallel planes using
 /// Cramer's rule (for determinants of compatible systems).
 //==============================================================================
-tfloat3 PlanesIntersec(const tplane3f &pla1,const tplane3f &pla2,const tplane3f &pla3){
+tfloat3 PlanesIntersec(const tplane3f& pla1,const tplane3f& pla2
+  ,const tplane3f& pla3)
+{
   tfloat3 res=TFloat3(0);
   const float dm=fmath::Determinant3x3(TMatrix3f(pla1.a,pla1.b,pla1.c,pla2.a,pla2.b,pla2.c,pla3.a,pla3.b,pla3.c));
   if(dm){
@@ -140,7 +152,9 @@ tfloat3 PlanesIntersec(const tplane3f &pla1,const tplane3f &pla2,const tplane3f 
 /// Devuelve punto de interseccion entre un plano y una linea.
 /// Returns intersection of a plane and a line.
 //==============================================================================
-tdouble3 PlaneLineIntersec(const tplane3d &pla,const tdouble3 &pt1,const tdouble3 &pt2){
+tdouble3 PlaneLineIntersec(const tplane3d& pla,const tdouble3& pt1
+  ,const tdouble3& pt2)
+{
   const tdouble3 v=(pt2-pt1);
   const double x1=pt1.x;
   const double x2=v.x;
@@ -156,7 +170,9 @@ tdouble3 PlaneLineIntersec(const tplane3d &pla,const tdouble3 &pt1,const tdouble
 /// Devuelve punto de interseccion entre un plano y una linea.
 /// Returns intersection of a plane and a line.
 //==============================================================================
-tfloat3 PlaneLineIntersec(const tplane3f &pla,const tfloat3 &pt1,const tfloat3 &pt2){
+tfloat3 PlaneLineIntersec(const tplane3f& pla,const tfloat3& pt1
+  ,const tfloat3& pt2)
+{
   const tfloat3 v=(pt2-pt1);
   const float x1=pt1.x;
   const float x2=v.x;
@@ -173,8 +189,8 @@ tfloat3 PlaneLineIntersec(const tplane3f &pla,const tfloat3 &pt1,const tfloat3 &
 /// Devuelve distancia maxima entre plano y 4 puntos.
 /// Returns maximum distance between plane and 4 points.
 //==============================================================================
-double PlaneDistMax(const tplane3d &pla,const tdouble3 &p1,const tdouble3 &p2
-  ,const tdouble3 &p3,const tdouble3 &p4)
+double PlaneDistMax(const tplane3d& pla,const tdouble3& p1,const tdouble3& p2
+  ,const tdouble3& p3,const tdouble3& p4)
 { 
   const double d1=PlaneDistSign(pla,p1);
   const double d2=PlaneDistSign(pla,p2);
@@ -186,10 +202,10 @@ double PlaneDistMax(const tplane3d &pla,const tdouble3 &p1,const tdouble3 &p2
 
 //==============================================================================
 /// Devuelve planos y distancias para delimitar un dominio en forma de caja.
-/// Returns planes and distnaces to limit a box domain.
+/// Returns planes and distances to limit a box domain.
 //==============================================================================
-void PlanesDomain(const tdouble3 &pt,const tdouble3 &vx,const tdouble3 &vy
-  ,const tdouble3 &vz,tplane3d &plax,tplane3d &play,tplane3d &plaz,tdouble3 &pladist)
+void PlanesDomain(const tdouble3& pt,const tdouble3& vx,const tdouble3& vy
+  ,const tdouble3& vz,tplane3d& plax,tplane3d& play,tplane3d& plaz,tdouble3& pladist)
 {
   const tdouble3 p1=pt;
   const tdouble3 p2=p1+vx;
@@ -212,8 +228,8 @@ void PlanesDomain(const tdouble3 &pt,const tdouble3 &vx,const tdouble3 &vy
 /// Comprueba si el punto esta dentro del dominio definido.
 /// Checks the point is inside the defined domain.
 //==============================================================================
-bool PlanesDomainCheck(const tdouble3 &pt,const tplane3d &plax,const tplane3d &play
-  ,const tplane3d &plaz,const tdouble3 &pladist)
+bool PlanesDomainCheck(const tdouble3& pt,const tplane3d& plax,const tplane3d& play
+  ,const tplane3d& plaz,const tdouble3& pladist)
 {
   const double dx=PlanePoint(plax,pt);
   const double dy=PlanePoint(play,pt);
@@ -226,7 +242,7 @@ bool PlanesDomainCheck(const tdouble3 &pt,const tplane3d &plax,const tplane3d &p
 /// Devuelve el area de un triangulo formado por 3 puntos.
 /// Returns the area of a triangle formed by 3 points.
 //==============================================================================
-double TriangleArea(const tdouble3 &p1,const tdouble3 &p2,const tdouble3 &p3){
+double TriangleArea(const tdouble3& p1,const tdouble3& p2,const tdouble3& p3){
   //Se obtienen los vectores del triangulo.
   //Obtains the triangle vectors.
   double PQx=p2.x-p1.x;
@@ -238,7 +254,7 @@ double TriangleArea(const tdouble3 &p1,const tdouble3 &p2,const tdouble3 &p3){
   //Se hace el producto cruz.
   //Computes the cross product.
   double Vi=PQy*PRz-PRy*PQz;
-  double Vj=-(PQx*PRz-PRx*PQz);
+  double Vj=PRx*PQz-PQx*PRz;
   double Vk=PQx*PRy-PRx*PQy;
   //Se obtiene el area del triangulo que es igual a la mitad de la magnitud del vector resultante.
   //Obtains the triangle area that equals half the magnitude of the resulting vector.
@@ -249,7 +265,7 @@ double TriangleArea(const tdouble3 &p1,const tdouble3 &p2,const tdouble3 &p3){
 /// Devuelve el area de un triangulo formado por 3 puntos.
 /// Returns the area of a triangle formed by 3 points.
 //==============================================================================
-float TriangleArea(const tfloat3 &p1,const tfloat3 &p2,const tfloat3 &p3){
+float TriangleArea(const tfloat3& p1,const tfloat3& p2,const tfloat3& p3){
   //Se obtienen los vectores del triangulo.
   //Obtains the triangle vectors.
   float PQx=p2.x-p1.x;
@@ -270,5 +286,4 @@ float TriangleArea(const tfloat3 &p1,const tfloat3 &p2,const tfloat3 &p3){
 
 
 }
-
 

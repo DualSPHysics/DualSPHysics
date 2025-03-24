@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
-<DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+<DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
 EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
 School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -74,16 +74,18 @@ private:
 
 public:
   JAppInfo(std::string name,std::string ver,std::string date);
-  JAppInfo(std::string name,std::string ver,std::string subname,std::string subver,std::string date);
+  JAppInfo(std::string name,std::string ver,std::string subname
+    ,std::string subver,std::string date);
   ~JAppInfo();
   void Reset();
   void ClearNameExtra(){ MainNameExtra=""; };
   void AddNameExtra(std::string extra);
 
   void ConfigRunPaths(std::string runcommand);
-  void ConfigOutput(bool createdirs,bool csvsepcoma,std::string dirout,std::string dirdataout="");
+  void ConfigOutput(bool createdirs,bool csvsepcoma,std::string dirout
+    ,std::string dirdataout="");
 
-  void SetMainName(const std::string &mname);
+  void SetMainName(const std::string& mname);
 
 #ifdef JAppInfo_UseLog
   void LogInit(std::string fname,bool mpirun=false,int mpirank=0,int mpilaunch=0);
@@ -109,8 +111,8 @@ public:
   std::string GetDirOut()const{ return(DirOut); };
   std::string GetDirDataOut()const{ return(DirDataOut); };
 
-  int MkdirPath(const std::string &dir)const;
-  int MkdirPathFile(const std::string &file)const;
+  int MkdirPath(const std::string& dir)const;
+  int MkdirPathFile(const std::string& file)const;
 
 };
 

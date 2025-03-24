@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -185,9 +185,9 @@ std::string JDsPips::GetTotalPIsInfo()const{
 /// Compute number of particle interactions on CPU.
 //==============================================================================
 void JDsPips::ComputeCpu(unsigned nstep,double tstep,double tsim
-  ,const StCteSph &csp,int ompthreads
+  ,const StCteSph& csp,int ompthreads
   ,unsigned np,unsigned npb,unsigned npbok
-  ,const StDivDataCpu &dvd,const unsigned *dcell,const tdouble3 *pos)
+  ,const StDivDataCpu& dvd,const unsigned* dcell,const tdouble3* pos)
 {
   //-Compute bound & fluid PIs.
   ullong npith[OMP_MAXTHREADS*OMP_STRIDE];
@@ -267,8 +267,8 @@ void JDsPips::ComputeCpu(unsigned nstep,double tstep,double tsim
 //==============================================================================
 void JDsPips::ComputeGpu(unsigned nstep,double tstep,double tsim
   ,unsigned np,unsigned npb,unsigned npbok
-  ,const StDivDataGpu &dvd,const unsigned *dcell,const float4 *poscell
-  ,unsigned sauxmem,unsigned *auxmem)
+  ,const StDivDataGpu& dvd,const unsigned* dcell,const float4* poscell
+  ,unsigned sauxmem,unsigned* auxmem)
 {
   //-First calculation with reduction and the result is saved as uint4.
   const unsigned n1=npbok+(np-npb);
@@ -281,14 +281,14 @@ void JDsPips::ComputeGpu(unsigned nstep,double tstep,double tsim
   const unsigned n2=n1size;
   const unsigned n2size=cupips::InteractionNgSize_2nd(n2);
   if((n1size+n2size)*4>sauxmem)Run_Exceptioon("Auxiliary memory is not enough for 2nd calculation level.");
-  unsigned *auxmem2=auxmem+(n1size*4);
+  unsigned* auxmem2=auxmem+(n1size*4);
   cupips::InteractionNg_2nd(n2,(const uint4*)auxmem,(uint4*)auxmem2);
 
   //-Last reduction and the result is saved as ullong*4.
   const unsigned n3=n2size;
   const unsigned n3size=cupips::InteractionNgSize_3th(n3);
   if((n1size+n2size)*4+n3size*8>sauxmem)Run_Exceptioon("Auxiliary memory is not enough for 3th calculation level.");
-  ullong *auxmem3=(ullong*)(auxmem2+(n2size*4));
+  ullong* auxmem3=(ullong*)(auxmem2+(n2size*4));
   cupips::InteractionNg_3th(n3,(const uint4*)auxmem2,auxmem3);
   //-Allocates memory to final results.
   //Log->Printf("\n==> n3:%u  n3size:%u",n3,n3size);

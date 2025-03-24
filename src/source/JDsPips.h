@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -96,15 +96,15 @@ public:
   bool CheckRun(unsigned nstep)const{ return(nstep>=NextNstep); }
 
   void ComputeCpu(unsigned nstep,double tstep,double tsim
-    ,const StCteSph &csp,int ompthreads
+    ,const StCteSph& csp,int ompthreads
     ,unsigned np,unsigned npb,unsigned npbok
-    ,const StDivDataCpu &dvd,const unsigned *dcell,const tdouble3 *pos);
+    ,const StDivDataCpu& dvd,const unsigned* dcell,const tdouble3* pos);
 
 #ifdef _WITHGPU
   void ComputeGpu(unsigned nstep,double tstep,double tsim
     ,unsigned np,unsigned npb,unsigned npbok
-    ,const StDivDataGpu &dvd,const unsigned *dcell,const float4 *poscell
-    ,unsigned sauxmem,unsigned *auxmem);
+    ,const StDivDataGpu& dvd,const unsigned* dcell,const float4* poscell
+    ,unsigned sauxmem,unsigned* auxmem);
 #endif
 
 };

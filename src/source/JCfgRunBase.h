@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -29,6 +29,7 @@
 //#   para floats. Ahora toma el valor default siempre que falte un valor. (14-09-2021)
 //# - Nuevo metodo VerText(). (08-05-2022)
 //# - Incluye txopt5 en SplitsOpts(). (25-08-2022)
+//# - Carga nueva configuracion CsvSepThou. (12-04-2024)
 //#############################################################################
 
 #ifndef _JCfgRunBase_
@@ -56,39 +57,40 @@ protected:
   int ParmDef;
   void LoadDsphConfig(std::string path);
 
-  static unsigned LoadFloats (std::string txopt,float  def,unsigned nv,std::vector<float > &vv);
-  static unsigned LoadDoubles(std::string txopt,double def,unsigned nv,std::vector<double> &vv);
-  static unsigned LoadFloat3 (std::string txopt,float def,unsigned nv,tfloat3 *v);
-  static unsigned LoadDouble3(std::string txopt,double def,unsigned nv,tdouble3 *v);
-  static void LoadFloat3(std::string txopt,float def,tfloat3 &v1);
-  static void LoadFloat6(std::string txopt,float def,tfloat3 &v1,tfloat3 &v2);
-  static void LoadDouble2(std::string txopt,double def,tdouble2 &v1);
-  static void LoadDouble3(std::string txopt,double def,tdouble3 &v1);
-  static void LoadDouble6(std::string txopt,double def,tdouble3 &v1,tdouble3 &v2);
+  static unsigned LoadFloats (std::string txopt,float  def,unsigned nv,std::vector<float >& vv);
+  static unsigned LoadDoubles(std::string txopt,double def,unsigned nv,std::vector<double>& vv);
+  static unsigned LoadFloat3 (std::string txopt,float def,unsigned nv,tfloat3* v);
+  static unsigned LoadDouble3(std::string txopt,double def,unsigned nv,tdouble3* v);
+  static void LoadFloat3(std::string txopt,float def,tfloat3& v1);
+  static void LoadFloat6(std::string txopt,float def,tfloat3& v1,tfloat3& v2);
+  static void LoadDouble2(std::string txopt,double def,tdouble2& v1);
+  static void LoadDouble3(std::string txopt,double def,tdouble3& v1);
+  static void LoadDouble6(std::string txopt,double def,tdouble3& v1,tdouble3& v2);
 
-  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull
-    ,std::string &txopt1,std::string &txopt2,std::string &txopt3,std::string &txopt4
-    ,std::string &txopt5)const;
-  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull
-    ,std::string &txopt1,std::string &txopt2,std::string &txopt3,std::string &txopt4)const
+  void SplitsOpts(const std::string& opt,std::string& txword,std::string& txoptfull
+    ,std::string& txopt1,std::string& txopt2,std::string& txopt3,std::string& txopt4
+    ,std::string& txopt5)const;
+  void SplitsOpts(const std::string& opt,std::string& txword,std::string& txoptfull
+    ,std::string& txopt1,std::string& txopt2,std::string& txopt3,std::string& txopt4)const
   {
     std::string tx5; SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3,txopt4,tx5);
   }
-  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull
-    ,std::string &txopt1,std::string &txopt2,std::string &txopt3)const
+  void SplitsOpts(const std::string& opt,std::string& txword,std::string& txoptfull
+    ,std::string& txopt1,std::string& txopt2,std::string& txopt3)const
   {
     std::string tx4; SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,txopt3,tx4);
   }
-  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull
-    ,std::string &txopt1,std::string &txopt2)const
+  void SplitsOpts(const std::string& opt,std::string& txword,std::string& txoptfull
+    ,std::string& txopt1,std::string& txopt2)const
   {
     std::string tx3,tx4; SplitsOpts(opt,txword,txoptfull,txopt1,txopt2,tx3,tx4);
   }
-  void SplitsOpts(const std::string &opt,std::string &txword,std::string &txoptfull)const
+  void SplitsOpts(const std::string& opt,std::string& txword,std::string& txoptfull)const
   {
     std::string tx1,tx2,tx3,tx4; SplitsOpts(opt,txword,txoptfull,tx1,tx2,tx3,tx4);
   }
 
+  static bool OptIsEnabled(const std::string& txopt);
 public:
   const bool NoParms; ///<Allows zero parameters without showing help.
   bool PrintInfo;
@@ -96,6 +98,7 @@ public:
   //-General configuration from DsphConfig.xml
   bool CreateDirs;   ///<Creates full path for output files (true by default).
   bool CsvSepComa;   ///<Separator character in CSV files (false=semicolon, true=coma).
+  bool CsvSepThou;   ///<Use thousands separator (false by default).
 
 public:
   JCfgRunBase(bool noparms=false);
@@ -103,14 +106,14 @@ public:
 
   void LoadArgv(int argc,char** argv);
   void LoadFile(std::string fname,int lv);
-  void ErrorParm(const std::string &opt,int optc,int lv,const std::string &file)const;
-  void ErrorParmText(const std::string &text,int optc,int lv,const std::string &file)const;
+  void ErrorParm(const std::string& opt,int optc,int lv,const std::string& file)const;
+  void ErrorParmText(const std::string& text,int optc,int lv,const std::string& file)const;
 
   static std::string VerText(const std::string fullname,const std::string veropt);
 
   virtual void VisuInfo()const=0;
   virtual void VisuConfig()const=0;
-  virtual void LoadOpts(std::string *optlis,int optn,int lv,const std::string &file)=0;
+  virtual void LoadOpts(const std::string* optlis,int optn,int lv,const std::string& file)=0;
   virtual void ValidaCfg()=0;
 };
 

@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -24,7 +24,7 @@
 //:# - Nuevos metodos LoadFileXml() y SaveFileXml() para cargar o generar un
 //:#   fichero xml de forma directa. (27-11-2010)
 //:# - Se guarda el Mk absoluto para cada bloque de particulas para facilitar
-//:#   su utilizacion en herramientas de postprocesing. (21-01-2011)
+//:#   su utilizacion en herramientas de postprocessing. (21-01-2011)
 //:# - Se anhadieron dos nuevas variables para los floating bodies: Velini y 
 //:#   Omegaini. (25-01-2011)
 //:# - Cambio de nombre, de JParticles a J.SpaceParts. (09-02-2012)
@@ -61,6 +61,7 @@
 //:# - Cambio de nombre de J.SpaceParts a J.CaseParts. (28-06-2020)
 //:# - Nuevas opciones LinearForce y AngularForce para floatings. (30-06-2020)
 //:# - Se definio BaseNameSize para obtener nombre de subclase. (02-07-2020)
+//:# - Uso de 64-bits para numero de particulas. (07-05-2024)
 //:#############################################################################
 
 /// \file JCaseParts.h \brief Declares the class \ref JCaseParts.
@@ -101,22 +102,23 @@ class TiXmlElement;
 class JCasePartBlock : public JObject
 {
 private:
-  const JCaseProperties* Properties;   ///<Pointer to properties object.
-  std::string Props;                    ///<Assigned properties.
-  word Mk;                              ///<Absolute label.
-  word MkType;                          ///<Label of block fluid or bound.
-  unsigned Begin;                       ///<Id of the first particle of the block.
-  unsigned Count;                       ///<Number of particles.
+  const JCaseProperties* Properties;  ///<Pointer to properties object.
+  std::string Props;                  ///<Assigned properties.
+  word Mk;                            ///<Absolute label.
+  word MkType;                        ///<Label of block fluid or bound.
+  ullong Begin;                       ///<Id of the first particle of the block.
+  ullong Count;                       ///<Number of particles.
 
 public:
   const unsigned BaseNameSize;
   const TpParticles Type;    ///<Type of particle.
   const bool Bound;          ///<Indicates whether a particle is boundary or not.
 
-  JCasePartBlock(const JCaseProperties* properties,TpParticles type,const char* name
-    ,word mktype=0,unsigned begin=0,unsigned count=0)
+  JCasePartBlock(const JCaseProperties* properties,TpParticles type
+    ,const char* name,word mktype=0,ullong begin=0,ullong count=0)
     :BaseNameSize(unsigned(std::string("JCasePartBlock_").size()))
-    ,Properties(properties),Type(type),Bound(IsBound(type)),MkType(mktype),Begin(begin),Count(count)
+    ,Properties(properties),Type(type),Bound(IsBound(type)),MkType(mktype)
+    ,Begin(begin),Count(count)
   { 
     ClassName=std::string("JCasePartBlock_")+name;
   } 
@@ -126,16 +128,20 @@ public:
 #endif
   void ConfigMk(word mkfirst){ Mk=MkType+mkfirst; }
   std::string GetNameXml()const;
-  unsigned GetBegin()const{ return(Begin); }
-  unsigned GetCount()const{ return(Count); }
-  word GetMkType()const{ return(MkType); }
-  word GetMk()const{ return(Mk); }
+  unsigned GetBegin  ()const{ return(GetBegin32()); };
+  unsigned GetCount  ()const{ return(GetCount32()); };
+  unsigned GetBegin32()const;
+  unsigned GetCount32()const;
+  ullong   GetBegin64()const{ return(Begin); }
+  ullong   GetCount64()const{ return(Count); }
+  word     GetMkType ()const{ return(MkType); }
+  word     GetMk()const{ return(Mk); }
   std::string GetProperty()const{ return(Props); }
-  virtual void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  virtual TiXmlElement* WriteXml(JXml *sxml,TiXmlElement* ele)const;
+  virtual void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  virtual TiXmlElement* WriteXml(JXml* sxml,TiXmlElement* ele)const;
 
-  void SetBegin(unsigned begin){ Begin=begin; }
-  void SetCount(unsigned count){ Count=count; }
+  void SetBegin64(ullong begin){ Begin=begin; }
+  void SetCount64(ullong count){ Count=count; }
 
 #ifdef JCaseParts_UseProps
   //-Returns values of properties.
@@ -180,9 +186,11 @@ public:
 class JCasePartBlock_Fixed : public JCasePartBlock
 {
 public:
-  JCasePartBlock_Fixed(const JCaseProperties* properties,word mktype,unsigned begin,unsigned count)
+  JCasePartBlock_Fixed(const JCaseProperties* properties,word mktype
+    ,ullong begin,ullong count)
     :JCasePartBlock(properties,TpPartFixed,"Fixed",mktype,begin,count){}
-  JCasePartBlock_Fixed(const JCaseProperties* properties,const JXml *sxml,TiXmlElement* ele)
+  JCasePartBlock_Fixed(const JCaseProperties* properties,const JXml* sxml
+    ,TiXmlElement* ele)
     :JCasePartBlock(properties,TpPartFixed,"Fixed"){ ReadXml(sxml,ele); }
 };  
 
@@ -195,14 +203,16 @@ class JCasePartBlock_Moving : public JCasePartBlock
 private:
   unsigned RefMotion;
 public:
-  JCasePartBlock_Moving(const JCaseProperties* properties,word mktype,unsigned begin
-    ,unsigned count,unsigned refmotion)
-    :JCasePartBlock(properties,TpPartMoving,"Moving",mktype,begin,count),RefMotion(refmotion){}
-  JCasePartBlock_Moving(const JCaseProperties* properties,const JXml *sxml,TiXmlElement* ele)
-    :JCasePartBlock(properties,TpPartMoving,"Moving"){ ReadXml(sxml,ele); }
+  JCasePartBlock_Moving(const JCaseProperties* properties,word mktype
+    ,ullong begin,ullong count,unsigned refmotion)
+    :JCasePartBlock(properties,TpPartMoving,"Moving",mktype,begin,count)
+    ,RefMotion(refmotion){}
+  JCasePartBlock_Moving(const JCaseProperties* properties,const JXml* sxml
+    ,TiXmlElement* ele):JCasePartBlock(properties,TpPartMoving,"Moving")
+  { ReadXml(sxml,ele); }
   unsigned GetRefMotion()const{ return(RefMotion); }
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  TiXmlElement* WriteXml(JXml *sxml,TiXmlElement* ele)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  TiXmlElement* WriteXml(JXml* sxml,TiXmlElement* ele)const;
 };  
 
 //##############################################################################
@@ -220,20 +230,21 @@ private:
   tint3 RotationFree;
   tdouble3 LinearVelini;
   tdouble3 AngularVelini;
-  JLinearValue *LinearVel;
-  JLinearValue *AngularVel;
-  JLinearValue *LinearForce;
-  JLinearValue *AngularForce;
+  JLinearValue* LinearVel;
+  JLinearValue* AngularVel;
+  JLinearValue* LinearForce;
+  JLinearValue* AngularForce;
 
 public:
   JCasePartBlock_Floating(const JCaseProperties* properties
-    ,word mktype,unsigned begin,unsigned count,double massbody,double masspart
+    ,word mktype,ullong begin,ullong count,double massbody,double masspart
     ,const tdouble3& center,const tmatrix3d& inertia
-    ,const tint3 &translationfree,const tint3 &rotationfree
-    ,const tdouble3 &linvelini,const tdouble3 &angvelini
-    ,const JLinearValue *linvel  ,const JLinearValue *angvel
-    ,const JLinearValue *linforce,const JLinearValue *angforce);
-  JCasePartBlock_Floating(const JCaseProperties* properties,const JXml *sxml,TiXmlElement* ele);
+    ,const tint3& translationfree,const tint3& rotationfree
+    ,const tdouble3& linvelini,const tdouble3& angvelini
+    ,const JLinearValue* linvel  ,const JLinearValue* angvel
+    ,const JLinearValue* linforce,const JLinearValue* angforce);
+  JCasePartBlock_Floating(const JCaseProperties* properties
+    ,const JXml* sxml,TiXmlElement* ele);
   ~JCasePartBlock_Floating();
   double        GetMassbody()       const{ return(Massbody); }
   double        GetMasspart()       const{ return(Masspart); }
@@ -247,8 +258,8 @@ public:
   JLinearValue* GetAngularVel()     const{ return(AngularVel); }
   JLinearValue* GetLinearForce()    const{ return(LinearForce); }
   JLinearValue* GetAngularForce()   const{ return(AngularForce); }
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  TiXmlElement* WriteXml(JXml *sxml,TiXmlElement* ele)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  TiXmlElement* WriteXml(JXml* sxml,TiXmlElement* ele)const;
 };  
 
 //##############################################################################
@@ -258,9 +269,11 @@ public:
 class JCasePartBlock_Fluid : public JCasePartBlock
 {
 public:
-  JCasePartBlock_Fluid(const JCaseProperties* properties,word mktype,unsigned begin,unsigned count)
+  JCasePartBlock_Fluid(const JCaseProperties* properties,word mktype
+    ,ullong begin,ullong count)
     :JCasePartBlock(properties,TpPartFluid,"Fluid",mktype,begin,count){}
-  JCasePartBlock_Fluid(const JCaseProperties* properties,const JXml *sxml,TiXmlElement* ele)
+  JCasePartBlock_Fluid(const JCaseProperties* properties,const JXml* sxml
+    ,TiXmlElement* ele)
     :JCasePartBlock(properties,TpPartFluid,"Fluid"){ ReadXml(sxml,ele); }
 };  
 
@@ -274,16 +287,16 @@ class JCaseParts  : protected JObject
 public:
   /// Structure with summary of particle information.
   typedef struct {
-    unsigned np[4];
-    unsigned idini[4];
-    unsigned idlast[4];
+    ullong np[4];
+    ullong idini[4];
+    ullong idlast[4];
     unsigned nmk[4];
     std::string mklist[4];
   }StSummaryData;
 
 private:
   std::vector<JCasePartBlock*> Blocks;
-  unsigned Begin;
+  ullong Begin;
   TpParticles LastType;
   word MkBoundFirst,MkFluidFirst;
   tdouble3 Posmin;  ///<Minimum position of particles.
@@ -291,30 +304,36 @@ private:
 
   JCaseProperties* Properties;
 
-  unsigned GetBegin()const{ return(Begin); }
+  ullong GetBegin()const{ return(Begin); }
   JCasePartBlock* GetByMkType(bool bound,word mktype)const;
   void Add(JCasePartBlock* block);
-  void ReadXml(const JXml *sxml,TiXmlElement* lis);
-  void WriteXml(JXml *sxml,TiXmlElement* lis)const;
-  void WriteXmlSummary(JXml *sxml,TiXmlElement* ele)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* lis);
+  void WriteXml(JXml* sxml,TiXmlElement* lis)const;
+  void WriteXmlSummary(JXml* sxml,TiXmlElement* ele)const;
 
 public:
   JCaseParts();
   ~JCaseParts();
   void Reset();
-  unsigned Count(TpParticles type)const;
-  unsigned Count()const;
+  unsigned Count  (TpParticles type)const{ return(Count32(type));  }
+  unsigned Count  ()const{ return(Count32());  }
+  unsigned Count32(TpParticles type)const;
+  unsigned Count32()const;
+  ullong   Count64(TpParticles type)const;
+  ullong   Count64()const;
   unsigned CountBlocks()const{ return(unsigned(Blocks.size())); }
   unsigned CountBlocks(TpParticles type)const;
   const JCasePartBlock& GetBlock(unsigned pos)const;
 
-  bool CheckNparticles(unsigned casenfixed,unsigned casenmoving,unsigned casenfloat,unsigned casenfluid)const;
-  bool CheckNparticles(ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid)const;
+  bool CheckNparticles(unsigned casenfixed,unsigned casenmoving
+    ,unsigned casenfloat,unsigned casenfluid)const;
+  bool CheckNparticles(ullong casenfixed,ullong casenmoving
+    ,ullong casenfloat,ullong casenfluid)const;
 
-  void LoadFileXml(const std::string &file,const std::string &path);
-  void SaveFileXml(const std::string &file,const std::string &path,bool newfile=true)const;
-  void LoadXml(const JXml *sxml,const std::string &place);
-  void SaveXml(JXml *sxml,const std::string &place)const;
+  void LoadFileXml(const std::string& file,const std::string& path);
+  void SaveFileXml(const std::string& file,const std::string& path,bool newfile=true)const;
+  void LoadXml(const JXml* sxml,const std::string& place);
+  void SaveXml(JXml* sxml,const std::string& place)const;
 
   void SetMkFirst(word boundfirst,word fluidfirst);
   word GetMkBoundFirst()const{ return(MkBoundFirst); }
@@ -324,42 +343,42 @@ public:
   tdouble3 GetPosmin()const{ return(Posmin); }
   tdouble3 GetPosmax()const{ return(Posmax); }
 
-  void AddFixed(word mktype,unsigned count){ 
+  void AddFixed(word mktype,ullong count){ 
     Add(new JCasePartBlock_Fixed(Properties,mktype,GetBegin(),count));
   }
 
-  void AddMoving(word mktype,unsigned count,unsigned refmotion){ 
+  void AddMoving(word mktype,ullong count,unsigned refmotion){ 
     Add(new JCasePartBlock_Moving(Properties,mktype,GetBegin(),count,refmotion));
   }
 
-  void AddFloating(word mktype,unsigned count,double massbody,double masspart
-    ,const tdouble3 &center,const tmatrix3d &inertia
-    ,const tint3 &translationfree,const tint3 &rotationfree
-    ,const tdouble3 &linvelini,const tdouble3 &angvelini
-    ,const JLinearValue *linvel,const JLinearValue *angvel
-    ,const JLinearValue *linforce,const JLinearValue *angforce)
+  void AddFloating(word mktype,ullong count,double massbody,double masspart
+    ,const tdouble3& center,const tmatrix3d& inertia
+    ,const tint3& translationfree,const tint3& rotationfree
+    ,const tdouble3& linvelini,const tdouble3& angvelini
+    ,const JLinearValue* linvel,const JLinearValue* angvel
+    ,const JLinearValue* linforce,const JLinearValue* angforce)
   { 
     Add(new JCasePartBlock_Floating(Properties,mktype,GetBegin(),count
       ,massbody,masspart,center,inertia,translationfree,rotationfree
       ,linvelini,angvelini,linvel,angvel,linforce,angforce)); 
   }
 
-  void AddFluid(word mktype,unsigned count){ 
+  void AddFluid(word mktype,ullong count){ 
     Add(new JCasePartBlock_Fluid(Properties,mktype,GetBegin(),count));
   }
 
-  void SetBlockSize(unsigned pos,unsigned np);
+  void S_etBlockSize(unsigned pos,ullong np);
 
 #ifdef JCaseParts_UseProps
-  void LoadProperties(const JCaseProperties *props);
+  void LoadProperties(const JCaseProperties* props);
 #endif
 
   std::string GetMkList(TpParticles type)const;
 
   JCaseParts::StSummaryData GetSummaryData()const;
-  void GetParticleSummary(std::vector<std::string> &out)const;
+  void GetParticleSummary(std::vector<std::string>& out)const;
 
-  void GetParticlesInfo(std::vector<std::string> &out)const;
+  void GetParticlesInfo(std::vector<std::string>& out)const;
   void VisuParticlesInfo()const;
 
   bool UseImposedFtVel()const;
@@ -368,30 +387,37 @@ public:
 
 
 //##############################################################################
-//# JCasePartsGetMk
+//# JCasePartsGetMk64
 //##############################################################################
 /// \brief Compute Mk value from Id.
 
-class JCasePartsGetMk  : protected JObject
+class JCasePartsGetMk64 : protected JObject
 {
 private:
   const bool Splitting;
   unsigned MkCount;
-  unsigned *MkRange;
-  word *MkValue;
+  ullong* MkRange;
+  word* MkValue;
   word MkSplitting;
 
-  void Config(const JCaseParts *sparts);
+  void Config(const JCaseParts* sparts);
 public:
-  JCasePartsGetMk(const JCaseParts *sparts,bool splitting);
-  ~JCasePartsGetMk();
+  JCasePartsGetMk64(const JCaseParts* sparts,bool splitting);
+  ~JCasePartsGetMk64();
   void Reset();
   unsigned GetMkCount()const{ return(MkCount); }
 
   ///Returns MK from Id value.
   inline word IdToMk(unsigned id)const{
     unsigned c=0;
-    for(;c<MkCount&&id>=MkRange[c];c++);
+    for(;c<MkCount && id>=MkRange[c];c++);
+    return(c<MkCount? MkValue[c]: MkSplitting);
+  }
+
+  ///Returns MK from Id value.
+  inline word IdToMk(ullong id)const{
+    unsigned c=0;
+    for(;c<MkCount && id>=MkRange[c];c++);
     return(c<MkCount? MkValue[c]: MkSplitting);
   }
 };

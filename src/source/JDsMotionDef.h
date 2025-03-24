@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -25,9 +25,9 @@
 
 ///Defines type of movement.
 typedef enum{ 
-  MOTT_None=0,    ///<No movement.
-  MOTT_Linear=1,  ///<Linear movement.
-  MOTT_Matrix=2   ///<Matrix movement (for rotations).
+  MOTT_None=0    ///<No movement.
+ ,MOTT_Linear=1  ///<Linear movement.
+ ,MOTT_Matrix=2  ///<Matrix movement (for rotations).
 }TpMotionType;   
 
 ///Structure with the information for moving particles (lineal and matrix movement).

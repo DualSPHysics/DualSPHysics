@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -39,7 +39,8 @@ public:
   const double TimeStart;
   const double TimeFinish;
 
-  JMotionEvent(JMotionObj* obj,JMotionMov* mov,double timestart,double timefinish):Obj(obj),Mov(mov),TimeStart(timestart),TimeFinish(timefinish){}
+  JMotionEvent(JMotionObj* obj,JMotionMov* mov,double timestart,double timefinish)
+    :Obj(obj),Mov(mov),TimeStart(timestart),TimeFinish(timefinish){}
 };
 
 

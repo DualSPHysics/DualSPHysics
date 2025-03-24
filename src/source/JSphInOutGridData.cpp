@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -26,7 +26,7 @@
 #include "JReadDatafile.h"
 #include "JSaveCsv2.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
+#include "JSpVtkData.h"
 #ifdef _WITHGPU
   #include "FunctionsCuda.h"
   #include "JSphGpu_InOut_iker.h"
@@ -52,8 +52,8 @@ JSphInOutGridDataTime::JSphInOutGridDataTime(unsigned nx,unsigned nz)
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInOutGridDataTime::JSphInOutGridDataTime(unsigned nx,unsigned nz,double time,const float *velx,const float *velz)
- :Nx(nx),Nz(nz),Npt(Nx*Nz)
+JSphInOutGridDataTime::JSphInOutGridDataTime(unsigned nx,unsigned nz,double time
+  ,const float* velx,const float* velz):Nx(nx),Nz(nz),Npt(Nx*Nz)
 {
   ResetInit();
   SetData(time,velx,velz);
@@ -87,7 +87,9 @@ void JSphInOutGridDataTime::AllocData(bool usevelz){
 //==============================================================================
 /// Set data.
 //==============================================================================
-void JSphInOutGridDataTime::SetData(double time,const float *velx,const float *velz){
+void JSphInOutGridDataTime::SetData(double time,const float* velx
+  ,const float* velz)
+{
   AllocData(velz!=NULL);
   Time=time;
   memcpy(Velx,velx,sizeof(float)*Npt);
@@ -97,7 +99,9 @@ void JSphInOutGridDataTime::SetData(double time,const float *velx,const float *v
 //==============================================================================
 /// Interpolate data between gdt and gdt2.
 //==============================================================================
-void JSphInOutGridDataTime::Interpolate(double time,const JSphInOutGridDataTime *gdt,const JSphInOutGridDataTime *gdt2){
+void JSphInOutGridDataTime::Interpolate(double time
+  ,const JSphInOutGridDataTime* gdt,const JSphInOutGridDataTime* gdt2)
+{
   AllocData(gdt->Velz!=NULL);
   Time=time;
   const double fx=((time-gdt->Time)/(gdt2->Time-gdt->Time));
@@ -190,7 +194,7 @@ void JSphInOutGridData::FreeMemoryGpu(){
 //==============================================================================
 /// Sets origin of grid.
 //==============================================================================
-void JSphInOutGridData::SetPosMin(const tdouble3 &posmin){
+void JSphInOutGridData::SetPosMin(const tdouble3& posmin){
   PosMin=posmin;
   PosMax.x=PosMin.x+Dpx*(Nx-1); 
   PosMax.y=PosMin.y;
@@ -200,7 +204,7 @@ void JSphInOutGridData::SetPosMin(const tdouble3 &posmin){
 //==============================================================================
 /// Configures and load data from CSV or BIN file.
 //==============================================================================
-void JSphInOutGridData::ConfigFromFile(const std::string &filename){
+void JSphInOutGridData::ConfigFromFile(const std::string& filename){
   Reset();
   string ext=fun::StrUpper(fun::GetExtension(filename));
   if(ext=="CSV")LoadDataCsv(filename);
@@ -212,7 +216,7 @@ void JSphInOutGridData::ConfigFromFile(const std::string &filename){
 //==============================================================================
 /// Configures and load data from CSV file.
 //==============================================================================
-void JSphInOutGridData::LoadDataCsv(const std::string &filename){
+void JSphInOutGridData::LoadDataCsv(const std::string& filename){
   JReadDatafile rdat;
   rdat.LoadFile(filename);
   //-Load and check fmtversion.
@@ -247,8 +251,8 @@ void JSphInOutGridData::LoadDataCsv(const std::string &filename){
   //-Load values data according FmtVersion.
   rdat.SetReadLine(4);
   const unsigned npt=nx*nz;
-  float *velx=new float[npt];
-  float *velz=(usevelz? new float[npt]: NULL);
+  float* velx=new float[npt];
+  float* velz=(usevelz? new float[npt]: NULL);
   for(unsigned cr=4;cr<rows;cr++){
     const double time=rdat.ReadNextDouble();
     for(unsigned p=0;p<npt;p++)velx[p]=rdat.ReadNextFloat(true);
@@ -264,7 +268,7 @@ void JSphInOutGridData::LoadDataCsv(const std::string &filename){
 //==============================================================================
 /// Configures and load data from BIN file.
 //==============================================================================
-void JSphInOutGridData::LoadDataBin(const std::string &filename){
+void JSphInOutGridData::LoadDataBin(const std::string& filename){
   Run_Exceptioon("NOT IMPLEMENTED...");
 }
 
@@ -283,10 +287,12 @@ void JSphInOutGridData::ConfigGridData(unsigned nx,unsigned nz,double dpx,double
 //==============================================================================
 /// Adds data for another time.
 //==============================================================================
-void JSphInOutGridData::AddDataTime(double time,unsigned npt,const float *velx,const float *velz){
+void JSphInOutGridData::AddDataTime(double time,unsigned npt,const float* velx
+  ,const float* velz)
+{
   if(CountTimes() && DataTimes[CountTimes()-1]->GetTime()>=time)Run_Exceptioon("New time of data is not higher than previous one.");
   if(npt!=Npt)Run_Exceptioon("The number of points does not match.");
-  JSphInOutGridDataTime *gdt=new JSphInOutGridDataTime(Nx,Nz,time,velx,(UseVelz? velz: NULL));
+  JSphInOutGridDataTime* gdt=new JSphInOutGridDataTime(Nx,Nz,time,velx,(UseVelz? velz: NULL));
   DataTimes.push_back(gdt);
 }
 
@@ -311,9 +317,9 @@ void JSphInOutGridData::SaveDataCsv(std::string filename)const{
   scsv.SetData();
   const unsigned nt=CountTimes();
   for(unsigned ct=0;ct<nt;ct++){
-    const JSphInOutGridDataTime *gdt=DataTimes[ct];
-    const float *velx=gdt->GetVelx();
-    const float *velz=gdt->GetVelz();
+    const JSphInOutGridDataTime* gdt=DataTimes[ct];
+    const float* velx=gdt->GetVelx();
+    const float* velz=gdt->GetVelz();
     scsv << gdt->GetTime();
     for(unsigned c=0;c<Npt;c++)scsv << velx[c];
     if(UseVelz)for(unsigned c=0;c<Npt;c++)scsv << velz[c];
@@ -346,12 +352,13 @@ void JSphInOutGridData::ComputeTime(double t){
 //==============================================================================
 /// Interpolate velocity in time and position of selected partiles in a list.
 //==============================================================================
-void JSphInOutGridData::InterpolateVelCpu(double time,unsigned izone,unsigned np,const int *plist
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop,float velcorr)
+void JSphInOutGridData::InterpolateVelCpu(double time,unsigned izone,unsigned np
+  ,const int* plist,const tdouble3* pos,const typecode* code,const unsigned* idp
+  ,tfloat4* velrhop,float velcorr)
 {
   ComputeTime(time);
-  const float *velx=SelData->GetVelx();
-  const float *velz=SelData->GetVelz();
+  const float* velx=SelData->GetVelx();
+  const float* velz=SelData->GetVelz();
   const int nx1=Nx-1;
   const int nz1=Nz-1;
   const int n=int(np);
@@ -398,12 +405,13 @@ void JSphInOutGridData::InterpolateVelCpu(double time,unsigned izone,unsigned np
 //==============================================================================
 /// Interpolate velocity in time and Z-position of selected partiles in a list.
 //==============================================================================
-void JSphInOutGridData::InterpolateZVelCpu(double time,unsigned izone,unsigned np,const int *plist
-  ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop,float velcorr)
+void JSphInOutGridData::InterpolateZVelCpu(double time,unsigned izone,unsigned np
+  ,const int* plist,const tdouble3* pos,const typecode* code,const unsigned* idp
+  ,tfloat4* velrhop,float velcorr)
 {
   ComputeTime(time);
-  const float *velx=SelData->GetVelx();
-  const float *velz=SelData->GetVelz();
+  const float* velx=SelData->GetVelx();
+  const float* velz=SelData->GetVelz();
   const int nx1=0;
   const int nz1=Nz-1;
   const int n=int(np);
@@ -486,38 +494,41 @@ void JSphInOutGridData::ComputeTimeGpu(double t){
 //==============================================================================
 /// Interpolate velocity in time and Z-position of selected partiles in a list.
 //==============================================================================
-void JSphInOutGridData::InterpolateZVelGpu(double time,unsigned izone,unsigned np,const int *plist
-  ,const double2 *posxyg,const double *poszg,const typecode *codeg,const unsigned *idpg
-  ,float4 *velrhopg,float velcorr)
+void JSphInOutGridData::InterpolateZVelGpu(double time,unsigned izone,unsigned np
+  ,const int* plist,const double2* posxyg,const double* poszg
+  ,const typecode* codeg,const unsigned* idpg,float4* velrhopg,float velcorr)
 {
   ComputeTimeGpu(time);
-  cusphinout::InOutInterpolateZVel(izone,PosMin.z,Dpz,Nz-1,SelVelxg,SelVelzg,np,plist,poszg,codeg,velrhopg,velcorr);
+  cusphinout::InOutInterpolateZVel(izone,PosMin.z,Dpz,Nz-1,SelVelxg,SelVelzg
+    ,np,plist,poszg,codeg,velrhopg,velcorr);
 }
 #endif
 
 //==============================================================================
 /// Saves DataTime object in VTK file.
 //==============================================================================
-void JSphInOutGridData::SaveVtk(const JSphInOutGridDataTime *gdt,std::string filename)const{
+void JSphInOutGridData::SaveVtk(const JSphInOutGridDataTime* gdt
+  ,std::string filename)const
+{
   const tfloat3 pos0=ToTFloat3(PosMin);
   //-Allocates memory.
-  tfloat3 *pos=new tfloat3[Npt];
-  tfloat3 *vel=new tfloat3[Npt];
+  tfloat3* pos=new tfloat3[Npt];
+  tfloat3* vel=new tfloat3[Npt];
   //-Computes position.
   unsigned p=0;
   for(unsigned cx=0;cx<Nx;cx++)for(unsigned cz=0;cz<Nz;cz++,p++){
     pos[p]=pos0+TFloat3(float(Dpx*cx),0,float(Dpz*cz));
   }
   //-Computes velocity.
-  const float *velx=gdt->GetVelx();
-  const float *velz=gdt->GetVelz();
+  const float* velx=gdt->GetVelx();
+  const float* velz=gdt->GetVelz();
   if(UseVelz)for(unsigned p=0;p<Npt;p++)vel[p]=TFloat3(velx[p],0,velz[p]);
   else       for(unsigned p=0;p<Npt;p++)vel[p]=TFloat3(velx[p],0,0);
   //-Saves VTK file.
   JDataArrays arrays;
   arrays.AddArray("Pos",Npt,pos,true);
   arrays.AddArray("Vel",Npt,vel,true);
-  JVtkLib::SaveVtkData(filename,arrays,"Pos");
+  JSpVtkData::Save(filename,arrays,"Pos");
   arrays.Reset();
   ////-Old style...
   //std::vector<JFormatFiles2::StScalarData> fields;
@@ -574,7 +585,7 @@ void JSphInOutGridData::SaveDataVtkTime(std::string filename,double tmax,double 
 //
 //
 //    for(unsigned ci=0;ci<GetCount();ci++){
-//      const JSphInOutZone *izone=List[ci];
+//      const JSphInOutZone* izone=List[ci];
 //      const tdouble3* ptdom=izone->GetPtDomain();
 //      if(Simulate2D){
 //        shapes.push_back(JFormatFiles2::DefineShape_Quad(ptdom[0],ptdom[1],ptdom[2],ptdom[3],ci,0));

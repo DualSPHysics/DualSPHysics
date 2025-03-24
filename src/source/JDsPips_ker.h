@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -31,14 +31,14 @@ namespace cupips{
 
 unsigned InteractionNgSize_1st(unsigned n);
 void InteractionNg_1st(unsigned nb,unsigned pinitb,unsigned nf,unsigned pinitf
-  ,const StDivDataGpu &dvd,const unsigned *dcell,const float4 *poscell,uint4 *res
+  ,const StDivDataGpu& dvd,const unsigned* dcell,const float4* poscell,uint4* res
   ,cudaStream_t stm=NULL);
 
 unsigned InteractionNgSize_2nd(unsigned n);
-void InteractionNg_2nd(unsigned n,const uint4 *data,uint4 *res,cudaStream_t stm=NULL);
+void InteractionNg_2nd(unsigned n,const uint4* data,uint4* res,cudaStream_t stm=NULL);
 
 unsigned InteractionNgSize_3th(unsigned n);
-void InteractionNg_3th(unsigned n,const uint4 *data,ullong *res,cudaStream_t stm=NULL);
+void InteractionNg_3th(unsigned n,const uint4* data,ullong* res,cudaStream_t stm=NULL);
 
 }
 

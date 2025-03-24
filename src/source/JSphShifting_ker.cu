@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -122,7 +122,7 @@ void InitGpuPlanes(bool tfirst,bool tdbl,unsigned n,unsigned pini
 //------------------------------------------------------------------------------
 __global__ void KerRunShifting(unsigned n,unsigned pini,double dt
   ,double coefumagn,float shifttfs,double coeftfs,float maxdist
-  ,const float4 *velrhop,float4 *shiftposfs)
+  ,const float4* velrhop,float4* shiftposfs)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x;
   if(p<n){
@@ -156,7 +156,7 @@ __global__ void KerRunShifting(unsigned n,unsigned pini,double dt
 //==============================================================================
 void RunShifting(unsigned n,unsigned pini,double dt
   ,double coefumagn,float shifttfs,double coeftfs,float maxdist
-  ,const float4 *velrhop,float4 *shiftposfs,cudaStream_t stm)
+  ,const float4* velrhop,float4* shiftposfs,cudaStream_t stm)
 {
   if(n){
     const dim3 sgrid=GetSimpleGridSize(n,SPHBSIZE);

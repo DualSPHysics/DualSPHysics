@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -63,10 +63,10 @@ private:
 
   unsigned SizeFile;     ///< Size of file.
   unsigned Size;         ///< Size of data.
-  char *Data;            ///< Data from file.
+  char* Data;            ///< Data from file.
 
   int LineCount;         ///< Number of lines.
-  unsigned *LineBegin;   ///< Inicio de cada linea [LineCount+1].
+  unsigned* LineBegin;   ///< Inicio de cada linea [LineCount+1].
   int RemLineCount;      ///< Number of remark lines.
 
   std::string Sep;       ///< Value separator.
@@ -85,7 +85,7 @@ public:
   ~JReadDatafile();
   void Reset();
 
-  void LoadFile(const std::string &file,unsigned maxsize=1048576000);
+  void LoadFile(const std::string& file,unsigned maxsize=1048576000);
   void RemoveChar(char let);
   void ReplaceSpaces();
 

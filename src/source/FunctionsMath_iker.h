@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -27,7 +27,7 @@ namespace cumath{
 /// Resuelve punto en el plano.
 /// Solves point in the plane.
 //------------------------------------------------------------------------------
-__device__ double PointPlane(const float4 &pla,const double3 &pt){ 
+__device__ double PointPlane(const float4& pla,const double3& pt){ 
   return(pt.x*pla.x+pt.y*pla.y+pt.z*pla.z+pla.w);
 }
 
@@ -35,7 +35,7 @@ __device__ double PointPlane(const float4 &pla,const double3 &pt){
 /// Resuelve punto en el plano.
 /// Solves point in the plane.
 //------------------------------------------------------------------------------
-__device__ float PointPlane(const float4 &pla,float px,float py,float pz){ 
+__device__ float PointPlane(const float4& pla,float px,float py,float pz){ 
   return(pla.x*px+pla.y*py+pla.z*pz+pla.w);
 }
 
@@ -43,7 +43,7 @@ __device__ float PointPlane(const float4 &pla,float px,float py,float pz){
 /// Returns the distance between a point and a plane.
 /// Devuelve la distancia entre un punto y un plano.
 //------------------------------------------------------------------------------
-__device__ double DistPlaneSign(const float4 &pla,const double3 &pt){
+__device__ double DistPlaneSign(const float4& pla,const double3& pt){
   return(PointPlane(pla,pt)/sqrt(pla.x*pla.x+pla.y*pla.y+pla.z*pla.z));
 }
 
@@ -51,7 +51,7 @@ __device__ double DistPlaneSign(const float4 &pla,const double3 &pt){
 /// Returns the distance between a point and a plane.
 /// Devuelve la distancia entre un punto y un plano.
 //------------------------------------------------------------------------------
-__device__ float KerDistPlaneSign(const float4 &pla,float px,float py,float pz){ 
+__device__ float KerDistPlaneSign(const float4& pla,float px,float py,float pz){ 
   return(PointPlane(pla,px,py,pz)/sqrt(pla.x*pla.x+pla.y*pla.y+pla.z*pla.z));
 }
 
@@ -59,7 +59,7 @@ __device__ float KerDistPlaneSign(const float4 &pla,float px,float py,float pz){
 /// Returns the distance between a point and a plane.
 /// Devuelve la distancia entre un punto y un plano.
 //------------------------------------------------------------------------------
-__device__ double DistPlane(const float4 &pla,const double3 &pt){ 
+__device__ double DistPlane(const float4& pla,const double3& pt){ 
   return(fabs(DistPlaneSign(pla,pt)));
 }
 
@@ -67,7 +67,7 @@ __device__ double DistPlane(const float4 &pla,const double3 &pt){
 /// Initializes matrix to zero.
 /// Inicializa matriz a cero.
 //------------------------------------------------------------------------------
-__device__ void Tmatrix3fReset(tmatrix3f &m){ 
+__device__ void Tmatrix3fReset(tmatrix3f& m){ 
   m.a11=m.a12=m.a13=m.a21=m.a22=m.a23=m.a31=m.a32=m.a33=0; 
 }
 
@@ -75,7 +75,7 @@ __device__ void Tmatrix3fReset(tmatrix3f &m){
 /// Initializes matrix to zero.
 /// Inicializa matriz a cero.
 //------------------------------------------------------------------------------
-__device__ void Tmatrix3dReset(tmatrix3d &m){ 
+__device__ void Tmatrix3dReset(tmatrix3d& m){ 
   m.a11=m.a12=m.a13=m.a21=m.a22=m.a23=m.a31=m.a32=m.a33=0; 
 }
 
@@ -83,7 +83,7 @@ __device__ void Tmatrix3dReset(tmatrix3d &m){
 /// Initializes matrix to zero.
 /// Inicializa matriz a cero.
 //------------------------------------------------------------------------------
-__device__ void Tmatrix4fReset(tmatrix4f &m){ 
+__device__ void Tmatrix4fReset(tmatrix4f& m){ 
   m.a11=m.a12=m.a13=m.a14=m.a21=m.a22=m.a23=m.a24=m.a31=m.a32=m.a33=m.a34=m.a41=m.a42=m.a43=m.a44=0; 
 }
 
@@ -91,7 +91,7 @@ __device__ void Tmatrix4fReset(tmatrix4f &m){
 /// Initializes matrix to zero.
 /// Inicializa matriz a cero.
 //------------------------------------------------------------------------------
-__device__ void Tmatrix4dReset(tmatrix4d &m){ 
+__device__ void Tmatrix4dReset(tmatrix4d& m){ 
   m.a11=m.a12=m.a13=m.a14=m.a21=m.a22=m.a23=m.a24=m.a31=m.a32=m.a33=m.a34=m.a41=m.a42=m.a43=m.a44=0; 
 }
 
@@ -99,31 +99,34 @@ __device__ void Tmatrix4dReset(tmatrix4d &m){
 /// Calcula el determinante de una matriz de 3x3.
 /// Returns the determinant of a 3x3 matrix.
 //------------------------------------------------------------------------------
-__device__ float Determinant3x3(const tmatrix3f &d){
-  return(d.a11*d.a22*d.a33 + d.a12*d.a23*d.a31 + d.a13*d.a21*d.a32 - d.a31*d.a22*d.a13 - d.a32*d.a23*d.a11 - d.a33*d.a21*d.a12);
+__device__ float Determinant3x3(const tmatrix3f& d){
+  return(d.a11*d.a22*d.a33 + d.a12*d.a23*d.a31 + d.a13*d.a21*d.a32
+       - d.a31*d.a22*d.a13 - d.a32*d.a23*d.a11 - d.a33*d.a21*d.a12);
 }
 
 //------------------------------------------------------------------------------
 /// Calcula el determinante de una matriz de 3x3.
 /// Returns the determinant of a 3x3 matrix.
 //------------------------------------------------------------------------------
-__device__ double Determinant3x3dbl(const tmatrix3f &d){
-  return(double(d.a11)*double(d.a22)*double(d.a33) + double(d.a12)*double(d.a23)*double(d.a31) + double(d.a13)*double(d.a21)*double(d.a32) - double(d.a31)*double(d.a22)*double(d.a13) - double(d.a32)*double(d.a23)*double(d.a11) - double(d.a33)*double(d.a21)*double(d.a12));
+__device__ double Determinant3x3dbl(const tmatrix3f& d){
+  return(double(d.a11)*double(d.a22)*double(d.a33) + double(d.a12)*double(d.a23)*double(d.a31) + double(d.a13)*double(d.a21)*double(d.a32)
+       - double(d.a31)*double(d.a22)*double(d.a13) - double(d.a32)*double(d.a23)*double(d.a11) - double(d.a33)*double(d.a21)*double(d.a12));
 }
 
 //------------------------------------------------------------------------------
 /// Calcula el determinante de una matriz de 3x3.
 /// Returns the determinant of a 3x3 matrix.
 //------------------------------------------------------------------------------
-__device__ double Determinant3x3(const tmatrix3d &d){
-  return(d.a11*d.a22*d.a33 + d.a12*d.a23*d.a31 + d.a13*d.a21*d.a32 - d.a31*d.a22*d.a13 - d.a32*d.a23*d.a11 - d.a33*d.a21*d.a12);
+__device__ double Determinant3x3(const tmatrix3d& d){
+  return(d.a11*d.a22*d.a33 + d.a12*d.a23*d.a31 + d.a13*d.a21*d.a32
+       - d.a31*d.a22*d.a13 - d.a32*d.a23*d.a11 - d.a33*d.a21*d.a12);
 }
 
 //------------------------------------------------------------------------------
 /// Devuelve la matriz inversa de una matriz de 3x3.
 /// Returns the inverse matrix of a 3x3 matrix.
 //------------------------------------------------------------------------------
-__device__ tmatrix3f InverseMatrix3x3(const tmatrix3f &d,const float det){
+__device__ tmatrix3f InverseMatrix3x3(const tmatrix3f& d,const float det){
   tmatrix3f inv;
   if(det){
     inv.a11= (d.a22*d.a33-d.a23*d.a32)/det;
@@ -144,7 +147,7 @@ __device__ tmatrix3f InverseMatrix3x3(const tmatrix3f &d,const float det){
 /// Devuelve la matriz inversa de una matriz de 3x3.
 /// Returns the inverse matrix of a 3x3 matrix.
 //------------------------------------------------------------------------------
-__device__ tmatrix3f InverseMatrix3x3dbl(const tmatrix3f &d,const double det){
+__device__ tmatrix3f InverseMatrix3x3dbl(const tmatrix3f& d,const double det){
   tmatrix3f inv;
   if(det){
     inv.a11=float( (double(d.a22)*double(d.a33)-double(d.a23)*double(d.a32))/det);
@@ -165,7 +168,7 @@ __device__ tmatrix3f InverseMatrix3x3dbl(const tmatrix3f &d,const double det){
 /// Devuelve la matriz inversa de una matriz de 3x3.
 /// Returns the inverse matrix of a 3x3 matrix.
 //------------------------------------------------------------------------------
-__device__ tmatrix3d InverseMatrix3x3(const tmatrix3d &d,const double det){
+__device__ tmatrix3d InverseMatrix3x3(const tmatrix3d& d,const double det){
   tmatrix3d inv;
   if(det){
     inv.a11= (d.a22*d.a33-d.a23*d.a32)/det;
@@ -186,7 +189,7 @@ __device__ tmatrix3d InverseMatrix3x3(const tmatrix3d &d,const double det){
 /// Devuelve la matriz inversa de una matriz de 3x3.
 /// Returns the inverse matrix of a 3x3 matrix.
 //==============================================================================
-__device__ tmatrix3f InverseMatrix3x3(const tmatrix3f &d){
+__device__ tmatrix3f InverseMatrix3x3(const tmatrix3f& d){
   return(InverseMatrix3x3(d,Determinant3x3(d)));
 }
 
@@ -194,7 +197,7 @@ __device__ tmatrix3f InverseMatrix3x3(const tmatrix3f &d){
 /// Devuelve la matriz inversa de una matriz de 3x3.
 /// Returns the inverse matrix of a 3x3 matrix.
 //==============================================================================
-__device__ tmatrix3d InverseMatrix3x3(const tmatrix3d &d){
+__device__ tmatrix3d InverseMatrix3x3(const tmatrix3d& d){
   return(InverseMatrix3x3(d,Determinant3x3(d)));
 }
 
@@ -202,7 +205,7 @@ __device__ tmatrix3d InverseMatrix3x3(const tmatrix3d &d){
 /// Calcula el determinante de una matriz de 4x4.
 /// Returns the determinant of a 4x4 matrix.
 //------------------------------------------------------------------------------
-__device__ float Determinant4x4(const tmatrix4f &d){
+__device__ float Determinant4x4(const tmatrix4f& d){
   return(d.a14*d.a23*d.a32*d.a41 - d.a13*d.a24*d.a32*d.a41 -
          d.a14*d.a22*d.a33*d.a41 + d.a12*d.a24*d.a33*d.a41 +
          d.a13*d.a22*d.a34*d.a41 - d.a12*d.a23*d.a34*d.a41 -
@@ -221,7 +224,7 @@ __device__ float Determinant4x4(const tmatrix4f &d){
 /// Calcula el determinante de una matriz de 4x4.
 /// Returns the determinant of a 4x4 matrix.
 //------------------------------------------------------------------------------
-__device__ double Determinant4x4dbl(const tmatrix4f &d){
+__device__ double Determinant4x4dbl(const tmatrix4f& d){
   return(double(d.a14)*double(d.a23)*double(d.a32)*double(d.a41) - double(d.a13)*double(d.a24)*double(d.a32)*double(d.a41) -
          double(d.a14)*double(d.a22)*double(d.a33)*double(d.a41) + double(d.a12)*double(d.a24)*double(d.a33)*double(d.a41) +
          double(d.a13)*double(d.a22)*double(d.a34)*double(d.a41) - double(d.a12)*double(d.a23)*double(d.a34)*double(d.a41) -
@@ -240,7 +243,7 @@ __device__ double Determinant4x4dbl(const tmatrix4f &d){
 /// Calcula el determinante de una matriz de 4x4.
 /// Returns the determinant of a 4x4 matrix.
 //------------------------------------------------------------------------------
-__device__ double Determinant4x4(const tmatrix4d &d){
+__device__ double Determinant4x4(const tmatrix4d& d){
   return(d.a14*d.a23*d.a32*d.a41 - d.a13*d.a24*d.a32*d.a41 -
          d.a14*d.a22*d.a33*d.a41 + d.a12*d.a24*d.a33*d.a41 +
          d.a13*d.a22*d.a34*d.a41 - d.a12*d.a23*d.a34*d.a41 -
@@ -259,7 +262,7 @@ __device__ double Determinant4x4(const tmatrix4d &d){
 /// Devuelve la matriz inversa de una matriz de 4x4.
 /// Returns the inverse matrix of a 4x4 matrix.
 //------------------------------------------------------------------------------
-__device__ tmatrix4f InverseMatrix4x4(const tmatrix4f &d,const float det){
+__device__ tmatrix4f InverseMatrix4x4(const tmatrix4f& d,const float det){
   tmatrix4f inv;
   if(det){
     inv.a11=(d.a22*(d.a33*d.a44-d.a34*d.a43) + d.a23*(d.a34*d.a42-d.a32*d.a44) + d.a24*(d.a32*d.a43-d.a33*d.a42)) /det;
@@ -287,7 +290,7 @@ __device__ tmatrix4f InverseMatrix4x4(const tmatrix4f &d,const float det){
 /// Devuelve la matriz inversa de una matriz de 4x4.
 /// Returns the inverse matrix of a 4x4 matrix.
 //------------------------------------------------------------------------------
-__device__ tmatrix4f InverseMatrix4x4dbl(const tmatrix4f &d,const double det){
+__device__ tmatrix4f InverseMatrix4x4dbl(const tmatrix4f& d,const double det){
   tmatrix4f inv;
   if(det){
     inv.a11=(double(d.a22)*(double(d.a33)*double(d.a44)-double(d.a34)*double(d.a43)) + double(d.a23)*(double(d.a34)*double(d.a42)-double(d.a32)*double(d.a44)) + double(d.a24)*(double(d.a32)*double(d.a43)-double(d.a33)*double(d.a42))) /det;
@@ -315,7 +318,7 @@ __device__ tmatrix4f InverseMatrix4x4dbl(const tmatrix4f &d,const double det){
 /// Devuelve la matriz inversa de una matriz de 4x4.
 /// Returns the inverse matrix of a 4x4 matrix.
 //------------------------------------------------------------------------------
-__device__ tmatrix4d InverseMatrix4x4(const tmatrix4d &d,const double det){
+__device__ tmatrix4d InverseMatrix4x4(const tmatrix4d& d,const double det){
   tmatrix4d inv;
   if(det){
     inv.a11=(d.a22*(d.a33*d.a44-d.a34*d.a43) + d.a23*(d.a34*d.a42-d.a32*d.a44) + d.a24*(d.a32*d.a43-d.a33*d.a42)) /det;
@@ -343,7 +346,7 @@ __device__ tmatrix4d InverseMatrix4x4(const tmatrix4d &d,const double det){
 /// Devuelve producto de 2 matrices de 3x3.
 /// Returns the product of 2 matrices of 3x3.
 //==============================================================================
-__device__ tmatrix3f MulMatrix3x3(const tmatrix3f &a,const tmatrix3f &b){
+__device__ tmatrix3f MulMatrix3x3(const tmatrix3f& a,const tmatrix3f& b){
   tmatrix3f ret;
   ret.a11=a.a11*b.a11 + a.a12*b.a21 + a.a13*b.a31;
   ret.a12=a.a11*b.a12 + a.a12*b.a22 + a.a13*b.a32;
@@ -361,7 +364,7 @@ __device__ tmatrix3f MulMatrix3x3(const tmatrix3f &a,const tmatrix3f &b){
 /// Devuelve producto de 2 matrices de 3x3.
 /// Returns the product of 2 matrices of 3x3.
 //==============================================================================
-__device__ tmatrix3d MulMatrix3x3(const tmatrix3d &a,const tmatrix3d &b){
+__device__ tmatrix3d MulMatrix3x3(const tmatrix3d& a,const tmatrix3d& b){
   tmatrix3d ret;
   ret.a11=a.a11*b.a11 + a.a12*b.a21 + a.a13*b.a31;
   ret.a12=a.a11*b.a12 + a.a12*b.a22 + a.a13*b.a32;
@@ -379,7 +382,7 @@ __device__ tmatrix3d MulMatrix3x3(const tmatrix3d &a,const tmatrix3d &b){
 /// Devuelve traspuesta de matriz 3x3.
 /// Returns the transpose from matrix 3x3.
 //==============================================================================
-__device__ tmatrix3f TrasMatrix3x3(const tmatrix3f &a){
+__device__ tmatrix3f TrasMatrix3x3(const tmatrix3f& a){
   tmatrix3f ret;
   ret.a11=a.a11;  ret.a12=a.a21;  ret.a13=a.a31;
   ret.a21=a.a12;  ret.a22=a.a22;  ret.a23=a.a32;
@@ -391,7 +394,7 @@ __device__ tmatrix3f TrasMatrix3x3(const tmatrix3f &a){
 /// Devuelve traspuesta de matriz 3x3.
 /// Returns the transpose from matrix 3x3.
 //==============================================================================
-__device__ tmatrix3d TrasMatrix3x3(const tmatrix3d &a){
+__device__ tmatrix3d TrasMatrix3x3(const tmatrix3d& a){
   tmatrix3d ret;
   ret.a11=a.a11;  ret.a12=a.a21;  ret.a13=a.a31;
   ret.a21=a.a12;  ret.a22=a.a22;  ret.a23=a.a32;
@@ -403,7 +406,7 @@ __device__ tmatrix3d TrasMatrix3x3(const tmatrix3d &a){
 /// Devuelve la matriz de rotacion.
 /// Returns the rotation matrix.
 //==============================================================================
-__device__ tmatrix3f RotMatrix3x3(const float3 &ang){
+__device__ tmatrix3f RotMatrix3x3(const float3& ang){
   const float cosx=cos(ang.x),cosy=cos(ang.y),cosz=cos(ang.z);
   const float sinx=sin(ang.x),siny=sin(ang.y),sinz=sin(ang.z);
   tmatrix3f ret;
@@ -423,7 +426,7 @@ __device__ tmatrix3f RotMatrix3x3(const float3 &ang){
 /// Devuelve la matriz de rotacion.
 /// Returns the rotation matrix.
 //==============================================================================
-__device__ tmatrix3d RotMatrix3x3(const double3 &ang){
+__device__ tmatrix3d RotMatrix3x3(const double3& ang){
   const double cosx=cos(ang.x),cosy=cos(ang.y),cosz=cos(ang.z);
   const double sinx=sin(ang.x),siny=sin(ang.y),sinz=sin(ang.z);
   tmatrix3d ret;

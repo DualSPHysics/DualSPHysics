@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -52,6 +52,10 @@ class JDsPartsInit;
 class JGaugeSystem;
 class JGaugeSwl;
 
+namespace jmsh{            //<vs_meeshdat>
+  class JMeshTDatasDsVel;  //<vs_meeshdat>
+}                          //<vs_meeshdat>
+
 //##############################################################################
 //# XML format in _FmtXML_InOut.xml.
 //##############################################################################
@@ -75,13 +79,13 @@ public:
 private:
   const bool Cpu;
   const StCteSph CSP; ///<Structure with main SPH constants values and configurations.
-  JLog2 *Log;
+  JLog2* Log;
   const unsigned IdZone;
   const tdouble3 MapRealPosMin;
   const tdouble3 MapRealPosMax;
 
   //-Configuration parameters.
-  JSphInOutPoints *Points;      ///<Definition of inlet points.
+  JSphInOutPoints* Points;      ///<Definition of inlet points.
   byte Layers;                  ///<Number of inlet particle layers.
   TpInInput InputMode;          ///<Defines the treatment of fluid particles entering a inlet/outlet zone (default=0).
   bool InputCheck;              ///<Checks fluid input for RemoveZsurf=true or InputMode!=InInput_Free.
@@ -93,36 +97,39 @@ private:
   tfloat3 BoxLimitMin;
   tfloat3 BoxLimitMax;
 
+  std::string XmlShape;    ///<Shape definition in XML (PARTICLES, LINE, BOX, CIRCLE).
   tdouble3 Direction;      ///<Inflow direction.
   tdouble3 PtPlane;        ///<Position to create inlet plane.
   tplane3f Plane;          ///<Inlet plane.
-  unsigned NptInit;        ///<Number of inout points at the begining (first layer).
-  unsigned NpartInit;      ///<Number of inout particles at the begining.
+  unsigned NptInit;        ///<Number of inout points at the beginning (first layer).
+  unsigned NpartInit;      ///<Number of inout particles at the beginning.
 
   //-Configuration of velocity, zsurf and density.
   TpInVelMode VelMode;         ///<Inflow velocity mode (fixed or variable).
-  JSphInOutVel *InOutVel;      ///<Manages Velocity configuration.
+  TpInVelProfile VelProfile;   ///<Inflow velocity profile for fixed or variable modes (uniform, linear, parabolic or special modes).
+
+  JSphInOutVel* InOutVel;      ///<Manages Velocity configuration.
 
   TpInZsurfMode ZsurfMode;     ///<Inflow zsurf mode (fixed, variable...).
-  JSphInOutZsurf *InOutZsurf;  ///<Manages Zsurf configuration.
+  JSphInOutZsurf* InOutZsurf;  ///<Manages Zsurf configuration.
 
   TpInRhopMode RhopMode;       ///<Inflow rhop mode (fixed or extrapolated).
   
   bool ExternalVarInput;       ///<Receives velocity and zsurf values from external sources. (default=false)
 
 private:
-  void ReadXml(const JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile
-    ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem);
+  void ReadXml(const JXml* sxml,TiXmlElement* lis,const std::string& dirdatafile
+    ,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem);
   void LoadDomain();
 
 public:
-  JSphInOutZone(bool cpu,unsigned idzone,const StCteSph &csp
-    ,const tdouble3 &posmin,const tdouble3 &posmax
-    ,const JXml *sxml,TiXmlElement* ele,const std::string &dirdatafile
-    ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem);
+  JSphInOutZone(bool cpu,unsigned idzone,const StCteSph& csp
+    ,const tdouble3& posmin,const tdouble3& posmax
+    ,const JXml* sxml,TiXmlElement* ele,const std::string& dirdatafile
+    ,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem);
   ~JSphInOutZone();
   void Reset();
-  void GetConfig(std::vector<std::string> &lines)const;
+  void GetConfig(std::vector<std::string>& lines)const;
   void CheckConfig()const;
 
   static TpInVelProfile GetConfigVelProfile  (byte cfg){ return((TpInVelProfile)(cfg&InVelP_MASK));  }
@@ -132,9 +139,9 @@ public:
   byte GetConfigZone()const;
   byte GetConfigUpdate()const;
 
-  unsigned LoadInletPoints(tdouble3 *pos);
-  void LoadInitialParticles(unsigned npartinit,tdouble3 *pos);
-  static float CalcVel(TpInVelProfile vprof,const tfloat4 &vdata,double posz);
+  unsigned LoadInletPoints(tdouble3* pos);
+  void LoadInitialParticles(unsigned npartinit,tdouble3* pos);
+  static float CalcVel(TpInVelProfile vprof,const tfloat4& vdata,double posz);
 
   unsigned GetIdZone()const{ return(IdZone); }
   byte GetLayers()const{ return(Layers); }
@@ -144,8 +151,8 @@ public:
   const tdouble3* GetPtDomain()const{ return(PtDom); };
   tfloat3 GetBoxLimitMin()const{ return(BoxLimitMin); };
   tfloat3 GetBoxLimitMax()const{ return(BoxLimitMax); };
-  inline bool InZoneBox(const tfloat3 &ps)const;
-  bool InZone(bool useboxlimit,const tfloat3 &ps)const;
+  inline bool InZoneBox(const tfloat3& ps)const;
+  bool InZone(bool useboxlimit,const tfloat3& ps)const;
 
   unsigned GetNptInit()const{ return(NptInit); }
   unsigned GetNpartInit()const{ return(NpartInit); }
@@ -158,6 +165,9 @@ public:
     return(RhopMode==InRhop_Constant || RhopMode==InRhop_Hydrostatic
     || VelMode==InVelM_Fixed || VelMode==InVelM_Variable); 
   }
+
+  bool Use_SpecialProfile()const{ return(VelProfile==InVelP_JetCircle); }
+
   bool Use_ExtrapolatedData()const{ 
     return(RhopMode==InRhop_Extrapolated || VelMode==InVelM_Extrapolated); 
   }

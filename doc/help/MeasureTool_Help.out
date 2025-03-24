@@ -1,20 +1,20 @@
 
 
- <MEASURETOOL>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <MEASURETOOL>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  MeasureTool is a free tool for DualSPHysics simulations.
  DualSPHysics project is an international collaboration between
  University of Vigo (Spain) and University of Manchester (UK).
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- * Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+ Redistribution and use in binary form, without modification, are
+ permitted provided that the following conditions are met:
  * Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
+ * Redistributions or modifications of source code are not permitted 
+   unless expressly authorised, and must retain the above copyright 
+   notice, this list of conditions and the following disclaimer.
  * Neither the name of the MeasureTool nor the names of its contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
@@ -31,7 +31,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-MeasureTool v5.0.206 (12-04-2023)
+MeasureTool v5.4.266 (20-03-2025)
 ==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -44,8 +44,8 @@ Information about parameters of execution:
     -opt <file>     Loads configuration from a file
 
   Define input file :
-    -dirin <dir>       Indicates the directory with particle data
-    -casein <casename> Name of case file with particle data
+    -dirdata <dir>     Directory with particle data (Part_XXXX.bi4)
+    -filedata <file>   File with particle data (file.bi4)
 
     -filexml file.xml  Loads xml file with information of mk and
                        and other information. The word 'AUTO' can
@@ -77,9 +77,10 @@ Information about parameters of execution:
        +/-floating:  Floating body particles
        +/-fluid:     Fluid particles (no excluded)
        (by default: all, + means include, - means do not include)
+    -onlyzone:<values>   Indicates the VRes zone of selected particles
 
   Set the configuration of interpolation:
-    -pointstemplate Creates example file to be used with -points or -pointspos
+    -templates      Creates example file to be used with -points or -pointspos
     -points <file>  Defines the points where interpolated data will be
                     computed (each value separated by space or a new line)
     -pointsdef:<def>  Definition of points by command line intead of by file.
@@ -91,23 +92,27 @@ Information about parameters of execution:
     -pointspos <file>  Defines the position of points where interpolated data
                        will be computed (each line contains the points for one
                        part file, points are defined as x0;y0;z0;x1;y1;z1...)
-    -particlesmk:<values>  Indicates the points where interpolated data will
-                           be computed using the positions of the particles 
-                           with the given mk
+    -pointsgeo[:size] <file>  Defines the measuring positions starting from
+                       vertices in a geometry file (VTK, VTU, VTP, STL or PLY).
+                       When size is provided, the triangle mesh is refined to
+                       reduce the side size to requested size
 
-    -particlesid:<values>  Indicates the points where interpolated data will
-                           be computed using the positions of the particles 
-                           with the given id
+    -meshpoints[:size] Generates triangle mesh starting from the measuring
+                       positions when a grid definition was used (only for
+                       flow calculation). When size is provided, the triangle
+                       mesh is refined to reduce the side size to requested
+                       size.
+    -trackmk:<mk>      Points track the movement of the indicated MK. Only
+                       supports -points and -pointsdef options
 
     -kclimit:<float>       Defines the minimum value of sum_wab_vol to apply
                            the Kernel Correction. Use value >= 2 to disable
-                           this correction (default value = 0.5)
+                           this correction (default value = 0.5 and 2 for flow
+                           calculation)
     -kcdummy:<float>       Defines the dummy value for the interpolated
                            quantity if Kernel Correction is not applied
                            (default value = 0)
     -kcusedummy:<0/1>      Defines whether or not to use the dummy value
-                           (default value = 1)
-    -kcmass:<0/1>          Enables/disables Kernel Correction for Mass variable
                            (default value = 1)
 
     -distinter_2h:<float>  Coefficient of 2h that defines the maximum distance
@@ -115,6 +120,12 @@ Information about parameters of execution:
                            (default value = 1.0)
     -distinter:<float>     Defines the maximum distance for the interaction
                            among particles in an absolute way.
+
+  Set calculation mode:
+    -vars:      Set variables to compute by SPH interpolation (by default).
+    -elevation: Computes fluid elevation and other related variables.
+    -flow:      Computes flow.
+    -tke:       Computes Turbulent Kinetic Energy.
 
   Set the values to be calculated:
     -vars[:<values>] Defines the variables or magnitudes that
@@ -125,36 +136,30 @@ Information about parameters of execution:
        +/-vel:       Velocity
        +/-rhop:      Density
        +/-press:     Pressure
-       +/-pressh:    Hydrostatic pressure (computed from depth data)
        +/-mass:      Mass
        +/-vol:       Volume
        +/-idp:       Id of particles
        +/-ace:       Acceleration
        +/-vor:       Vorticity
-       +/-depth:     Depth (computed from depth data files by IsoSurface)
-       +/-kcorr:     Summation of interaction kernel multiplied by volume
+       +/-kcorr:     Kernel sum
        +/-XXX:       Variable defined by the user
-     (by default: vel,rhop or empty when elevation/tke calculation is enabled)
+    (by default: vel,rhop,press when elevation/tke calculation is not enabled)
 
-    -depthdir <dir>  Directory with depth data (PartDepth_xxxx.bin4)
-
-  Set the height values to be calculated:
-    -elevation[:<float>]  Fluid elevation is calculated starting from mass 
-                     values for each point x,y. The reference mass to obtain
-                     the elevation is calculated according to the mass values
-                     of the selected particles; by default 0.5 in 3D (half 
-                     the mass) and 0.4 in 2D
-    -elevationlimit:<float>  The same as -elevation but the reference mass is
-                             given by an absolute value
+  Set options for elevation calculation:
+    -elevation[:<float>]  Fluid elevation is calculated starting from kernel
+         sum for each point x,y. The threshold value is 0.5 in 3D (0.4 in 2D)
+         by default.
     -elevationoutput:<value> Output files with fluid elevation values
-       time:        Values of elevation for each time (option by default)
-       pos:         Values of elevation for each position (x,y)
-       all:         Both output files.
+       time:          Values of elevation for each time (option by default)
+       pos:           Values of elevation for each position (x,y)
+       all:           Both output files.
 
     -hvars[:<values>] Defines height values to be computed
                       (+ means include, - means do not include)
        +/-all:        To choose or reject all options
-       +/-eta:        Elevation for each column x,y (equal to -elevation)
+       +/-eta:        Maximum elevation for each column x,y (like -elevation)
+       +/-eta1:       First elevation for each column x,y
+       +/-eta2/3/4:   Following elevations for each column (eta2, eta3, eta4)
        +/-bottom:     Fluid bottom for each column x,y
        +/-depthsum:   Sum of depths for each column x,y
        +/-depthmax:   Maximum depth for each column x,y
@@ -164,12 +169,11 @@ Information about parameters of execution:
 
     -hsort:<value>    Height sort mode: 1:Original, 2:X-Y, 3:Y-X (0 by default)
 
-    -masslimit:<float>  Coefficient to compute mass limit used to find the
-                        fluid surface, by default 0.5 in 3D (half the mass)
-                        and 0.4 in 2D
-    -masslimitvalue:<float>  The same as -masslimit but the reference mass is
-                        given by an absolute value
+  Set options for flow calculation:
+    -flow[:<units>] Compute flow in requested units: 1:m^3/s, 2:l/s, 3:gal/s,
+                    4:gal/min (default units = m^3/s).
 
+  Set Turbulent Kinetic Energy calculation:
     -tke            Turbulent Kinetic Energy is calculated using the average 
                     velocity of selected PARTS
 

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -50,6 +50,8 @@ void JDsOutputTime::Reset(){
   Times.clear();
   TimeBase=0;
   SpecialConfig=false;
+  SimpleTout=0;
+  SimpleToutNum=0;
   LastTimeInput=LastTimeOutput=-1;
 }
 
@@ -62,6 +64,8 @@ void JDsOutputTime::CopyFrom(const JDsOutputTime* tout){
   for(unsigned c=0;c<nt;c++)Times.push_back(tout->Times[c]);
   TimeBase=tout->TimeBase;
   SpecialConfig=tout->SpecialConfig;
+  SimpleTout=tout->SimpleTout;
+  SimpleToutNum=tout->SimpleToutNum;
   LastTimeInput=tout->LastTimeInput;
   LastTimeOutput=tout->LastTimeOutput;
 }
@@ -74,12 +78,16 @@ void JDsOutputTime::Config(double timeoutdef){
   if(timeoutdef<=0)Run_Exceptioon("Value timeout by default is invalid. It is not greater than zero.");
   AddTimeOut(0,timeoutdef);
   SpecialConfig=false;
+  SimpleTout=timeoutdef;
+  SimpleToutNum=0;
 }
 
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JDsOutputTime::Config(std::string filexml,const std::string &place,double timeoutdef){
+void JDsOutputTime::Config(std::string filexml,const std::string& place
+  ,double timeoutdef)
+{
   Reset();
   JXml xml; xml.LoadFile(filexml);
   LoadXml(&xml,place);
@@ -108,7 +116,7 @@ bool JDsOutputTime::AddTimeOut(double t,double tout){
 //==============================================================================
 /// Reads configuration from the XML node.
 //==============================================================================
-void JDsOutputTime::ReadXml(const JXml *sxml,TiXmlElement* ele){
+void JDsOutputTime::ReadXml(const JXml* sxml,TiXmlElement* ele){
   TiXmlElement* elet=ele->FirstChildElement("tout"); 
   while(elet){
     double t=sxml->GetAttributeDouble(elet,"time");
@@ -121,7 +129,7 @@ void JDsOutputTime::ReadXml(const JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Loads configuration from XML object.
 //==============================================================================
-void JDsOutputTime::LoadXml(const JXml *sxml,const std::string &place){
+void JDsOutputTime::LoadXml(const JXml* sxml,const std::string& place){
   TiXmlNode* node=sxml->GetNodeSimple(place);
   //if(!node)Run_Exception(string("Cannot find the element \'")+place+"\'.");
   if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
@@ -142,7 +150,7 @@ void JDsOutputTime::VisuConfig(std::string txhead,std::string txfoot)const{
 /// Returns configuration information.
 //==============================================================================
 void JDsOutputTime::GetConfig(std::string txhead,std::string txfoot
-  ,std::vector<std::string> &lines)const
+  ,std::vector<std::string>& lines)const
 {
   if(!txhead.empty())lines.push_back(txhead); 
   for(unsigned c=0;c<GetCount();c++){
@@ -157,32 +165,43 @@ void JDsOutputTime::GetConfig(std::string txhead,std::string txfoot
 double JDsOutputTime::GetNextTime(double t){
   if(LastTimeInput>=0 && t==LastTimeInput)return(LastTimeOutput);
   LastTimeInput=t;
-  //printf("\n++> GetNextTime(%f)\n",t);
-  double nexttime=0;
-  double tb=Times[TimeBase].time;
-  double tnext=(TimeBase+1<GetCount()? Times[TimeBase+1].time: DBL_MAX);
-  //printf("++>INI TimeBase::%d tb:%f \n",TimeBase,tb);
-  //-Avanza hasta tb <= t < tnext.
-  while(t>=tnext){
-    TimeBase++;
-    tb=Times[TimeBase].time;
-    tnext=(TimeBase+1<GetCount()? Times[TimeBase+1].time: DBL_MAX);
-  }
-  //printf("++> TimeBase::%d tb:%f \n",TimeBase,tb);
-  if(t<tb)nexttime=tb;
-  else{
-    const double tbout=Times[TimeBase].tout;
-    unsigned nt=unsigned((t-tb)/tbout);
-    nexttime=tb+tbout*nt;
-    for(;nexttime<=t;nt++){
-      nexttime=tb+tbout*nt;
-      //printf("++> nexttime:%f dif:%f %20.12E\n",nexttime,nexttime-t,nexttime-t);
+  if(SpecialConfig){
+    //printf("\n++> GetNextTime(%f)\n",t);
+    double nexttime=0;
+    double tb=Times[TimeBase].time;
+    double tnext=(TimeBase+1<GetCount()? Times[TimeBase+1].time: DBL_MAX);
+    //printf("++>INI TimeBase::%d tb:%f \n",TimeBase,tb);
+    //-Avanza hasta tb <= t < tnext.
+    while(t>=tnext){
+      TimeBase++;
+      tb=Times[TimeBase].time;
+      tnext=(TimeBase+1<GetCount()? Times[TimeBase+1].time: DBL_MAX);
     }
-    if(nexttime>tnext)nexttime=tnext;
+    //printf("++> TimeBase::%d tb:%f \n",TimeBase,tb);
+    if(t<tb)nexttime=tb;
+    else{
+      const double tbout=Times[TimeBase].tout;
+      unsigned nt=unsigned((t-tb)/tbout);
+      nexttime=tb+tbout*nt;
+      for(;nexttime<=t;nt++){
+        nexttime=tb+tbout*nt;
+        //printf("++> nexttime:%f dif:%f %20.12E\n",nexttime,nexttime-t,nexttime-t);
+      }
+      if(nexttime>tnext)nexttime=tnext;
+    }
+    //printf("++> nexttime:%f\n",nexttime);
+    LastTimeOutput=nexttime;
   }
-  //printf("++> nexttime:%f\n",nexttime);
-  LastTimeOutput=nexttime;
-  return(nexttime);
+  else{
+    double nexttime=LastTimeOutput;
+    while(t>=nexttime){
+      SimpleToutNum++;
+      nexttime=SimpleTout*SimpleToutNum;
+    }
+    LastTimeOutput=nexttime;
+    //printf("+++++> nexttime:%f dif:%f %20.12E\n",nexttime,nexttime-t,nexttime-t);
+  }
+  return(LastTimeOutput);
 }
 
 

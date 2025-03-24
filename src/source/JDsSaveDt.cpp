@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -60,14 +60,18 @@ void JDsSaveDt::Reset(){
   LastInterval=0;
   memset(&ValueNull,0,sizeof(StValue));
   LastDtf=LastDt1=LastDt2=ValueNull;
+  LastDt3=ValueNull;                              //<vs_flexstruc>
   LastAceMax=LastViscDtMax=LastVelMax=ValueNull;
+  LastFlexStrucDtMax=ValueNull;                   //<vs_flexstruc>
   CountAllDts=0;
 }
 
 //==============================================================================
 /// Configures object.
 //==============================================================================
-void JDsSaveDt::Config(const JXml *sxml,const std::string &place,double timemax,double timeout){
+void JDsSaveDt::Config(const JXml* sxml,const std::string& place,double timemax
+  ,double timeout)
+{
   Reset();
   LoadXml(sxml,place);
   if(TimeFinish<=0)TimeFinish=DBL_MAX;
@@ -79,7 +83,7 @@ void JDsSaveDt::Config(const JXml *sxml,const std::string &place,double timemax,
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JDsSaveDt::LoadXml(const JXml *sxml,const std::string &place){
+void JDsSaveDt::LoadXml(const JXml* sxml,const std::string& place){
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(string("Cannot find the element \'")+place+"\'.");
   if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
@@ -88,10 +92,10 @@ void JDsSaveDt::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JDsSaveDt::ReadXml(const JXml *sxml,TiXmlElement* ele){
-  TimeStart=sxml->ReadElementFloat(ele,"start","value",true);
-  TimeFinish=sxml->ReadElementFloat(ele,"finish","value",true,-1);
-  TimeInterval=sxml->ReadElementFloat(ele,"interval","value",true,-1);
+void JDsSaveDt::ReadXml(const JXml* sxml,TiXmlElement* ele){
+  TimeStart=sxml->ReadElementDouble(ele,"start","value",true);
+  TimeFinish=sxml->ReadElementDouble(ele,"finish","value",true,-1);
+  TimeInterval=sxml->ReadElementDouble(ele,"interval","value",true,-1);
   AllDt=sxml->ReadElementBool(ele,"alldt","value",true,false);
   FullInfo=sxml->ReadElementBool(ele,"fullinfo","value",true,false);
 }
@@ -125,9 +129,11 @@ void JDsSaveDt::SaveFileValues(){
     scsv << "Dtf_mean [s];Dtf_min [s];Dtf_max [s]";
     scsv << "Dt1_mean [s];Dt1_min [s];Dt1_max [s]";
     scsv << "Dt2_mean [s];Dt2_min [s];Dt2_max [s]";
+    scsv << "Dt3_mean [s];Dt3_min [s];Dt3_max [s]";                         //<vs_flexstruc>
     if(FullInfo){
       scsv << "AceMax_mean [m/s^2];AceMax_min [m/s^2];AceMax_max [m/s^2]";
       scsv << "ViscDtMax_mean;ViscDtMax_min;ViscDtMax_max";
+      scsv << "FlexStrucDtMax_mean;FlexStrucDtMax_min;FlexStrucDtMax_max";  //<vs_flexstruc>
       scsv << "VelMax_mean [m/s];VelMax_min [m/s];VelMax_max [m/s]";
     }
     scsv << jcsv::Endl();
@@ -140,10 +146,12 @@ void JDsSaveDt::SaveFileValues(){
     v=DtFinal[c];    scsv << v.tini << v.num << v.vmean << v.vmin << v.vmax;
     v=Dt1[c];        scsv << v.vmean << v.vmin << v.vmax;
     v=Dt2[c];        scsv << v.vmean << v.vmin << v.vmax;
+    v=Dt3[c];        scsv << v.vmean << v.vmin << v.vmax;         //<vs_flexstruc>
     if(FullInfo){
       v=AceMax[c];     scsv << v.vmean << v.vmin << v.vmax;
       v=ViscDtMax[c];  scsv << v.vmean << v.vmin << v.vmax;
       v=VelMax[c];     scsv << v.vmean << v.vmin << v.vmax;
+      v=FlexStrucDtMax[c];  scsv << v.vmean << v.vmin << v.vmax;  //<vs_flexstruc>
     }
     scsv << jcsv::Endl();
   }
@@ -187,7 +195,7 @@ void JDsSaveDt::SaveFileAllDts(){
 /// Saves indicated info for dt. If it matches with timestep.
 /// Guarda info del dt inicado. Si coincide timestep lo sobre.
 //==============================================================================
-void JDsSaveDt::AddValueData(double timestep,double dt,StValue &value){
+void JDsSaveDt::AddValueData(double timestep,double dt,StValue& value){
   if(!value.num){
     value.tini=timestep;
     value.vmean=value.vmin=value.vmax=dt;
@@ -210,12 +218,16 @@ void JDsSaveDt::AddLastValues(){
   DtFinal[Count]=LastDtf;
   Dt1[Count]=LastDt1;
   Dt2[Count]=LastDt2;
+  Dt3[Count]=LastDt3; //<vs_flexstruc>
   LastDtf=LastDt1=LastDt2=ValueNull;
+  LastDt3=ValueNull;  //<vs_flexstruc>
   if(FullInfo){
     AceMax[Count]=LastAceMax;
     ViscDtMax[Count]=LastViscDtMax;
+    FlexStrucDtMax[Count]=LastFlexStrucDtMax; //<vs_flexstruc>
     VelMax[Count]=LastVelMax;
     LastAceMax=LastViscDtMax=LastVelMax=ValueNull;
+    LastFlexStrucDtMax=ValueNull; //<vs_flexstruc>
   }
   Count++;
 }
@@ -224,9 +236,11 @@ void JDsSaveDt::AddLastValues(){
 /// Saves indicated info for dt. If it matches with timestep.
 /// Guarda info del dt inicado. Si coincide timestep lo sobre
 //==============================================================================
-void JDsSaveDt::AddValues(double timestep,double dtfinal,double dt1,double dt2,double acemax,double viscdtmax,double velmax){
+void JDsSaveDt::AddValues(double timestep,double dtfinal,double dt1,double dt2
+  ,double dt3,double acemax,double viscdtmax,double flexstrucdtmax,double velmax)
+{
   if(TimeStart<=timestep && timestep<=TimeFinish){
-    unsigned interval=unsigned((timestep-TimeStart)/TimeInterval);
+    const unsigned interval=unsigned((timestep-TimeStart)/TimeInterval);
     if(LastInterval!=interval && LastDtf.num){
       AddLastValues();
       if(Count>=SizeValuesSave)SaveFileValues();
@@ -235,9 +249,11 @@ void JDsSaveDt::AddValues(double timestep,double dtfinal,double dt1,double dt2,d
     AddValueData(timestep,dtfinal,LastDtf);
     AddValueData(timestep,dt1,LastDt1);
     AddValueData(timestep,dt2,LastDt2);
+    AddValueData(timestep,dt3,LastDt3); //<vs_flexstruc>
     if(FullInfo){
       AddValueData(timestep,acemax,LastAceMax);
       AddValueData(timestep,viscdtmax,LastViscDtMax);
+      AddValueData(timestep,flexstrucdtmax,LastFlexStrucDtMax); //<vs_flexstruc>
       AddValueData(timestep,velmax,LastVelMax);
     }
     //-Management of AllDt.

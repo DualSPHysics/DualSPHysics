@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -41,10 +41,10 @@ class JWaveSpectrumGpu : protected JObject
 private:
 
   llong MemGpuFixed;
-  tdouble4 *Order2CoefsEtag;  ///<Coefficients on GPU for elevation of each wave combination {dnm,dkl,aagnm,bbgnm} [SizeWaveCoefs].
-  double *Order2CoefsDnmg;    ///<Coefficients on GPU for position of each wave combination {dnm} [SizeWaveCoefs].
-  tdouble2 *Order2CoefsPosg;  ///<Coefficients on GPU for position of each wave combination {aaf1,bbf1} [SizeWaveCoefs].
-  double *Order2Auxg;         ///<Auxiliary memory for reductions. [SizeWaveCoefs].
+  tdouble4* Order2CoefsEtag;  ///<Coefficients on GPU for elevation of each wave combination {dnm,dkl,aagnm,bbgnm} [SizeWaveCoefs].
+  double*   Order2CoefsDnmg;  ///<Coefficients on GPU for position of each wave combination {dnm} [SizeWaveCoefs].
+  tdouble2* Order2CoefsPosg;  ///<Coefficients on GPU for position of each wave combination {aaf1,bbf1} [SizeWaveCoefs].
+  double*   Order2Auxg;       ///<Auxiliary memory for reductions. [SizeWaveCoefs].
 
 public:
   JWaveSpectrumGpu();
@@ -52,7 +52,7 @@ public:
 
   void AllocMemoryGpu(unsigned sizewavecoefs);
   void FreeMemoryGpu();
-  void CopyCoefs(unsigned sizewavecoefs,const tdouble4 *d4,const double *d1,const tdouble2 *d2);
+  void CopyCoefs(unsigned sizewavecoefs,const tdouble4* d4,const double* d1,const tdouble2* d2);
 
   double CalcPosition(double time,unsigned sizewavecoefs);
   double CalcElevation(double time,double x,unsigned sizewavecoefs);

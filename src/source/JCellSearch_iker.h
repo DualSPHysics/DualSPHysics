@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -32,8 +32,8 @@ namespace cunsearch{
 /// Devuelve limites de celdas para interaccion.
 //------------------------------------------------------------------------------
 __device__ void InitCte(unsigned rcell
-  ,const int &scelldiv,const int4 &nc,const int3 &cellzero
-  ,int &ini1,int &fin1,int &ini2,int &fin2,int &ini3,int &fin3)
+  ,const int& scelldiv,const int4& nc,const int3& cellzero
+  ,int& ini1,int& fin1,int& ini2,int& fin2,int& ini3,int& fin3)
 {
   //-Obtains interaction limits.
   const int cx=DCEL_Cellx(CTE.cellcode,rcell)-cellzero.x;
@@ -60,9 +60,9 @@ __device__ void InitCte(unsigned rcell
 /// Returns cell limits for the interaction.
 /// Devuelve limites de celdas para interaccion.
 //------------------------------------------------------------------------------
-__device__ void InitCte(const double &px,const double &py,const double &pz
-  ,const int &scelldiv,const int4 &nc,const int3 &cellzero
-  ,int &ini1,int &fin1,int &ini2,int &fin2,int &ini3,int &fin3)
+__device__ void InitCte(const double& px,const double& py,const double& pz
+  ,const int& scelldiv,const int4& nc,const int3& cellzero
+  ,int& ini1,int& fin1,int& ini2,int& fin2,int& ini3,int& fin3)
 {
   //-Obtains interaction limits.
   const int cx=int((px-CTE.domposminx)/CTE.scell)-cellzero.x;
@@ -92,9 +92,9 @@ __device__ void InitCte(const double &px,const double &py,const double &pz
 /// Devuelve limites de celdas para interaccion.
 //------------------------------------------------------------------------------
 __device__ void Initsp(unsigned rcell
-  ,const unsigned &axis,const unsigned &cellcode
-  ,const int &scelldiv,const int4 &nc,const int3 &cellzero
-  ,int &ini1,int &fin1,int &ini2,int &fin2,int &ini3,int &fin3)
+  ,const unsigned& axis,const unsigned& cellcode
+  ,const int& scelldiv,const int4& nc,const int3& cellzero
+  ,int& ini1,int& fin1,int& ini2,int& fin2,int& ini3,int& fin3)
 {
   //-Obtains interaction limits.
   const int cx=DCEL_Cellx(cellcode,rcell)-cellzero.x;
@@ -121,10 +121,10 @@ __device__ void Initsp(unsigned rcell
 /// Returns cell limits for the interaction.
 /// Devuelve limites de celdas para interaccion.
 //------------------------------------------------------------------------------
-__device__ void Initsp(const double &px,const double &py,const double &pz
-  ,const unsigned &axis,const double3 &domposmin,const float &scell
-  ,const int &scelldiv,const int4 &nc,const int3 &cellzero
-  ,int &ini1,int &fin1,int &ini2,int &fin2,int &ini3,int &fin3)
+__device__ void Initsp(const double& px,const double& py,const double& pz
+  ,const unsigned& axis,const double3& domposmin,const float& scell
+  ,const int& scelldiv,const int4& nc,const int3& cellzero
+  ,int& ini1,int& fin1,int& ini2,int& fin2,int& ini3,int& fin3)
 {
   //-Obtains interaction limits.
   const int cx=int((px-domposmin.x)/scell)-cellzero.x;
@@ -152,9 +152,9 @@ __device__ void Initsp(const double &px,const double &py,const double &pz
 /// Returns range of boundary particles for neighborhood search.
 /// Devuelve rango de particulas bound para busqueda de vecinos.
 //------------------------------------------------------------------------------
-__device__ void ParticleRange(const int &c2,const int &c3
-  ,const int &ini1,const int &fin1,const int2 *begincell
-  ,unsigned &pini,unsigned &pfin)
+__device__ void ParticleRange(const int& c2,const int& c3
+  ,const int& ini1,const int& fin1,const int2* begincell
+  ,unsigned& pini,unsigned& pfin)
 {
   const int v=c2+c3;
   for(int c1=ini1;c1<fin1;c1++){
@@ -169,8 +169,8 @@ __device__ void ParticleRange(const int &c2,const int &c3
 //==============================================================================
 /// Returns distance squared between particles 1 and 2 (rr2).
 //==============================================================================
-__device__ float Distance2(const float4 &pscellp1,const float4 &pscellp2
-  ,const float &poscellsize)
+__device__ float Distance2(const float4& pscellp1,const float4& pscellp2
+  ,const float& poscellsize)
 {
   const float drx=pscellp1.x-pscellp2.x + poscellsize*(PSCEL_GetfX(pscellp1.w)-PSCEL_GetfX(pscellp2.w));
   const float dry=pscellp1.y-pscellp2.y + poscellsize*(PSCEL_GetfY(pscellp1.w)-PSCEL_GetfY(pscellp2.w));

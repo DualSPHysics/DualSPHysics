@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -60,8 +60,10 @@ void JOutputCsv::Reset(){
 //==============================================================================
 /// Stores data in CSV format.
 //==============================================================================
-void JOutputCsv::SaveCsv(std::string fname,const JDataArrays &arrays,std::string head){
-  if(fun::GetExtension(fname).empty())FileName=fname=fun::AddExtension(fname,".csv");
+void JOutputCsv::SaveCsv(std::string fname,const JDataArrays& arrays
+  ,std::string head)
+{
+  if(fun::GetExtension(fname).empty())FileName=fname=fun::AddExtension(fname,"csv");
   const char csvsep=(CsvSepComa? ',': ';');
   const unsigned nf=arrays.Count();
   const unsigned nv=arrays.GetDataCount(true);
@@ -98,14 +100,14 @@ void JOutputCsv::SaveCsv(std::string fname,const JDataArrays &arrays,std::string
         string fmt=outfmt[cf];
         string values;
         switch(ar.type){
-          case TypeUchar:  { const byte     *v=(byte    *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
-          case TypeUshort: { const word     *v=(word    *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
-          case TypeUint:   { const unsigned *v=(unsigned*)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
-          case TypeFloat:  { const float    *v=(float   *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
-          case TypeDouble: { const double   *v=(double  *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
-          case TypeUint3:  { const tuint3   *v=(tuint3  *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv].x,v[cv].y,v[cv].z)+csvsep; }break;
-          case TypeFloat3: { const tfloat3  *v=(tfloat3 *)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv].x,v[cv].y,v[cv].z)+csvsep; }break;
-          case TypeDouble3:{ const tdouble3 *v=(tdouble3*)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv].x,v[cv].y,v[cv].z)+csvsep; }break;
+          case TypeUchar:  { const byte*     v=(byte*    )ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
+          case TypeUshort: { const word*     v=(word*    )ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
+          case TypeUint:   { const unsigned* v=(unsigned*)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
+          case TypeFloat:  { const float*    v=(float*   )ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
+          case TypeDouble: { const double*   v=(double*  )ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv])+csvsep; }break;
+          case TypeUint3:  { const tuint3*   v=(tuint3*  )ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv].x,v[cv].y,v[cv].z)+csvsep; }break;
+          case TypeFloat3: { const tfloat3*  v=(tfloat3* )ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv].x,v[cv].y,v[cv].z)+csvsep; }break;
+          case TypeDouble3:{ const tdouble3* v=(tdouble3*)ar.ptr;  values=fun::PrintStr(fmt.c_str(),v[cv].x,v[cv].y,v[cv].z)+csvsep; }break;
           default: Run_ExceptioonFile(fun::PrintStr("Type of array \'%s\' is invalid.",TypeToStr(ar.type)),fname);
         }
         pf << values;
@@ -121,8 +123,8 @@ void JOutputCsv::SaveCsv(std::string fname,const JDataArrays &arrays,std::string
 //==============================================================================
 /// Calculates statistic information of unitary arrays.
 //==============================================================================
-template<typename T> void JOutputCsv::CalculateStatsArray1(unsigned ndata,T *data
-    ,double &valmin,double &valmax,double &valmean)const
+template<typename T> void JOutputCsv::CalculateStatsArray1(unsigned ndata,T* data
+    ,double& valmin,double& valmax,double& valmean)const
 {
   double vmin=0,vmax=0,vmea=0;
   if(ndata)vmin=vmax=double(data[0]);
@@ -140,8 +142,8 @@ template<typename T> void JOutputCsv::CalculateStatsArray1(unsigned ndata,T *dat
 //==============================================================================
 /// Calculates statistic information of triple arrays.
 //==============================================================================
-template<typename T> void JOutputCsv::CalculateStatsArray3(unsigned ndata,T *data
-  ,tdouble4 &valmin,tdouble4 &valmax,tdouble4 &valmean)const
+template<typename T> void JOutputCsv::CalculateStatsArray3(unsigned ndata,T* data
+  ,tdouble4& valmin,tdouble4& valmax,tdouble4& valmean)const
 {
   tdouble4 vmin=TDouble4(0);
   tdouble4 vmax=TDouble4(0);
@@ -172,8 +174,10 @@ template<typename T> void JOutputCsv::CalculateStatsArray3(unsigned ndata,T *dat
 ////==============================================================================
 ///// Compute and stores statistic information in CSV format.
 ////==============================================================================
-//void JOutputCsv::SaveStatsCsv(std::string fname,bool create,int part,double timestep,const JDataArrays &arrays,std::string head){
-//  if(fun::GetExtension(fname).empty())FileName=fname=fun::AddExtension(fname,".csv");
+//void JOutputCsv::SaveStatsCsv(std::string fname,bool create,int part
+//  ,double timestep,const JDataArrays& arrays,std::string head)
+//{
+//  if(fun::GetExtension(fname).empty())FileName=fname=fun::AddExtension(fname,"csv");
 //  const char csvsep=(CsvSepComa? ',': ';');
 //  const unsigned nf=arrays.GetCount();
 //  const unsigned nv=arrays.GetDataCount();
@@ -224,20 +228,20 @@ template<typename T> void JOutputCsv::CalculateStatsArray3(unsigned ndata,T *dat
 //        double vmin,vmax,vmea;
 //        tdouble4 vmin3,vmax3,vmea3;
 //        switch(ar->GetType()){
-//          case JDataArraysDef::TpChar:   { const char     *v=ar->GetPointerChar();     CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
-//          case JDataArraysDef::TpUchar:  { const byte     *v=ar->GetPointerUchar();    CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
-//          case JDataArraysDef::TpShort:  { const short    *v=ar->GetPointerShort();    CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
-//          case JDataArraysDef::TpUshort: { const word     *v=ar->GetPointerUshort();   CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
-//          case JDataArraysDef::TpInt:    { const int      *v=ar->GetPointerInt();      CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
-//          case JDataArraysDef::TpUint:   { const unsigned *v=ar->GetPointerUint();     CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
-//          case JDataArraysDef::TpLlong:  { const llong    *v=ar->GetPointerLlong();    CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
-//          case JDataArraysDef::TpUllong: { const ullong   *v=ar->GetPointerUllong();   CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
-//          case JDataArraysDef::TpFloat:  { const float    *v=ar->GetPointerFloat();    CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
-//          case JDataArraysDef::TpDouble: { const double   *v=ar->GetPointerDouble();   CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
-//          case JDataArraysDef::TpInt3:   { const tint3    *v=ar->GetPointerInt3();     CalculateStatsArray3(nv,v,vmin3,vmax3,vmea3); }break;
-//          case JDataArraysDef::TpUint3:  { const tuint3   *v=ar->GetPointerUint3();    CalculateStatsArray3(nv,v,vmin3,vmax3,vmea3); }break;
-//          case JDataArraysDef::TpFloat3: { const tfloat3  *v=ar->GetPointerFloat3();   CalculateStatsArray3(nv,v,vmin3,vmax3,vmea3); }break;
-//          case JDataArraysDef::TpDouble3:{ const tdouble3 *v=ar->GetPointerDouble3();  CalculateStatsArray3(nv,v,vmin3,vmax3,vmea3); }break;
+//          case JDataArraysDef::TpChar:   { const char*     v=ar->GetPointerChar();     CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
+//          case JDataArraysDef::TpUchar:  { const byte*     v=ar->GetPointerUchar();    CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
+//          case JDataArraysDef::TpShort:  { const short*    v=ar->GetPointerShort();    CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
+//          case JDataArraysDef::TpUshort: { const word*     v=ar->GetPointerUshort();   CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
+//          case JDataArraysDef::TpInt:    { const int*      v=ar->GetPointerInt();      CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
+//          case JDataArraysDef::TpUint:   { const unsigned* v=ar->GetPointerUint();     CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
+//          case JDataArraysDef::TpLlong:  { const llong*    v=ar->GetPointerLlong();    CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
+//          case JDataArraysDef::TpUllong: { const ullong*   v=ar->GetPointerUllong();   CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
+//          case JDataArraysDef::TpFloat:  { const float*    v=ar->GetPointerFloat();    CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
+//          case JDataArraysDef::TpDouble: { const double*   v=ar->GetPointerDouble();   CalculateStatsArray1(nv,v,vmin,vmax,vmea); }break;
+//          case JDataArraysDef::TpInt3:   { const tint3*    v=ar->GetPointerInt3();     CalculateStatsArray3(nv,v,vmin3,vmax3,vmea3); }break;
+//          case JDataArraysDef::TpUint3:  { const tuint3*   v=ar->GetPointerUint3();    CalculateStatsArray3(nv,v,vmin3,vmax3,vmea3); }break;
+//          case JDataArraysDef::TpFloat3: { const tfloat3*  v=ar->GetPointerFloat3();   CalculateStatsArray3(nv,v,vmin3,vmax3,vmea3); }break;
+//          case JDataArraysDef::TpDouble3:{ const tdouble3* v=ar->GetPointerDouble3();  CalculateStatsArray3(nv,v,vmin3,vmax3,vmea3); }break;
 //          default: Run_Exceptioon("Type of array is invalid.");
 //        }
 //        if(!ar->IsTriple())pf << fun::PrintStr(fmt.c_str(),vmin,vmax,vmea)+csvsep;

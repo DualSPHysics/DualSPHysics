@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -56,6 +56,8 @@ protected:
   double FirstTime;     ///<First time to evaluate (when it is less than timeout and not zero). | Primer instante a evaluar (cuando es menor que timeout y no es cero).
   double TimeOut;       ///<Periodic interval duration (in seconds). | Duracion de intervalo periodico (en segundos).
 
+  //unsigned NumCheckTime;
+
   unsigned TimeOutNum;  //<Number of intervals processed with Periodic or Times. | Numero de intervalos procesados con Periodic o Times.
 
   unsigned TimesSize;        ///<Number of elements of Times. | Numero de elementos de Times. 
@@ -70,7 +72,7 @@ protected:
   unsigned OutNum;
 
   void ConfigPeriodic(double tfirst,double tout);
-  void ConfigTimes(unsigned ntimes,const double *vtimes);
+  void ConfigTimes(unsigned ntimes,const double* vtimes);
   void ConfigTimes(std::string times);
   void PrepareTimes();
 
@@ -81,9 +83,9 @@ protected:
 public:
   JTimeControl(double tout);
   JTimeControl(double tfirst,double tout);
-  JTimeControl(unsigned ntimes,const double *vtimes);
-  JTimeControl(const std::string &times);
-  //~JTimeControl();
+  JTimeControl(unsigned ntimes,const double* vtimes);
+  JTimeControl(const std::string& times);
+  ~JTimeControl();
 
   void Reset();
 

@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -35,15 +35,15 @@ namespace fsph{
 /// Returns pressure starting from density using equation of state 
 /// based on [Monaghan, 1994].
 //==============================================================================
-inline float ComputePressMonaghan(float rhop,float rhop0,float b,float gamma){ 
-  return(b*(pow(rhop/rhop0,gamma)-1.0f));
+inline float ComputePressMonaghan(float rho,float rho0,float b,float gamma){ 
+  return(b*(pow(rho/rho0,gamma)-1.0f));
 }
 //==============================================================================
 /// Returns pressure starting from density using equation of state 
 /// based on [Monaghan, 1994].
 //==============================================================================
-inline float ComputePressMonaghan(float rhop,const StCteSph &csp){
-  return(ComputePressMonaghan(rhop,csp.rhopzero,csp.cteb,csp.gamma));
+inline float ComputePressMonaghan(float rho,const StCteSph& csp){
+  return(ComputePressMonaghan(rho,csp.rhopzero,csp.cteb,csp.gamma));
 }
 
 
@@ -53,15 +53,15 @@ inline float ComputePressMonaghan(float rhop,const StCteSph &csp){
 //------------------------------------------------------------------------------
 /// Returns pressure starting from density using default equation of state.
 //------------------------------------------------------------------------------
-inline float ComputePress(float rhop,float rhop0,float b,float gamma,float cs0){ 
-  return(ComputePressMonaghan(rhop,rhop0,b,gamma));
+inline float ComputePress(float rho,float rho0,float b,float gamma,float cs0){ 
+  return(ComputePressMonaghan(rho,rho0,b,gamma));
 }
 
 //------------------------------------------------------------------------------
 /// Returns pressure starting from density using default equation of state.
 //------------------------------------------------------------------------------
-inline float ComputePress(float rhop,const StCteSph &csp){ 
-  return(ComputePressMonaghan(rhop,csp));
+inline float ComputePress(float rho,const StCteSph& csp){ 
+  return(ComputePressMonaghan(rho,csp));
 }
 
 

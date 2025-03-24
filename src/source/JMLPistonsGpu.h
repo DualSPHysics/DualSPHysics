@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -39,8 +39,8 @@
 class JMLPistonsGpu : protected JObject
 {
 private:
-  byte *PistonIdg;     ///<Data of PistonId on GPU.
-  double *MovVelg;     ///<Data of MovVel on GPU.
+  byte*   PistonIdg;   ///<Data of PistonId on GPU.
+  double* MovVelg;     ///<Data of MovVel on GPU.
   llong MemGpuFixed;  
 
 public:
@@ -49,8 +49,8 @@ public:
   void FreeMemoryGpu();
   inline llong GetAllocMemoryGpu()const{ return(MemGpuFixed); }
 
-  void PreparePiston1d(unsigned sizepistonid,const byte *pistonid,unsigned sizemovvel);
-  void CopyMovVel(unsigned sizemovvel,const double *movvel);
+  void PreparePiston1d(unsigned sizepistonid,const byte* pistonid,unsigned sizemovvel);
+  void CopyMovVel(unsigned sizemovvel,const double* movvel);
 
   inline const byte* GetPistonIdg()const{ return(PistonIdg);}
   inline const double* GetMovVelg()const{ return(MovVelg);}
@@ -65,7 +65,7 @@ class JMLPiston2DGpu : protected JObject
 {
 private:
   unsigned Size;
-  double *MovVelyzg;  ///<Data of MovVelyz on GPU. [Size]
+  double* MovVelyzg;  ///<Data of MovVelyz on GPU. [Size]
 
 public:
   JMLPiston2DGpu();
@@ -74,7 +74,7 @@ public:
   inline llong GetAllocMemoryGpu()const{ return(sizeof(double)*Size); }
 
   void AllocMemoryGpu(unsigned size);
-  void CopyMovVelyz(const double *movvelyz);
+  void CopyMovVelyz(const double* movvelyz);
 
   inline const double* GetMovVelyzg()const{ return(MovVelyzg); }
 

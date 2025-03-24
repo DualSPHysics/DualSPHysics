@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -20,13 +20,12 @@
 
 #include "JMotionMov.h"
 #include "JXml.h"
-#include "JReadDatafile.h"
 
 //##############################################################################
-//# JMotionMovXXX
+//# JMotionMovWait
 //##############################################################################
 //==============================================================================
-// Guarda configuracion de movimiento en formato xml
+/// Saves configuration in XML.
 //==============================================================================
 void JMotionMovWait::WriteXml(TiXmlNode* node)const{
   TiXmlElement item("wait"); 
@@ -35,6 +34,12 @@ void JMotionMovWait::WriteXml(TiXmlNode* node)const{
   if(NextId)JXml::AddAttribute(&item,"next",int(NextId));
   node->InsertEndChild(item);
 }
+
+//##############################################################################
+//# JMotionMovRect
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
 //==============================================================================
 void JMotionMovRect::WriteXml(TiXmlNode* node)const{
   TiXmlElement item("mvrect"); 
@@ -45,6 +50,12 @@ void JMotionMovRect::WriteXml(TiXmlNode* node)const{
   //-Define contenido de movimiento.
   JXml::AddAttribute(JXml::AddElementDouble3(node2,"vel",Vel),"units_comment","m/s");
 }
+
+//##############################################################################
+//# JMotionMovRectAce
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
 //==============================================================================
 void JMotionMovRectAce::WriteXml(TiXmlNode* node)const{
   TiXmlElement item("mvrectace"); 
@@ -56,6 +67,12 @@ void JMotionMovRectAce::WriteXml(TiXmlNode* node)const{
   if(!VelPrev)JXml::AddAttribute(JXml::AddElementDouble3(node2,"velini",Vel),"units_comment","m/s");
   JXml::AddAttribute(JXml::AddElementDouble3(node2,"ace",Ace),"units_comment","m/s^2");
 }
+
+//##############################################################################
+//# JMotionMovRot
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
 //==============================================================================
 void JMotionMovRot::WriteXml(TiXmlNode* node)const{
   TiXmlElement item("mvrot"); 
@@ -70,6 +87,12 @@ void JMotionMovRot::WriteXml(TiXmlNode* node)const{
   node2->InsertEndChild(JXml::MakeElementDouble3("axisp1",Axis->P1));
   node2->InsertEndChild(JXml::MakeElementDouble3("axisp2",Axis->P2));
 }
+
+//##############################################################################
+//# JMotionMovRotAce
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
 //==============================================================================
 void JMotionMovRotAce::WriteXml(TiXmlNode* node)const{
   TiXmlElement item("mvrotace"); 
@@ -87,6 +110,11 @@ void JMotionMovRotAce::WriteXml(TiXmlNode* node)const{
   node2->InsertEndChild(JXml::MakeElementDouble3("axisp2",Axis->P2));
 }
 
+//##############################################################################
+//# JMotionMovCir
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
 //==============================================================================
 void JMotionMovCir::WriteXml(TiXmlNode* node)const{
   TiXmlElement item("mvcir"); 
@@ -103,6 +131,12 @@ void JMotionMovCir::WriteXml(TiXmlNode* node)const{
   node2->InsertEndChild(JXml::MakeElementDouble3("axisp1",Axis->P1));
   node2->InsertEndChild(JXml::MakeElementDouble3("axisp2",Axis->P2));
 }
+
+//##############################################################################
+//# JMotionMovCirAce
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
 //==============================================================================
 void JMotionMovCirAce::WriteXml(TiXmlNode* node)const{
   TiXmlElement item("mvcirace"); 
@@ -122,6 +156,11 @@ void JMotionMovCirAce::WriteXml(TiXmlNode* node)const{
   node2->InsertEndChild(JXml::MakeElementDouble3("axisp2",Axis->P2));
 }
 
+//##############################################################################
+//# JMotionMovRectSinu
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
 //==============================================================================
 void JMotionMovRectSinu::WriteXml(TiXmlNode* node)const{
   TiXmlElement item("mvrectsinu"); 
@@ -137,6 +176,11 @@ void JMotionMovRectSinu::WriteXml(TiXmlNode* node)const{
   if(!PhasePrev)JXml::AddAttribute(JXml::AddElementDouble3(node2,"phase",phase),"units_comment",(AngDegrees? "degrees": "radians"));
 }
 
+//##############################################################################
+//# JMotionMovRotSinu
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
 //==============================================================================
 void JMotionMovRotSinu::WriteXml(TiXmlNode* node)const{
   TiXmlElement item("mvrotsinu"); 
@@ -155,6 +199,11 @@ void JMotionMovRotSinu::WriteXml(TiXmlNode* node)const{
   node2->InsertEndChild(JXml::MakeElementDouble3("axisp2",Axis->P2));
 }
 
+//##############################################################################
+//# JMotionMovCirSinu
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
 //==============================================================================
 void JMotionMovCirSinu::WriteXml(TiXmlNode* node)const{
   TiXmlElement item("mvcirsinu"); 
@@ -174,13 +223,19 @@ void JMotionMovCirSinu::WriteXml(TiXmlNode* node)const{
   node2->InsertEndChild(JXml::MakeElementDouble3("axisp2",Axis->P2));
 }
 
+//##############################################################################
+//# JMotionMovRectFile
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
 //==============================================================================
 void JMotionMovRectFile::WriteXml(TiXmlNode* node)const{
   TiXmlElement item("mvrectfile"); 
   JXml::AddAttribute(&item,"id",int(Id)); 
   JXml::AddAttribute(&item,"duration",Time);
   if(NextId)JXml::AddAttribute(&item,"next",int(NextId));
-  //-Define contenido de movimiento.
+  TiXmlNode* node2=node->InsertEndChild(item);
+  //-Saves file configuration.
   TiXmlElement item2("file");
   JXml::AddAttribute(&item2,"name",File);
   JXml::AddAttribute(&item2,"fields",Fields);
@@ -188,10 +243,14 @@ void JMotionMovRectFile::WriteXml(TiXmlNode* node)const{
   if(FieldX>=0)JXml::AddAttribute(&item2,"fieldx",FieldX);
   if(FieldY>=0)JXml::AddAttribute(&item2,"fieldy",FieldY);
   if(FieldZ>=0)JXml::AddAttribute(&item2,"fieldz",FieldZ);
-  TiXmlNode* node2=node->InsertEndChild(item);
   node2->InsertEndChild(item2);
 }
 
+//##############################################################################
+//# JMotionMovRotFile
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
 //==============================================================================
 void JMotionMovRotFile::WriteXml(TiXmlNode* node)const{
   TiXmlElement item("mvrotfile"); 
@@ -200,136 +259,81 @@ void JMotionMovRotFile::WriteXml(TiXmlNode* node)const{
   if(NextId)JXml::AddAttribute(&item,"next",int(NextId));
   JXml::AddAttribute(&item,"anglesunits",(AngDegrees? "degrees": "radians"));
   TiXmlNode* node2=node->InsertEndChild(item);
-  //-Define contenido de movimiento.
+  //-Saves file configuration.
   node2->InsertEndChild(JXml::MakeElementAttrib("file","name",File));
+  //-Saves other configuration.
   node2->InsertEndChild(JXml::MakeElementDouble3("axisp1",Axis->P1));
   node2->InsertEndChild(JXml::MakeElementDouble3("axisp2",Axis->P2));
 }
 
+//##############################################################################
+//# JMotionMovRotAdvFile
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
+//==============================================================================
+void JMotionMovRotAdvFile::WriteXml(TiXmlNode* node)const{
+  TiXmlElement item("mvrotadvfile"); 
+  JXml::AddAttribute(&item,"id",int(Id)); 
+  JXml::AddAttribute(&item,"duration",Time);
+  if(NextId)JXml::AddAttribute(&item,"next",int(NextId));
+  JXml::AddAttribute(&item,"anglesunits",(AngDegrees? "degrees": "radians"));
+  TiXmlNode* node2=node->InsertEndChild(item);
+  //-Saves file configuration.
+  TiXmlElement item2("file");
+  JXml::AddAttribute(&item2,"name",File);
+  JXml::AddAttribute(&item2,"fields",Fields);
+  JXml::AddAttribute(&item2,"fieldtime",FieldTime);
+  if(FieldAng1>=0)JXml::AddAttribute(&item2,"fieldang1",FieldAng1);
+  if(FieldAng2>=0)JXml::AddAttribute(&item2,"fieldang2",FieldAng2);
+  if(FieldAng3>=0)JXml::AddAttribute(&item2,"fieldang3",FieldAng3);
+  node2->InsertEndChild(item2);
+  //-Saves other configuration.
+  node2->InsertEndChild(JXml::MakeElementDouble3("center",Center));
+  node2->InsertEndChild(JXml::MakeElementAttrib("intrinsic","value",Intrinsic));
+  node2->InsertEndChild(JXml::MakeElementAttrib("axes","value",Axes));
+}
+
+//##############################################################################
+//# JMotionMovPathFile
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
+//==============================================================================
+void JMotionMovPathFile::WriteXml(TiXmlNode* node)const{
+  TiXmlElement item("mvpathfile");
+  JXml::AddAttribute(&item,"id",int(Id));
+  JXml::AddAttribute(&item,"duration",Time);
+  if(NextId)JXml::AddAttribute(&item,"next",int(NextId));
+  JXml::AddAttribute(&item,"anglesunits",(AngDegrees? "degrees": "radians"));
+  TiXmlNode* node2=node->InsertEndChild(item);
+  //-Saves file configuration.
+  TiXmlElement item2("file");
+  JXml::AddAttribute(&item2,"name",File);
+  JXml::AddAttribute(&item2,"fields",Fields);
+  JXml::AddAttribute(&item2,"fieldtime",FieldTime);
+  if(FieldX>=0)JXml::AddAttribute(&item2,"fieldx",FieldX);
+  if(FieldY>=0)JXml::AddAttribute(&item2,"fieldy",FieldY);
+  if(FieldZ>=0)JXml::AddAttribute(&item2,"fieldz",FieldZ);
+  if(FieldAng1>=0)JXml::AddAttribute(&item2,"fieldang1",FieldAng1);
+  if(FieldAng2>=0)JXml::AddAttribute(&item2,"fieldang2",FieldAng2);
+  if(FieldAng3>=0)JXml::AddAttribute(&item2,"fieldang3",FieldAng3);
+  node2->InsertEndChild(item2);
+  //-Saves other configuration.
+  node2->InsertEndChild(JXml::MakeElementDouble3("center",Center));
+  node2->InsertEndChild(JXml::MakeElementAttrib("movecenter","value",MoveCenter));
+  node2->InsertEndChild(JXml::MakeElementAttrib("intrinsic","value",Intrinsic));
+  node2->InsertEndChild(JXml::MakeElementAttrib("axes","value",Axes));
+}
+
+//##############################################################################
+//# JMotionMovNull
+//##############################################################################
+//==============================================================================
+/// Saves configuration in XML.
 //==============================================================================
 void JMotionMovNull::WriteXml(TiXmlNode* node)const{
   TiXmlElement item("mvnull"); JXml::AddAttribute(&item,"id",int(Id));
   node->InsertEndChild(item);
 }
 
-
-//##############################################################################
-//# JMotionDataFile
-//##############################################################################
-//==============================================================================
-// Constructor for positions.
-//==============================================================================
-JMotionDataFile::JMotionDataFile(std::string dirdata,std::string file,const int fields,const int fieldtime,const int fieldx,const int fieldy,const int fieldz):PosType(true){
-  ClassName="JMotionDataFile";
-  //printf("--------> NEW  JMotionDataFile\n");
-  Times=NULL; ValuesPos=NULL; ValuesAng=NULL;
-  Reset();
-  LoadFilePos(dirdata,file,fields,fieldtime,fieldx,fieldy,fieldz);
-}
-
-//==============================================================================
-// Constructor for angles.
-//==============================================================================
-JMotionDataFile::JMotionDataFile(std::string dirdata,std::string file,bool angdegrees):PosType(false){
-  ClassName="JMotionDataFile";
-  //printf("--------> NEW  JMotionDataFile\n");
-  Times=NULL; ValuesPos=NULL; ValuesAng=NULL;
-  Reset();
-  LoadFileAng(dirdata,file,angdegrees);
-}
-
-//==============================================================================
-// Destructor.
-//==============================================================================
-JMotionDataFile::~JMotionDataFile(){
-  DestructorActive=true;
-  //printf("--------> DELETE  JMotionDataFile\n");
-  Reset();
-}
-
-//==============================================================================
-// Initialization of variables.
-//==============================================================================
-void JMotionDataFile::Reset(){
-  Size=Count=0;
-  delete[] Times;     Times=NULL;
-  delete[] ValuesPos; ValuesPos=NULL;
-  delete[] ValuesAng; ValuesAng=NULL;
-}
-
-//==============================================================================
-// Modifica la asignacion de memoria para los vectores de MovRectFile y MovRotFile
-//==============================================================================
-void JMotionDataFile::Resize(unsigned size){
-  //printf("JMotionMovActive::DfResize> %u --> %u\n",DfSize,size);
-  if(size>Size){
-    double* times=new double[size];
-    tdouble3* vpos=NULL;
-    double* vang=NULL;
-    if(PosType)vpos=new tdouble3[size];
-    else         vang=new double[size];
-    if(Size){
-      memcpy(times,Times,sizeof(double)*Size);
-      if(PosType)memcpy(vpos,ValuesPos,sizeof(tdouble3)*Size);
-      else       memcpy(vang,ValuesAng,sizeof(double)  *Size);
-      delete[] Times;
-      delete[] ValuesPos;
-      delete[] ValuesAng;
-    }
-    Times=times;
-    ValuesPos=vpos;
-    ValuesAng=vang;
-    Size=size;
-  }
-}
-
-//==============================================================================
-// Carga y configura datos del movimiento a partir de fichero de datos.
-//==============================================================================
-void JMotionDataFile::LoadFilePos(std::string dirdata,std::string file,const int fields,const int fieldtime,const int fieldx,const int fieldy,const int fieldz){
-  if(int(file.find("/"))<0 && int(file.find("\\"))<0)file=dirdata+file; //-If only name of file then add Dirin.
-  //printf("LoadFilePos>  file:[%s]\n",file.c_str());
-
-  //-Carga datos del fichero.
-  JReadDatafile rdat;
-  rdat.LoadFile(file,SIZEMAX);
-  const unsigned rows=rdat.Lines()-rdat.RemLines();
-  Resize(rows);
-  //printf("----->rows:%u\n",rows);
-  for(unsigned r=0;r<rows;r++){
-    double time,posx=0,posy=0,posz=0;
-    for(int f=0;f<fields;f++){
-      const double v=rdat.ReadNextDouble(f!=0);
-      //printf("[%u]------>  v[%u]:%f\n",r,f,v);
-      if(f==fieldtime)time=v;
-      if(f==fieldx)posx=v;
-      if(f==fieldy)posy=v;
-      if(f==fieldz)posz=v;
-    }
-    Times[r]=time; ValuesPos[r]=TDouble3(posx,posy,posz);
-    //printf("[%u]>  t:%f  x:%f\n",r,time,posx);
-  }
-  Count=rows;
-  if(Count<2)Run_ExceptioonFile("Cannot be less than two positions.",file);
-}
-
-//==============================================================================
-// Carga y configura datos del movimiento a partir de fichero de datos.
-//==============================================================================
-void JMotionDataFile::LoadFileAng(std::string dirdata,std::string file,bool angdegrees){
-  if(int(file.find("/"))<0 && int(file.find("\\"))<0)file=dirdata+file; //-If only name of file then add Dirin.
-
-  //-Carga datos del fichero.
-  JReadDatafile rdat;
-  rdat.LoadFile(file,SIZEMAX);
-  const unsigned rows=rdat.Lines()-rdat.RemLines();
-  Resize(rows);
-  for(unsigned r=0;r<rows;r++){
-    Times[r]=rdat.ReadNextDouble();
-    ValuesAng[r]=rdat.ReadNextDouble();
-    //printf("FileData[%u]>  t:%f  ang:%f\n",r,time,ang);
-  }
-  if(!angdegrees)for(unsigned r=0;r<rows;r++)ValuesAng[r]=ValuesAng[r]*TODEG; //-Convierte de radianes a grados.
-  Count=rows;
-  if(Count<2)Run_ExceptioonFile("Cannot be less than two angles.",file);
-}

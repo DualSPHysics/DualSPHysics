@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -52,18 +52,18 @@ public:
 
 protected:
   std::string FileName; ///<Last file generated.
-  template<typename T> void CalculateStatsArray1(unsigned ndata,T *data
-    ,double &valmin,double &valmax,double &valmean)const;
-  template<typename T> void CalculateStatsArray3(unsigned ndata,T *data
-    ,tdouble4 &valmin,tdouble4 &valmax,tdouble4 &valmean)const;
+  template<typename T> void CalculateStatsArray1(unsigned ndata,T* data
+    ,double& valmin,double& valmax,double& valmean)const;
+  template<typename T> void CalculateStatsArray3(unsigned ndata,T* data
+    ,tdouble4& valmin,tdouble4& valmax,tdouble4& valmean)const;
 
 public:
   JOutputCsv(bool csvsepcoma=false,bool createpath=true);
   ~JOutputCsv();
   void Reset();
 
-  void SaveCsv(std::string fname,const JDataArrays &arrays,std::string head="");
-  //void SaveStatsCsv(std::string fname,bool create,int part,double timestep,const JDataArrays &arrays,std::string head="");
+  void SaveCsv(std::string fname,const JDataArrays& arrays,std::string head="");
+  //void SaveStatsCsv(std::string fname,bool create,int part,double timestep,const JDataArrays& arrays,std::string head="");
 
 };
 

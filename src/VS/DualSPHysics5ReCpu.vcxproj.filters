@@ -41,6 +41,15 @@
     <Filter Include="Source\Inlet">
       <UniqueIdentifier>{4a2918ba-146c-4db2-a88f-96b2ecaedbb9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\MeshData">
+      <UniqueIdentifier>{14081430-9295-419c-9cb1-a37ac6195e86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\FlexStruc">
+      <UniqueIdentifier>{28cbd7c1-6f6d-48b8-a805-25a9f8749657}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\VRes">
+      <UniqueIdentifier>{6e810965-d093-4040-8a11-81231cc4f0dd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\source\JCellDivGpu_ker.h">
@@ -56,9 +65,6 @@
       <Filter>CommonDsph</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JPartOutBi4Save.h">
-      <Filter>CommonDsph</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JPartFloatBi4.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JWaveGen.h">
@@ -202,26 +208,14 @@
     <ClInclude Include="..\source\JRelaxZone_ker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JSphGpu_InOut_ker.h">
-      <Filter>Cuda</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JLinearValueDef.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JDataArrays.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JPartNormalData.h">
-      <Filter>CommonDsph</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JOutputCsv.h">
       <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JVtkLib.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JVtkLibUndef.h">
-      <Filter>Libs</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JWaveGenUndef.h">
       <Filter>Libs</Filter>
@@ -232,22 +226,10 @@
     <ClInclude Include="..\source\JSphGpuSimple_ker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\DSphMoorDyn.h">
+    <ClInclude Include="..\source\DSphMoorDynPlus.h">
       <Filter>Libs</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\DSphMoorDynUndef.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JNumexLib.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JNumexLibDef.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JNumexLibUndef.h">
-      <Filter>Libs</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JVtkLibDef.h">
+    <ClInclude Include="..\source\DSphMoorDynPlusUndef.h">
       <Filter>Libs</Filter>
     </ClInclude>
     <ClInclude Include="..\source\JDsPips_ker.h">
@@ -376,12 +358,6 @@
     <ClInclude Include="..\source\JCaseProperties.h">
       <Filter>CommonDsph</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JCaseUserVars.h">
-      <Filter>CommonDsph</Filter>
-    </ClInclude>
-    <ClInclude Include="..\source\JCaseVtkOut.h">
-      <Filter>CommonDsph</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JDsGauge_ker.h">
       <Filter>Cuda</Filter>
     </ClInclude>
@@ -448,9 +424,6 @@
     <ClInclude Include="..\source\JComputeMotionRef.h">
       <Filter>Source\Other</Filter>
     </ClInclude>
-    <ClInclude Include="..\source\JFtMotionSave.h">
-      <Filter>Source\Other</Filter>
-    </ClInclude>
     <ClInclude Include="..\source\JPartMotionDef.h">
       <Filter>Source\Other</Filter>
     </ClInclude>
@@ -490,6 +463,120 @@
     <ClInclude Include="..\source\JDsMotionDef.h">
       <Filter>Source\Other</Filter>
     </ClInclude>
+    <ClInclude Include="..\source\JDsOutputParts.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsPartFloatSave.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsPartMotionSave.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartMotRefBi4Save.h">
+      <Filter>Source\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JPartFloatInfoBi4.h">
+      <Filter>CommonDsph</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JViscosityDef.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshData.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshDataDef.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatas.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatasDsVel.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatasSave.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatasXml.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMeshTDatasLoad.h">
+      <Filter>Source\MeshData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JMotionData.h">
+      <Filter>Common\JMotion</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_cte.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JTrianglesMesh.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_InOut_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_mdbc_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDebugSphCpu.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JXmlDef.h">
+      <Filter>Common\JXml</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_preloop_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphShiftingAdv.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSpVtkData.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSpVtkShape.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JChronoGeoObj.h">
+      <Filter>Src_Chrono</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphFlexStruc.h">
+      <Filter>Source\FlexStruc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JBoxDef.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JCaseVRes.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JVResDataLimits.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpuSingle_VRes.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphVRes.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphVResDef.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphVResDriver.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphCpuSingle_VRes.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JDsVresData.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphCpu_VRes.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphGpu_VRes_iker.h">
+      <Filter>Cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\JSphVResZone.h">
+      <Filter>Source\VRes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\source\main.cpp">
@@ -499,9 +586,6 @@
       <Filter>CommonDsph</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JPartOutBi4Save.cpp">
-      <Filter>CommonDsph</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JPartFloatBi4.cpp">
       <Filter>CommonDsph</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JDsphConfig.cpp">
@@ -596,9 +680,6 @@
     </ClCompile>
     <ClCompile Include="..\source\JDataArrays.cpp">
       <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JPartNormalData.cpp">
-      <Filter>CommonDsph</Filter>
     </ClCompile>
     <ClCompile Include="..\source\JOutputCsv.cpp">
       <Filter>Common</Filter>
@@ -708,12 +789,6 @@
     <ClCompile Include="..\source\JCaseProperties.cpp">
       <Filter>CommonDsph</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\JCaseUserVars.cpp">
-      <Filter>CommonDsph</Filter>
-    </ClCompile>
-    <ClCompile Include="..\source\JCaseVtkOut.cpp">
-      <Filter>CommonDsph</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\JWaveSpectrumGpu.cpp">
       <Filter>Source\Other</Filter>
     </ClCompile>
@@ -759,9 +834,6 @@
     <ClCompile Include="..\source\JComputeMotionRef.cpp">
       <Filter>Source\Other</Filter>
     </ClCompile>
-    <ClCompile Include="..\source\JFtMotionSave.cpp">
-      <Filter>Source\Other</Filter>
-    </ClCompile>
     <ClCompile Include="..\source\FunGeo3d.cpp">
       <Filter>Common</Filter>
     </ClCompile>
@@ -776,6 +848,96 @@
     </ClCompile>
     <ClCompile Include="..\source\JDsGpuInfo.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsOutputParts.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsPartFloatSave.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsPartMotionSave.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JPartMotRefBi4Save.cpp">
+      <Filter>Source\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JPartFloatInfoBi4.cpp">
+      <Filter>CommonDsph</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshData.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatasDsVel.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatasSave.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatasLoad.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatas.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMeshTDatasXml.cpp">
+      <Filter>Source\MeshData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JMotionData.cpp">
+      <Filter>Common\JMotion</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JTrianglesMesh.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpu_mdbc.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDebugSphCpu.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphShiftingAdv.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpu_preloop.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSpVtkData.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSpVtkShape.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JChronoGeoObj.cpp">
+      <Filter>Src_Chrono</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphFlexStruc.cpp">
+      <Filter>Source\FlexStruc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JBoxDef.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JCaseVRes.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphGpuSingle_VRes.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphVRes.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JVResDataLimits.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JDsVresData.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpu_VRes.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphCpuSingle_VRes.cpp">
+      <Filter>Source\VRes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\source\JSphVResZone.cpp">
+      <Filter>Source\VRes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -802,9 +964,6 @@
     <CudaCompile Include="..\source\JRelaxZone_ker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
-    <CudaCompile Include="..\source\JSphGpu_InOut_ker.cu">
-      <Filter>Cuda</Filter>
-    </CudaCompile>
     <CudaCompile Include="..\source\JSphGpuSimple_ker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
@@ -824,6 +983,18 @@
       <Filter>Cuda</Filter>
     </CudaCompile>
     <CudaCompile Include="..\source\FunctionsMath_iker.h">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_InOut_iker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_mdbc_iker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_preloop_iker.cu">
+      <Filter>Cuda</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\source\JSphGpu_VRes_iker.cu">
       <Filter>Cuda</Filter>
     </CudaCompile>
   </ItemGroup>

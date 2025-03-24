@@ -1,6 +1,6 @@
 //HEAD_DSTOOLS
 /* 
- <DualSPHysics codes>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <DualSPHysics codes>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between:
@@ -28,7 +28,7 @@
 //# =========
 //# - Clase para gestionar uno o varios pistones de velocidad-X. (10-05-2014)
 //# - Remplaza long long por llong. (01-10-2015)
-//# - Improved exception managment. (19-03-2020)  
+//# - Improved exception management. (19-03-2020)  
 //# - Comprueba opcion active en elementos de primer y segundo nivel. (19-03-2020)  
 //# - Nueva funcion CalculateMontionInit() para permitir el reinicio. (30-10-2021)  
 //#############################################################################
@@ -70,24 +70,24 @@ public:
     double posymin;
     double poszmin;
     unsigned poszcount;
-    const double *movyz;
-    const double *velyz;
+    const double* movyz;
+    const double* velyz;
   }StMotionInfoPiston2D;
 
 public:
-  JMLPistons(bool usegpu,JLog2 *log,std::string dirdata){}
+  JMLPistons(bool usegpu,JLog2* log,std::string dirdata){}
   ~JMLPistons(){}
   void Reset(){}
   static bool Available(){ return(false); }
   llong GetAllocMemoryCpu()const{ return(0); }
   llong GetAllocMemoryGpu()const{ return(0); }
 
-  void LoadFileXml(const std::string &filexml,const std::string &place){}
-  void LoadXml(const JXml *sxml,const std::string &place){}
+  void LoadFileXml(const std::string& filexml,const std::string& place){}
+  void LoadXml(const JXml* sxml,const std::string& place){}
   bool ConfigPiston(word mkbound,word pistonid,unsigned idbegin,unsigned np,double timemax){ return(false); }
   bool ExistsPistonByMk(word mkbound){ return(false); }
   void CheckPistons(){}
-  void PreparePiston(double dp,unsigned np,const unsigned *idp,const tdouble3 *pos){}
+  void PreparePiston(double dp,unsigned np,const unsigned* idp,const tdouble3* pos){}
 
   void VisuConfig(std::string txhead,std::string txfoot){}
 
@@ -129,12 +129,12 @@ public:
     double posymin;
     double poszmin;
     unsigned poszcount;
-    const double *movyz;
-    const double *velyz;
+    const double* movyz;
+    const double* velyz;
   }StMotionInfoPiston2D;
 
 private:
-  JLog2 *Log;
+  JLog2* Log;
   const bool UseGpu;
   const bool Cpu;
   const std::string DirData;
@@ -151,30 +151,30 @@ private:
   unsigned PoszCount;  //-Numero de posiciones Z de los pistones (comun para todos);
 
   static const unsigned PistonIdSize=2048;
-  byte *PistonId;      //-Contiene el id del piston en funcion del codigo de particula moving [PistonIdSize].
-  double *MovVel;      //-Almacena Movx y Velx de todos los pistones 1D (only GPU) [PoszCount*Piston1dCount*2].
+  byte*   PistonId;    //-Contiene el id del piston en funcion del codigo de particula moving [PistonIdSize].
+  double* MovVel;      //-Almacena Movx y Velx de todos los pistones 1D (only GPU) [PoszCount*Piston1dCount*2].
 
   JMLPistonsGpu* PistonsGpu; //-Object for GPU use.
 
   bool Use_AwasZsurf;  //-AWAS-Zsurf.
 
-  void ReadXml(const JXml *sxml,TiXmlElement* lis);
-  void PreparePiston1d(double dp,unsigned np,const unsigned *idp,const tdouble3 *pos);
+  void ReadXml(const JXml* sxml,TiXmlElement* lis);
+  void PreparePiston1d(double dp,unsigned np,const unsigned* idp,const tdouble3* pos);
 
 public:
-  JMLPistons(bool usegpu,JLog2 *log,std::string dirdata);
+  JMLPistons(bool usegpu,JLog2* log,std::string dirdata);
   ~JMLPistons();
   void Reset();
   static bool Available(){ return(true); }
   llong GetAllocMemoryCpu()const;
   llong GetAllocMemoryGpu()const;
 
-  void LoadFileXml(const std::string &filexml,const std::string &place);
-  void LoadXml(const JXml *sxml,const std::string &place);
+  void LoadFileXml(const std::string& filexml,const std::string& place);
+  void LoadXml(const JXml* sxml,const std::string& place);
   bool ConfigPiston(word mkbound,word pistonid,unsigned idbegin,unsigned np,double timemax);
   bool ExistsPistonByMk(word mkbound);
   void CheckPistons();
-  void PreparePiston(double dp,unsigned np,const unsigned *idp,const tdouble3 *pos);
+  void PreparePiston(double dp,unsigned np,const unsigned* idp,const tdouble3* pos);
 
   void VisuConfig(std::string txhead,std::string txfoot);
 

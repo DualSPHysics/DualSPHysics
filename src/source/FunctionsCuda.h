@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -28,6 +28,7 @@
 //:# - Nueva funcion ToHostFloatXYZ_W(). (10-09-2019)
 //:# - Gestion de excepciones mejorada.  (15-09-2019)
 //:# - Nuevas funciones HostAlloc(byte), ToHostByte(). (18-01-2020)
+//:# - Reconoce arquitectura Hopper hasta 9.0. (29-02-2024)
 //:#############################################################################
 
 /// \file FunctionsCuda.h \brief Declares basic/general GPU functions for the entire application.
@@ -98,61 +99,67 @@ typedef struct StrGpuInfo{
   }
 }StGpuInfo;
 
-void CheckCudaErroorFun(const char *const file,int const line
-  ,const char *const fun,std::string msg);
+void CheckCudaErroorFun(const char* const file,int const line
+  ,const char* const fun,std::string msg);
 
 std::string GetCudaDeviceName(int gid);
 StGpuInfo GetCudaDeviceInfo(int gid);
-int GetCudaDevicesInfo(std::vector<std::string> *gpuinfo,std::vector<StGpuInfo> *gpuprops);
+int GetCudaDevicesInfo(std::vector<std::string>* gpuinfo,std::vector<StGpuInfo>* gpuprops);
 int _ConvertSMVer2Cores(int major, int minor);
 
 //-Functions to allocate GPU memory.
-size_t Malloc(byte     **,unsigned count);
-size_t Malloc(word     **,unsigned count);
-size_t Malloc(unsigned **,unsigned count);
-size_t Malloc(uint4    **,unsigned count);
-size_t Malloc(int      **,unsigned count);
-size_t Malloc(int2     **,unsigned count);
-size_t Malloc(int3     **,unsigned count);
-size_t Malloc(float    **,unsigned count);
-size_t Malloc(float2   **,unsigned count);
-size_t Malloc(float3   **,unsigned count);
-size_t Malloc(float4   **,unsigned count);
-size_t Malloc(double   **,unsigned count);
-size_t Malloc(double2  **,unsigned count);
-size_t Malloc(double3  **,unsigned count);
+size_t Malloc(byte**    ,unsigned count);
+size_t Malloc(word**    ,unsigned count);
+size_t Malloc(ushort2** ,unsigned count);
+size_t Malloc(unsigned**,unsigned count);
+size_t Malloc(uint4**   ,unsigned count);
+size_t Malloc(int**     ,unsigned count);
+size_t Malloc(int2**    ,unsigned count);
+size_t Malloc(int3**    ,unsigned count);
+size_t Malloc(float**   ,unsigned count);
+size_t Malloc(float2**  ,unsigned count);
+size_t Malloc(float3**  ,unsigned count);
+size_t Malloc(float4**  ,unsigned count);
+size_t Malloc(double**  ,unsigned count);
+size_t Malloc(double2** ,unsigned count);
+size_t Malloc(double3** ,unsigned count);
+//<vs_vrres_ini>
+size_t Malloc(bool**    ,unsigned count);               
+size_t Malloc(tmatrix4f** ,unsigned count);
+//<vs_vrres_end>
 //:cudaFree(GpuMem);
 
 //-Functions to allocate pinned CPU memory.
-size_t HostAlloc(byte     **,unsigned count);
-size_t HostAlloc(word     **,unsigned count);
-size_t HostAlloc(unsigned **,unsigned count);
-size_t HostAlloc(int      **,unsigned count);
-size_t HostAlloc(int2     **,unsigned count);
-size_t HostAlloc(float    **,unsigned count);
-size_t HostAlloc(tfloat4  **,unsigned count);
-size_t HostAlloc(double   **,unsigned count);
-size_t HostAlloc(tdouble2 **,unsigned count);
+size_t HostAlloc(byte**    ,unsigned count);
+size_t HostAlloc(word**    ,unsigned count);
+size_t HostAlloc(unsigned**,unsigned count);
+size_t HostAlloc(int**     ,unsigned count);
+size_t HostAlloc(int2**    ,unsigned count);
+size_t HostAlloc(float**   ,unsigned count);
+size_t HostAlloc(tfloat4** ,unsigned count);
+size_t HostAlloc(double**  ,unsigned count);
+size_t HostAlloc(tdouble2**,unsigned count);
 //:cudaFreeHost(PinnedMem);
 
 //-Functions to copy data to Host (debug).
-byte*     ToHostByte   (unsigned pini,unsigned n,const byte     *ptrg);
-word*     ToHostWord   (unsigned pini,unsigned n,const word     *ptrg);
-ushort4*  ToHostWord4  (unsigned pini,unsigned n,const ushort4  *ptrg);
-int*      ToHostInt    (unsigned pini,unsigned n,const int      *ptrg);
-unsigned* ToHostUint   (unsigned pini,unsigned n,const unsigned *ptrg);
-tint2*    ToHostInt2   (unsigned pini,unsigned n,const int2     *ptrg);
-tint3*    ToHostInt3   (unsigned pini,unsigned n,const int3     *ptrg);
-float*    ToHostFloat  (unsigned pini,unsigned n,const float    *ptrg);
-tfloat3*  ToHostFloat3 (unsigned pini,unsigned n,const float3   *ptrg);
-tfloat4*  ToHostFloat4 (unsigned pini,unsigned n,const float4   *ptrg);
-double*   ToHostDouble (unsigned pini,unsigned n,const double   *ptrg);
-tdouble2* ToHostDouble2(unsigned pini,unsigned n,const double2  *ptrg);
+byte*     ToHostByte   (unsigned pini,unsigned n,const byte*     ptrg);
+word*     ToHostWord   (unsigned pini,unsigned n,const word*     ptrg);
+ushort2*  ToHostWord2  (unsigned pini,unsigned n,const ushort2*  ptrg);
+ushort4*  ToHostWord4  (unsigned pini,unsigned n,const ushort4*  ptrg);
+int*      ToHostInt    (unsigned pini,unsigned n,const int*      ptrg);
+unsigned* ToHostUint   (unsigned pini,unsigned n,const unsigned* ptrg);
+tint2*    ToHostInt2   (unsigned pini,unsigned n,const int2*     ptrg);
+tint3*    ToHostInt3   (unsigned pini,unsigned n,const int3*     ptrg);
+float*    ToHostFloat  (unsigned pini,unsigned n,const float*    ptrg);
+tfloat3*  ToHostFloat3 (unsigned pini,unsigned n,const float3*   ptrg);
+tfloat4*  ToHostFloat4 (unsigned pini,unsigned n,const float4*   ptrg);
+double*   ToHostDouble (unsigned pini,unsigned n,const double*   ptrg);
+tdouble2* ToHostDouble2(unsigned pini,unsigned n,const double2*  ptrg);
 
-tfloat3*  ToHostPosf3(unsigned pini,unsigned n,const double2 *posxyg,const double *poszg);
-tdouble3* ToHostPosd3(unsigned pini,unsigned n,const double2 *posxyg,const double *poszg);
-tfloat3*  ToHostFloatXYZ_W(unsigned pini,unsigned n,const float4 *ptrg,float **ptr_w);
-tfloat3*  ToHostPosf3(unsigned nplist,const unsigned *idxlistg,const double2 *posxyg,const double *poszg);
+tfloat3*  ToHostPosf3(unsigned pini,unsigned n,const double2* posxyg,const double* poszg);
+tdouble3* ToHostPosd3(unsigned pini,unsigned n,const double2* posxyg,const double* poszg);
+tfloat3*  ToHostFloatXYZ_W(unsigned pini,unsigned n,const float4* ptrg,float* *ptr_w);
+tfloat3*  ToHostPosf3(unsigned nplist,const unsigned* idxlistg,const double2* posxyg,const double* poszg);
 
 }
 

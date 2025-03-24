@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -52,39 +52,46 @@ protected:
   const tdouble3 Map_PosMin,Map_PosMax,Map_PosDif;
   const tuint3 Map_Cells;
   const unsigned CaseNbound,CaseNfixed,CaseNpb;
-  JLog2 *Log;
-  std::string DirOut;
 
-  bool AllocFullNct;     ///<Resserve memory for max number of cells of domain (DomCells). | Reserva memoria para el numero maximo de celdas del dominio (DomCells).
-  float OverMemoryNp;    ///<Percentage that is added to the memory reserved for Np. (def=0) | Porcentaje que se anhade a la reserva de memoria de Np. (def=0).
-  word OverMemoryCells;  ///<Cell number that is incremented in each dimension to reserve memory. | Numero celdas que se incrementa en cada dimension reservar memoria. (def=0).
+  const float OverMemoryNp;   ///<Percentage that is added to the memory reserved for Np. (def=0) | Porcentaje que se anhade a la reserva de memoria de Np. (def=0).
+  const word OverMemoryCells; ///<Cell number that is incremented in each dimension to reserve memory. | Numero celdas que se incrementa en cada dimension reservar memoria. (def=0).
+  const unsigned OverMemoryNCells; ///<Minimum number of cells that is incremented to reserve memory.
+
+  JLog2* Log;
+  std::string DirOut;
 
   //-Variables to define the domain.
   unsigned DomCellCode;  ///<Key for codifying cell of position. | Clave para la codificacion de la celda de posicion.
-  tuint3 DomCelIni,DomCelFin;
-  tdouble3 DomPosMin,DomPosMax;
-  tuint3 DomCells;
+  tuint3 DomCelIni;
+  tuint3 DomCelFin;
+  tdouble3 DomPosMin;
+  tdouble3 DomPosMax;
+  tuint3 DomCells;       ///<Number of cells in each direction. DomCells=DomMCelFin-DomMCelIni
+  ullong DomCellsMax;    ///<Maximum number of cells according to DomCells.
 
   //-Variables with allocated memory as a function of the number of particles in CPU.
   //-Memoria reservada en funcion de particulas en GPU.
   unsigned SizeNp;
-  unsigned *CellPart;
-  unsigned *SortPart;
+  unsigned* CellPart;
+  unsigned* SortPart;
   unsigned SizeAuxMem;
-  float *AuxMem;
+  float* AuxMem;
 
   unsigned IncreaseNp; ///<Possible number of particles to be created in the near future.
 
   //-Variables with allocated memory as a function of the number of cells in GPU.
   //-Memoria reservada en funcion de celdas en GPU.
   unsigned SizeNct;
-  int2 *BeginEndCell;  ///<Contains the first and final particle of each cell. | Contiene el principio y final de cada celda. 
+  int2* BeginEndCell;  ///<Contains the first and final particle of each cell. | Contiene el principio y final de cada celda. 
   // BeginEndCell=[BoundOk(nct),BoundIgnore(1),Fluid(nct),BoundOut(1),FluidOut(1),BoundOutIgnore(1),FluidOutIgnore(1)]
 
-  ullong MemAllocGpuNp;  ///<GPU memory reserved for particles. | Mermoria GPU reservada para particulas.
-  ullong MemAllocGpuNct; ///<GPU memory reserved for cells. | Mermoria GPU reservada para celdas.
+  llong    MemAllocGpuNp;       ///<GPU memory allocated for particles.
+  unsigned MemAllocGpuNpTimes;  ///<Number of GPU memory allocations for cells.
+  llong    MemAllocGpuNct;      ///<GPU memory reserved for cells.
+  unsigned MemAllocGpuNctTimes; ///<Number of GPU memory allocations for cells.
 
-  unsigned Ndiv,NdivFull;
+  unsigned Ndiv;
+  unsigned NdivFull;
 
   //-Number of particles by type to initialise in divide.
   //-Numero de particulas por tipo al iniciar el divide.
@@ -114,27 +121,35 @@ protected:
 
   bool DivideFull;      ///<Indicate that divie is applied to fluid & boundary (not only to fluid). | Indica que el divide se aplico a fluido y contorno (no solo al fluido).
 
+  unsigned* SortPart2;    ///<Copy of SortPart so can use in sort_by_key. //<vs_flexstruc>
+  unsigned* SortIdx;      ///<Indices to particles which are sorted.      //<vs_flexstruc>
+
   void Reset();
 
   //-Management of allocated dynamic memory.
   //-Gestion de reserva dinamica de memoria.
   void FreeMemoryNct();
   void FreeMemoryAll();
-  void AllocMemoryNp(ullong np);
-  void AllocMemoryNct(ullong nct);
+  void AllocMemoryNp(ullong np,ullong npmin);
+  void AllocMemoryNct(ullong nct,ullong nctmin);
   void CheckMemoryNp(unsigned npmin);
   void CheckMemoryNct(unsigned nctmin);
 
   ullong SizeBeginEndCell(ullong nct)const{ return((nct*2)+5); } //-[BoundOk(nct),BoundIgnore(1),Fluid(nct),BoundOut(1),FluidOut(1),BoundOutIgnore(1),FluidOutIgnore(1)]
+  unsigned NctFromSizeMBytes(unsigned megabytes)const{ 
+    return(unsigned(double(megabytes)/16*MEBIBYTE-(40./16.)));
+  }
 
-  ullong GetAllocMemoryCpu()const{ return(0); }
-  ullong GetAllocMemoryGpuNp()const{ return(MemAllocGpuNp); };
-  ullong GetAllocMemoryGpuNct()const{ return(MemAllocGpuNct); };
-  ullong GetAllocMemoryGpu()const{ return(GetAllocMemoryGpuNp()+GetAllocMemoryGpuNct()); };
+  llong GetAllocMemoryCpu()const{ return(0); }
+  llong GetAllocMemoryGpuNp()const{ return(MemAllocGpuNp); };
+  llong GetAllocMemoryGpuNct()const{ return(MemAllocGpuNct); };
+  llong GetAllocMemoryGpu()const{ return(GetAllocMemoryGpuNp()+GetAllocMemoryGpuNct()); };
 
-  //:tuint3 GetMapCell(const tfloat3 &pos)const;
-  void CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellg,const typecode *codeg,tuint3 &cellmin,tuint3 &cellmax);
-  void CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellg,const typecode *codeg,tuint3 &cellmin,tuint3 &cellmax);
+  //:tuint3 GetMapCell(const tfloat3& pos)const;
+  void CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2
+    ,const unsigned* dcellg,const typecode* codeg,tuint3& cellmin,tuint3& cellmax);
+  void CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2
+    ,const unsigned* dcellg,const typecode* codeg,tuint3& cellmin,tuint3& cellmax);
 
   void CellBeginEnd(unsigned cell,unsigned ndata,unsigned* data)const;
   int2 CellBeginEnd(unsigned cell)const;
@@ -145,20 +160,25 @@ public:
     ,float kernelsize2,float poscellsize
     ,bool celldomfixed,TpCellMode cellmode,float scell
     ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
-    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout
-    ,bool allocfullnct=true,float overmemorynp=CELLDIV_OVERMEMORYNP,word overmemorycells=CELLDIV_OVERMEMORYCELLS);
+    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb
+    ,std::string dirout);
   ~JCellDivGpu();
   void FreeMemoryGpu(){ FreeMemoryAll(); }
 
   void DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelfin,tdouble3 domposmin,tdouble3 domposmax);
 
-  void SortBasicArrays(const unsigned *idp,const typecode *code,const unsigned *dcell,const double2 *posxy,const double *posz,const float4 *velrhop,unsigned *idp2,typecode *code2,unsigned *dcell2,double2 *posxy2,double *posz2,float4 *velrhop2);
-  void SortDataArrays(const float4 *a,float4 *a2);
-  void SortDataArrays(const float *a,const float *b,float *a2,float *b2);
-  void SortDataArrays(const double2 *a,const double *b,const float4 *c,double2 *a2,double *b2,float4 *c2);
-  void SortDataArrays(const tsymatrix3f *a,tsymatrix3f *a2);
-  void SortDataArrays(const float3 *a,float3 *a2);
-  void SortDataArrays(const float *a,float *a2);
+  void SortBasicArrays(const unsigned* idp,const typecode* code,const unsigned* dcell
+    ,const double2* posxy,const double* posz,const float4* velrhop,unsigned* idp2
+    ,typecode* code2,unsigned* dcell2,double2* posxy2,double* posz2,float4* velrhop2);
+  void SortDataArrays(const float4* a,float4* a2);
+  void SortDataArrays(const float* a,const float* b,float* a2,float* b2);
+  void SortDataArrays(const double2* a,const double* b,const float4* c,double2* a2,double* b2,float4* c2);
+  void SortDataArrays(const float3* a,const float3* b,const float3* c,float3* a2,float3* b2,float3* c2);
+  void SortDataArrays(const tsymatrix3f* a,tsymatrix3f* a2);
+  void SortDataArrays(const float3* a,float3* a2);
+  void SortDataArrays(const float* a,float* a2);
+  void SortDataArrays(const unsigned* a,const float4* b,unsigned* a2,float4* b2);
+  void SortArrayPeriParent(unsigned* aux,const unsigned* a,unsigned* a2);
 
   float* GetAuxMem(unsigned size);
 
@@ -167,6 +187,8 @@ public:
   float GetScell()const{ return(Scell); }
 //:  tuint3 GetDomCells()const{ return(DomCells); };
 //:  unsigned GetCellCode()const{ return(DomCellCode); };
+
+  unsigned GetSizeNct()const{ return(SizeNct); }
 
   unsigned GetNct()const{ return(Nct); }
   unsigned GetNcx()const{ return(Ncx); }
@@ -177,6 +199,7 @@ public:
 
   tuint3 GetCellDomainMin()const{ return(CellDomainMin); }
   tuint3 GetCellDomainMax()const{ return(CellDomainMax); }
+  tdouble6 GetDomainLimitsMinMax(unsigned slicecellmin=0)const;
   tdouble3 GetDomainLimits(bool limitmin,unsigned slicecellmin=0)const;
 
   unsigned GetNpFinal()const{ return(NpFinal); }
@@ -192,13 +215,15 @@ public:
 
   void SetIncreaseNp(unsigned increasenp){ IncreaseNp=increasenp; }
 
+  void UpdateIndices(unsigned n,unsigned* idx); //<vs_flexstruc>
+
   //:uint2 GetRangeParticlesCells(bool fluid,unsigned celini,unsigned celfin)const;
   //:unsigned GetParticlesCells(unsigned celini,unsigned celfin);
 
 
-  //:tuint3 DgGetCell(const tfloat3 &pos)const;
-  //:void DgSaveVktIdx(std::string file,unsigned np,const unsigned *idx,const unsigned *idp,const tfloat3 *pos)const;
-  //:void DgSaveVktRange(std::string file,unsigned pini,unsigned pfin,const unsigned *idpg,const float3 *posg)const;
+  //:tuint3 DgGetCell(const tfloat3& pos)const;
+  //:void DgSaveVktIdx(std::string file,unsigned np,const unsigned* idx,const unsigned* idp,const tfloat3* pos)const;
+  //:void DgSaveVktRange(std::string file,unsigned pini,unsigned pfin,const unsigned* idpg,const float3* posg)const;
 };
 
 #endif

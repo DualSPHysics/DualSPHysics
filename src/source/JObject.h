@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -44,20 +44,20 @@ protected:
   std::string ClassName;   ///<Name of the class.
   bool DestructorActive;   ///<Destructor of object in execution.
 
-  //static void RunExceptioonStatic(const std::string &srcfile,int srcline
-  //  ,const std::string &method
-  //  ,const std::string &msg,const std::string &file="");
+  //static void RunExceptioonStatic(const std::string& srcfile,int srcline
+  //  ,const std::string& method
+  //  ,const std::string& msg,const std::string& file="");
 
-  void RunExceptioon(const std::string &srcfile,int srcline
-    ,const std::string &classname,const std::string &method
-    ,const std::string &msg,const std::string &file="")const;
+  void RunExceptioon(const std::string& srcfile,int srcline
+    ,const std::string& classname,const std::string& method
+    ,const std::string& msg,const std::string& file="")const;
 
-  void RunException(const std::string &method,const std::string &msg
-    ,const std::string &file="")const;
+  void RunException(const std::string& method,const std::string& msg
+    ,const std::string& file="")const;
 
 public:  
   JObject():ClassName("JObject"),DestructorActive(false){} ///<Constructor of objects.
-
+  virtual std::string ObjectId()const;
 
 };
 

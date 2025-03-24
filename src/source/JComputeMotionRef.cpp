@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -91,11 +91,11 @@ void JComputeMotionRef::AddMkBlock(word mk,word mkbound,unsigned begin,unsigned 
 // Adds mks data to Mks vector.
 //==============================================================================
 void JComputeMotionRef::AddMkBlocks(word mkboundfirst
-  ,const std::vector<StMkMotionData> &mks)
+  ,const std::vector<StMkMotionData>& mks)
 {
   const unsigned n=unsigned(mks.size());
   for(unsigned c=0;c<n;c++){
-    const StMkMotionData &v=mks[c];
+    const StMkMotionData& v=mks[c];
     AddMkBlock(v.mkbound+mkboundfirst,v.mkbound,v.begin,v.np);
   }
 }
@@ -104,10 +104,10 @@ void JComputeMotionRef::AddMkBlocks(word mkboundfirst
 // Adds mks[] data to Mks vector.
 //==============================================================================
 void JComputeMotionRef::AddMkBlocks(word mkboundfirst,unsigned nmk
-  ,const StMkMotionData *mks)
+  ,const StMkMotionData* mks)
 {
   for(unsigned c=0;c<nmk;c++){
-    const StMkMotionData &v=mks[c];
+    const StMkMotionData& v=mks[c];
     AddMkBlock(v.mkbound+mkboundfirst,v.mkbound,v.begin,v.np);
   }
 }
@@ -115,7 +115,7 @@ void JComputeMotionRef::AddMkBlocks(word mkboundfirst,unsigned nmk
 //==============================================================================
 // Computes RIdp to look for particles by Id.
 //==============================================================================
-unsigned* JComputeMotionRef::ComputeRidp(unsigned np,const unsigned *idp){
+unsigned* JComputeMotionRef::ComputeRidp(unsigned np,const unsigned* idp){
   delete[] PartRidp; PartRidp=NULL;
   PartRidp=new unsigned[CaseNbound];
   memset(PartRidp,255,sizeof(unsigned)*CaseNbound);
@@ -127,8 +127,8 @@ unsigned* JComputeMotionRef::ComputeRidp(unsigned np,const unsigned *idp){
 // Find reference points to compute motion.
 //==============================================================================
 void JComputeMotionRef::ComputeRefPoints(unsigned casenfixed,unsigned casenmoving
-  ,unsigned casenfloat,unsigned np,const unsigned *idp,const tdouble3 *posd
-  ,const tfloat3 *posf,const unsigned *ridp)
+  ,unsigned casenfloat,unsigned np,const unsigned* idp,const tdouble3* posd
+  ,const tfloat3* posf,const unsigned* ridp)
 {
   if(!CountMkBlock())Run_Exceptioon("No MK data defined.");
   const bool possimple=(posd==NULL);
@@ -237,10 +237,10 @@ void JComputeMotionRef::ComputeRefPoints(unsigned casenfixed,unsigned casenmovin
 //==============================================================================
 // Copy motion reference data to mks.
 //==============================================================================
-void JComputeMotionRef::GetMotionRefData(StMkMotionData &v)const{
+void JComputeMotionRef::GetMotionRefData(StMkMotionData& v)const{
   const unsigned idx=IdxMkBlock(v.mkbound);
   if(idx==UINT_MAX)Run_Exceptioon("Mkbound value is was not found.");
-  const StMkMotionData &v0=Mks[idx];
+  const StMkMotionData& v0=Mks[idx];
   //-Copy data.
   v.nid=v0.nid;
   for(unsigned cv=0;cv<3;cv++){
@@ -253,7 +253,7 @@ void JComputeMotionRef::GetMotionRefData(StMkMotionData &v)const{
 //==============================================================================
 // Copy motion reference data to mks.
 //==============================================================================
-void JComputeMotionRef::GetMotionRef(std::vector<StMkMotionData> &mks)const{
+void JComputeMotionRef::GetMotionRef(std::vector<StMkMotionData>& mks)const{
   const unsigned n=unsigned(mks.size());
   for(unsigned c=0;c<n;c++)GetMotionRefData(mks[c]);
 }
@@ -261,6 +261,6 @@ void JComputeMotionRef::GetMotionRef(std::vector<StMkMotionData> &mks)const{
 //==============================================================================
 // Copy motion reference data to mks.
 //==============================================================================
-void JComputeMotionRef::GetMotionRef(unsigned nmk,StMkMotionData *mks)const{
+void JComputeMotionRef::GetMotionRef(unsigned nmk,StMkMotionData* mks)const{
   for(unsigned c=0;c<nmk;c++)GetMotionRefData(mks[c]);
 }

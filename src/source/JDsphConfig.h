@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -22,6 +22,7 @@
 //:# - Carga configuracion del fichero DsphConfig.xml. (23-10-2017)
 //:# - Carga nueva configuracion createdirs. (21-05-2018)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
+//:# - Carga nueva configuracion CsvSepThousands. (12-04-2024)
 //:#############################################################################
 
 /// \file JDsphConfig.h \brief Declares the class \ref JDsphConfig.
@@ -44,8 +45,9 @@ class JDsphConfig : protected JObject
 protected:
   std::string FileCfg;
 
-  int CreateDirs;   ///<Creates full path for output files (-1=undefined, 0=no, 1=yes).
-  int CsvSeparator; ///<Separator character in CSV files (-1=undefined, 0=semicolon, 1=coma).
+  int CreateDirs;      ///<Creates full path for output files (-1=undefined, 0=no, 1=yes).
+  int CsvSeparator;    ///<Separator character in CSV files (-1=undefined, 0=semicolon, 1=coma).
+  int CsvSepThousands; ///<Use thousands separator (-1=undefined, 0=no, 1=yes).
 
 public:
   JDsphConfig();
@@ -57,6 +59,7 @@ public:
 
   int GetCreateDirs()const{ return(CreateDirs); }
   int GetCsvSeparator()const{ return(CsvSeparator); }
+  int GetCsvSepThousands()const{ return(CsvSepThousands); }
 };
 
 #endif

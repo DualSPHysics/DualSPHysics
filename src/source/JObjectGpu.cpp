@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -31,8 +31,8 @@
 ////==============================================================================
 ///// Throws exception related to a CUDA error from a static method.
 ////==============================================================================
-//void JObjectGpu::RunExceptioonCudaStatic(const std::string &srcfile,int srcline
-//  ,const std::string &method
+//void JObjectGpu::RunExceptioonCudaStatic(const std::string& srcfile,int srcline
+//  ,const std::string& method
 //  ,cudaError_t cuerr,std::string msg)
 //{
 //  msg=msg+fun::PrintStr(" (CUDA error %d (%s)).\n",cuerr,cudaGetErrorString(cuerr));
@@ -41,8 +41,8 @@
 ////==============================================================================
 ///// Checks CUDA error and throws exception from a static method.
 ////==============================================================================
-//void JObjectGpu::CheckCudaErroorStatic(const std::string &srcfile,int srcline
-//  ,const std::string &method,std::string msg)
+//void JObjectGpu::CheckCudaErroorStatic(const std::string& srcfile,int srcline
+//  ,const std::string& method,std::string msg)
 //{
 //  cudaError_t cuerr=cudaGetLastError();
 //  if(cuerr!=cudaSuccess)RunExceptioonCudaStatic(srcfile,srcline,method,cuerr,msg);
@@ -51,24 +51,27 @@
 //==============================================================================
 /// Throws exception related to a CUDA error.
 //==============================================================================
-void JObjectGpu::RunExceptioonCuda(const std::string &srcfile,int srcline
-  ,const std::string &classname,const std::string &method
+void JObjectGpu::RunExceptioonCuda(const std::string& srcfile,int srcline
+  ,const std::string& classname,const std::string& method
   ,cudaError_t cuerr,std::string msg)const
 {
+  const std::string oid=ObjectId();
   msg=msg+fun::PrintStr(" (CUDA error %d (%s)).\n",cuerr,cudaGetErrorString(cuerr));
-  throw JException(srcfile,srcline,classname,method,msg,"");
+  throw JException(srcfile,srcline,(oid.empty()? classname: oid),method,msg,"");
 }
 
 //==============================================================================
 /// Checks CUDA error and throws exception.
 /// Comprueba error de CUDA y lanza excepcion si lo hubiera.
 //==============================================================================
-void JObjectGpu::CheckCudaErroor(const std::string &srcfile,int srcline
-  ,const std::string &classname,const std::string &method
+void JObjectGpu::CheckCudaErroor(const std::string& srcfile,int srcline
+  ,const std::string& classname,const std::string& method
   ,std::string msg)const
 {
   cudaError_t cuerr=cudaGetLastError();
-  if(cuerr!=cudaSuccess)RunExceptioonCuda(srcfile,srcline,classname,method,cuerr,msg);
+  const std::string oid=ObjectId();
+  if(cuerr!=cudaSuccess)RunExceptioonCuda(srcfile,srcline
+    ,(oid.empty()? ClassName: oid),method,cuerr,msg);
 }
 
 

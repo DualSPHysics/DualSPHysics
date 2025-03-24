@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (31-07-2020) *** -->
+<!-- *** DualSPHysics v5.4.353 (11-12-2024) *** -->
 <!-- *** class: JSph (JSpaceEParms)  *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -10,19 +10,22 @@
 	<parameters>
 		<parameter key="SavePosDouble" value="0" comment="Saves particle position using double precision (default=0)" />
 		<parameter key="Boundary" value="2" comment="Boundary method 1:DBC, 2:mDBC (default=1)" />
-		<parameter key="MDBCFastSingle" value="1" comment="mDBC uses fast single precision calculation on GPU (default=1)" />
+		<parameter key="SlipMode" value="1" comment="Slip mode for mDBC 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1)" />
+		<parameter key="NoPenetration" value="1" comment="Slip mode for mDBC 1:DBC vel=0, 2:No-slip, 3:Free slip (default=1)" />
 		<parameter key="StepAlgorithm" value="1" comment="Step Algorithm 1:Verlet, 2:Symplectic (default=1)" />
 		<parameter key="VerletSteps" value="40" comment="Verlet only: Number of steps to apply Euler timestepping (default=40)" />
 		<parameter key="Kernel" value="2" comment="Interaction Kernel 1:Cubic Spline, 2:Wendland (default=2)" />
-		<parameter key="ViscoTreatment" value="1" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS (default=1)" />
-		<parameter key="Visco" value="0.01" comment="Viscosity value" />
+		<parameter key="ViscoTreatment" value="1" comment="Viscosity formulation 1:Artificial, 2:Laminar+SPS, 3:Laminar (default=1)" />
+		<parameter key="Visco" value="0.01" comment="Viscosity value. Typically 0.01 for Artificial and 1e-6 m^2/s (water kinematic viscosity) for Laminar" />
 		<parameter key="ViscoBoundFactor" value="1" comment="Multiply viscosity value with boundary (default=1)" />
-		<parameter key="#DeltaSPH" value="0" comment="**DEPRECATED** DeltaSPH value, 0.1 is the typical value, with 0 disabled (default=0)" />
 		<parameter key="DensityDT" value="0" comment="Density Diffusion Term 0:None, 1:Molteni, 2:Fourtakas, 3:Fourtakas(full) (default=0)" />
 		<parameter key="DensityDTvalue" value="0.1" comment="DDT value (default=0.1)" />
-		<parameter key="Shifting" value="0" comment="Shifting mode 0:None, 1:Ignore bound, 2:Ignore fixed, 3:Full (default=0)" />
-		<parameter key="ShiftCoef" value="-2" comment="Coefficient for shifting computation (default=-2)" />
+		<parameter key="Shifting" value="0" comment="Shifting mode 0:None, 1:Ignore bound, 2:Ignore fixed, 3:Full, 4:Full advanced (default=0)" />
+		<parameter key="ShiftCoef" value="-2" comment="Coefficient for standard shifting computation (default=-2)" />
 		<parameter key="ShiftTFS" value="0" comment="Threshold to detect free surface. Typically 1.5 for 2D and 2.75 for 3D (default=0)" />
+		<parameter key="ShiftAdvCoef" value="-0.01" comment="Coefficient for advanced shifting computation (default=-0.01)" />
+		<parameter key="ShiftAdvALE" value="0" comment="ALE formulation for advanced shifting  (default=0)" />
+		<parameter key="ShiftAdvNCPress" value="0" comment="Non conservative pressure formulation for advanced shifting (default=0)" />
 		<parameter key="RigidAlgorithm" value="1" comment="Rigid Algorithm 0:collision-free, 1:SPH, 2:DEM, 3:Chrono (default=1)" />
 		<parameter key="FtPause" value="0.0" comment="Time to freeze the floatings at simulation start (warmup) (default=0)" units_comment="seconds" />
 		<parameter key="FtIgnoreRadius" value="0" comment="Ignores floating body radius with periodic conditions (default=0)" />
@@ -34,10 +37,12 @@
 		<parameter key="DtAllParticles" value="0" comment="Velocity of particles used to calculate DT. 1:All, 0:Only fluid/floating (default=0)" />
 		<parameter key="TimeMax" value="1.5" comment="Time of simulation" units_comment="seconds" />
 		<parameter key="TimeOut" value="0.01" comment="Time out data" units_comment="seconds" />
+		<parameter key="TimeOutExtra" value="0.001" comment="Time out for extra output data on motion and floating information" units_comment="seconds" />
 		<parameter key="RhopOutMin" value="700" comment="Minimum rhop valid (default=700)" units_comment="kg/m^3" />
 		<parameter key="RhopOutMax" value="1300" comment="Maximum rhop valid (default=1300)" units_comment="kg/m^3" />
-		<parameter key="PartsOutMax" value="1" comment="%/100 of fluid particles allowed to be excluded from domain (default=1)" units_comment="decimal" />
 		<parameter key="WrnPartsOut" value="1" comment="Active warning according to number of out particles (default=1)" />
+		<parameter key="MinFluidStop" value="0" comment="Minimum proportion of initial fluid particles to continue the simulation 0:Never stops, 0.1:Stops when fluid drops to 10%. (default=0)" />
+		<parameter key="PartsOutMax" value="1" comment="**DEPRECATED** Proportion of initial fluid particles that can be excluded 0:none, 0.5:half, 1:all (default=1)" />
 		
 		<parameter key="XPeriodicIncZ" value="0" comment="Increase of Z with periodic BC in axis X" units_comment="metres (m)" />
 		<parameter key="XPeriodicIncY" value="0" comment="Increase of Y with periodic BC in axis X" units_comment="metres (m)" />

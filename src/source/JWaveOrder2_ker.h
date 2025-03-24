@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -37,11 +37,11 @@ namespace cuwave2{
 
 //-Kernels for JWaveSpectrum.
 unsigned GetSizeAux(unsigned n);
-double CalcPosition(double time,unsigned n,const double *dnm,const double2 *coefx,double *aux);
-double CalcElevation(double time,double x,unsigned n,const double4 *coefe,double *aux);
+double CalcPosition(double time,unsigned n,const double* dnm,const double2* coefx,double* aux);
+double CalcElevation(double time,double x,unsigned n,const double4* coefe,double* aux);
 
-//:double CalcPosition1(double time,unsigned n,const double *dnm,const double2 *coefx,double *aux);
-//:double CalcPosition2(double time,unsigned n,const double *dnm,const double2 *coefx,double *aux);
+//:double CalcPosition1(double time,unsigned n,const double* dnm,const double2* coefx,double* aux);
+//:double CalcPosition2(double time,unsigned n,const double* dnm,const double2* coefx,double* aux);
 
 }
 

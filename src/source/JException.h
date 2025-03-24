@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -45,8 +45,10 @@ class JException : public std::exception{
   std::string Text;      ///<Text of the exception.
   std::string File;      ///<File related to the exception.
  public:
-  JException(const std::string &classname,const std::string &method,const std::string &text,const std::string &file);
-  JException(const std::string &srcfile,int srcline,const std::string &classname,const std::string &method,const std::string &text,const std::string &file);
+  JException(const std::string& classname,const std::string& method
+    ,const std::string& text,const std::string& file);
+  JException(const std::string& srcfile,int srcline,const std::string& classname
+    ,const std::string& method,const std::string& text,const std::string& file);
   ~JException() throw(){}  ///<Destructor of objects.
   std::string ToStr()const;
   void Print()const;

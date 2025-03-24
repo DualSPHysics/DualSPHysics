@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -58,13 +58,16 @@ public:
   const unsigned Begin;   ///<Id of the first particle of the block.
   const unsigned Count;   ///<Number of particles.
 
-  JSphMkBlock(TpParticles type,unsigned mktype,unsigned mk,typecode code,unsigned begin,unsigned count);
+  JSphMkBlock(TpParticles type,unsigned mktype,unsigned mk,typecode code
+    ,unsigned begin,unsigned count);
   void Reset();
 
   bool GetPosDefined()const{ return(PosDefined); }
   tdouble3 GetPosMin()const{ return(PosMin); }
   tdouble3 GetPosMax()const{ return(PosMax); }
-  void SetPosMinMax(const tdouble3 &pmin,const tdouble3 &pmax){ PosDefined=true; PosMin=pmin; PosMax=pmax; }
+  void SetPosMinMax(const tdouble3& pmin,const tdouble3& pmax){ 
+    PosDefined=true; PosMin=pmin; PosMax=pmax;
+  }
 };
 
 
@@ -94,7 +97,7 @@ public:
   JSphMk();
   ~JSphMk();
   void Reset();
-  void Config(const JCaseParts *parts);
+  void Config(const JCaseParts* parts);
 
   unsigned Size()const{ return(MkListSize); }
   const JSphMkBlock* Mkblock(unsigned c)const{ return(MkList[c]); }
@@ -122,7 +125,7 @@ public:
     return(cb<Size()? MkList[cb]->Mk: 0);
   }
   /// Returns Mk values according to a given Idp values (returns 0 when idp is invalid).
-  void GetMkByIds(unsigned n,const unsigned *idp,word *mk)const{
+  void GetMkByIds(unsigned n,const unsigned* idp,word* mk)const{
     for(unsigned p=0;p<n;p++)mk[p]=GetMkById(idp[p]);
   }
 
@@ -132,16 +135,16 @@ public:
     return(cb<Size()? MkList[cb]->Mk: 0);
   }
   /// Returns Mk values according to a given Code values (returns 0 when code is invalid).
-  void GetMkByCodes(unsigned n,const typecode *code,word *mk)const{
+  void GetMkByCodes(unsigned n,const typecode* code,word* mk)const{
     for(unsigned p=0;p<n;p++)mk[p]=GetMkByCode(code[p]);
   }
 
   typecode CodeSetType(typecode code,TpParticles type,unsigned value)const;
 
-  //void ComputeMkDomains(bool bound,const std::vector<unsigned> &mklist,unsigned np,const tdouble3 *pos,const typecode *code);
-  void ComputeMkDomains(unsigned np,const tdouble3 *pos,const typecode *code);
+  //void ComputeMkDomains(bool bound,const std::vector<unsigned>& mklist,unsigned np,const tdouble3* pos,const typecode* code);
+  void ComputeMkDomains(unsigned np,const tdouble3* pos,const typecode* code);
 
-  void ConfigPartDataHead(JPartDataHead *parthead)const;
+  void ConfigPartDataHead(JPartDataHead* parthead)const;
 };
 
 

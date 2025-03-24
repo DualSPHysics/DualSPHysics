@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -16,19 +16,20 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-//:#############################################################################
-//:# Cambios:
-//:# =========
-//:# - Incluye la aplicacion de TimeMod. (23-04-2018)
-//:# - Ahora devuelve los datos de motion como StMotionData. (11-09-2019)
-//:# - Permite compilar sin libreria WaveGen. (10-12-2019)
-//:# - Usa el valor de gravity de la simuacion. (03-02-2020)
-//:# - Permite configurar varios <savemotion>. (04-02-2020)
-//:# - <savemotion> usa por defecto TimeMax y TimePart de la simulacion. (04-02-2020)
-//:# - Comprueba opcion active en elementos de primer, segundo nivel y AWAS. (19-03-2020)  
-//:# - Devuelve movimiento MOTT_None para tiempos fuera del intervalo de generacion. (03-02-2021)
-//:# - Indica tipos de generacion de olas configurados. (23-07-2021)
-//:#############################################################################
+//#############################################################################
+//# Cambios:
+//# =========
+//# - Incluye la aplicacion de TimeMod. (23-04-2018)
+//# - Ahora devuelve los datos de motion como StMotionData. (11-09-2019)
+//# - Permite compilar sin libreria WaveGen. (10-12-2019)
+//# - Usa el valor de gravity de la simuacion. (03-02-2020)
+//# - Permite configurar varios <savemotion>. (04-02-2020)
+//# - <savemotion> usa por defecto TimeMax y TimePart de la simulacion. (04-02-2020)
+//# - Comprueba opcion active en elementos de primer, segundo nivel y AWAS. (19-03-2020)  
+//# - Devuelve movimiento MOTT_None para tiempos fuera del intervalo de generacion. (03-02-2021)
+//# - Indica tipos de generacion de olas configurados. (23-07-2021)
+//# - Minor coding style changes. (28-08-2023)
+//#############################################################################
 
 /// \file JWaveGen.h \brief Declares the class \ref JWaveGen.
 
@@ -108,8 +109,8 @@ public:
   //==============================================================================
   /// Constructor.
   //==============================================================================
-  JWaveGen(bool useomp,bool usegpu,JLog2 *log,std::string dirdata,const JXml *sxml
-    ,const std::string &place,tdouble3 gravity3);
+  JWaveGen(bool useomp,bool usegpu,JLog2* log,std::string dirdata,const JXml* sxml
+    ,const std::string& place,tdouble3 gravity3);
 
   //==============================================================================
   /// Destructor.
@@ -140,7 +141,7 @@ public:
   /// Prepares paddle movement.
   //==============================================================================
   void InitPaddle(unsigned cp,double timemax,double timepart
-    ,const StWvgDimensions &wdims);
+    ,const StWvgDimensions& wdims);
 
   //==============================================================================
   /// Returns true when paddle uses AWAS.
@@ -151,12 +152,12 @@ public:
   /// Returns AWAS information to define gauge.
   //==============================================================================
   void PaddleGetAwasInfo(unsigned cp,double coefmassdef,double massfluid
-    ,double &masslimit,double &tstart,double &gdp,tdouble3 &point0,tdouble3 &point2)const;
+    ,double& masslimit,double& tstart,double& gdp,tdouble3& point0,tdouble3& point2)const;
 
   //==============================================================================
   /// Defines gauge for paddle AWAS.
   //==============================================================================
-  void PaddleGaugeInit(unsigned cp,void *gswl);
+  void PaddleGaugeInit(unsigned cp,void* gswl);
 
   //==============================================================================
   /// Returns gauge for paddle AWAS (NULL when it is undefined).
@@ -172,12 +173,12 @@ public:
   //==============================================================================
   /// Loads the last gauge results.
   //==============================================================================
-  void LoadLastGaugeResults(unsigned cp,double timestep,const tfloat3 &posswl,const tfloat3 &point0);
+  void LoadLastGaugeResults(unsigned cp,double timestep,const tfloat3& posswl,const tfloat3& point0);
 
   //==============================================================================
   /// Returns new position for gauge.
   //==============================================================================
-  void GetUpdateGaugePoints(unsigned cp,bool updatepoints,tdouble3 &point0,tdouble3 &point2)const;
+  void GetUpdateGaugePoints(unsigned cp,bool updatepoints,tdouble3& point0,tdouble3& point2)const;
 
 
   //==============================================================================

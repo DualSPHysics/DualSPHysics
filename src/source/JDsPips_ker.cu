@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -34,7 +34,9 @@ namespace cupips{
 /// Reduction using sum of unsigned values in shared memory for a warp.
 /// Reduccion mediante suma de valores unsigned en memoria shared para un warp.
 //==============================================================================
-template <unsigned blockSize> __device__ void KerReduSumUintWarp(volatile unsigned* sudat,unsigned tid){
+template <unsigned blockSize> __device__ void KerReduSumUintWarp(
+  volatile unsigned* sudat,unsigned tid)
+{
   if(blockSize>=64)sudat[tid]+=sudat[tid+32];
   if(blockSize>=32)sudat[tid]+=sudat[tid+16];
   if(blockSize>=16)sudat[tid]+=sudat[tid+8];
@@ -46,9 +48,9 @@ template <unsigned blockSize> __device__ void KerReduSumUintWarp(volatile unsign
 //------------------------------------------------------------------------------
 /// Count number of real and checked neighbours.
 //------------------------------------------------------------------------------
-__device__ void KerInteractionNgBox(const unsigned &pini,const unsigned &pfin
-  ,float kernelsize2,float poscellsize,const float4 &pscellp1,const float4 *poscell
-  ,unsigned &numr,unsigned &numc)
+__device__ void KerInteractionNgBox(const unsigned& pini,const unsigned& pfin
+  ,float kernelsize2,float poscellsize,const float4& pscellp1
+  ,const float4* poscell,unsigned& numr,unsigned& numc)
 {
   for(int p2=pini;p2<pfin;p2++){
     const float4 pscellp2=poscell[p2];
@@ -63,13 +65,14 @@ __device__ void KerInteractionNgBox(const unsigned &pini,const unsigned &pfin
 //------------------------------------------------------------------------------
 template <unsigned blockSize> __global__ void KerInteractionNg
   (unsigned nb,unsigned pinitb,unsigned nf,unsigned pinitf
-  ,int scelldiv,int4 nc,int3 cellzero,const int2 *begincell,unsigned cellfluid,const unsigned *dcell
-  ,unsigned axis,unsigned cellcode,float kernelsize2,float poscellsize,const float4 *poscell,uint4 *res)
+  ,int scelldiv,int4 nc,int3 cellzero,const int2* begincell,unsigned cellfluid
+  ,const unsigned* dcell,unsigned axis,unsigned cellcode,float kernelsize2
+    ,float poscellsize,const float4* poscell,uint4* res)
 {
   extern __shared__ unsigned snrf[];
-  unsigned *snrb=snrf+blockDim.x;
-  unsigned *sncf=snrb+blockDim.x;
-  unsigned *sncb=sncf+blockDim.x;
+  unsigned* snrb=snrf+blockDim.x;
+  unsigned* sncf=snrb+blockDim.x;
+  unsigned* sncb=sncf+blockDim.x;
   const unsigned tid=threadIdx.x;
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Number of particle.
   if(p<nb+nf){
@@ -118,7 +121,7 @@ template <unsigned blockSize> __global__ void KerInteractionNg
 /// Count number of real and checked neighbours in particle interacion.
 //==============================================================================
 void InteractionNg_1st(unsigned nb,unsigned pinitb,unsigned nf,unsigned pinitf
-  ,const StDivDataGpu &dvd,const unsigned *dcell,const float4 *poscell,uint4 *res
+  ,const StDivDataGpu& dvd,const unsigned* dcell,const float4* poscell,uint4* res
   ,cudaStream_t stm)
 {
   const unsigned BSIZE=256;
@@ -150,13 +153,13 @@ unsigned InteractionNgSize_1st(unsigned np){
 /// principio de res[] (Se usan tantas posiciones del res[] como bloques, 
 /// quedando el resultado final en res[0]).
 //==============================================================================
-template <unsigned blockSize> __global__ void KerReduSumUint4(unsigned n,unsigned ini
-  ,const uint4 *dat,uint4 *res)
+template <unsigned blockSize> __global__ void KerReduSumUint4(unsigned n
+  ,unsigned ini,const uint4* dat,uint4* res)
 {
   extern __shared__ unsigned sfdatx[];
-  unsigned *sfdaty=sfdatx+blockDim.x;
-  unsigned *sfdatz=sfdaty+blockDim.x;
-  unsigned *sfdatw=sfdatz+blockDim.x;
+  unsigned* sfdaty=sfdatx+blockDim.x;
+  unsigned* sfdatz=sfdaty+blockDim.x;
+  unsigned* sfdatw=sfdatz+blockDim.x;
   const unsigned tid=threadIdx.x;
   unsigned c=blockIdx.x*blockDim.x + threadIdx.x;
   uint4 value=(c<n? dat[c+ini]: make_uint4(0,0,0,0));
@@ -176,7 +179,7 @@ template <unsigned blockSize> __global__ void KerReduSumUint4(unsigned n,unsigne
 //==============================================================================
 /// Count number of real and checked neighbours in particle interacion.
 //==============================================================================
-void InteractionNg_2nd(unsigned n,const uint4 *data,uint4 *res,cudaStream_t stm)
+void InteractionNg_2nd(unsigned n,const uint4* data,uint4* res,cudaStream_t stm)
 {
   if(n){
     const unsigned BSIZE=256;
@@ -218,12 +221,12 @@ template <unsigned blockSize> __device__ void KerReduSumUllongWarp(volatile ullo
 /// quedando el resultado final en res[0]).
 //==============================================================================
 template <unsigned blockSize> __global__ void KerReduSumUintlong4(unsigned n,unsigned ini
-  ,const uint4 *dat,ullong *res)
+  ,const uint4* dat,ullong* res)
 {
   extern __shared__ ullong sldatx[];
-  ullong *sldaty=sldatx+blockDim.x;
-  ullong *sldatz=sldaty+blockDim.x;
-  ullong *sldatw=sldatz+blockDim.x;
+  ullong* sldaty=sldatx+blockDim.x;
+  ullong* sldatz=sldaty+blockDim.x;
+  ullong* sldatw=sldatz+blockDim.x;
   const unsigned tid=threadIdx.x;
   unsigned c=blockIdx.x*blockDim.x + threadIdx.x;
   const uint4 value=(c<n? dat[c+ini]: make_uint4(0,0,0,0));
@@ -253,7 +256,7 @@ template <unsigned blockSize> __global__ void KerReduSumUintlong4(unsigned n,uns
 //==============================================================================
 /// Count number of real and checked neighbours in particle interacion.
 //==============================================================================
-void InteractionNg_3th(unsigned n,const uint4 *data,ullong *res,cudaStream_t stm)
+void InteractionNg_3th(unsigned n,const uint4* data,ullong* res,cudaStream_t stm)
 {
   if(n){
     const unsigned BSIZE=256;

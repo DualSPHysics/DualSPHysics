@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -53,10 +53,10 @@ tdouble3 JSphCpu::Interaction_PosNoPeriodic(tdouble3 posp1)const{
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
 template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
-  (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
-  ,const tplane3f *planes,const float* width,const tfloat3 *dirdata,float determlimit
-  ,StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos,const typecode *code
-  ,const unsigned *idp,tfloat4 *velrhop)
+  (unsigned inoutcount,const int* inoutpart,const byte* cfgzone
+  ,const tplane3f* planes,const float* width,const tfloat3* dirdata,float determlimit
+  ,StDivDataCpu dvd,const unsigned* dcell,const tdouble3* pos,const typecode* code
+  ,const unsigned* idp,tfloat4* velrhop)
 {
   //Log->Printf("%u>++> InteractionInOutGhost_Double",Nstep);
   //-Inicia ejecucion con OpenMP.
@@ -241,10 +241,10 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Double
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
 template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
-  (unsigned inoutcount,const int *inoutpart,const byte *cfgzone
-  ,const tplane3f *planes,const float* width,const tfloat3 *dirdata,float determlimit
-  ,StDivDataCpu dvd,const unsigned *dcell,const tdouble3 *pos,const typecode *code
-  ,const unsigned *idp,tfloat4 *velrhop)
+  (unsigned inoutcount,const int* inoutpart,const byte* cfgzone
+  ,const tplane3f* planes,const float* width,const tfloat3* dirdata,float determlimit
+  ,StDivDataCpu dvd,const unsigned* dcell,const tdouble3* pos,const typecode* code
+  ,const unsigned* idp,tfloat4* velrhop)
 {
   //-Inicia ejecucion con OpenMP.
   const int n=int(inoutcount);
@@ -425,13 +425,14 @@ template<bool sim2d,TpKernel tker> void JSphCpu::InteractionInOutExtrap_Single
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-template<TpKernel tker> void JSphCpu::Interaction_InOutExtrapT(byte doublemode,unsigned inoutcount,const int *inoutpart
-  ,const byte *cfgzone,const tplane3f *planes
-  ,const float* width,const tfloat3 *dirdata,float determlimit
-  ,const unsigned *dcell,const tdouble3 *pos,const typecode *code
-  ,const unsigned *idp,tfloat4 *velrhop)
+template<TpKernel tker> void JSphCpu::Interaction_InOutExtrapT(byte doublemode
+  ,unsigned inoutcount,const int* inoutpart
+  ,const byte* cfgzone,const tplane3f* planes
+  ,const float* width,const tfloat3* dirdata,float determlimit
+  ,const unsigned* dcell,const tdouble3* pos,const typecode* code
+  ,const unsigned* idp,tfloat4* velrhop)
 {
-  const StDivDataCpu &dvd=DivData;
+  const StDivDataCpu& dvd=DivData;
   //-Interaction GhostBoundaryNodes-Fluid.
   if(doublemode==2){
     if(Simulate2D)InteractionInOutExtrap_Single<true ,tker> (inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,dvd,dcell,pos,code,idp,velrhop);
@@ -448,11 +449,11 @@ template<TpKernel tker> void JSphCpu::Interaction_InOutExtrapT(byte doublemode,u
 /// Perform interaction between ghost inlet/outlet nodes and fluid particles. GhostNodes-Fluid
 /// Realiza interaccion entre ghost inlet/outlet nodes y particulas de fluido. GhostNodes-Fluid
 //==============================================================================
-void JSphCpu::Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const int *inoutpart
-  ,const byte *cfgzone,const tplane3f *planes
-  ,const float* width,const tfloat3 *dirdata,float determlimit
-  ,const unsigned *dcell,const tdouble3 *pos,const typecode *code
-  ,const unsigned *idp,tfloat4 *velrhop)
+void JSphCpu::Interaction_InOutExtrap(byte doublemode,unsigned inoutcount
+  ,const int* inoutpart,const byte* cfgzone,const tplane3f* planes
+  ,const float* width,const tfloat3* dirdata,float determlimit
+  ,const unsigned* dcell,const tdouble3* pos,const typecode* code
+  ,const unsigned* idp,tfloat4* velrhop)
 {
   switch(TKernel){
     case KERNEL_Cubic:       Interaction_InOutExtrapT<KERNEL_Cubic>     (doublemode,inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit,dcell,pos,code,idp,velrhop);  break;
@@ -465,8 +466,9 @@ void JSphCpu::Interaction_InOutExtrap(byte doublemode,unsigned inoutcount,const 
 /// Calculates maximum zsurf in fluid domain.
 /// Calcula zsurf maximo en el fluido.
 //==============================================================================
-float JSphCpu::Interaction_InOutZsurf(unsigned nptz,const tfloat3 *ptzpos,float maxdist,float zbottom
-  ,const StDivDataCpu &divdata,const tdouble3 *pos,const typecode *code)
+float JSphCpu::Interaction_InOutZsurf(unsigned nptz,const tfloat3* ptzpos
+  ,float maxdist,float zbottom,const StDivDataCpu& divdata
+  ,const tdouble3* pos,const typecode* code)
 {
   const float maxdist2=maxdist*maxdist;
 //  Log->Printf("%u>++> InteractionInOutGhost_Double",Nstep);

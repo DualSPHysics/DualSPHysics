@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2021 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -80,7 +80,8 @@ void JDsExtraDataSave::Config(std::string svparts){
 /// Check PART number to save.
 //==============================================================================
 bool JDsExtraDataSave::CheckSave(int cpart)const{
-  return(cpart>0 && SvParts && cpart%SvParts==0 && (FilterParts==NULL || FilterParts->CheckValue(unsigned(cpart))));
+  return(cpart>0 && SvParts && cpart%SvParts==0 
+    && (FilterParts==NULL || FilterParts->CheckValue(unsigned(cpart))));
 }
 
 //==============================================================================
@@ -110,24 +111,24 @@ void JDsExtraDataSave::InitPartData(int cpart,double timestep,int nstep){
 /// Add normals data.
 //==============================================================================
 void JDsExtraDataSave::AddNormals(bool usenormalsft,unsigned np,unsigned npb
-  ,const unsigned *idp,const typecode *code,const tfloat3 *boundnormal)
+  ,const unsigned* idp,const typecode* code,const tfloat3* boundnor)
 {
   if(!CaseNfloat)usenormalsft=false;
   Data->SetvBool("UseNormalsFt",usenormalsft);
   const unsigned nsize=(usenormalsft? CaseNbound: CaseNbound-CaseNfloat);
   //Log->Printf("AddNormals----> np:%u  npb:%u  nsize:%u",np,npb,nsize);
-  tfloat3 *vnor=Data->CreateArrayFloat3("Normals",nsize,true);
+  tfloat3* vnor=Data->CreateArrayFloat3("Normals",nsize,true);
   //-Fixed and moving boundary particles.
   if(code!=NULL){
-    for(unsigned p=0;p<npb;p++)if(idp[p]<nsize && CODE_IsNormal(code[p]))vnor[idp[p]]=boundnormal[p];
+    for(unsigned p=0;p<npb;p++)if(idp[p]<nsize && CODE_IsNormal(code[p]))vnor[idp[p]]=boundnor[p];
   }
-  else for(unsigned p=0;p<npb;p++)if(idp[p]<nsize)vnor[idp[p]]=boundnormal[p]; 
+  else for(unsigned p=0;p<npb;p++)if(idp[p]<nsize)vnor[idp[p]]=boundnor[p]; 
   //-Floating boundary particles.
   if(usenormalsft && CaseNfloat){
     if(code!=NULL){
-      for(unsigned p=npb;p<np;p++)if(idp[p]<nsize && CODE_IsNormal(code[p]))vnor[idp[p]]=boundnormal[p];
+      for(unsigned p=npb;p<np;p++)if(idp[p]<nsize && CODE_IsNormal(code[p]))vnor[idp[p]]=boundnor[p];
     }
-    else for(unsigned p=npb;p<np;p++)if(idp[p]<nsize)vnor[idp[p]]=boundnormal[p];
+    else for(unsigned p=npb;p<np;p++)if(idp[p]<nsize)vnor[idp[p]]=boundnor[p];
   }
 }
 
@@ -205,20 +206,21 @@ void JDsExtraDataLoad::LoadPartData(std::string dir,int cpart){
 /// Load normals data from extra data.
 //==============================================================================
 bool JDsExtraDataLoad::LoadNormals(unsigned np,unsigned npb
-  ,const unsigned *idp,tfloat3 *boundnormal)
+  ,const unsigned* idp,tfloat3* boundnor)
 {
   if(Data->GetvUint("CaseNbound")!=CaseNbound)Run_ExceptioonFile("CaseNbound value does not match.",FileData);
   if(Data->GetvUint("CaseNfloat")!=CaseNfloat)Run_ExceptioonFile("CaseNfloat value does not match.",FileData);
   const bool usenormalsft=Data->GetvBool("UseNormalsFt");
-  JBinaryDataArray *ar=Data->GetArray("Normals");
-  if(!ar || ar->GetType()!=JBinaryDataDef::DatFloat3)Run_ExceptioonFile("The array \'Normals\' is missing or type invalid.",FileData);
-  const unsigned nsize=ar->GetCount();
-  const tfloat3 *vnor=(const tfloat3 *)ar->GetDataPointer();
+  JBinaryDataArray* ar=Data->GetArray("Normals");
+  if(!ar || ar->GetType()!=JBinaryDataDef::DatFloat3)
+    Run_ExceptioonFile("The array \'Normals\' is missing or type invalid.",FileData);
+  const unsigned nsize=unsigned(ar->GetCount());
+  const tfloat3* vnor=(const tfloat3* )ar->GetDataPointer();
   //-Fixed and moving boundary particles.
-  for(unsigned p=0;p<npb;p++)if(idp[p]<nsize)boundnormal[p]=vnor[idp[p]]; 
+  for(unsigned p=0;p<npb;p++)if(idp[p]<nsize)boundnor[p]=vnor[idp[p]]; 
   //-Floating boundary particles.
   if(usenormalsft){
-    for(unsigned p=npb;p<np;p++)if(idp[p]<nsize)boundnormal[p]=vnor[idp[p]];
+    for(unsigned p=npb;p<np;p++)if(idp[p]<nsize)boundnor[p]=vnor[idp[p]];
   }
   return(usenormalsft);
 }

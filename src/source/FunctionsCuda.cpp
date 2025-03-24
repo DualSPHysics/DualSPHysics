@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -29,8 +29,8 @@ namespace fcuda{
 //==============================================================================
 /// Checks error and throws exception.
 //==============================================================================
-void CheckCudaErroorFun(const char *const file,int const line,const char *const fun
-  ,std::string msg)
+void CheckCudaErroorFun(const char* const file,int const line
+  ,const char* const fun,std::string msg)
 {
   const cudaError_t cuerr=cudaGetLastError();
   if(cuerr!=cudaSuccess){
@@ -42,7 +42,7 @@ void CheckCudaErroorFun(const char *const file,int const line,const char *const 
 //==============================================================================
 /// Returns information about selected GPU (code from deviceQuery example).
 //==============================================================================
-inline bool IsGPUCapableP2P(const cudaDeviceProp *pProp){
+inline bool IsGPUCapableP2P(const cudaDeviceProp* pProp){
 #ifdef _WIN32
     return(pProp->major>=2 && pProp->tccDriver? true: false);
 #else
@@ -138,7 +138,9 @@ StGpuInfo GetCudaDeviceInfo(int gid){
 //==============================================================================
 /// Returns information about detected GPUs (code from deviceQuery example).
 //==============================================================================
-int GetCudaDevicesInfo(std::vector<std::string> *gpuinfo,std::vector<StGpuInfo> *gpuprops){
+int GetCudaDevicesInfo(std::vector<std::string>* gpuinfo
+  ,std::vector<StGpuInfo>* gpuprops)
+{
   if(gpuinfo)gpuinfo->push_back("[CUDA Capable device(s)]");
   int deviceCount=0;
   cudaGetDeviceCount(&deviceCount);
@@ -152,7 +154,8 @@ int GetCudaDevicesInfo(std::vector<std::string> *gpuinfo,std::vector<StGpuInfo> 
   int driverVersion=0,runtimeVersion=0;
   cudaDriverGetVersion(&driverVersion);
   cudaRuntimeGetVersion(&runtimeVersion);
-  if(gpuinfo)gpuinfo->push_back(fun::PrintStr("  CUDA Driver Version / Runtime Version: %d.%d / %d.%d",driverVersion/1000,(driverVersion%100)/10,runtimeVersion/1000,(runtimeVersion%100)/10));
+  if(gpuinfo)gpuinfo->push_back(fun::PrintStr("  CUDA Driver Version / Runtime Version: %d.%d / %d.%d"
+    ,driverVersion/1000,(driverVersion%100)/10,runtimeVersion/1000,(runtimeVersion%100)/10));
   //-Devices information.
   for(int dev=0;dev<deviceCount;++dev){
     const StGpuInfo g=GetCudaDeviceInfo(dev);
@@ -160,16 +163,16 @@ int GetCudaDevicesInfo(std::vector<std::string> *gpuinfo,std::vector<StGpuInfo> 
       gpuinfo->push_back(" ");
       gpuinfo->push_back(fun::PrintStr("Device %d: \"%s\"",dev,g.name.c_str()));
       gpuinfo->push_back(fun::PrintStr("  CUDA Capability Major....: %d.%d",g.ccmajor,g.ccminor));
-      gpuinfo->push_back(fun::PrintStr("  Global memory............: %.0f MBytes",(float)g.globalmem/1048576.0f));
+      gpuinfo->push_back(fun::PrintStr("  Global memory............: %.0f MiB",double(g.globalmem)/MEBIBYTE));
       gpuinfo->push_back(fun::PrintStr("  CUDA Cores...............: %d (%2d Multiprocessors, %3d CUDA Cores/MP)",g.cores,g.mp,g.coresmp));
       gpuinfo->push_back(fun::PrintStr("  GPU Max Clock rate.......: %.0f MHz (%0.2f GHz)",1e-3f*g.clockrate,1e-6f*g.clockrate));
 #if CUDART_VERSION >= 5000
       gpuinfo->push_back(fun::PrintStr("  Memory Clock rate........: %.0f Mhz",1e-3f*g.clockratemem));
       gpuinfo->push_back(fun::PrintStr("  Memory Bus Width.........: %d-bit",g.busmem));
-      gpuinfo->push_back(fun::PrintStr("  L2 Cache Size............: %.0f KBytes",(float)g.cachelv2/1024.f));
+      gpuinfo->push_back(fun::PrintStr("  L2 Cache Size............: %.0f KiB",double(g.cachelv2)/1024));
 #endif
-      gpuinfo->push_back(fun::PrintStr("  Constant memory..........: %.0f KBytes",(float)g.constantmem/1024.f));
-      gpuinfo->push_back(fun::PrintStr("  Shared memory per block..: %.0f KBytes",(float)g.sharedmem/1024.f));
+      gpuinfo->push_back(fun::PrintStr("  Constant memory..........: %.0f KiB",double(g.constantmem)/1024));
+      gpuinfo->push_back(fun::PrintStr("  Shared memory per block..: %.0f KiB",double(g.sharedmem)/1024));
       gpuinfo->push_back(fun::PrintStr("  Registers per block......: %d",g.regsblock));
       gpuinfo->push_back(fun::PrintStr("  Maximum threads per MP...: %d",g.maxthmp));
       gpuinfo->push_back(fun::PrintStr("  Maximum threads per block: %d",g.maxthblock));
@@ -201,6 +204,7 @@ int GetCudaDevicesInfo(std::vector<std::string> *gpuinfo,std::vector<StGpuInfo> 
 /// Returns cores per multiprocessor (code from helper_cuda.h).
 /// https://github.com/NVIDIA/cuda-samples/blob/master/Common/helper_cuda.h
 /// https://en.wikipedia.org/wiki/List_of_Nvidia_graphics_processing_units
+/// https://developer.nvidia.com/cuda-gpus
 /// https://en.wikipedia.org/wiki/GeForce_20_series
 /// https://en.wikipedia.org/wiki/GeForce_30_series
 /// https://en.wikipedia.org/wiki/Quadro
@@ -209,7 +213,7 @@ int _ConvertSMVer2Cores(int major, int minor){
   /// Defines for GPU Architecture types (using the SM version to determine the # of cores per SM).
   typedef struct
   {
-    int SM; // 0xMm (hexidecimal notation), M = SM Major version, and m = SM minor version
+    int SM; // 0xMm (hexadecimal notation), M = SM Major version, and m = SM minor version
     int Cores;
   } sSMtoCores;
 
@@ -232,6 +236,9 @@ int _ConvertSMVer2Cores(int major, int minor){
     { 0x75,  64}, // Turing Generation (SM 7.5) TU10X class
     { 0x80,  64}, // Ampere Generation (SM 8.0) GA100 class: A100
     { 0x86, 128}, // Ampere Generation (SM 8.6) GA10x class: GeForce 30 series
+    { 0x87, 128}, // Ampere Generation (SM 8.7) Jetson XXX
+    { 0x89, 128}, // Ada Lovelace Generation (SM 8.9) AD10x class
+    { 0x90, 128}, // Hopper Generation (SM 9.0) GH100 class
     { -1, -1 }
   };
 
@@ -252,100 +259,157 @@ int _ConvertSMVer2Cores(int major, int minor){
 //==============================================================================
 /// Allocates memory for word on GPU.
 //==============================================================================
-size_t Malloc(byte **ptr,unsigned count){
-  size_t size=sizeof(byte)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(byte** ptr,unsigned count){
+  const size_t size=sizeof(byte)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates memory for word on GPU.
 //==============================================================================
-size_t Malloc(word **ptr,unsigned count){
-  size_t size=sizeof(word)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(word** ptr,unsigned count){
+  const size_t size=sizeof(word)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
+}
+
+//==============================================================================
+/// Allocates memory for ushort2 on GPU.
+//==============================================================================
+size_t Malloc(ushort2** ptr,unsigned count){
+  const size_t size=sizeof(ushort2)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates memory for unsigned on GPU.
 //==============================================================================
-size_t Malloc(unsigned **ptr,unsigned count){
-  size_t size=sizeof(unsigned)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(unsigned** ptr,unsigned count){
+  const size_t size=sizeof(unsigned)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates memory for uint4 on GPU.
 //==============================================================================
-size_t Malloc(uint4 **ptr,unsigned count){
-  size_t size=sizeof(uint4)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(uint4** ptr,unsigned count){
+  const size_t size=sizeof(uint4)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates memory for int on GPU.
 //==============================================================================
-size_t Malloc(int **ptr,unsigned count){
-  size_t size=sizeof(int)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(int** ptr,unsigned count){
+  const size_t size=sizeof(int)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates memory for int2 on GPU.
 //==============================================================================
-size_t Malloc(int2 **ptr,unsigned count){
-  size_t size=sizeof(int2)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(int2** ptr,unsigned count){
+  const size_t size=sizeof(int2)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates memory for int3 on GPU.
 //==============================================================================
-size_t Malloc(int3 **ptr,unsigned count){
-  size_t size=sizeof(int3)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(int3** ptr,unsigned count){
+  const size_t size=sizeof(int3)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates memory for float on GPU.
 //==============================================================================
-size_t Malloc(float **ptr,unsigned count){
-  size_t size=sizeof(float)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(float** ptr,unsigned count){
+  const size_t size=sizeof(float)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates memory for float2 on GPU.
 //==============================================================================
-size_t Malloc(float2 **ptr,unsigned count){
-  size_t size=sizeof(float2)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(float2** ptr,unsigned count){
+  const size_t size=sizeof(float2)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates memory for float3 on GPU.
 //==============================================================================
-size_t Malloc(float3 **ptr,unsigned count){
-  size_t size=sizeof(float3)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(float3** ptr,unsigned count){
+  const size_t size=sizeof(float3)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates memory for float4 on GPU.
 //==============================================================================
-size_t Malloc(float4 **ptr,unsigned count){
-  size_t size=sizeof(float4)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(float4** ptr,unsigned count){
+  const size_t size=sizeof(float4)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates memory for double on GPU.
 //==============================================================================
-size_t Malloc(double **ptr,unsigned count){
-  size_t size=sizeof(double)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(double** ptr,unsigned count){
+  const size_t size=sizeof(double)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates memory for double2 on GPU.
 //==============================================================================
-size_t Malloc(double2 **ptr,unsigned count){
-  size_t size=sizeof(double2)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(double2** ptr,unsigned count){
+  const size_t size=sizeof(double2)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates memory for double3 on GPU.
 //==============================================================================
-size_t Malloc(double3 **ptr,unsigned count){
-  size_t size=sizeof(double3)*count;  cudaMalloc((void**)ptr,size);  return(size);
+size_t Malloc(double3** ptr,unsigned count){
+  const size_t size=sizeof(double3)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
 }
+
+//<vs_vrres_ini>
+//==============================================================================
+/// Allocates memory for bool on GPU.
+//==============================================================================
+size_t Malloc(bool** ptr,unsigned count){
+  const size_t size=sizeof(bool)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
+}
+
+//==============================================================================
+/// Allocates memory for tmatrix4f on GPU.
+//==============================================================================
+size_t Malloc(tmatrix4f** ptr,unsigned count){
+  const size_t size=sizeof(tmatrix4f)*count;
+  cudaMalloc((void**)ptr,size);
+  return(size);
+}
+//<vs_vrres_end>
 
 
 //##############################################################################
@@ -355,64 +419,91 @@ size_t Malloc(double3 **ptr,unsigned count){
 //==============================================================================
 /// Allocates pinned memory for byte on CPU.
 //==============================================================================
-size_t HostAlloc(byte **ptr,unsigned count){
-  size_t size=sizeof(byte)*count;  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);  return(size);
+size_t HostAlloc(byte** ptr,unsigned count){
+  const size_t size=sizeof(byte)*count;
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates pinned memory for word on CPU.
 //==============================================================================
-size_t HostAlloc(word **ptr,unsigned count){
-  size_t size=sizeof(word)*count;  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);  return(size);
+size_t HostAlloc(word** ptr,unsigned count){
+  const size_t size=sizeof(word)*count;
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates pinned memory for unsigned on CPU.
 //==============================================================================
-size_t HostAlloc(unsigned **ptr,unsigned count){
-  size_t size=sizeof(unsigned)*count;  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);  return(size);
+size_t HostAlloc(unsigned** ptr,unsigned count){
+  const size_t size=sizeof(unsigned)*count;
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault_cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates pinned memory for int on CPU.
 //==============================================================================
-size_t HostAlloc(int **ptr,unsigned count){
-  size_t size=sizeof(int)*count;  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);  return(size);
+size_t HostAlloc(int** ptr,unsigned count){
+  const size_t size=sizeof(int)*count;
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates pinned memory for int2 on CPU.
 //==============================================================================
-size_t HostAlloc(int2 **ptr,unsigned count){
-  size_t size=sizeof(int2)*count;  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);  return(size);
+size_t HostAlloc(int2** ptr,unsigned count){
+  const size_t size=sizeof(int2)*count;
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates pinned memory for float on CPU.
 //==============================================================================
-size_t HostAlloc(float **ptr,unsigned count){
-  size_t size=sizeof(float)*count;  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);  return(size);
+size_t HostAlloc(float** ptr,unsigned count){
+  const size_t size=sizeof(float)*count; 
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates pinned memory for tfloat4 on CPU.
 //==============================================================================
-size_t HostAlloc(tfloat4 **ptr,unsigned count){
-  size_t size=sizeof(tfloat4)*count;  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);  return(size);
+size_t HostAlloc(tfloat4** ptr,unsigned count){
+  const size_t size=sizeof(tfloat4)*count;
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates pinned memory for double on CPU.
 //==============================================================================
-size_t HostAlloc(double **ptr,unsigned count){
-  size_t size=sizeof(double)*count;  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);  return(size);
+size_t HostAlloc(double** ptr,unsigned count){
+  const size_t size=sizeof(double)*count;
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
+  return(size);
 }
 
 //==============================================================================
 /// Allocates pinned memory for tdouble2 on CPU.
 //==============================================================================
-size_t HostAlloc(tdouble2 **ptr,unsigned count){
-  size_t size=sizeof(tdouble2)*count;  cudaHostAlloc((void**)ptr,size,cudaHostAllocDefault);  return(size);
+size_t HostAlloc(tdouble2** ptr,unsigned count){
+  const size_t size=sizeof(tdouble2)*count;
+  //cudaHostAlloc((void**)ptr,size,cudaHostAllocPortable);
+  cudaMallocHost((void**)ptr,size);
+  return(size);
 }
 
 
@@ -423,10 +514,10 @@ size_t HostAlloc(tdouble2 **ptr,unsigned count){
 //==============================================================================
 /// Returns dynamic pointer with byte data. (this pointer must be deleted)
 //==============================================================================
-byte* ToHostByte(unsigned pini,unsigned n,const byte *vg){
+byte* ToHostByte(unsigned pini,unsigned n,const byte* vg){
   Check_CudaErroorFun("At the beginning.");
   try{
-    byte *v=new byte[n];
+    byte* v=new byte[n];
     cudaMemcpy(v,vg+pini,sizeof(byte)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
@@ -440,11 +531,28 @@ byte* ToHostByte(unsigned pini,unsigned n,const byte *vg){
 //==============================================================================
 /// Returns dynamic pointer with word data. (this pointer must be deleted)
 //==============================================================================
-word* ToHostWord(unsigned pini,unsigned n,const word *vg){
+word* ToHostWord(unsigned pini,unsigned n,const word* vg){
   Check_CudaErroorFun("At the beginning.");
   try{
-    word *v=new word[n];
+    word* v=new word[n];
     cudaMemcpy(v,vg+pini,sizeof(word)*n,cudaMemcpyDeviceToHost);
+    Check_CudaErroorFun("After cudaMemcpy().");
+    return(v);
+  }
+  catch(const std::bad_alloc){
+    fun::Run_ExceptioonFun(fun::PrintStr("Could not allocate the requested memory (np=%u).",n));
+  }
+  return(NULL);
+}
+
+//==============================================================================
+/// Returns dynamic pointer with ushort2 data. (this pointer must be deleted)
+//==============================================================================
+ushort2* ToHostWord2(unsigned pini,unsigned n,const ushort2* vg){
+  Check_CudaErroorFun("At the beginning.");
+  try{
+    ushort2* v=new ushort2[n];
+    cudaMemcpy(v,vg+pini,sizeof(ushort2)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
   }
@@ -457,10 +565,10 @@ word* ToHostWord(unsigned pini,unsigned n,const word *vg){
 //==============================================================================
 /// Returns dynamic pointer with ushort4 data. (this pointer must be deleted)
 //==============================================================================
-ushort4* ToHostWord4(unsigned pini,unsigned n,const ushort4 *vg){
+ushort4* ToHostWord4(unsigned pini,unsigned n,const ushort4* vg){
   Check_CudaErroorFun("At the beginning.");
   try{
-    ushort4 *v=new ushort4[n];
+    ushort4* v=new ushort4[n];
     cudaMemcpy(v,vg+pini,sizeof(ushort4)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
@@ -474,10 +582,10 @@ ushort4* ToHostWord4(unsigned pini,unsigned n,const ushort4 *vg){
 //==============================================================================
 /// Returns dynamic pointer with int data. (this pointer must be deleted)
 //==============================================================================
-int* ToHostInt(unsigned pini,unsigned n,const int *vg){
+int* ToHostInt(unsigned pini,unsigned n,const int* vg){
   Check_CudaErroorFun("At the beginning.");
   try{
-    int *v=new int[n];
+    int* v=new int[n];
     cudaMemcpy(v,vg+pini,sizeof(int)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
@@ -491,10 +599,10 @@ int* ToHostInt(unsigned pini,unsigned n,const int *vg){
 //==============================================================================
 /// Returns dynamic pointer with unsigned data. (this pointer must be deleted)
 //==============================================================================
-unsigned* ToHostUint(unsigned pini,unsigned n,const unsigned *vg){
+unsigned* ToHostUint(unsigned pini,unsigned n,const unsigned* vg){
   Check_CudaErroorFun("At the beginning.");
   try{
-    unsigned *v=new unsigned[n];
+    unsigned* v=new unsigned[n];
     cudaMemcpy(v,vg+pini,sizeof(unsigned)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
@@ -508,10 +616,10 @@ unsigned* ToHostUint(unsigned pini,unsigned n,const unsigned *vg){
 //==============================================================================
 /// Returns dynamic pointer with tint2 data. (this pointer must be deleted)
 //==============================================================================
-tint2* ToHostInt2(unsigned pini,unsigned n,const int2 *vg){
+tint2* ToHostInt2(unsigned pini,unsigned n,const int2* vg){
   Check_CudaErroorFun("At the beginning.");
   try{
-    tint2 *v=new tint2[n];
+    tint2* v=new tint2[n];
     cudaMemcpy(v,vg+pini,sizeof(tint2)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
@@ -525,10 +633,10 @@ tint2* ToHostInt2(unsigned pini,unsigned n,const int2 *vg){
 //==============================================================================
 /// Returns dynamic pointer with tint3 data. (this pointer must be deleted)
 //==============================================================================
-tint3* ToHostInt3(unsigned pini,unsigned n,const int3 *vg){
+tint3* ToHostInt3(unsigned pini,unsigned n,const int3* vg){
   Check_CudaErroorFun("At the beginning.");
   try{
-    tint3 *v=new tint3[n];
+    tint3* v=new tint3[n];
     cudaMemcpy(v,vg+pini,sizeof(tint3)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
@@ -542,10 +650,10 @@ tint3* ToHostInt3(unsigned pini,unsigned n,const int3 *vg){
 //==============================================================================
 /// Returns dynamic pointer with float data. (this pointer must be deleted)
 //==============================================================================
-float* ToHostFloat(unsigned pini,unsigned n,const float *vg){
+float* ToHostFloat(unsigned pini,unsigned n,const float* vg){
   Check_CudaErroorFun("At the beginning.");
   try{
-    float *v=new float[n];
+    float* v=new float[n];
     cudaMemcpy(v,vg+pini,sizeof(float)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
@@ -559,10 +667,10 @@ float* ToHostFloat(unsigned pini,unsigned n,const float *vg){
 //==============================================================================
 /// Returns dynamic pointer with tfloat3 data. (this pointer must be deleted)
 //==============================================================================
-tfloat3* ToHostFloat3(unsigned pini,unsigned n,const float3 *vg){
+tfloat3* ToHostFloat3(unsigned pini,unsigned n,const float3* vg){
   Check_CudaErroorFun("At the beginning.");
   try{
-    tfloat3 *v=new tfloat3[n];
+    tfloat3* v=new tfloat3[n];
     cudaMemcpy(v,vg+pini,sizeof(tfloat3)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
@@ -576,10 +684,10 @@ tfloat3* ToHostFloat3(unsigned pini,unsigned n,const float3 *vg){
 //==============================================================================
 /// Returns dynamic pointer with tfloat4 data. (this pointer must be deleted)
 //==============================================================================
-tfloat4* ToHostFloat4(unsigned pini,unsigned n,const float4 *vg){
+tfloat4* ToHostFloat4(unsigned pini,unsigned n,const float4* vg){
   Check_CudaErroorFun("At the beginning.");
   try{
-    tfloat4 *v=new tfloat4[n];
+    tfloat4* v=new tfloat4[n];
     cudaMemcpy(v,vg+pini,sizeof(tfloat4)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
@@ -593,10 +701,10 @@ tfloat4* ToHostFloat4(unsigned pini,unsigned n,const float4 *vg){
 //==============================================================================
 /// Returns dynamic pointer with double data. (this pointer must be deleted)
 //==============================================================================
-double* ToHostDouble(unsigned pini,unsigned n,const double *vg){
+double* ToHostDouble(unsigned pini,unsigned n,const double* vg){
   Check_CudaErroorFun("At the beginning.");
   try{
-    double *v=new double[n];
+    double* v=new double[n];
     cudaMemcpy(v,vg+pini,sizeof(double)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
@@ -610,10 +718,10 @@ double* ToHostDouble(unsigned pini,unsigned n,const double *vg){
 //==============================================================================
 /// Returns dynamic pointer with tdouble2 data. (this pointer must be deleted)
 //==============================================================================
-tdouble2* ToHostDouble2(unsigned pini,unsigned n,const double2 *vg){
+tdouble2* ToHostDouble2(unsigned pini,unsigned n,const double2* vg){
   Check_CudaErroorFun("At the beginning.");
   try{
-    tdouble2 *v=new tdouble2[n];
+    tdouble2* v=new tdouble2[n];
     cudaMemcpy(v,vg+pini,sizeof(tdouble2)*n,cudaMemcpyDeviceToHost);
     Check_CudaErroorFun("After cudaMemcpy().");
     return(v);
@@ -629,12 +737,14 @@ tdouble2* ToHostDouble2(unsigned pini,unsigned n,const double2 *vg){
 //==============================================================================
 /// Returns dynamic pointer with position in tfloat3. (this pointer must be deleted)
 //==============================================================================
-tfloat3* ToHostPosf3(unsigned pini,unsigned n,const double2 *posxyg,const double *poszg){
+tfloat3* ToHostPosf3(unsigned pini,unsigned n,const double2* posxyg
+  ,const double* poszg)
+{
   Check_CudaErroorFun("At the beginning.");
   try{
-    tdouble2 *posxy=ToHostDouble2(pini,n,posxyg);
-    double   *posz= ToHostDouble(pini,n,poszg);
-    tfloat3 *posf=new tfloat3[n];
+    tdouble2* posxy=ToHostDouble2(pini,n,posxyg);
+    double*   posz= ToHostDouble(pini,n,poszg);
+    tfloat3*  posf=new tfloat3[n];
     for(unsigned p=0;p<n;p++)posf[p]=ToTFloat3(TDouble3(posxy[p].x,posxy[p].y,posz[p]));
     delete[] posxy;  posxy=NULL;
     delete[] posz;   posz =NULL;
@@ -649,12 +759,14 @@ tfloat3* ToHostPosf3(unsigned pini,unsigned n,const double2 *posxyg,const double
 //==============================================================================
 /// Returns dynamic pointer with position in tfloat3. (this pointer must be deleted)
 //==============================================================================
-tdouble3* ToHostPosd3(unsigned pini,unsigned n,const double2 *posxyg,const double *poszg){
+tdouble3* ToHostPosd3(unsigned pini,unsigned n,const double2* posxyg
+  ,const double* poszg)
+{
   Check_CudaErroorFun("At the beginning.");
   try{
-    tdouble2 *posxy=ToHostDouble2(pini,n,posxyg);
-    double   *posz= ToHostDouble(pini,n,poszg);
-    tdouble3 *posd=new tdouble3[n];
+    tdouble2* posxy=ToHostDouble2(pini,n,posxyg);
+    double*   posz= ToHostDouble(pini,n,poszg);
+    tdouble3* posd=new tdouble3[n];
     for(unsigned p=0;p<n;p++)posd[p]=TDouble3(posxy[p].x,posxy[p].y,posz[p]);
     delete[] posxy;  posxy=NULL;
     delete[] posz;   posz =NULL;
@@ -667,14 +779,16 @@ tdouble3* ToHostPosd3(unsigned pini,unsigned n,const double2 *posxyg,const doubl
 }
 
 //==============================================================================
-/// Returns dynamic pointers with x,y,z data and w values are saved in ptr_w. (theses pointers must be deleted)
+/// Returns dynamic pointers with x,y,z data and w values are saved in ptr_w. (these pointers must be deleted)
 //==============================================================================
-tfloat3* ToHostFloatXYZ_W(unsigned pini,unsigned n,const float4 *ptrg,float **ptr_w){
+tfloat3* ToHostFloatXYZ_W(unsigned pini,unsigned n,const float4* ptrg
+  ,float** ptr_w)
+{
   Check_CudaErroorFun("At the beginning.");
   try{
-    const tfloat4 *v4=ToHostFloat4(pini,n,ptrg);
-    tfloat3 *vxyz=new tfloat3[n];
-    float   *vw  =new float[n];
+    const tfloat4* v4=ToHostFloat4(pini,n,ptrg);
+    tfloat3* vxyz=new tfloat3[n];
+    float*   vw  =new float[n];
     for(unsigned p=0;p<n;p++){
       const tfloat4 v=v4[p];
       vxyz[p]=TFloat3(v.x,v.y,v.z);
@@ -696,14 +810,14 @@ tfloat3* ToHostFloatXYZ_W(unsigned pini,unsigned n,const float4 *ptrg,float **pt
 /// Returns dynamic pointer with selected positions in idxlistg as tfloat3.
 /// (this pointer must be deleted)
 //==============================================================================
-tfloat3* ToHostPosf3(unsigned nplist,const unsigned *idxlistg
-  ,const double2 *posxyg,const double *poszg)
+tfloat3* ToHostPosf3(unsigned nplist,const unsigned* idxlistg
+  ,const double2* posxyg,const double* poszg)
 {
   Check_CudaErroorFun("At the beginning.");
   if(nplist){
     try{
-      tfloat3 *posf=new tfloat3[nplist];
-      unsigned *idxlist=ToHostUint(0,nplist,idxlistg);
+      tfloat3* posf=new tfloat3[nplist];
+      unsigned* idxlist=ToHostUint(0,nplist,idxlistg);
       unsigned idmin=UINT_MAX,idmax=0;
       for(unsigned c=0;c<nplist;c++){
         const unsigned p=idxlist[c];
@@ -713,7 +827,7 @@ tfloat3* ToHostPosf3(unsigned nplist,const unsigned *idxlistg
         }
       }
       const unsigned npdata=(idmin!=UINT_MAX? idmax-idmin+1: 0);
-      tfloat3 *posdata=NULL;
+      tfloat3* posdata=NULL;
       if(npdata)posdata=ToHostPosf3(idmin,npdata,posxyg,poszg);
       for(unsigned c=0;c<nplist;c++){
         const unsigned p=idxlist[c];
@@ -731,8 +845,5 @@ tfloat3* ToHostPosf3(unsigned nplist,const unsigned *idxlistg
 }
 
 
-
-
 }
-
 

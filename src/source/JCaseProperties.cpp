@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -86,7 +86,7 @@ int JCasePropValue::GetIndexSubName(std::string subname)const{
 }
 
 //==============================================================================
-/// Retunrs value inline.
+/// Returns value inline.
 //==============================================================================
 std::string JCasePropValue::GetValue()const{
   if(!Simple)Run_Exceptioon("Value has one or more several subvalues.");
@@ -94,7 +94,7 @@ std::string JCasePropValue::GetValue()const{
 }
 
 //==============================================================================
-/// Retunrs a subvalue starting from the name.
+/// Returns a subvalue starting from the name.
 //==============================================================================
 std::string JCasePropValue::GetSubValue(std::string subname)const{
   subname=fun::StrLower(subname);
@@ -175,7 +175,8 @@ void JCasePropProperty::CopyFrom(const JCasePropProperty* pro){
     if(v->GetSimple())AddValue(v->GetName(),v->GetValue());
     else{
       const unsigned nv=v->GetSubValuesCount();
-      for(unsigned cv=0;cv<nv;cv++)AddSubValue(v->GetName(),v->GetSubValueName(cv),v->GetSubValue(cv));
+      for(unsigned cv=0;cv<nv;cv++)
+        AddSubValue(v->GetName(),v->GetSubValueName(cv),v->GetSubValue(cv));
     }
   }
 }
@@ -194,9 +195,10 @@ int JCasePropProperty::GetIndexValue(std::string name)const{
 /// Adds value.
 //==============================================================================
 void JCasePropProperty::AddValue(std::string name,std::string v){
-  if(fun::StrLower(name)=="name")Run_Exceptioon("The name of value cannot be \'name\'.");
+  if(fun::StrLower(name)=="name")
+    Run_Exceptioon("The name of value cannot be \'name\'.");
   if(ExistsNameValue(name))Run_Exceptioon("Value already exists.");
-  JCasePropValue *va=new JCasePropValue(name);
+  JCasePropValue* va=new JCasePropValue(name);
   Values.push_back(va);
   va->SetValue(v);
 }
@@ -204,11 +206,13 @@ void JCasePropProperty::AddValue(std::string name,std::string v){
 //==============================================================================
 /// Adds value with name.
 //==============================================================================
-void JCasePropProperty::AddSubValue(std::string name,std::string subname,std::string v){
+void JCasePropProperty::AddSubValue(std::string name,std::string subname
+  ,std::string v)
+{
   int idx=GetIndexValue(name);
   //-Creates value.
   if(idx<0){
-    JCasePropValue *va=new JCasePropValue(name);
+    JCasePropValue* va=new JCasePropValue(name);
     Values.push_back(va);
     idx=int(Values.size())-1;
   }
@@ -328,11 +332,13 @@ void JCasePropLinks::CopyFrom(const JCasePropLinks* links){
 //==============================================================================
 /// Adds new link.
 //==============================================================================
-void JCasePropLinks::AddLink(JCasePropLink::TpLink type,std::string mks,std::string props){
+void JCasePropLinks::AddLink(JCasePropLink::TpLink type,std::string mks
+  ,std::string props)
+{
   mks=fun::StrWithoutChar(mks,' ');
   props=fun::StrWithoutChar(props,' ');
   if(!mks.empty()&&!props.empty()){
-    JCasePropLink *link=new JCasePropLink(type,mks,props);
+    JCasePropLink* link=new JCasePropLink(type,mks,props);
     Links.push_back(link);
   }
 }
@@ -340,7 +346,7 @@ void JCasePropLinks::AddLink(JCasePropLink::TpLink type,std::string mks,std::str
 //==============================================================================
 /// Reads the links section in XML format.
 //==============================================================================
-void JCasePropLinks::ReadXml(const JXml *sxml,TiXmlElement* eprops){
+void JCasePropLinks::ReadXml(const JXml* sxml,TiXmlElement* eprops){
   Reset();
   TiXmlElement* elinks=eprops->FirstChildElement("links");
   if(elinks){
@@ -366,7 +372,7 @@ void JCasePropLinks::ReadXml(const JXml *sxml,TiXmlElement* eprops){
 //==============================================================================
 /// Writes the links section in XML format.
 //==============================================================================
-void JCasePropLinks::WriteXml(JXml *sxml,TiXmlElement* eprops)const{
+void JCasePropLinks::WriteXml(JXml* sxml,TiXmlElement* eprops)const{
   if(Links.size()){
     TiXmlElement item("links");
     TiXmlElement* elinks=eprops->InsertEndChild(item)->ToElement();
@@ -396,7 +402,8 @@ std::string JCasePropLinks::GetPropsSort(std::string props){
     }
   }
   //-Reorders properties.
-  if(vprops.size())for(unsigned c=0;c<vprops.size()-1;c++)for(unsigned c2=c+1;c2<vprops.size();c2++)if(vprops[c]>vprops[c2]){
+  if(vprops.size())for(unsigned c=0;c<vprops.size()-1;c++)
+    for(unsigned c2=c+1;c2<vprops.size();c2++)if(vprops[c]>vprops[c2]){
     string aux=vprops[c];
     vprops[c]=vprops[c2];
     vprops[c2]=aux;
@@ -413,15 +420,15 @@ std::string JCasePropLinks::GetPropsSort(std::string props){
 //==============================================================================
 /// Returns the properties associated to each MK.
 //==============================================================================
-void JCasePropLinks::GetPropsList(std::vector<std::string> &vprops_mk
-  ,std::vector<std::string> &vprops_mkb
-  ,std::vector<std::string> &vprops_mkf)const
+void JCasePropLinks::GetPropsList(std::vector<std::string>& vprops_mk
+  ,std::vector<std::string>& vprops_mkb
+  ,std::vector<std::string>& vprops_mkf)const
 {
   const unsigned nlinks=unsigned(Links.size());
   for(unsigned c=0;c<nlinks;c++){
     const JCasePropLink* lk=Links[c];
     int tp=(lk->GetType()==JCasePropLink::LINK_MkBound? 1: (lk->GetType()==JCasePropLink::LINK_MkFluid? 2: 0));
-    vector<string> &vprops=(lk->GetType()==JCasePropLink::LINK_MkBound? vprops_mkb: (lk->GetType()==JCasePropLink::LINK_MkFluid? vprops_mkf: vprops_mk));
+    vector<string>& vprops=(lk->GetType()==JCasePropLink::LINK_MkBound? vprops_mkb: (lk->GetType()==JCasePropLink::LINK_MkFluid? vprops_mkf: vprops_mk));
     JRangeFilter rg(lk->GetMks());
     unsigned v=rg.GetFirstValue();
     while(v!=UINT_MAX){
@@ -439,10 +446,11 @@ void JCasePropLinks::GetPropsList(std::vector<std::string> &vprops_mk
 //==============================================================================
 /// Returns the properties associated to the given MK.
 //==============================================================================
-std::string JCasePropLinks::GetPropsFast(word mk,word mkboundfirst,word mkfluidfirst
-  ,std::vector<std::string> &vprops_mk
-  ,std::vector<std::string> &vprops_mkb
-  ,std::vector<std::string> &vprops_mkf)const
+std::string JCasePropLinks::GetPropsFast(word mk,word mkboundfirst
+  ,word mkfluidfirst
+  ,std::vector<std::string>& vprops_mk
+  ,std::vector<std::string>& vprops_mkb
+  ,std::vector<std::string>& vprops_mkf)const
 {
   //-Gets properties assigned to MK.
   string props;
@@ -461,7 +469,9 @@ std::string JCasePropLinks::GetPropsFast(word mk,word mkboundfirst,word mkfluidf
 //==============================================================================
 /// Returns the properties associated to the given MK.
 //==============================================================================
-std::string JCasePropLinks::GetProps(word mk,word mkboundfirst,word mkfluidfirst)const{
+std::string JCasePropLinks::GetProps(word mk,word mkboundfirst
+  ,word mkfluidfirst)const
+{
   //-Gets properties assigned to MK.
   string props;
   for(unsigned c=0;c<unsigned(Links.size());c++){
@@ -575,7 +585,9 @@ void JCaseProperties::CopyFrom(const JCaseProperties* props){
 //==============================================================================
 /// Loads data in XML format from a file.
 //==============================================================================
-void JCaseProperties::LoadFileXml(const std::string &file,const std::string &path){
+void JCaseProperties::LoadFileXml(const std::string& file
+  ,const std::string& path)
+{
   JXml jxml;
   jxml.LoadFile(file);
   LoadXml(&jxml,path);
@@ -584,7 +596,9 @@ void JCaseProperties::LoadFileXml(const std::string &file,const std::string &pat
 //==============================================================================
 /// Stores data in XML format in a file.
 //==============================================================================
-void JCaseProperties::SaveFileXml(const std::string &file,const std::string &path,bool newfile)const{
+void JCaseProperties::SaveFileXml(const std::string& file
+  ,const std::string& path,bool newfile)const
+{
   JXml jxml;
   if(!newfile)jxml.LoadFile(file);
   SaveXml(&jxml,path);
@@ -594,7 +608,7 @@ void JCaseProperties::SaveFileXml(const std::string &file,const std::string &pat
 //==============================================================================
 /// Loads initial conditions from the XML object.
 //==============================================================================
-void JCaseProperties::LoadXml(const JXml *sxml,const std::string &place){
+void JCaseProperties::LoadXml(const JXml* sxml,const std::string& place){
   Reset();
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(node)ReadXml(sxml,node->ToElement());
@@ -603,18 +617,18 @@ void JCaseProperties::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 /// Stores initial conditions in the XML object.
 //==============================================================================
-void JCaseProperties::SaveXml(JXml *sxml,const std::string &place)const{
+void JCaseProperties::SaveXml(JXml* sxml,const std::string& place)const{
   WriteXml(sxml,sxml->GetNode(place,true)->ToElement());
 }
 
 //==============================================================================
 /// Reads property in XML format.
 //==============================================================================
-void JCaseProperties::ReadXmlProperty(const JXml *sxml,TiXmlElement* eprop){
+void JCaseProperties::ReadXmlProperty(const JXml* sxml,TiXmlElement* eprop){
   //-Creates property if it does not exist.
-  JCasePropProperty *pro=AddProperty(sxml->GetAttributeStr(eprop,"name"));
+  JCasePropProperty* pro=AddProperty(sxml->GetAttributeStr(eprop,"name"));
   //-Loads values inline.
-  TiXmlAttribute *at=eprop->FirstAttribute();
+  TiXmlAttribute* at=eprop->FirstAttribute();
   while(at){
     string name=at->Name();
     string val=at->Value();
@@ -628,7 +642,7 @@ void JCaseProperties::ReadXmlProperty(const JXml *sxml,TiXmlElement* eprop){
   while(ele){
     string name=ele->Value();
     if(name[0]!='_'){
-      TiXmlAttribute *at=ele->FirstAttribute();
+      TiXmlAttribute* at=ele->FirstAttribute();
       while(at){
         string atname=at->Name();
         string atval=at->Value();
@@ -645,7 +659,9 @@ void JCaseProperties::ReadXmlProperty(const JXml *sxml,TiXmlElement* eprop){
 //==============================================================================
 /// Reads external file with properties in XML format.
 //==============================================================================
-void JCaseProperties::ReadXmlPropertyFile(const JXml *sxml,TiXmlElement* epropfile){
+void JCaseProperties::ReadXmlPropertyFile(const JXml* sxml
+  ,TiXmlElement* epropfile)
+{
   std::string file=sxml->GetAttributeStr(epropfile,"file");
   std::string path=sxml->GetAttributeStr(epropfile,"path");
   //-Loads XML file.
@@ -655,7 +671,7 @@ void JCaseProperties::ReadXmlPropertyFile(const JXml *sxml,TiXmlElement* epropfi
   TiXmlNode* node=jxml.GetNode(path,false);
   if(!node)Run_ExceptioonFile(std::string("Cannot find the element \'")+path+"\'.",file);
   //-Loads properties of node.
-  TiXmlElement *eprops=node->ToElement();
+  TiXmlElement* eprops=node->ToElement();
   TiXmlElement* ele=eprops->FirstChildElement(); 
   while(ele){
     std::string cmd=ele->Value();
@@ -667,7 +683,9 @@ void JCaseProperties::ReadXmlPropertyFile(const JXml *sxml,TiXmlElement* epropfi
 //==============================================================================
 /// Writes property in XML format.
 //==============================================================================
-void JCaseProperties::WriteXmlProperty(JXml *sxml,TiXmlElement* eprops,const JCasePropProperty* prop)const{
+void JCaseProperties::WriteXmlProperty(JXml* sxml,TiXmlElement* eprops
+  ,const JCasePropProperty* prop)const
+{
   TiXmlElement* eprop=JXml::AddElementAttrib(eprops,"property","name",prop->GetName());
   //-Writes values inline.
   for(unsigned c=0;c<prop->GetValuesCount();c++){
@@ -687,7 +705,9 @@ void JCaseProperties::WriteXmlProperty(JXml *sxml,TiXmlElement* eprops,const JCa
 //==============================================================================
 /// Writes external file with properties in XML format.
 //==============================================================================
-void JCaseProperties::WriteXmlPropertyFile(JXml *sxml,TiXmlElement* eprops,StPropertyFile propfile)const{
+void JCaseProperties::WriteXmlPropertyFile(JXml* sxml,TiXmlElement* eprops
+  ,StPropertyFile propfile)const
+{
   TiXmlElement* ele=JXml::AddElement(eprops,"propertyfile");
   JXml::AddAttribute(ele,"file",propfile.file);
   JXml::AddAttribute(ele,"path",propfile.path);
@@ -696,7 +716,7 @@ void JCaseProperties::WriteXmlPropertyFile(JXml *sxml,TiXmlElement* eprops,StPro
 //==============================================================================
 /// Reads the list of initial conditions in XML format.
 //==============================================================================
-void JCaseProperties::ReadXml(const JXml *sxml,TiXmlElement* eprops){
+void JCaseProperties::ReadXml(const JXml* sxml,TiXmlElement* eprops){
   //-Loads links.
   Links->ReadXml(sxml,eprops);
   //-Loads properties.
@@ -717,7 +737,7 @@ void JCaseProperties::ReadXml(const JXml *sxml,TiXmlElement* eprops){
 //==============================================================================
 /// Writes the list in XML format.
 //==============================================================================
-void JCaseProperties::WriteXml(JXml *sxml,TiXmlElement* eprops)const{
+void JCaseProperties::WriteXml(JXml* sxml,TiXmlElement* eprops)const{
   //-Stores links.
   Links->WriteXml(sxml,eprops);
   //-Stores property files.
@@ -741,7 +761,9 @@ void JCaseProperties::CheckLinks(){
 /// Fliters information only for MK values of mkselect.
 //==============================================================================
 //#include "JTimer.h"
-void JCaseProperties::FilterMk(word mkboundfirst,word mkfluidfirst,std::string mkselect){
+void JCaseProperties::FilterMk(word mkboundfirst,word mkfluidfirst
+  ,std::string mkselect)
+{
   vector<string> vprops;
   vector<string> vmks;
   //-Gets properties of each MK of mkselect.
@@ -767,7 +789,7 @@ void JCaseProperties::FilterMk(word mkboundfirst,word mkfluidfirst,std::string m
       }
       v=rg.GetNextValue(v);
     }
-    //timer.Stop(); printf("\nTime of fast method: %.3f sec.\n\n",timer.GetElapsedTimeF()/1000.f); fflush(stdout);
+    //timer.Stop(); printf("\nTime of fast method: %.3f sec.\n\n",timer.GetSecs()); fflush(stdout);
   }
 
   //-Reorders MK's.
@@ -815,7 +837,9 @@ std::string JCaseProperties::GetPropertyMk(word mk)const{
 //==============================================================================
 /// Returns pointer to value with the given index.
 //==============================================================================
-const JCasePropValue* JCaseProperties::GetValuePtr(std::string props,unsigned idx)const{
+const JCasePropValue* JCaseProperties::GetValuePtr(std::string props
+  ,unsigned idx)const
+{
   const JCasePropValue* value=NULL;
   unsigned n=0;
   while(!props.empty() && !value){
@@ -835,7 +859,9 @@ const JCasePropValue* JCaseProperties::GetValuePtr(std::string props,unsigned id
 //==============================================================================
 /// Returns value with the given name.
 //==============================================================================
-const JCasePropValue* JCaseProperties::GetValuePtr(std::string props,std::string name)const{
+const JCasePropValue* JCaseProperties::GetValuePtr(std::string props
+  ,std::string name)const
+{
   const JCasePropValue* value=NULL;
   while(!props.empty() && !value){
     std::string pro=fun::StrSplit("+",props);
@@ -853,7 +879,9 @@ const JCasePropValue* JCaseProperties::GetValuePtr(std::string props,std::string
 //==============================================================================
 /// Returns value with the given index.
 //==============================================================================
-const JCasePropValue* JCaseProperties::GetValue(std::string props,unsigned idx)const{
+const JCasePropValue* JCaseProperties::GetValue(std::string props
+  ,unsigned idx)const
+{
   const JCasePropValue* value=GetValuePtr(props,idx);
   if(!value)Run_Exceptioon("Index of value is invalid.");
   return(value);
@@ -862,7 +890,9 @@ const JCasePropValue* JCaseProperties::GetValue(std::string props,unsigned idx)c
 //==============================================================================
 /// Returns value with the name indicated.
 //==============================================================================
-const JCasePropValue* JCaseProperties::GetValue(std::string props,std::string name)const{
+const JCasePropValue* JCaseProperties::GetValue(std::string props
+  ,std::string name)const
+{
   const JCasePropValue* value=GetValuePtr(props,name);
   if(!value)Run_Exceptioon(string("Value \'")+name+"\' not found.");
   return(value);
@@ -915,7 +945,9 @@ std::string JCaseProperties::GetValueStr(std::string props,unsigned idx)const{
 //==============================================================================
 /// Returns value as string of given value.
 //==============================================================================
-std::string JCaseProperties::GetValueStr(std::string props,std::string name)const{
+std::string JCaseProperties::GetValueStr(std::string props
+  ,std::string name)const
+{
   const JCasePropValue* value=GetValue(props,name);
   string val;
   if(value->GetSimple())val=value->GetValue();
@@ -932,28 +964,36 @@ std::string JCaseProperties::GetValueStr(std::string props,std::string name)cons
 //==============================================================================
 /// Returns number of subvalues.
 //==============================================================================
-unsigned JCaseProperties::GetSubValuesCount(std::string props,unsigned idx)const{
+unsigned JCaseProperties::GetSubValuesCount(std::string props
+  ,unsigned idx)const
+{
   return(GetValue(props,idx)->GetSubValuesCount());
 }
 
 //==============================================================================
 /// Returns name of given subvalue.
 //==============================================================================
-std::string JCaseProperties::GetSubValueName(std::string props,unsigned idx,unsigned subidx)const{
+std::string JCaseProperties::GetSubValueName(std::string props,unsigned idx
+  ,unsigned subidx)const
+{
   return(GetValue(props,idx)->GetSubValueName(subidx));
 }
 
 //==============================================================================
 /// Returns value as string of given subvalue.
 //==============================================================================
-std::string JCaseProperties::GetSubValueStr(std::string props,unsigned idx,unsigned subidx)const{
+std::string JCaseProperties::GetSubValueStr(std::string props,unsigned idx
+  ,unsigned subidx)const
+{
   return(GetValue(props,idx)->GetSubValue(subidx));
 }
 
 //==============================================================================
 /// Rreturns if the given subvalue exists.
 //==============================================================================
-bool JCaseProperties::ExistsSubValue(std::string props,std::string name,std::string subname)const{
+bool JCaseProperties::ExistsSubValue(std::string props,std::string name
+  ,std::string subname)const
+{
   const JCasePropValue* value=GetValuePtr(props,name);
   return(value && value->ExistsSubName(subname));
 }
@@ -961,7 +1001,9 @@ bool JCaseProperties::ExistsSubValue(std::string props,std::string name,std::str
 //==============================================================================
 /// Returns value as string of given subvalue..
 //==============================================================================
-std::string JCaseProperties::GetSubValueStr(std::string props,std::string name,std::string subname)const{
+std::string JCaseProperties::GetSubValueStr(std::string props,std::string name
+  ,std::string subname)const
+{
   return(GetValue(props,name)->GetSubValue(subname));
 }
 
@@ -995,7 +1037,7 @@ JCasePropProperty* JCaseProperties::AddProperty(std::string name){
   int idx=GetIndexProperty(name);
   //-Creates a new property with that name.
   if(idx<0){
-    JCasePropProperty *pro=new JCasePropProperty(name);
+    JCasePropProperty* pro=new JCasePropProperty(name);
     Props.push_back(pro);
     idx=int(Props.size())-1;
   }

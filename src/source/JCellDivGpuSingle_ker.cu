@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -38,8 +38,9 @@ namespace cudiv{
 /// Las particulas excluidas de tipo bound (fixed and moving) and floating se mueven a BoxBoundOut.
 /// Asigna valores consecutivos a SortPart[].
 //------------------------------------------------------------------------------
-__global__ void KerPreSortFull(unsigned np,unsigned cellcode,const unsigned *dcell
-  ,const typecode *code,uint3 cellzero,uint3 ncells,unsigned *cellpart,unsigned *sortpart)
+__global__ void KerPreSortFull(unsigned np,unsigned cellcode
+  ,const unsigned* dcell,const typecode* code,uint3 cellzero,uint3 ncells
+  ,unsigned* cellpart,unsigned* sortpart)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<np){
@@ -83,8 +84,9 @@ __global__ void KerPreSortFull(unsigned np,unsigned cellcode,const unsigned *dce
 /// Las particulas excluidas de tipo bound (fixed and moving) and floating se mueven a BoxBoundOut.
 /// Asigna valores consecutivos a SortPart[].
 //==============================================================================
-void PreSortFull(unsigned np,unsigned cellcode,const unsigned *dcell,const typecode *code
-  ,tuint3 cellmin,tuint3 ncells,unsigned *cellpart,unsigned *sortpart)
+void PreSortFull(unsigned np,unsigned cellcode,const unsigned* dcell
+  ,const typecode* code,tuint3 cellmin,tuint3 ncells,unsigned* cellpart
+  ,unsigned* sortpart)
 {
   if(np){
     const uint3 cellzero=make_uint3(cellmin.x,cellmin.y,cellmin.z);
@@ -107,8 +109,8 @@ void PreSortFull(unsigned np,unsigned cellcode,const unsigned *dcell,const typec
 /// Asigna valores consecutivos a SortPart[].
 //==============================================================================
 __global__ void KerPreSortFluid(unsigned n,unsigned pini,unsigned cellcode
-  ,const unsigned *dcell,const typecode *code,uint3 cellzero,uint3 ncells
-  ,unsigned *cellpart,unsigned *sortpart)
+  ,const unsigned* dcell,const typecode* code,uint3 cellzero,uint3 ncells
+  ,unsigned* cellpart,unsigned* sortpart)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
@@ -146,8 +148,9 @@ __global__ void KerPreSortFluid(unsigned n,unsigned pini,unsigned cellcode
 /// Las particulas excluidas de tipo floating se mueven a BoxBoundOut.
 /// Asigna valores consecutivos a SortPart[].
 //==============================================================================
-void PreSortFluid(unsigned npf,unsigned pini,unsigned cellcode,const unsigned *dcell,const typecode *code
-  ,tuint3 cellmin,tuint3 ncells,unsigned *cellpart,unsigned *sortpart)
+void PreSortFluid(unsigned npf,unsigned pini,unsigned cellcode
+  ,const unsigned* dcell,const typecode* code,tuint3 cellmin,tuint3 ncells
+  ,unsigned* cellpart,unsigned* sortpart)
 {
   if(npf){
     const uint3 cellzero=make_uint3(cellmin.x,cellmin.y,cellmin.z);

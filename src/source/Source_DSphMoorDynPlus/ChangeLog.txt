@@ -1,0 +1,194 @@
+                          MoorDynPlus C++ Change Log
+==========================================================================  
+  Changes since v2.1.0
+--------------------------------------------------------------------------------
+               MoorDynPlus v2.1.?  - July 01, 2024 - Ivan Martinez Estevez
+--------------------------------------------------------------------------------
+* ==== (v2.1.1 / 16-12-2024) ====
+* - Fixed bug in csv node data saving
+
+* ==== (v2.1.0 / 08-11-2024) ====
+* - Rename files
+
+==========================================================================  
+  Changes since v2.0.0
+--------------------------------------------------------------------------------
+               MoorDynPlus v2.0.?  - October 24, 2021 - Ivan Martinez Estevez
+--------------------------------------------------------------------------------
+* ==== (v2.0.36 / 26-01-2022) ====
+* - Show the maximum stretched length of the line when the it is longer than its maximum possible value with seabed interaction
+* ==== (v2.0.35 / 24-11-2021) ====
+* - dtM can be user-defined or automatically calculated by using: <dtM value="X" auto=[true|false] (default:auto=true)/>
+* ==== (v2.0.34 / 24-11-2021) ====
+* - Show the initial tensions on the connections of each mooring line
+* - Use of a JLog2 to show information about bodies and connections
+* ==== (v2.0.33 / 24-11-2021) ====
+* - Fix bug in the tangential relative flow calculation
+* ==== (v2.0.32 / 23-11-2021) ====
+* - Young's Modulus can be defined in the xml input file (<e>) and EA will be calculated by E*Area
+* ==== (v2.0.31 / 23-11-2021) ====
+* - Show a summary of the line configuration
+* ==== (v2.0.30 / 23-11-2021) ====
+* - Adjust the dtm used for the time integration and send a warning when it is modified
+* ==== (v2.0.29 / 24-10-2021) ====
+* - Allow to select different depths for each mooring line
+* ==== (v2.0.28 / 22-10-2021) ====
+* - Fix bug in volume calculation 
+* - Rename number by id for each object class
+* - Set the get functions as const
+* - Optimization when saving data in csv files
+* ==== (v2.0.27 / 30-07-2021) ====
+* - Allow the use of user-defined variables from the XML 
+* ==== (v2.0.26 / 30-07-2021) ====
+* - Create Vtk of the mooring lines when MoorDynPlus is working stand alone 
+* ==== (v2.025 / 28-07-2021) ====
+* - Rename the class LineDefault by LineBase 
+* ==== (v2.024 / 27-07-2021) ====
+* - Improvements in comments and structure of the code 
+* ==== (v2.023 / 07-06-2021) ====
+* - Save data in CSV using <output> and <savedata> to keep the compatibility with old versions
+* ==== (v2.022 / 03-06-2021) ====
+* - Add <cstring> and <sstream> includes to fix bug for linux compilation in FunMoorDyn
+* - Update makefiles and vs project with the new files and dependencies from DualSPHysics
+* ==== (v2.021 / 24-05-2021) ====
+* - Replace tabs by double space
+* - Improvements in the code organization
+* - Improvements in the memory access to get data to save it in the csv files
+* - Manages the range of saving data saving data from DualSPHysics by default
+* ==== (v2.0.20 / 07-05-2021) ====
+* - New method to save data in CSV files
+* ==== (v2.0.19 / 07-05-2021) ====
+* - Enable debug mode by xml file
+* ==== (v2.0.18 / 07-05-2021) ====
+* - Improvements in the code style
+* ==== (v2.0.17 / 06-05-2021) ====
+* - New class FunMoorDyn.cpp/h to manage the common functions of MoorDynPlus
+* - New class IApi to show the progress in the IC calculation and the license
+* - Rename Types_moordyn.h by TypesMoorDyn.h
+* - Define the functions of Misc.cpp/h inside a namespace (misc::)
+* ==== (v2.0.16) ====
+* - Change the exception when Unstretched length < distance between connections by a warning.
+* ==== (v2.0.15) ====
+* - Format output for real numbers 
+* ==== (v2.0.14) ====
+* - Added constraints to avoid not expected xml tags    
+* ==== (v2.0.13) ====
+* - Get gravity from DSPH
+* ==== (v2.0.12) ====
+* - Write output properties for each node 
+* ==== (v2.0.11) ====
+* - Added Break tension which disables the line when it reaches this tension
+* ==== (v2.0.10) ====
+* - Allowed set different water free surface
+* ==== (v2.0.09) ====
+* - Added Progress bar
+* ==== (v2.0.08) ====
+* - Class QSlines. It allows Log and warning system.
+* ==== (v2.0.07) ====
+* - Log system to print messages by console and store it in Run.out.
+* - Warning System to show it by console.
+* ==== (v2.0.06) ====
+* - Moored floatings to different water depth.
+* ==== (v2.0.05) ====
+* - Output files will not be created when user doesn't choose save data.
+* ==== (v2.0.04) ====
+* - Calculation Mass and Volumn of the connect connections.
+* - Updated Moorings.cpp and JMooredFloatings to allow more than one moored floating.
+* - Two Fairleads for each line.
+* ==== (v2.0.03) ====
+* - <connect> connections.
+* ==== (v2.0.02) ====
+* - New Xml.
+* ==== (v2.0.01) ====
+* - C++ reimplementation. -> MoorDynPlus
+    
+-----------------------------------------------------------------------------
+
+
+                           MoorDyn C Change Log
+==========================================================================
+
+Listing changes since version v1.0.1C
+--------------------------------------------------------------------------
+
+--------------------------------------------------------------------------
+               MoorDyn v1.00.02C - Dec. 8, 2015 - Matt Hall
+--------------------------------------------------------------------------
+
+ - fixes in connection force output channels:
+   - removed double counting of connection self-weight in net force output
+   - added functionality for outputting individual X,Y,Z force components 
+     (previously gave 0)
+ 
+ - fixed LinesClose() so that MoorDyn can be called repeatedly without 
+   errors (when connect nodes are used)
+
+ - made bottom contact general so that fairlead and anchor ends experiencing 
+   bottom contact will not cause problems
+
+ - added NaN check for node positions during simulation and also during 
+   initialization
+
+ - integrated contributions from Yi-Hsiang Yu (NREL) and Daniel Combest 
+   (ENGYS) for compiling on Mac OSX and Linux, respectively.
+   - compiles for OSX with "OSX" defined, compiles for Linux with "LINUX" defined
+   - openGL functions are now omitted unless "USEGL" is defined
+ 
+
+--------------------------------------------------------------------------
+               MoorDyn v1.00.03C - Jan. 11, 2016 - Matt Hall
+--------------------------------------------------------------------------
+
+ - made various improvements to parsing of input file
+   - added recognition of additional keywords as used in the MoorDyn F input files
+   - added more informative error messages
+   - removed case sensitivity in "vessel/fix/connect" keywords
+   
+ - FIXED ERROR IN NET FORCES!
+   - Roll and Yaw moments returned by MoorDyn (the 4th and 6th elements of Flines)
+     were completely wrong due to a misuse of the "-=" operator.
+
+
+--------------------------------------------------------------------------
+               MoorDyn v1.00.04C - Feb. 15, 2016 - Matt Hall
+--------------------------------------------------------------------------
+
+ - added units header line to line-specific output files
+ - added option "WriteUnits" that, when set to zero, will disable units lines in 
+   output files
+
+
+
+--------------------------------------------------------------------------
+               MoorDyn v1.01.00C - April 20, 2016 - Matt Hall
+--------------------------------------------------------------------------
+
+ - Restructured time stepping interface function to do 3-DOF coupling at individual 
+   fairleads rather than 6-DOF coupling at platform reference point.
+     - LinesCalc functionality is unchanged - it still provides coupling at platform.
+     - New function FairleadsCalc provides coupling at individual fairleads as 
+       alternative.  This function replaces the 6-DOF vectors of x, xd, and f (returned) 
+       with two-dimensional arrays of x, xd, and f (returned) of size nFairs by 3.
+ - Added optional parameter "dtOut" to specify the desired frequency of output file writing
+   in seconds.  A zero value (default) gives original behaviour of writing at every call.
+ - Callable output function now has a second parameter for coupling step size, dtC.  
+    (leave as 0 for original behaviour)
+ - Added function to programmatically access any node's position rather than relying on
+   output files:  GetNodePos(int LineNum, int NodeNum, double pos[3])
+ - Incorporated adjustment to avoid isnan issues on Linux compiles (from Yi-Hsiang Yu, NREL)
+
+--------------------------------------------------------------------------
+               MoorDyn v1.01.01C - November 5, 2017 - Matt Hall
+--------------------------------------------------------------------------
+
+ - Fixed calculation for outputting tensions at arbitrary nodes along line length in main 
+   output file (previously gave zero).  No effect on individual line output files.
+ - Added a basic friction model for seabed contact based on a saturated damping approach 
+   (described in EWTEC 2017 paper).
+ - Corrected fairlead force to include weight of adjacent half-segment (code typo noticed
+   by Kellen Devries).
+ - Added second fairlead-centric coupling function, FairleadsCalc2, which works with 1D 
+   rather than 2D arrays.
+ - Corrected anchor tension output (e.g. "AnchTen1") - previously outputted fairlead value.
+ - Removed some unused wave kinematics code in preparation for new implementation.
+

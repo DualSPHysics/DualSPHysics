@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -60,7 +60,9 @@ void JMLPistonsGpu::FreeMemoryGpu(){
 //==============================================================================
 /// Allocates GPU memory for PistonIdg and MovVelg.
 //==============================================================================
-void JMLPistonsGpu::PreparePiston1d(unsigned sizepistonid,const byte *pistonid,unsigned sizemovvel){
+void JMLPistonsGpu::PreparePiston1d(unsigned sizepistonid,const byte* pistonid
+  ,unsigned sizemovvel)
+{
   #ifdef _WITHGPU
     cudaMalloc((void**)&PistonIdg,sizeof(byte)*sizepistonid);
     cudaMemcpy(PistonIdg,pistonid,sizeof(byte)*sizepistonid,cudaMemcpyHostToDevice);
@@ -73,7 +75,7 @@ void JMLPistonsGpu::PreparePiston1d(unsigned sizepistonid,const byte *pistonid,u
 //==============================================================================
 /// Copies MovVel data on GPU memory.
 //==============================================================================
-void JMLPistonsGpu::CopyMovVel(unsigned sizemovvel,const double *movvel){
+void JMLPistonsGpu::CopyMovVel(unsigned sizemovvel,const double* movvel){
   #ifdef _WITHGPU
     cudaMemcpy(MovVelg,movvel,sizeof(double)*sizemovvel,cudaMemcpyHostToDevice);
   #endif 
@@ -123,7 +125,7 @@ void JMLPiston2DGpu::AllocMemoryGpu(unsigned size){
 //==============================================================================
 /// Copies MovVelyz data on GPU memory.
 //==============================================================================
-void JMLPiston2DGpu::CopyMovVelyz(const double *movvelyz){
+void JMLPiston2DGpu::CopyMovVelyz(const double* movvelyz){
   #ifdef _WITHGPU
     cudaMemcpy(MovVelyzg,movvelyz,sizeof(double)*Size,cudaMemcpyHostToDevice);
   #endif 

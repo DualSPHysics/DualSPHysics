@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- *** DualSPHysics v5.3.303 (29-11-2023) *** -->
+<!-- *** class: JSphInOut using MESH-IN (https://doi.org/10.1016/j.oceaneng.2022.113400) *** -->
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Velocity definitions *** -->
+<!-- Imposed variable velocity using values in a external mesh-data file (CSV or binary format)-->
+	<imposevelocity mode="3" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+		<meshdata file="Case_Vel.mbi4" comment="Velocity data from mesh-data file (CSV or binary)" units_comment="m/s">
+			<magnitude v="false" comment="Selects velocity magnitude (using inlet direction) when available in the input data (default=true)" />
+			<reverse v="false" comment="Reverse velocity values (v=-v) (default=false)" />
+			<initialtime v="0" comment="Defines the initial time of mesh data (default=0)" />
+			<timeloop tbegin="10" tend="12" comment="Defines the loop by start and end time (default=0,0)" />
+			<setpos x="0" y="0" z="0" comment="Applies a position offset to the mesh data (default=0,0,0)" />
+			<setvelmul x="1" y="1" z="1" comment="Multiply fixed value to velocity data (default=1,1,1)" units_comment="m/s" />
+			<setveladd x="0" y="0" z="0" comment="Add fixed value to velocity data (default=0,0,0)" units_comment="m/s" />
+		</meshdata>
+		<meshdata file="Case_VelDir.csv" comment="Velocity data from mesh-data file (CSV or binary)" units_comment="m/s">
+			<magnitude v="true" comment="Velocity data using magnitude or 3 components (default=true)" />
+		</meshdata>
+	</imposevelocity>
+<!-- **DEPRECATED** Imposed variable velocity using values in a external mesh-data file (CSV or binary format)-->
+	<imposevelocity mode="3" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+		<meshdata file="Case_VelDir.csv" magnitude="true" reverse="false" setx="0" sety="0" setz="0" initialtime="0" comment="Velocity data (magnitude or 3 components) from mesh-data file (CSV or binary)." units_comment="m/s" />
+		<meshdata file="Case_Vel.mbi4" magnitude="false" reverse="false" setx="0" sety="0" setz="0" initialtime="0" comment="Velocity data (magnitude or 3 components) mesh-data file (CSV or binary)." units_comment="m/s" />
+		<meshdata file="Case_Vel.mbi4" magnitude="false" setmulx="0" setmuly="0" setmulz="0" comment="Multiply fixed value to velocity data." units_comment="m/s" />
+		<meshdata file="Case_Vel.mbi4" magnitude="false" setaddx="0" setaddy="0" setaddz="0" comment="Add fixed value to velocity data." units_comment="m/s" />
+	</imposevelocity>
+<!------------------------------------------------------------------------------->
+<!------------------------------------------------------------------------------->
+<!-- *** Zsurf definitions *** -->
+<!-- Imposed variable zsurf using values in a external mesh-data file (CSV or binary format)-->
+	<imposezsurf mode="1" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
+		<savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
+		<remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
+		<meshdata file="Case_Zsurf.csv" comment="Zsurf data from mesh-data file (CSV or binary)." units_comment="m" />
+		<meshdata file="Case_Zsurf.mbi4" comment="Zsurf data from mesh-data file (CSV or binary)." units_comment="m"> 
+			<initialtime v="0" comment="Defines the initial time of mesh data (default=0)" />
+			<timeloop tbegin="10" tend="12" comment="Defines the loop by start and end time (default=0,0)" />
+			<setpos x="0" y="0" z="0" comment="Applies a position offset to the mesh data (default=0,0,0)" />
+		</meshdata>
+	</imposezsurf>
+<!-- **DEPRECATED** Imposed variable zsurf using values in a external mesh-data file (CSV or binary format)-->
+	<imposezsurf mode="1" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
+		<savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
+		<remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
+		<meshdata file="Case_Zsurf.csv" setx="0" sety="0" setz="0" initialtime="0" comment="Zsurf data from mesh-data file (CSV or binary)." units_comment="m" />
+		<meshdata file="Case_Zsurf.mbi4" setx="0" sety="0" setz="0" initialtime="0" comment="Zsurf data from mesh-data file (CSV or binary)." units_comment="m" />
+	</imposezsurf>
+
+

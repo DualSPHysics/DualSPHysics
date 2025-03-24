@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -48,7 +48,7 @@ unsigned GetAuxSize_ReduSumDouble(unsigned ndata);
 
 double ReduSumDouble(unsigned ndata,unsigned inidata,const double* data,double* resu);
 void ReduSumDoubleAsyn(unsigned ndata,unsigned inidata,const double* data,double* resu,cudaStream_t stm);
-void ReduSumDoubleAsyn(unsigned ndata,unsigned inidata,const double* data,double* resu,double *pim1_sum,cudaStream_t stm);
+void ReduSumDoubleAsyn(unsigned ndata,unsigned inidata,const double* data,double* resu,double* pim1_sum,cudaStream_t stm);
 double DgReduSumDouble(unsigned ndata,unsigned inidata,const double* data);
 
 //-Kernels for ReduSumFloat.
@@ -56,7 +56,7 @@ unsigned GetAuxSize_ReduSumFloat(unsigned ndata);
 
 float ReduSumFloat(unsigned ndata,unsigned inidata,const float* data,float* resu);
 void ReduSumFloatAsyn(unsigned ndata,unsigned inidata,const float* data,float* resu,cudaStream_t stm);
-void ReduSumFloatAsyn(unsigned ndata,unsigned inidata,const float* data,float* resu,float *pim1_sum,cudaStream_t stm);
+void ReduSumFloatAsyn(unsigned ndata,unsigned inidata,const float* data,float* resu,float* pim1_sum,cudaStream_t stm);
 float DgReduSumFloat(unsigned ndata,unsigned inidata,const float* data);
 
 //-Kernels for ReduSumUint.
@@ -64,7 +64,7 @@ unsigned GetAuxSize_ReduSumUint(unsigned ndata);
 
 unsigned ReduSumUint(unsigned ndata,unsigned inidata,const unsigned* data,unsigned* resu);
 void ReduSumUintAsyn(unsigned ndata,unsigned inidata,const unsigned* data,unsigned* resu,cudaStream_t stm);
-void ReduSumUintAsyn(unsigned ndata,unsigned inidata,const unsigned* data,unsigned* resu,unsigned *pim1_sum,cudaStream_t stm);
+void ReduSumUintAsyn(unsigned ndata,unsigned inidata,const unsigned* data,unsigned* resu,unsigned* pim1_sum,cudaStream_t stm);
 unsigned DgReduSumUint(unsigned ndata,unsigned inidata,const unsigned* data);
 
 //-Kernels for ReduSumFloat3.
@@ -72,7 +72,7 @@ unsigned GetAuxSize_ReduSumFloat3(unsigned ndata);
 
 float3 ReduSumFloat3(unsigned ndata,unsigned inidata,const float3* data,float3* resu);
 void ReduSumFloat3Asyn(unsigned ndata,unsigned inidata,const float3* data,float3* resu,cudaStream_t stm);
-void ReduSumFloat3Asyn(unsigned ndata,unsigned inidata,const float3* data,float3* resu,float3 *pim1_sum,cudaStream_t stm);
+void ReduSumFloat3Asyn(unsigned ndata,unsigned inidata,const float3* data,float3* resu,float3* pim1_sum,cudaStream_t stm);
 float3 DgReduSumFloat3(unsigned ndata,unsigned inidata,const float3* data);
 
 

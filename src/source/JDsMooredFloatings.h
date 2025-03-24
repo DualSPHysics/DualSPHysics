@@ -1,6 +1,6 @@
 //HEAD_DSTOOLS
 /* 
- <DualSPHysics codes>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <DualSPHysics codes>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between:
@@ -26,9 +26,9 @@
 //:#############################################################################
 //:# Cambios:
 //:# =========
-//:# - Gestion de moorings usando la libreria MoorDyn. (06-02-2017)
+//:# - Gestion de moorings usando la libreria MoorDynPlus. (06-02-2017)
 //:# - Inclusion en codigo DualSPHysics v4.2.073. (13-08-2018)
-//:# - Actualiza coupling con MoorDyn. (23-12-2019)
+//:# - Actualiza coupling con MoorDynPlus. (23-12-2019)
 //:# - Saves VTK files in MooringsVtk directory. (24-12-2019)
 //:# - Muestra warning en el caso de que la gravedad no sea definida solo en Z
 //:#   y error en caso de ser cero. (12-03-2020)
@@ -70,13 +70,13 @@ public:
     unsigned fairnum;  ///<Number of fairlead.
     tdouble3 linkpos;  ///<Link point in the floating (initial position).
     word ptid;         ///<Ptid in JDsFtForcePoints object.
-    StrLinkData(unsigned xftid,unsigned xfairnum,const tdouble3 &xlinkpos,word xptid){ 
+    StrLinkData(unsigned xftid,unsigned xfairnum,const tdouble3& xlinkpos,word xptid){ 
       ftid=xftid; fairnum=xfairnum; linkpos=xlinkpos; ptid=xptid;
     }
   }StLinkData;
 
 private:
-  JLog2 *Log;
+  JLog2* Log;
   unsigned FtIdx;  ///<Number of floating with moorings.
   unsigned FtId;   ///<Number of floating in the general list of floatings.
 
@@ -90,7 +90,7 @@ public:
   void Reset();
 
   void ConfigIds(unsigned ftidx,unsigned ftid);
-  void AddFairlead(unsigned fairnum,const tdouble3 &linkpos,word ptid);
+  void AddFairlead(unsigned fairnum,const tdouble3& linkpos,word ptid);
   
   void VisuConfig()const;
 
@@ -109,14 +109,14 @@ public:
 class JDsMooredFloatings : protected JObject
 {
 private:
-  JLog2 *Log;
+  JLog2* Log;
   const std::string DirCase;
   const std::string CaseName;
   const tfloat3 Gravity;
   const double TimeMax;
   const double DtOut;
   std::string FileLines;
-  std::string MoordynDir;   ///<Work directory for MoorDyn.
+  std::string MdpDir;   ///<Work directory for MoorDynPlus.
 
   double StartTime;    ///<Start time of the application of mooring forces. (def=0).
   double StartRamp;    ///<Ramp time after start time. (def=0).
@@ -129,7 +129,7 @@ private:
 
   std::vector<JDsMooredFloating*> Floatings; ///<List of floatings with moorings.
 
-  bool MoorDynReady;   ///<Indicate if MoorDyn was initializated.
+  bool MoorDynPlusReady;    ///<Indicate if MoorDynPlus was initializated.
 
   bool FairArrays;          ///<Indicate if the fairlead arrays was initializated.
   unsigned FairNftm;        ///<Number of moored floatings.
@@ -143,8 +143,8 @@ private:
   //double LastTimeOk;
 
   unsigned GetFloatingByMkbound(word mkbound)const;
-  void ReadXml(const JXml *sxml,TiXmlElement* ele);
-  void ConfigFloatings(unsigned ftcount,const StFloatingData *ftdata);
+  void ReadXml(const JXml* sxml,TiXmlElement* ele);
+  void ConfigFloatings(unsigned ftcount,const StFloatingData* ftdata);
   void AllocFairMemory();
   void FreeFairMemory();
 
@@ -152,12 +152,12 @@ public:
   JDsMooredFloatings(std::string dircase,std::string casename,tfloat3 gravity,double timemax,double dtout);
   ~JDsMooredFloatings();
   void Reset();
-  void LoadXml(const JXml *sxml,const std::string &place);
-  void Config(unsigned ftcount,const StFloatingData *ftdata,JDsFtForcePoints *forcepoints);
+  void LoadXml(const JXml* sxml,const std::string& place);
+  void Config(unsigned ftcount,const StFloatingData* ftdata,JDsFtForcePoints* forcepoints);
 
   void VisuConfig(std::string txhead,std::string txfoot)const;
 
-  void ComputeForces(unsigned nstep,double timestep,double dt,JDsFtForcePoints *forcepoints);
+  void ComputeForces(unsigned nstep,double timestep,double dt,JDsFtForcePoints* forcepoints);
 
   void SaveVtkMoorings(unsigned numfile,bool svlines)const;
   void SaveData(unsigned numfile)const;

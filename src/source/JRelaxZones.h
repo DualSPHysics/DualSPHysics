@@ -1,6 +1,6 @@
 //HEAD_DSTOOLS
 /* 
- <DualSPHysics codes>  Copyright (c) 2020 by Dr. Jose M. Dominguez
+ <DualSPHysics codes>  Copyright (c) 2025 by Dr. Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between:
@@ -61,15 +61,15 @@ class JRelaxZoneMeshdata;
 class JRelaxZones : protected JObject
 {
 public:
-  JRelaxZones(bool useomp,bool usegpu,JLog2 *log,std::string appname
+  JRelaxZones(bool useomp,bool usegpu,JLog2* log,std::string appname
     ,std::string dirdata,bool withfloatings,unsigned fluidbeginidp
     ,tdouble3 gravity3){}
   ~JRelaxZones(){}
   void Reset(){}
   static bool Available(){ return(false); }
 
-  void LoadFileXml(const std::string &filexml,const std::string &place){}
-  void LoadXml(const JXml *sxml,const std::string &place){}
+  void LoadFileXml(const std::string& filexml,const std::string& place){}
+  void LoadXml(const JXml* sxml,const std::string& place){}
 
   bool Use_Meshdata()const{ return(false); }
 
@@ -97,7 +97,7 @@ class JRelaxZones : protected JObject
 private:
   const bool UseOmp;
   const bool UseGpu;
-  JLog2 *Log;
+  JLog2* Log;
   const std::string AppName;    ///<Nombre de aplicacion. Application Name.
   const std::string DirData;    ///<Directorio de datos. Data Directory.
   const bool WithFloatings;
@@ -111,23 +111,23 @@ private:
 
   bool UseMeshdata;
 
-  void ReadXml_RelaxZone(bool wavereg,const JXml *sxml,TiXmlElement* ele);
-  void ReadXml_RelaxZoneExternal(bool onedim,const JXml *sxml,TiXmlElement* ele);
-  void ReadXml_RelaxZoneUniform(const JXml *sxml,TiXmlElement* ele);
-  void ReadXml_RelaxZoneMeshdata(const JXml *sxml,TiXmlElement* ele);
-  void ReadXml(const JXml *sxml,TiXmlElement* lis);
+  void ReadXml_RelaxZone(bool wavereg,const JXml* sxml,TiXmlElement* ele);
+  void ReadXml_RelaxZoneExternal(bool onedim,const JXml* sxml,TiXmlElement* ele);
+  void ReadXml_RelaxZoneUniform(const JXml* sxml,TiXmlElement* ele);
+  void ReadXml_RelaxZoneMeshdata(const JXml* sxml,TiXmlElement* ele);
+  void ReadXml(const JXml* sxml,TiXmlElement* lis);
   void SaveDomainVtk(std::string fname,tdouble3 center,float width,double swl,double depth);
 
 public:
-  JRelaxZones(bool useomp,bool usegpu,JLog2 *log,std::string appname
+  JRelaxZones(bool useomp,bool usegpu,JLog2* log,std::string appname
     ,std::string dirdata,bool withfloatings,unsigned fluidbeginidp
     ,tdouble3 gravity3);
   ~JRelaxZones();
   void Reset();
   static bool Available(){ return(true); }
 
-  void LoadFileXml(const std::string &filexml,const std::string &place);
-  void LoadXml(const JXml *sxml,const std::string &place);
+  void LoadFileXml(const std::string& filexml,const std::string& place);
+  void LoadXml(const JXml* sxml,const std::string& place);
 
   bool Use_Meshdata()const{ return(UseMeshdata); }
 

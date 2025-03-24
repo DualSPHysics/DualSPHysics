@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -25,8 +25,10 @@
 
 namespace cudiv{
 
-void PreSortFull(unsigned np,unsigned cellcode,const unsigned *dcell,const typecode *code,tuint3 cellmin,tuint3 ncells,unsigned *cellpart,unsigned *sortpart);
-void PreSortFluid(unsigned npf,unsigned pini,unsigned cellcode,const unsigned *dcell,const typecode *code,tuint3 cellmin,tuint3 ncells,unsigned *cellpart,unsigned *sortpart);
+void PreSortFull(unsigned np,unsigned cellcode,const unsigned* dcell,const typecode* code
+  ,tuint3 cellmin,tuint3 ncells,unsigned* cellpart,unsigned* sortpart);
+void PreSortFluid(unsigned npf,unsigned pini,unsigned cellcode,const unsigned* dcell
+  ,const typecode* code,tuint3 cellmin,tuint3 ncells,unsigned* cellpart,unsigned* sortpart);
 
 }
 #endif

@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -26,7 +26,7 @@
 
 ///Structure with data of cell division for neighborhood search on GPU.
 typedef struct{
-  TpMgDivMode axis;
+  TpMgDivMode axis;     ///<Axis division (X, Y or Z).
   tuint3 ncells;
   int scelldiv;         ///<Value to divide KernelSize (1 or 2).
   int4 nc;
@@ -51,9 +51,9 @@ inline StDivDataGpu DivDataGpuNull(){
 //==============================================================================
 /// Returns structure with data for neighborhood search on Single-GPU.
 //==============================================================================
-inline StDivDataGpu MakeDivDataGpu(int scelldiv,const tuint3 &ncells
-  ,const tuint3 &cellmin,const int2* beginendcell,float scell,unsigned domcellcode
-  ,const tdouble3 &domposmin,float kernelsize2,float poscellsize)
+inline StDivDataGpu MakeDivDataGpu(int scelldiv,const tuint3& ncells
+  ,const tuint3& cellmin,const int2* beginendcell,float scell,unsigned domcellcode
+  ,const tdouble3& domposmin,float kernelsize2,float poscellsize)
 {
   StDivDataGpu ret;
   ret.axis=MGDIV_Z;

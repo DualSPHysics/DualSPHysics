@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -43,44 +43,47 @@ void JMotionPos::Reset(){
 //==============================================================================
 // Aplica movimiento lineal.
 //==============================================================================
-void JMotionPos::Move(const tdouble3 &dis){
+void JMotionPos::Move(const tdouble3& dis){
   if(TypeSimple)PosSimple=TDouble3(PosSimple.x+dis.x,PosSimple.y+dis.y,PosSimple.z+dis.z);
   else PosMatrix.Mul(JMatrix4d::MatrixMov(dis));
-/*
-  else{
-//  printf("\nMove:(%g,%g,%g)\n",dis.x,dis.y,dis.z);
-//    PosMatrix.Print("PreMove");
-    PosMatrix.Mul(JMatrix4::MatrixMov(dis));
-//    PosMatrix.Print("PostMove");
-  }*/
 }
 
 //==============================================================================
 // Aplica rotacion.
 //==============================================================================
-void JMotionPos::Rotate(double ang,const tdouble3 &axisp1,const tdouble3 &axisp2){
+void JMotionPos::Rotate(double ang,const tdouble3& axisp1,const tdouble3& axisp2){
   if(TypeSimple)ToMatrix();
-//  JMatrix4d m=JMatrix4d::MatrixRot(ang,axisp1,axisp2);
-//  m.Print("m");
   PosMatrix.Mul(JMatrix4d::MatrixRot(ang,axisp1,axisp2));
-/*
-  JMatrix4d m=JMatrix4d::MatrixRot(ang,axisp1,axisp2);
-  PosMatrix=m;
-  TypeSimple=false;
-/*
-  if(TypeSimple&&modpos.TypeSimple){
-    PosSimple=TDouble3(PosSimple.x+modpos.PosSimple.x,PosSimple.y+modpos.PosSimple.y,PosSimple.z+modpos.PosSimple.z);
-  }
-  else{
-    //---->PDTE
-  }
-*/
 }
+
+//==============================================================================
+// Aplica rotacion.
+//==============================================================================
+void JMotionPos::RotateXYZ(const tdouble3& ang,const tdouble3& rot_center
+  ,const char* axes,const bool intrinsic)
+{
+  if(TypeSimple)ToMatrix();
+  PosMatrix.Mul(JMatrix4d::MatrixRotateCen(rot_center,ang.x,ang.y,ang.z,axes,intrinsic));
+}
+
+//==============================================================================
+// Aplica rotacion realtiva a partir de la rotacion anterior y la nueva.
+//==============================================================================
+void JMotionPos::RotateXYZ(const tdouble3& previous_ang,const tdouble3& new_ang,const tdouble3& rot_center
+  ,const char* axes,const bool intrinsic)
+{
+  if(TypeSimple)ToMatrix();
+  JMatrix4d prev_matrix=JMatrix4d::MatrixRotateCen(rot_center,-previous_ang.x,-previous_ang.y,-previous_ang.z,axes,intrinsic);
+  prev_matrix.MulPre(JMatrix4d::MatrixRotateCen(rot_center,new_ang.x,new_ang.y,new_ang.z,axes,!intrinsic));
+  PosMatrix = prev_matrix;
+
+}
+
 
 //==============================================================================
 // Aplica movimiento.
 //==============================================================================
-void JMotionPos::MoveMix(const JMotionPos &modpos){
+void JMotionPos::MoveMix(const JMotionPos& modpos){
   if(TypeSimple&&!modpos.TypeSimple)ToMatrix();
   if(modpos.TypeSimple)Move(modpos.PosSimple);
   else PosMatrix.Mul(modpos.PosMatrix);//<-Usando MulPre() da problemas...
@@ -101,7 +104,10 @@ void JMotionPos::ToMatrix(){
 //==============================================================================
 // Devuelve punto modificado al aplicarle el desplazamiento de PosSimple/PosMatrix
 //==============================================================================
-tdouble3 JMotionPos::PointMove(const tdouble3 &p) const{
+tdouble3 JMotionPos::PointMove(const tdouble3& p)const{
   return(TypeSimple? TDouble3(p.x+PosSimple.x,p.y+PosSimple.y,p.z+PosSimple.z): PosMatrix.MulPoint(p));
 }
+
+
+
 

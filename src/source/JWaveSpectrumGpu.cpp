@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -33,7 +33,11 @@ using namespace std;
 //==============================================================================
 JWaveSpectrumGpu::JWaveSpectrumGpu(){
   ClassName="JWaveSpectrumGpu";
-  MemGpuFixed=0; Order2CoefsEtag=NULL; Order2CoefsDnmg=NULL; Order2CoefsPosg=NULL; Order2Auxg=NULL;
+  MemGpuFixed=0; 
+  Order2CoefsEtag=NULL; 
+  Order2CoefsDnmg=NULL; 
+  Order2CoefsPosg=NULL; 
+  Order2Auxg=NULL;
 }
 
 //==============================================================================
@@ -71,7 +75,9 @@ void JWaveSpectrumGpu::AllocMemoryGpu(unsigned sizewavecoefs){
 //==============================================================================
 /// Copy coefficients to GPU memory.
 //==============================================================================
-void JWaveSpectrumGpu::CopyCoefs(unsigned sizewavecoefs,const tdouble4 *d4,const double *d1,const tdouble2 *d2){
+void JWaveSpectrumGpu::CopyCoefs(unsigned sizewavecoefs,const tdouble4* d4
+  ,const double* d1,const tdouble2* d2)
+{
   #ifdef _WITHGPU
     cudaMemcpy(Order2CoefsEtag,d4,sizeof(double4)*sizewavecoefs,cudaMemcpyHostToDevice);
     cudaMemcpy(Order2CoefsDnmg,d1,sizeof(double) *sizewavecoefs,cudaMemcpyHostToDevice);

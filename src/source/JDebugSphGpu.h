@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -53,35 +53,43 @@ class JSphDomain;
 class JDebugSphGpu
 {
 protected:
-  static void RunExceptioonStatic(const std::string &srcfile,int srcline
-    ,const std::string &method
-    ,const std::string &msg,const std::string &file="");
-  static void RunExceptioonCudaStatic(const std::string &srcfile,int srcline
-    ,const std::string &method
+  static void RunExceptioonStatic(const std::string& srcfile,int srcline
+    ,const std::string& method
+    ,const std::string& msg,const std::string& file="");
+  static void RunExceptioonCudaStatic(const std::string& srcfile,int srcline
+    ,const std::string& method
     ,cudaError_t cuerr,std::string msg);
-  static void CheckCudaErroorStatic(const std::string &srcfile,int srcline
-    ,const std::string &method
+  static void CheckCudaErroorStatic(const std::string& srcfile,int srcline
+    ,const std::string& method
     ,std::string msg);
 
 public:
 
-  static byte*     GetCodeType     (unsigned n,const typecode *code);
-  static typecode* GetCodeTypeValue(unsigned n,const typecode *code);
-  static tuint3*   GetCell3(unsigned n,const unsigned *dcell,unsigned cellcode);
-  static tfloat3*  GetPosf3(unsigned n,const tdouble3 *pos);
-  static tfloat3*  GetPosf3(unsigned n,const tdouble2 *posxy,const double *posz);
-  static tdouble3* GetPosd3(unsigned n,const tdouble2 *posxy,const double *posz);
-  static tfloat3*  GetPosCell_Pos (unsigned n,const tfloat4 *poscell);
-  static tuint3*   GetPosCell_Cell(unsigned n,const tfloat4 *poscell);
+  static byte*     GetCodeType     (unsigned n,const typecode* code);
+  static typecode* GetCodeTypeValue(unsigned n,const typecode* code);
+  static tuint3*   GetCell3(unsigned n,const unsigned* dcell,unsigned cellcode);
+  static tfloat3*  GetPosf3(unsigned n,const tdouble3* pos);
+  static tfloat3*  GetPosf3(unsigned n,const tdouble2* posxy,const double* posz);
+  static tdouble3* GetPosd3(unsigned n,const tdouble2* posxy,const double* posz);
+  static tfloat3*  GetPosCell_Pos (unsigned n,const tfloat4* poscell);
+  static tuint3*   GetPosCell_Cell(unsigned n,const tfloat4* poscell);
 
-  static std::string PrepareVars(const std::string &vlist);
-  static bool FindVar(const std::string &var,const std::string &vlist){ return(int(vlist.find(std::string(",")+var+","))>=0); }
+  static std::string PrepareVars(const std::string& vlist);
+  static bool FindVar(const std::string& var,const std::string& vlist){
+    return(int(vlist.find(std::string(",")+var+","))>=0);
+  }
   static std::string CheckVars(std::string vlist);
 
   static std::string GetFileName(std::string filename,int numfile,int gid=-1);
 
-  static void LoadParticlesData(const JSphGpuSingle *gp,unsigned pini,unsigned pfin,std::string vars,JDataArrays *arrays,std::string file="");
-  static void SaveVtk(std::string filename,int numfile,unsigned pini,unsigned pfin,std::string vars,const JSphGpuSingle *gp);
+  static void RunUserFilters(JDataArrays& arrays);
+
+  static void LoadParticlesData(const JSphGpuSingle* gp,unsigned pini
+    ,unsigned pfin,std::string vars,JDataArrays* arrays,std::string file="");
+  static void SaveVtk(std::string filename,int numfile,unsigned pini
+    ,unsigned pfin,std::string vars,const JSphGpuSingle* gp);
+  static void SaveCsv(std::string filename,int numfile,unsigned pini
+    ,unsigned pfin,std::string vars,const JSphGpuSingle* gp);
 
 };
 

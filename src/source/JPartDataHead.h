@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -38,6 +38,7 @@
 #include "TypesDef.h"
 #include "JParticlesDef.h"
 #include "JPeriodicDef.h"
+#include "JViscosityDef.h"
 
 //##############################################################################
 //# JPartDataHeadMkBlock
@@ -65,12 +66,6 @@ public:
 class JPartDataHead : protected JObject
 {
 public:
-  ///Types of viscosity treatment.
-  typedef enum{ 
-    VISCO_LaminarSPS=2,        ///<Laminar viscosity and Sub-Partice Scale Turbulence.
-    VISCO_Artificial=1,        ///<Artificial viscosity.
-    VISCO_None=0 
-  }TpVisco;            
 
 private:
   static const unsigned FmtVersionDef=180324;    ///<Version de formato by default. Version of format by default.
@@ -154,7 +149,7 @@ public:
   void ConfigSimNp(bool npdynamic=false,bool reuseids=false);
   void ConfigSimMap(tdouble3 mapposmin,tdouble3 mapposmax);
   void ConfigSimPeri(TpPeri tperi,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc);
-  void ConfigVisco(JPartDataHead::TpVisco type,float value,float boundfactor);
+  void ConfigVisco(TpVisco type,float value,float boundfactor);
   void ConfigSymmetry(bool symmetry);
   void ConfigSplitting(bool splitting);
 
@@ -163,7 +158,7 @@ public:
   void LoadFile(std::string dir);
   void SaveFile(std::string dir);
 
-  void GetParticlesInfo(std::vector<std::string> &out)const;
+  void GetParticlesInfo(std::vector<std::string>& out)const;
   void VisuParticlesInfo()const;
 
 //-Methods for Mk blocks.

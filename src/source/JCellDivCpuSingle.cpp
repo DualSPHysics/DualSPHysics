@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -42,7 +42,7 @@ JCellDivCpuSingle::JCellDivCpuSingle(bool stable,bool floating,byte periactive
 /// Calculate limits of domain in cells adjusting to fluid (CellDomainMin/Max). 
 /// Calcula limites del dominio en celdas ajustando al fluido (CellDomainMin/Max). 
 //==============================================================================
-void JCellDivCpuSingle::CalcCellDomain(const unsigned *dcellc,const typecode *codec){
+void JCellDivCpuSingle::CalcCellDomain(const unsigned* dcellc,const typecode* codec){
   //-Define maximum cell domain.
   if(CellDomFixed){
     CellDomainMin=TUint3(0,0,0);
@@ -81,7 +81,10 @@ void JCellDivCpuSingle::CalcCellDomain(const unsigned *dcellc,const typecode *co
 /// fluido y contorno.
 /// En caso de que el dominio sea nulo CellDomainMin=CellDomainMax=(0,0,0).
 //==============================================================================
-void JCellDivCpuSingle::MergeMapCellBoundFluid(const tuint3 &celbmin,const tuint3 &celbmax,const tuint3 &celfmin,const tuint3 &celfmax,tuint3 &celmin,tuint3 &celmax)const{
+void JCellDivCpuSingle::MergeMapCellBoundFluid(const tuint3& celbmin
+  ,const tuint3& celbmax,const tuint3& celfmin,const tuint3& celfmax
+  ,tuint3& celmin,tuint3& celmax)const
+{
   const unsigned scelldiv=unsigned(ScellDiv);
   celmin=TUint3(max(min(celbmin.x,celfmin.x),(celfmin.x>=scelldiv? celfmin.x-scelldiv: 0))
                ,max(min(celbmin.y,celfmin.y),(celfmin.y>=scelldiv? celfmin.y-scelldiv: 0))
@@ -107,7 +110,7 @@ void JCellDivCpuSingle::PrepareNct(){
   Ncx=CellDomainMax.x-CellDomainMin.x+1;
   Ncy=CellDomainMax.y-CellDomainMin.y+1;
   Ncz=CellDomainMax.z-CellDomainMin.z+1;
-  //:printf("======  ncx:%u ncy:%u ncz:%u\n",Ncx,Ncy,Ncz);
+  //Log->Printf("======  ncx:%u ncy:%u ncz:%u\n",Ncx,Ncy,Ncz);
   Nsheet=Ncx*Ncy; Nct=Nsheet*Ncz; Nctt=SizeBeginCell(Nct);
   if(Nctt!=unsigned(Nctt))Run_Exceptioon("The number of cells is too big.");
   BoxBoundIgnore=Nct; 
@@ -131,8 +134,8 @@ void JCellDivCpuSingle::PrepareNct(){
 /// Las particulas excluidas de tipo bound (fixed and moving) and floating se mueven a BoxBoundOut.
 /// Contabiliza particulas por celda (partsincell[]).
 //==============================================================================
-void JCellDivCpuSingle::PreSortFull(unsigned np,const unsigned *dcellc,const typecode *codec
-  ,unsigned* cellpart,unsigned* partsincell)const
+void JCellDivCpuSingle::PreSortFull(unsigned np,const unsigned* dcellc
+  ,const typecode* codec,unsigned* cellpart,unsigned* partsincell)const
 {
   memset(partsincell,0,sizeof(unsigned)*(Nctt-1));
   for(unsigned p=0;p<np;p++){
@@ -170,8 +173,9 @@ void JCellDivCpuSingle::PreSortFull(unsigned np,const unsigned *dcellc,const typ
 /// Las particulas excluidas de tipo floating se mueven a BoxBoundOut.
 /// Contabiliza particulas por celda (partsincell[]).
 //==============================================================================
-void JCellDivCpuSingle::PreSortFluid(unsigned np,unsigned pini,const unsigned *dcellc
-  ,const typecode *codec,unsigned* cellpart,unsigned* partsincell)const
+void JCellDivCpuSingle::PreSortFluid(unsigned np,unsigned pini
+  ,const unsigned* dcellc,const typecode* codec,unsigned* cellpart
+  ,unsigned* partsincell)const
 {
   memset(partsincell+BoxFluid,0,sizeof(unsigned)*(Nctt-1-BoxFluid));
   const unsigned pfin=pini+np;
@@ -242,7 +246,7 @@ void JCellDivCpuSingle::MakeSortFluid(unsigned np,unsigned pini,const unsigned* 
 /// particulas excluidas ya fueron marcadas en code[].
 /// Calcula SortPart[] (donde esta la particula que deberia ir en dicha posicion).
 //==============================================================================
-void JCellDivCpuSingle::PreSort(const unsigned* dcellc,const typecode *codec){
+void JCellDivCpuSingle::PreSort(const unsigned* dcellc,const typecode* codec){
   //-Load SortPart[] with the current particle in the data vectors where the particle is that must go in stated position.
   //-Load BeginCell[] with first particle of each cell.
   //-Carga SortPart[] con la p actual en los vectores de datos donde esta la particula que deberia ir en dicha posicion.
@@ -275,8 +279,8 @@ void JCellDivCpuSingle::PreSort(const unsigned* dcellc,const typecode *codec){
 //==============================================================================
 void JCellDivCpuSingle::Divide(unsigned npb1,unsigned npf1
   ,unsigned npb2,unsigned npf2,bool boundchanged
-  ,const unsigned *dcellc,const typecode* codec,const unsigned* idpc
-  ,const tdouble3* posc,JDsTimersCpu *timersc)
+  ,const unsigned* dcellc,const typecode* codec,const unsigned* idpc
+  ,const tdouble3* posc,JDsTimersCpu* timersc)
 {
   DivideFull=false;
   timersc->TmStart(TMC_NlLimits);

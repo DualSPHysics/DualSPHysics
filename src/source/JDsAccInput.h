@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -74,8 +74,8 @@ protected:
   typecode CodeSel1; ///<First code of target particles (TypeAndValue).
   typecode CodeSel2; ///<Last code of target particles (TypeAndValue).
 
-  JLinearValue *AceData; ///<Input acceleration data.
-  JLinearValue *VelData; ///<Input velocity data.
+  JLinearValue* AceData; ///<Input acceleration data.
+  JLinearValue* VelData; ///<Input velocity data.
 
   double LastTimestepInput; ///<Saves the last value used with GetAccValues().
   StAceInput LastOutput;    ///<Saves the last value returned by GetAccValues().
@@ -85,7 +85,7 @@ protected:
 public:
   JDsAccInputMk(unsigned idx,bool bound,word mktype1,word mktype2
     ,double tini,double tend,bool genabled,tfloat3 acccentre
-    ,const JLinearValue &acedata,const JLinearValue &veldata);
+    ,const JLinearValue& acedata,const JLinearValue& veldata);
   ~JDsAccInputMk();
   long long GetAllocMemory()const;
 
@@ -95,7 +95,7 @@ public:
   typecode GetCodeSel1()const{ return(CodeSel1); };
   typecode GetCodeSel2()const{ return(CodeSel2); };
 
-  void GetConfig(std::vector<std::string> &lines)const;
+  void GetConfig(std::vector<std::string>& lines)const;
 
   //word GetMkFluid()const{ return(MkFluid); }
   const StAceInput& GetAccValues(double timestep); //SL: Added linear and angular velocity and set gravity flag
@@ -116,27 +116,27 @@ protected:
 
   void Reset();
   bool ExistMk(bool bound,word mktype)const;
-  void LoadXml(const JXml *sxml,const std::string &place);
-  void ReadXml(const JXml *sxml,TiXmlElement* lis);
-  void ComputeVelocity(const JLinearValue &acedata,JLinearValue &veldata)const;
+  void LoadXml(const JXml* sxml,const std::string& place);
+  void ReadXml(const JXml* sxml,TiXmlElement* lis);
+  void ComputeVelocity(const JLinearValue& acedata,JLinearValue& veldata)const;
 
 public:
-  JDsAccInput(const std::string &dirdata,const JXml *sxml,const std::string &place);
+  JDsAccInput(const std::string& dirdata,const JXml* sxml,const std::string& place);
   ~JDsAccInput();
   long long GetAllocMemory()const{ return(MemSize); }
 
   void VisuConfig(std::string txhead,std::string txfoot)const;
-  void Init(const JSphMk *mkinfo);
+  void Init(const JSphMk* mkinfo);
 
   unsigned GetCount()const{ return(unsigned(Inputs.size())); };
   const StAceInput& GetAccValues(unsigned cinput,double timestep); //SL: Added linear and angular velocity and set gravity flag
 
   void RunCpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
-    ,const typecode *code,const tdouble3 *pos,const tfloat4 *velrhop,tfloat3 *ace);
+    ,const typecode* code,const tdouble3* pos,const tfloat4* velrho,tfloat3* ace);
 
 #ifdef _WITHGPU
   void RunGpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
-    ,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace);
+    ,const typecode* code,const double2* posxy,const double* posz,const float4* velrho,float3* ace);
 #endif
 };
 

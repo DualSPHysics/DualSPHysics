@@ -1,6 +1,6 @@
 //HEAD_DSTOOLS
 /* 
- <DualSPHysics codes>  Copyright (c) 2020 by Dr. Jose M. Dominguez
+ <DualSPHysics codes>  Copyright (c) 2025 by Dr. Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between:
@@ -40,7 +40,7 @@ namespace curelaxzone{
 //------------------------------------------------------------------------------
 /// Returns TRUE when code==NULL or particle is normal and fluid.
 //------------------------------------------------------------------------------
-__device__ bool KerIsNormalFluid(const typecode *code,unsigned p){
+__device__ bool KerIsNormalFluid(const typecode* code,unsigned p){
   if(code){//-Descarta particulas floating o periodicas.
     const typecode cod=code[p];
     return(CODE_IsNormal(cod) && CODE_IsFluid(cod));
@@ -59,7 +59,7 @@ __global__ void KerSetFluidVelUniform(unsigned n,unsigned pini
   ,float3 vt,float4 cenpla,float4 dompla1,float4 dompla2,float4 dompla3
   ,float domsize1,float domsize2,float domsize3,float widthhalf
   ,float coeff,double falpha,double fbeta,double fsub,double fdiv,unsigned fluidbeginidp
-  ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop)
+  ,const double2* posxy,const double* posz,const unsigned* idp,float4* velrhop)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x;
   if(p<n){
@@ -89,11 +89,11 @@ __global__ void KerSetFluidVelUniform(unsigned n,unsigned pini
 /// Sets velocity of fluid to generate waves.
 //==============================================================================
 void SetFluidVelUniform(unsigned n,unsigned pini
-  ,const tfloat3 &vt,const tfloat4 &cenpla
-  ,const tfloat4 &dompla1,const tfloat4 &dompla2,const tfloat4 &dompla3
+  ,const tfloat3& vt,const tfloat4& cenpla
+  ,const tfloat4& dompla1,const tfloat4& dompla2,const tfloat4& dompla3
   ,float domsize1,float domsize2,float domsize3,float widthhalf
   ,float coeff,double falpha,double fbeta,double fsub,double fdiv,unsigned fluidbeginidp
-  ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop)
+  ,const double2* posxy,const double* posz,const unsigned* idp,float4* velrhop)
 {
   if(n){
     const dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
@@ -142,14 +142,15 @@ template <bool order2> __device__ float KerCalcVelocityZ(double x,double z
 //------------------------------------------------------------------------------
 /// Sets velocity of fluid to generate waves.
 //------------------------------------------------------------------------------
-template <bool order2,bool subdrift> __global__ void KerSetFluidVel(unsigned n,unsigned pini
-  ,double centerx,float widthhalf,float coeffx,float coeffz
+template <bool order2,bool subdrift> __global__ void KerSetFluidVel(unsigned n
+  ,unsigned pini,double centerx,float widthhalf,float coeffx,float coeffz
   ,double falpha,double fbeta,double fsub,double fdiv
   ,double timewave,double swl,double kl,double sinhkld
   ,double wpf,double cta,double depth,double framp
   ,double ct2,double sinhkld4
   ,double ctd,double ctd2,unsigned fluidbeginidp
-  ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop)
+  ,const double2* posxy,const double* posz,const unsigned* idp
+  ,float4* velrhop)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x;
   if(p<n){
@@ -185,7 +186,7 @@ void SetFluidVel(unsigned n,unsigned pini,bool order2,bool subdrift
   ,double wpf,double cta,double depth,double framp
   ,double ct2,double sinhkld4
   ,double ctd,double ctd2,unsigned fluidbeginidp
-  ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop)
+  ,const double2* posxy,const double* posz,const unsigned* idp,float4* velrhop)
 {
   if(n){
     const dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
@@ -210,7 +211,8 @@ void SetFluidVel(unsigned n,unsigned pini,bool order2,bool subdrift
 //------------------------------------------------------------------------------
 __device__ double2 KerCalcVelxzSpectrum(double x,double z,double timewave
   ,double depth,unsigned wavecount
-  ,const double *wavekl,const double *waveamp,const double *wavefang,const double *wavephase)
+  ,const double* wavekl,const double* waveamp,const double* wavefang
+  ,const double* wavephase)
 {
   double vx=0,vz=0;
   for(unsigned c=0;c<wavecount;c++){
@@ -247,13 +249,13 @@ template <byte subdriftmode> __device__ float KerCalcDriftX(double depth_z
 //------------------------------------------------------------------------------
 /// Sets velocity of fluid to generate irregular waves.
 //------------------------------------------------------------------------------
-template <byte subdriftmode> __global__ void KerSetFluidVelSpectrumSub(unsigned n,unsigned pini
-  ,double centerx,float widthhalf,float coeffx,float coeffz
+template <byte subdriftmode> __global__ void KerSetFluidVelSpectrumSub(unsigned n
+  ,unsigned pini,double centerx,float widthhalf,float coeffx,float coeffz
   ,double falpha,double fbeta,double fsub,double fdiv
   ,double timewave,double swl,double depth,double framp,unsigned wavecount
-  ,const double *wavekl,const double *waveamp,const double *wavefang,const double *wavephase  
-  ,unsigned fluidbeginidp
-  ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop
+  ,const double* wavekl,const double* waveamp,const double* wavefang
+  ,const double* wavephase,unsigned fluidbeginidp
+  ,const double2* posxy,const double* posz,const unsigned* idp,float4* velrhop
   ,double fun,double ctd,double ctd2,double ctd_2,double ctd2_2)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x;
@@ -291,9 +293,9 @@ void SetFluidVelSpectrumSub(unsigned n,unsigned pini
   ,double centerx,float widthhalf,float coeffx,float coeffz
   ,double falpha,double fbeta,double fsub,double fdiv
   ,double timewave,double swl,double depth,double framp,unsigned wavecount
-  ,const double *wavekl,const double *waveamp,const double *wavefang,const double *wavephase  
-  ,unsigned fluidbeginidp
-  ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop
+  ,const double* wavekl,const double* waveamp,const double* wavefang
+  ,const double* wavephase,unsigned fluidbeginidp
+  ,const double2* posxy,const double* posz,const unsigned* idp,float4* velrhop
   ,bool subdrift,double fun,double ctd,double ctd2,double ctd_2,double ctd2_2)
 {
   if(n){
@@ -313,7 +315,9 @@ void SetFluidVelSpectrumSub(unsigned n,unsigned pini
 //------------------------------------------------------------------------------
 // Devuelve datos de interpolacion en X, Y o Z.
 //------------------------------------------------------------------------------
-__device__ void KerGetInterpolationData(double pos,double posmin,double dp,unsigned np1,unsigned &cx,double &fx){
+__device__ void KerGetInterpolationData(double pos,double posmin,double dp
+  ,unsigned np1,unsigned& cx,double& fx)
+{
   double dx=(pos>posmin? pos-posmin: 0);
   cx=unsigned(dx/dp);
   if(cx>np1){ cx=np1; dx=0; } else dx-=dp*cx;
@@ -323,11 +327,12 @@ __device__ void KerGetInterpolationData(double pos,double posmin,double dp,unsig
 //------------------------------------------------------------------------------
 // Devuelve la velocidad en un punto por interpolacion de velocidades externas.
 //------------------------------------------------------------------------------
-template <bool usevelz> __device__ double2 KerCalcVelocityExternalXZ(double x,double y,double z
+template <bool usevelz> __device__ double2 KerCalcVelocityExternalXZ(double x
+  ,double y,double z
   ,double pxmin,double pymin,double pzmin
   ,double dpx,double dpy,double dpz
   ,unsigned npx1,unsigned npy1,unsigned npz1
-  ,const double *velx,const double *velz)
+  ,const double* velx,const double* velz)
 {
   double2 vel=make_double2(0,0);
   //-Obtiene datos de interpolacion en X, Y, Z.
@@ -371,15 +376,15 @@ template <bool usevelz> __device__ double2 KerCalcVelocityExternalXZ(double x,do
 //------------------------------------------------------------------------------
 /// Sets velocity of fluid to generate waves with external velocity data (SWASH).
 //------------------------------------------------------------------------------
-template<bool usevelz,byte subdriftmode> __global__ void KerSetFluidVelExternal(unsigned n,unsigned pini
-  ,double centerx,float widthhalf,float coeffx,float coeffz
+template<bool usevelz,byte subdriftmode> __global__ void KerSetFluidVelExternal(
+  unsigned n,unsigned pini,double centerx,float widthhalf,float coeffx,float coeffz
   ,double falpha,double fbeta,double fsub,double fdiv
   ,double pxmin,double pymin,double pzmin
   ,double dpx,double dpy,double dpz
   ,unsigned npx1,unsigned npy1,unsigned npz1
-  ,const double *velx,const double *velz
+  ,const double* velx,const double* velz
   ,unsigned fluidbeginidp
-  ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop
+  ,const double2* posxy,const double* posz,const unsigned* idp,float4* velrhop
   ,double fun,double ctd,double ctd2,double ctd_2,double ctd2_2,double bottom)
 {
   unsigned p=blockIdx.x*blockDim.x + threadIdx.x;
@@ -416,10 +421,11 @@ void SetFluidVelExternal(unsigned n,unsigned pini
   ,double pxmin,double pymin,double pzmin
   ,double dpx,double dpy,double dpz
   ,unsigned npx1,unsigned npy1,unsigned npz1
-  ,const double *velx,const double *velz
+  ,const double* velx,const double* velz
   ,unsigned fluidbeginidp
-  ,const double2 *posxy,const double *posz,const unsigned *idp,float4 *velrhop
-  ,bool subdrift,double fun,double ctd,double ctd2,double ctd_2,double ctd2_2,double bottom)
+  ,const double2* posxy,const double* posz,const unsigned* idp,float4* velrhop
+  ,bool subdrift,double fun,double ctd,double ctd2,double ctd_2,double ctd2_2
+  ,double bottom)
 {
   if(n){
     const dim3 sgrid=GetSimpleGridSize(n,WAVEBSIZE);
@@ -458,8 +464,9 @@ template <unsigned blockSize> __device__ void KerReduSumUintWarp(volatile unsign
 // Cuenta numero de particulas fluid entre xmin y xmax. El resultado se guarda
 // en res[] por bloque.
 //------------------------------------------------------------------------------
-template <unsigned blockSize> __global__ void KerComputeDrift(unsigned n,unsigned pini
-  ,double xmin,double xmax,const double2 *posxy,const typecode *code,unsigned *res)
+template <unsigned blockSize> __global__ void KerComputeDrift(unsigned n
+  ,unsigned pini,double xmin,double xmax,const double2* posxy
+  ,const typecode* code,unsigned* res)
 {
   extern __shared__ unsigned shcount[];
   const unsigned tid=threadIdx.x;
@@ -485,7 +492,7 @@ template <unsigned blockSize> __global__ void KerComputeDrift(unsigned n,unsigne
 // Computes drift on CPU. Counts fluid particles between xmin and xmax.
 //==============================================================================
 unsigned ComputeDrift(unsigned n,unsigned pini,double xmin,double xmax
-  ,const double2 *posxy,const typecode *code)
+  ,const double2* posxy,const typecode* code)
 {
   unsigned ret=0;
   if(n){
@@ -493,7 +500,7 @@ unsigned ComputeDrift(unsigned n,unsigned pini,double xmin,double xmax
     const unsigned smemSize=sizeof(unsigned)*WAVEBSIZE;
     const unsigned nblocks=sgrid.x*sgrid.y;
     //-Allocates memory on GPU.
-    unsigned *res=NULL;
+    unsigned* res=NULL;
     size_t size=sizeof(unsigned)*(nblocks+curedus::GetAuxSize_ReduSumUint(nblocks));
     cudaMalloc((void**)&res,size);
     //-Compute drift.

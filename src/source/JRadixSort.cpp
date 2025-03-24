@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -108,7 +108,7 @@ unsigned JRadixSort::BitsSize(ullong v)const{ return(TBitsSize<ullong>(v,64)); }
 /// Calcula Nbits para los datos indicados.
 /// Computes Nbits for the indicated data.
 //==============================================================================
-template<class T> unsigned JRadixSort::TCalcNbits(unsigned size,const T *data)const{
+template<class T> unsigned JRadixSort::TCalcNbits(unsigned size,const T* data)const{
   const int threads=omp_get_max_threads();
   T mxdata=0;
 
@@ -125,7 +125,7 @@ template<class T> unsigned JRadixSort::TCalcNbits(unsigned size,const T *data)co
     const int rk=int(size%OMPSIZE);
     //-Calcula maximo de nk bloques con varios hilos.
     //-Calculate maximum of nk blocks with several threads.
-    T *vmax=new T[threads*OMPSTRIDE];
+    T* vmax=new T[threads*OMPSTRIDE];
     memset(vmax,0,sizeof(T)*threads*OMPSTRIDE);
     #ifdef OMP_USE_RADIXSORT
       #pragma omp parallel for schedule (static)
@@ -154,13 +154,17 @@ template<class T> unsigned JRadixSort::TCalcNbits(unsigned size,const T *data)co
 /// Calcula Nbits para los datos indicados.
 /// Computes Nbits for the indicated data.
 //==============================================================================
-unsigned JRadixSort::CalcNbits(unsigned size,const unsigned *data)const{ return(TCalcNbits<unsigned>(size,data)); }
+unsigned JRadixSort::CalcNbits(unsigned size,const unsigned* data)const{
+  return(TCalcNbits<unsigned>(size,data));
+}
 
 //==============================================================================
 /// Calcula Nbits para los datos indicados.
 /// Computes Nbits for the indicated data.
 //==============================================================================
-unsigned JRadixSort::CalcNbits(unsigned size,const ullong *data)const{ return(TCalcNbits<ullong>(size,data)); }
+unsigned JRadixSort::CalcNbits(unsigned size,const ullong* data)const{
+  return(TCalcNbits<ullong>(size,data));
+}
 
 //==============================================================================
 /// Reserva la memoria necesaria.
@@ -191,7 +195,7 @@ template<class T> void JRadixSort::LoadBeginKeys(const T* data){
   //-Inicia proceso.
   //-Initialises process.
   if(!UseOmp || threads<2){//-Secuencial. //-Sequential
-    unsigned *nkeys=new unsigned[Nkeys*KEYSRANGE];
+    unsigned* nkeys=new unsigned[Nkeys*KEYSRANGE];
     memset(nkeys,0,sizeof(unsigned)*Nkeys*KEYSRANGE);
     for(unsigned c2=0;c2<Size;c2++){
       const T v=data[c2];
@@ -219,7 +223,7 @@ template<class T> void JRadixSort::LoadBeginKeys(const T* data){
     //-Reserva memoria auxiliar para conteo.
     //-Allocates auxiliary memory for counting.
     const unsigned skeys=Nkeys*KEYSRANGE+100;
-    unsigned *nkeys=new unsigned[skeys*threads];
+    unsigned* nkeys=new unsigned[skeys*threads];
     memset(nkeys,0,sizeof(unsigned)*skeys*threads);
     //-Realiza conteo con varios hilos.
     //-Performs count with several threads.
@@ -228,7 +232,7 @@ template<class T> void JRadixSort::LoadBeginKeys(const T* data){
     #endif
     for(int c=0;c<nk;c++){
       int th=omp_get_thread_num();
-      unsigned *n=nkeys+(skeys*th);
+      unsigned* n=nkeys+(skeys*th);
       const unsigned c2ini=OMPSIZE*c;
       const unsigned c2fin=c2ini+(c+1<nk? OMPSIZE: rk);
       //printf(">> c2ini:%d  c2fin:%d\n",c2ini,c2fin);
@@ -276,7 +280,9 @@ template<class T> void JRadixSort::SortStep(unsigned ck,const T* data,T* data2){
 /// Realiza un paso de ordenacion en funcion de 1 bit.
 /// Performs a sorting step in an 1 bit function.
 //==============================================================================
-template<class T> void JRadixSort::SortStepIndex(unsigned ck,const T* data,T* data2,const unsigned *index,unsigned *index2){
+template<class T> void JRadixSort::SortStepIndex(unsigned ck,const T* data
+  ,T* data2,const unsigned* index,unsigned* index2)
+{
   unsigned p2[KEYSRANGE];
   memcpy(p2,BeginKeys+(ck*KEYSRANGE),sizeof(unsigned)*KEYSRANGE);
   const unsigned ckmov=ck*KEYSBITS;
@@ -296,7 +302,7 @@ template<class T> void JRadixSort::SortStepIndex(unsigned ck,const T* data,T* da
 void JRadixSort::IndexCreate(){
   const int threads=omp_get_max_threads();
   //-Reserva memoria.
-  //-Allocates memeory.
+  //-Allocates memory.
   try{
     Index=new unsigned[Size];
     PrevIndex=new unsigned[Size];
@@ -331,7 +337,7 @@ void JRadixSort::IndexCreate(){
 /// Ordena valores de data.
 /// Reorders data values.
 //==============================================================================
-void JRadixSort::Sort(bool makeindex,unsigned size,unsigned *data,unsigned nbits){
+void JRadixSort::Sort(bool makeindex,unsigned size,unsigned* data,unsigned nbits){
   Reset();
   Nbits=nbits; Size=size; 
   Type32=true; InitData32=data; PrevData32=data;
@@ -359,7 +365,7 @@ void JRadixSort::Sort(bool makeindex,unsigned size,unsigned *data,unsigned nbits
 /// Ordena valores de data.
 /// Reorders data values.
 //==============================================================================
-void JRadixSort::Sort(bool makeindex,unsigned size,ullong *data,unsigned nbits){
+void JRadixSort::Sort(bool makeindex,unsigned size,ullong* data,unsigned nbits){
   Reset();
   Nbits=nbits; Size=size; 
   Type32=false; InitData64=data; PrevData64=data;
@@ -387,7 +393,7 @@ void JRadixSort::Sort(bool makeindex,unsigned size,ullong *data,unsigned nbits){
 /// Crea indice para ordenacion pero sin modificar los datos pasados.
 /// Creates sorting index without modifying the processed data.
 //==============================================================================
-void JRadixSort::MakeIndex(unsigned size,const unsigned *data,unsigned nbits){
+void JRadixSort::MakeIndex(unsigned size,const unsigned* data,unsigned nbits){
   unsigned* auxdata=new unsigned[size];
   memcpy(auxdata,data,sizeof(unsigned)*size);
   Sort(true,size,auxdata,nbits);
@@ -398,7 +404,7 @@ void JRadixSort::MakeIndex(unsigned size,const unsigned *data,unsigned nbits){
 /// Crea indice para ordenacion pero sin modificar los datos pasados.
 /// Creates sorting index without modifying the processed data.
 //==============================================================================
-void JRadixSort::MakeIndex(unsigned size,const ullong *data,unsigned nbits){
+void JRadixSort::MakeIndex(unsigned size,const ullong* data,unsigned nbits){
   ullong* auxdata=new ullong[size];
   memcpy(auxdata,data,sizeof(ullong)*size);
   Sort(true,size,auxdata,nbits);
@@ -409,11 +415,11 @@ void JRadixSort::MakeIndex(unsigned size,const ullong *data,unsigned nbits){
 /// Ordena vector de datos en funcion del Index[] calculado previamente.
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
-template<class T> void JRadixSort::TSortData(unsigned size,const T *data,T *result){
+template<class T> void JRadixSort::TSortData(unsigned size,const T* data,T* result){
   const int threads=omp_get_max_threads();
   if(!Index)Run_Exceptioon("There is no index to sort data.");
   if(size!=Size)Run_Exceptioon("The size of data is invalid.");
-  T *res=result;
+  T* res=result;
   if(data==res){//-Reserva vector auxiliar para la ordenacion. //-Allocates auxiliary array for sorting.
     try{
       res=new T[size];
@@ -453,73 +459,97 @@ template<class T> void JRadixSort::TSortData(unsigned size,const T *data,T *resu
 /// Ordena vector de datos en funcion del Index[] calculado previamente.
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
-void JRadixSort::SortData(unsigned size,const byte *data,byte *result){ TSortData<byte>(size,data,result); }
+void JRadixSort::SortData(unsigned size,const byte* data,byte* result){
+  TSortData<byte>(size,data,result);
+}
 
 //==============================================================================
 /// Ordena vector de datos en funcion del Index[] calculado previamente.
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
-void JRadixSort::SortData(unsigned size,const word *data,word *result){ TSortData<word>(size,data,result); }
+void JRadixSort::SortData(unsigned size,const word* data,word* result){
+  TSortData<word>(size,data,result);
+}
 
 //==============================================================================
 /// Ordena vector de datos en funcion del Index[] calculado previamente.
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
-void JRadixSort::SortData(unsigned size,const unsigned *data,unsigned *result){ TSortData<unsigned>(size,data,result); }
+void JRadixSort::SortData(unsigned size,const unsigned* data,unsigned* result){
+  TSortData<unsigned>(size,data,result);
+}
 
 //==============================================================================
 /// Ordena vector de datos en funcion del Index[] calculado previamente.
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
-void JRadixSort::SortData(unsigned size,const int *data,int *result){ TSortData<int>(size,data,result); }
+void JRadixSort::SortData(unsigned size,const int* data,int* result){
+  TSortData<int>(size,data,result);
+}
 
 //==============================================================================
 /// Ordena vector de datos en funcion del Index[] calculado previamente.
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
-void JRadixSort::SortData(unsigned size,const float *data,float *result){ TSortData<float>(size,data,result); }
+void JRadixSort::SortData(unsigned size,const float* data,float* result){
+  TSortData<float>(size,data,result);
+}
 
 //==============================================================================
 /// Ordena vector de datos en funcion del Index[] calculado previamente.
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
-void JRadixSort::SortData(unsigned size,const double *data,double *result){ TSortData<double>(size,data,result); }
+void JRadixSort::SortData(unsigned size,const double* data,double* result){
+  TSortData<double>(size,data,result);
+}
 
 //==============================================================================
 /// Ordena vector de datos en funcion del Index[] calculado previamente.
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
-void JRadixSort::SortData(unsigned size,const tuint2 *data,tuint2 *result){ TSortData<tuint2>(size,data,result); }
+void JRadixSort::SortData(unsigned size,const tuint2* data,tuint2* result){
+  TSortData<tuint2>(size,data,result);
+}
 
 //==============================================================================
 /// Ordena vector de datos en funcion del Index[] calculado previamente.
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
-void JRadixSort::SortData(unsigned size,const tfloat2 *data,tfloat2 *result){ TSortData<tfloat2>(size,data,result); }
+void JRadixSort::SortData(unsigned size,const tfloat2* data,tfloat2* result){
+  TSortData<tfloat2>(size,data,result);
+}
 
 //==============================================================================
 /// Ordena vector de datos en funcion del Index[] calculado previamente.
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
-void JRadixSort::SortData(unsigned size,const tfloat3 *data,tfloat3 *result){ TSortData<tfloat3>(size,data,result); }
+void JRadixSort::SortData(unsigned size,const tfloat3* data,tfloat3* result){
+  TSortData<tfloat3>(size,data,result);
+}
 
 //==============================================================================
 /// Ordena vector de datos en funcion del Index[] calculado previamente.
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
-void JRadixSort::SortData(unsigned size,const tfloat4 *data,tfloat4 *result){ TSortData<tfloat4>(size,data,result); }
+void JRadixSort::SortData(unsigned size,const tfloat4* data,tfloat4* result){
+  TSortData<tfloat4>(size,data,result);
+}
 
 //==============================================================================
 /// Ordena vector de datos en funcion del Index[] calculado previamente.
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
-void JRadixSort::SortData(unsigned size,const tdouble3 *data,tdouble3 *result){ TSortData<tdouble3>(size,data,result); }
+void JRadixSort::SortData(unsigned size,const tdouble3* data,tdouble3* result){
+  TSortData<tdouble3>(size,data,result);
+}
 
 //==============================================================================
 /// Ordena vector de datos en funcion del Index[] calculado previamente.
 /// Reorders data arrays as a function of the previously calculated Index[].
 //==============================================================================
-void JRadixSort::SortData(unsigned size,const tdouble2 *data,tdouble2 *result){ TSortData<tdouble2>(size,data,result); }
+void JRadixSort::SortData(unsigned size,const tdouble2* data,tdouble2* result){
+  TSortData<tdouble2>(size,data,result);
+}
 
 //==============================================================================
 /// Comprueba ordenacion de datos.

@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -102,7 +102,9 @@ void JCaseCtes::LoadDefault(){
 //==============================================================================
 /// Reads constants auto for definition of the case of xml node.
 //==============================================================================
-void JCaseCtes::ReadXmlElementAuto(JXml *sxml,TiXmlElement* node,bool optional,std::string name,double &value,bool &valueauto){
+void JCaseCtes::ReadXmlElementAuto(JXml* sxml,TiXmlElement* node,bool optional
+  ,std::string name,double& value,bool& valueauto)
+{
   TiXmlElement* xele=sxml->GetFirstElement(node,name,optional);
   if(xele){
     value=sxml->GetAttributeDouble(xele,"value");
@@ -113,7 +115,7 @@ void JCaseCtes::ReadXmlElementAuto(JXml *sxml,TiXmlElement* node,bool optional,s
 //==============================================================================
 /// Reads constants for definition of the case of xml node.
 //==============================================================================
-void JCaseCtes::ReadXmlDef(JXml *sxml,TiXmlElement* node){
+void JCaseCtes::ReadXmlDef(JXml* sxml,TiXmlElement* node){
   TiXmlElement* lattice=sxml->GetFirstElement(node,"lattice",true);
   SetLatticeBound(lattice? sxml->GetAttributeInt(lattice,"bound")==1: true);
   SetLatticeFluid(lattice? sxml->GetAttributeInt(lattice,"fluid")==1: true);
@@ -146,7 +148,10 @@ void JCaseCtes::ReadXmlDef(JXml *sxml,TiXmlElement* node){
 //==============================================================================
 /// Writes constants auto for definition of the case of xml node.
 //==============================================================================
-void JCaseCtes::WriteXmlElementAuto(JXml *sxml,TiXmlElement* node,std::string name,double value,bool valueauto,std::string comment,std::string unitscomment)const{
+void JCaseCtes::WriteXmlElementAuto(JXml* sxml,TiXmlElement* node
+  ,std::string name,double value,bool valueauto,std::string comment
+  ,std::string unitscomment)const
+{
   TiXmlElement xele(name.c_str());
   JXml::AddAttribute(&xele,"value",value); 
   JXml::AddAttribute(&xele,"auto",valueauto);
@@ -159,7 +164,9 @@ void JCaseCtes::WriteXmlElementAuto(JXml *sxml,TiXmlElement* node,std::string na
 //==============================================================================
 /// Writes constants with comment.
 //==============================================================================
-void JCaseCtes::WriteXmlElementComment(TiXmlElement* ele,std::string comment,std::string unitscomment)const{
+void JCaseCtes::WriteXmlElementComment(TiXmlElement* ele,std::string comment
+  ,std::string unitscomment)const
+{
   if(!comment.empty())JXml::AddAttribute(ele,"comment",comment);
   if(!unitscomment.empty())JXml::AddAttribute(ele,"units_comment",unitscomment);
 }
@@ -167,7 +174,7 @@ void JCaseCtes::WriteXmlElementComment(TiXmlElement* ele,std::string comment,std
 //==============================================================================
 /// Writes constants for definition of the case of xml node.
 //==============================================================================
-void JCaseCtes::WriteXmlDef(JXml *sxml,TiXmlElement* node,bool svtemplate)const{
+void JCaseCtes::WriteXmlDef(JXml* sxml,TiXmlElement* node,bool svtemplate)const{
   if(svtemplate || !GetLatticeBound() || !GetLatticeFluid()){
     TiXmlElement lattice("lattice");
     JXml::AddAttribute(&lattice,"bound",GetLatticeBound());
@@ -198,7 +205,7 @@ void JCaseCtes::WriteXmlDef(JXml *sxml,TiXmlElement* node,bool svtemplate)const{
 //==============================================================================
 /// Reads constants for execution of the case of xml node.
 //==============================================================================
-void JCaseCtes::ReadXmlRun(const JXml *sxml,TiXmlElement* node){
+void JCaseCtes::ReadXmlRun(const JXml* sxml,TiXmlElement* node){
   const bool data2d=sxml->ReadElementBool(node,"data2d","value");
   const double data2dposy=(data2d? sxml->ReadElementDouble(node,"data2dposy","value"): 0);
   SetData2D(data2d,data2dposy);
@@ -217,7 +224,7 @@ void JCaseCtes::ReadXmlRun(const JXml *sxml,TiXmlElement* node){
 //==============================================================================
 /// Writes constants for execution of the case of xml node.
 //==============================================================================
-void JCaseCtes::WriteXmlRun(JXml *sxml,TiXmlElement* node)const{
+void JCaseCtes::WriteXmlRun(JXml* sxml,TiXmlElement* node)const{
   if(Data2DDefined){
     WriteXmlElementComment(JXml::AddElementAttrib(node,"data2d","value",GetData2D()));
     if(GetData2D())WriteXmlElementComment(JXml::AddElementAttrib(node,"data2dposy","value",GetData2DPosY()),"","metres (m)");
@@ -252,7 +259,7 @@ void JCaseCtes::WriteXmlRun(JXml *sxml,TiXmlElement* node)const{
 //==============================================================================
 /// Loads constants for execution of the case of xml node.
 //==============================================================================
-void JCaseCtes::LoadXmlDef(JXml *sxml,const std::string &place){
+void JCaseCtes::LoadXmlDef(JXml* sxml,const std::string& place){
   Reset();
   TiXmlNode* node=sxml->GetNode(place,false);
   if(!node)Run_Exceptioon(std::string("The item is not found \'")+place+"\'.");
@@ -262,14 +269,16 @@ void JCaseCtes::LoadXmlDef(JXml *sxml,const std::string &place){
 //==============================================================================
 /// Stores constants for execution of the case of xml node.
 //==============================================================================
-void JCaseCtes::SaveXmlDef(JXml *sxml,const std::string &place,bool svtemplate)const{
+void JCaseCtes::SaveXmlDef(JXml* sxml,const std::string& place
+  ,bool svtemplate)const
+{
   WriteXmlDef(sxml,sxml->GetNode(place,true)->ToElement(),svtemplate);
 }
 
 //==============================================================================
 /// Loads constants for execution of the case of xml node.
 //==============================================================================
-void JCaseCtes::LoadXmlRun(const JXml *sxml,const std::string &place){
+void JCaseCtes::LoadXmlRun(const JXml* sxml,const std::string& place){
   Reset();
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(std::string("The item is not found \'")+place+"\'.");
@@ -279,12 +288,12 @@ void JCaseCtes::LoadXmlRun(const JXml *sxml,const std::string &place){
 //==============================================================================
 /// Stores constants for execution of the case of xml node.
 //==============================================================================
-void JCaseCtes::SaveXmlRun(JXml *sxml,const std::string &place)const{
+void JCaseCtes::SaveXmlRun(JXml* sxml,const std::string& place)const{
   WriteXmlRun(sxml,sxml->GetNode(place,true)->ToElement());
 }
 
 //==============================================================================
-/// Returns final H value accoding to current configuration.
+/// Returns final H value according to current configuration.
 //==============================================================================
 double JCaseCtes::ComputeFinalH(bool data2d,double dp)const{
   double coefh=GetCoefH();

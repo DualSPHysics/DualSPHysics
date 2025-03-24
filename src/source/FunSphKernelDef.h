@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -45,7 +45,7 @@ typedef struct {
 ///Structure with constants for the Wendland kernel.
 typedef struct {
   float awen;  ///<Constant to compute wab.
-  float bwen;  ///<Constant to compute fac (kernel derivative).
+  float bwenh; ///<Constant to compute fac (kernel derivative).
 }StKWendlandCte;
 
 }

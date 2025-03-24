@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -40,7 +40,7 @@ JMotionListData::JMotionListData(){
 //==============================================================================
 // Anota unico movimiento simple.
 //==============================================================================
-void JMotionListData::Sp_Movedt(const tdouble3 &mvsimple,double dt){
+void JMotionListData::Sp_Movedt(const tdouble3& mvsimple,double dt){
   Active=true;
   TypeSimple=true;
   MvSimple1=mvsimple;
@@ -52,7 +52,7 @@ void JMotionListData::Sp_Movedt(const tdouble3 &mvsimple,double dt){
 //==============================================================================
 // Anota unico movimiento con matriz.
 //==============================================================================
-void JMotionListData::Sp_Movedt(const tmatrix4d &mvmatrix,double dt){
+void JMotionListData::Sp_Movedt(const tmatrix4d& mvmatrix,double dt){
   Active=true;
   TypeSimple=false;
   MvMatrix1=mvmatrix;
@@ -62,7 +62,7 @@ void JMotionListData::Sp_Movedt(const tmatrix4d &mvmatrix,double dt){
 //==============================================================================
 // Anota primer movimiento simple.
 //==============================================================================
-void JMotionListData::Ace2_Move1dt(const tdouble3 &mvsimple){
+void JMotionListData::Ace2_Move1dt(const tdouble3& mvsimple){
   Active=true;
   TypeSimple=true;
   MvSimple1=mvsimple;
@@ -72,7 +72,7 @@ void JMotionListData::Ace2_Move1dt(const tdouble3 &mvsimple){
 //==============================================================================
 // Anota segundo movimiento simple.
 //==============================================================================
-void JMotionListData::Ace2_Move2dt(const tdouble3 &mvsimple){
+void JMotionListData::Ace2_Move2dt(const tdouble3& mvsimple){
   if(!Active)Ace2_Move1dt(TDouble3(0));
   if(TypeSimple)MvSimple2=mvsimple;
   else{
@@ -85,7 +85,7 @@ void JMotionListData::Ace2_Move2dt(const tdouble3 &mvsimple){
 //==============================================================================
 // Anota primer movimiento con matriz.
 //==============================================================================
-void JMotionListData::Ace2_Move1dt(const tmatrix4d &mvmatrix){
+void JMotionListData::Ace2_Move1dt(const tmatrix4d& mvmatrix){
   Active=true;
   TypeSimple=false;
   MvMatrix1=mvmatrix;
@@ -95,7 +95,7 @@ void JMotionListData::Ace2_Move1dt(const tmatrix4d &mvmatrix){
 //==============================================================================
 // Anota segundo movimiento con matriz.
 //==============================================================================
-void JMotionListData::Ace2_Move2dt(const tmatrix4d &mvmatrix){
+void JMotionListData::Ace2_Move2dt(const tmatrix4d& mvmatrix){
   if(!Active)Ace2_Move1dt(TMatrix4d());
   if(TypeSimple){
     TypeSimple=false;
@@ -120,11 +120,13 @@ void JMotionListData::Ace2_PosMotion(double dt){
 //==============================================================================
 /// Returns data of one moving object. Returns true when the motion is active.
 //==============================================================================
-bool JMotionListData::GetData(bool &typesimple,tdouble3 &simplemov,tdouble3 &simplevel
-  ,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2)const
+bool JMotionListData::GetData(bool& typesimple,tdouble3& simplemov
+  ,tdouble3& simplevel,tdouble3& simpleace,tmatrix4d& matmov
+  ,tmatrix4d& matmov2)const
 {
   if(Active){
-    if(typesimple=TypeSimple){
+    typesimple=TypeSimple;
+    if(typesimple){
       simplemov=MvSimple1;
       simplevel=VelSimple;
       simpleace=AceSimple;
@@ -140,10 +142,12 @@ bool JMotionListData::GetData(bool &typesimple,tdouble3 &simplemov,tdouble3 &sim
 //==============================================================================
 /// Returns data of one moving object. Returns true when the motion is active.
 //==============================================================================
-bool JMotionListData::GetData(bool &typesimple,tdouble3 &simplemov,tmatrix4d &matmov)const
+bool JMotionListData::GetData(bool& typesimple,tdouble3& simplemov
+  ,tmatrix4d& matmov)const
 {
   if(Active){
-    if(typesimple=TypeSimple){
+    typesimple=TypeSimple;
+    if(typesimple){
       simplemov=MvSimple1;
     }
     else{
@@ -177,8 +181,9 @@ JMotionList::~JMotionList(){
 //==============================================================================
 /// Returns data of one moving object. Returns true when the motion is active.
 //==============================================================================
-bool JMotionList::GetData(unsigned ref,bool &typesimple,tdouble3 &simplemov
-  ,tdouble3 &simplevel,tdouble3 &simpleace,tmatrix4d &matmov,tmatrix4d &matmov2)const
+bool JMotionList::GetData(unsigned ref,bool& typesimple,tdouble3& simplemov
+  ,tdouble3& simplevel,tdouble3& simpleace,tmatrix4d& matmov
+  ,tmatrix4d& matmov2)const
 {
   if(ref>=Nref)Run_Exceptioon("Reference is invalid.");
   return(MotionData[ref].GetData(typesimple,simplemov,simplevel,simpleace,matmov,matmov2));
@@ -187,7 +192,8 @@ bool JMotionList::GetData(unsigned ref,bool &typesimple,tdouble3 &simplemov
 //==============================================================================
 /// Returns data of one moving object. Returns true when the motion is active.
 //==============================================================================
-bool JMotionList::GetData(unsigned ref,bool &typesimple,tdouble3 &simplemov,tmatrix4d &matmov)const
+bool JMotionList::GetData(unsigned ref,bool& typesimple,tdouble3& simplemov
+  ,tmatrix4d& matmov)const
 {
   if(ref>=Nref)Run_Exceptioon("Reference is invalid.");
   return(MotionData[ref].GetData(typesimple,simplemov,matmov));

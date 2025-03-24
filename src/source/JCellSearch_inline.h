@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -30,7 +30,7 @@ namespace nsearch{
 /// Return initial data for neighborhood search according to cell number of particle.
 /// Devuelve datos iniciales para busqueda de vecinos segun numero de celda de particula.
 //==============================================================================
-inline StNgSearch Init(unsigned rcell,bool boundp2,const StDivDataCpu &dvd){
+inline StNgSearch Init(unsigned rcell,bool boundp2,const StDivDataCpu& dvd){
   //-Get cell coordinates of cell number.
   const int cx=DCEL_Cellx(dvd.domcellcode,rcell)-dvd.cellzero.x;
   const int cy=DCEL_Celly(dvd.domcellcode,rcell)-dvd.cellzero.y;
@@ -51,7 +51,7 @@ inline StNgSearch Init(unsigned rcell,bool boundp2,const StDivDataCpu &dvd){
 /// Return initial data for neighborhood search according to position.
 /// Devuelve datos iniciales para busqueda de vecinos segun posicion.
 //==============================================================================
-inline StNgSearch Init(const tdouble3 &pos,bool boundp2,const StDivDataCpu &dvd){
+inline StNgSearch Init(const tdouble3& pos,bool boundp2,const StDivDataCpu& dvd){
   //-Get cell coordinates of position pos.
   const int cx=int((pos.x-dvd.domposmin.x)/dvd.scell)-dvd.cellzero.x;
   const int cy=int((pos.y-dvd.domposmin.y)/dvd.scell)-dvd.cellzero.y;
@@ -72,7 +72,9 @@ inline StNgSearch Init(const tdouble3 &pos,bool boundp2,const StDivDataCpu &dvd)
 /// Returns range of particles for neighborhood search.
 /// Devuelve rango de particulas para busqueda de vecinos.
 //==============================================================================
-inline tuint2 ParticleRange(int y,int z,const StNgSearch &ngs,const StDivDataCpu &dvd){
+inline tuint2 ParticleRange(int y,int z,const StNgSearch& ngs
+  ,const StDivDataCpu& dvd)
+{
   const int v=dvd.nc.w*z + dvd.nc.x*y + ngs.cellinit;
   const unsigned pini=dvd.begincell[v+ngs.cxini];
   const unsigned pfin=dvd.begincell[v+ngs.cxfin];
@@ -82,7 +84,7 @@ inline tuint2 ParticleRange(int y,int z,const StNgSearch &ngs,const StDivDataCpu
 //==============================================================================
 /// Returns distance between particles 1 and 2 (drx,dry,drz and rr2).
 //==============================================================================
-inline tfloat4 Distances(const tdouble3 &pos1,const tdouble3 &pos2){
+inline tfloat4 Distances(const tdouble3& pos1,const tdouble3& pos2){
   tfloat4 dr;
   dr.x=float(pos1.x-pos2.x);
   dr.y=float(pos1.y-pos2.y);
@@ -94,7 +96,7 @@ inline tfloat4 Distances(const tdouble3 &pos1,const tdouble3 &pos2){
 //==============================================================================
 /// Returns distance squared between particles 1 and 2 (rr2).
 //==============================================================================
-inline float Distance2(const tdouble3 &pos1,const tdouble3 &pos2){
+inline float Distance2(const tdouble3& pos1,const tdouble3& pos2){
   const float drx=float(pos1.x-pos2.x);
   const float dry=float(pos1.y-pos2.y);
   const float drz=float(pos1.z-pos2.z);

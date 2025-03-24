@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -64,7 +64,7 @@ void JDsMotion::Reset(){
 //==============================================================================
 /// Configures moving objects.
 //==============================================================================
-void JDsMotion::ConfigObjects(const JCaseParts *parts){
+void JDsMotion::ConfigObjects(const JCaseParts* parts){
   ObjCount=parts->CountBlocks(TpPartMoving);
   if(ObjCount>CODE_MKRANGEMAX)Run_Exceptioon("The number of mobile objects exceeds the maximum.");
   //-Prepares memory.
@@ -73,7 +73,7 @@ void JDsMotion::ConfigObjects(const JCaseParts *parts){
   //-Loads configuration.
   unsigned cmot=0;
   for(unsigned c=0;c<parts->CountBlocks();c++){
-    const JCasePartBlock &block=parts->GetBlock(c);
+    const JCasePartBlock& block=parts->GetBlock(c);
     if(block.Type==TpPartMoving){
       if(cmot>=ObjCount)Run_Exceptioon("The number of mobile objects exceeds the expected maximum.");
       //:printf("block[%2d]=%d -> %d\n",c,block.GetBegin(),block.GetCount());
@@ -91,8 +91,8 @@ void JDsMotion::ConfigObjects(const JCaseParts *parts){
 //==============================================================================
 /// Initialisation of configuration for moving objects.
 //==============================================================================
-void JDsMotion::Init(const JCaseParts *parts,JXml *jxml,const std::string &path
-  ,const std::string &dirdata)
+void JDsMotion::Init(const JCaseParts* parts,JXml* jxml,const std::string& path
+  ,const std::string& dirdata)
 {
   Reset();
   //-Configures moving objects.
@@ -106,7 +106,7 @@ void JDsMotion::Init(const JCaseParts *parts,JXml *jxml,const std::string &path
 }
 
 //==============================================================================
-/// Returns Idx of requested moving object accoring to MkBound.
+/// Returns Idx of requested moving object according to MkBound.
 /// Returns UINT_MAX when it was not found.
 //==============================================================================
 unsigned JDsMotion::GetObjIdxByMkBound(word mkbound)const{
@@ -124,7 +124,7 @@ bool JDsMotion::ProcesTime(TpMotionMode mode,double timestep,double dt){
   if(mode==MOMT_Ace2dt)ActiveMotion=Mot->ProcesTimeAce(timestep+TimeMod,dt);
   //-Load motion data in ObjMotion[].
   if(true || ActiveMotion)for(unsigned ref=0;ref<ObjCount;ref++){
-    StMotionData &m=ObjMotion[ref];
+    StMotionData& m=ObjMotion[ref];
     bool typelinear;
     bool active=Mot->ProcesTimeGetData(ref,typelinear,m.linmov,m.linvel,m.linace,m.matmov,m.matmov2);
     if(active){
@@ -137,7 +137,7 @@ bool JDsMotion::ProcesTime(TpMotionMode mode,double timestep,double dt){
 }
 
 //==============================================================================
-/// Defines no motion for indicated object.
+/// Returns motion data for indicated object.
 //==============================================================================
 const StMotionData& JDsMotion::GetMotionData(unsigned idx)const{
   if(idx<GetNumObjects())return(ObjMotion[idx]);
@@ -149,7 +149,7 @@ const StMotionData& JDsMotion::GetMotionData(unsigned idx)const{
 //==============================================================================
 void JDsMotion::SetMotionData(const StMotionData& d){
   if(d.ref>=GetNumObjects())Run_Exceptioon("Moving object does not exist.");
-  StMotionData &m=ObjMotion[d.ref];
+  StMotionData& m=ObjMotion[d.ref];
   m.type=d.type;
   if(m.type==MOTT_Linear){
     m.linmov=d.linmov;
@@ -164,7 +164,7 @@ void JDsMotion::SetMotionData(const StMotionData& d){
 //==============================================================================
 void JDsMotion::SetMotionDataAce(const StMotionData& d){
   SetMotionData(d);
-  StMotionData &m=ObjMotion[d.ref];
+  StMotionData& m=ObjMotion[d.ref];
   m.linace=d.linace;
   m.matmov2=d.matmov2;
 }
@@ -179,7 +179,7 @@ void JDsMotion::SetMotionDataNone(unsigned idx){
 //==============================================================================
 /// Defines linear motion for indicated object.
 //==============================================================================
-void JDsMotion::SetMotionDataLin(unsigned idx,const tdouble3 &linmov){
+void JDsMotion::SetMotionDataLin(unsigned idx,const tdouble3& linmov){
   if(idx<GetNumObjects()){
     //printf("JDsMotion::SetMotionData-> idx:%d tp:%d  motion:(%g,%g,%g)\n",idx,tpmov,simplemov.x,simplemov.y,simplemov.z);
     ObjMotion[idx].type=MOTT_Linear;
@@ -193,7 +193,7 @@ void JDsMotion::SetMotionDataLin(unsigned idx,const tdouble3 &linmov){
 //==============================================================================
 /// Defines matrix motion for indicated object.
 //==============================================================================
-void JDsMotion::SetMotionDataMat(unsigned idx,const tmatrix4d &matmov){
+void JDsMotion::SetMotionDataMat(unsigned idx,const tmatrix4d& matmov){
   if(idx<GetNumObjects()){
     //printf("JDsMotion::SetMotionData-> idx:%d tp:%d  motion:(%g,%g,%g)\n",idx,tpmov,simplemov.x,simplemov.y,simplemov.z);
     ObjMotion[idx].type=MOTT_Matrix;

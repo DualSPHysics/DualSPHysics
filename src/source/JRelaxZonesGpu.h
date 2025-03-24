@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -49,7 +49,7 @@ public:
     ,double wpf,double cta,double depth,double framp
     ,double ct2,double sinhkld4
     ,double ctd,double ctd2,unsigned fluidbeginidp
-    ,const tdouble2 *posxy,const double *posz,const unsigned *idp,tfloat4 *velrhop);
+    ,const tdouble2* posxy,const double* posz,const unsigned* idp,tfloat4* velrhop);
 
 };
 
@@ -63,10 +63,10 @@ class JRelaxZoneSpectrumGpu : protected JObject
 {
 private:
   bool WavesOnGpu;
-  double *WaveKlg;     //-TWOPI / Wave length [WavesCount].
-  double *WaveAmpg;    //-Amplitud [WavesCount].
-  double *WaveFangg;   //-Frecuencia angular [WavesCount]. (WaveFang=Freq*TWOPI)
-  double *WavePhaseg;  //-Initial phase [WavesCount].
+  double* WaveKlg;     //-TWOPI / Wave length [WavesCount].
+  double* WaveAmpg;    //-Amplitud [WavesCount].
+  double* WaveFangg;   //-Frecuencia angular [WavesCount]. (WaveFang=Freq*TWOPI)
+  double* WavePhaseg;  //-Initial phase [WavesCount].
 
   llong MemGpuFixed;  
   void AllocMemoryGpu(unsigned wavecount);
@@ -78,7 +78,7 @@ public:
   inline bool GetWavesOnGpu()const{ return(WavesOnGpu); }
 
   void PrepareWaveDataGpu(unsigned wavecount
-    ,const double *kl,const double *amp,const double *fang,const double *phase);
+    ,const double* kl,const double* amp,const double* fang,const double* phase);
 
   inline llong GetAllocMemoryGpu()const{ return(MemGpuFixed); }
 
@@ -87,7 +87,7 @@ public:
     ,double falpha,double fbeta,double fsub,double fdiv
     ,double timewave,double swl,double depth,double framp,unsigned wavecount
     ,unsigned fluidbeginidp
-    ,const tdouble2 *posxy,const double *posz,const unsigned *idp,tfloat4 *velrhop
+    ,const tdouble2* posxy,const double* posz,const unsigned* idp,tfloat4* velrhop
     ,bool subdrift,double fun,double ctd,double ctd2,double ctd_2,double ctd2_2);
 
 };
@@ -102,8 +102,8 @@ class JRelaxZonesExternalGpu : protected JObject
 {
 private:
   bool GpuReady;
-  double *VelXg;
-  double *VelZg;
+  double* VelXg;
+  double* VelZg;
 
   llong MemGpuFixed;  
   void AllocMemoryGpu(unsigned size,bool loadvelz);
@@ -113,7 +113,7 @@ public:
   ~JRelaxZonesExternalGpu();
   void FreeMemoryGpu();
 
-  void PrepareDataGpu(unsigned size,bool loadvelz,const double *velx,const double *velz);
+  void PrepareDataGpu(unsigned size,bool loadvelz,const double* velx,const double* velz);
 
   inline llong GetAllocMemoryGpu()const{ return(MemGpuFixed); }
 
@@ -124,7 +124,7 @@ public:
     ,double dpx,double dpy,double dpz
     ,unsigned npx1,unsigned npy1,unsigned npz1
     ,unsigned fluidbeginidp
-    ,const tdouble2 *posxy,const double *posz,const unsigned *idp,tfloat4 *velrhop
+    ,const tdouble2* posxy,const double* posz,const unsigned* idp,tfloat4* velrhop
     ,bool subdrift,double fun,double ctd,double ctd2,double ctd_2,double ctd2_2,double bottom);
 
 };
@@ -142,11 +142,11 @@ public:
   inline llong GetAllocMemoryGpu()const{ return(0); }
 
   void SetFluidVelUniform(unsigned n,unsigned pini
-    ,const tfloat3 &vt,const tfloat4 &cenpla
-    ,const tfloat4 &dompla1,const tfloat4 &dompla2,const tfloat4 &dompla3
+    ,const tfloat3& vt,const tfloat4& cenpla
+    ,const tfloat4& dompla1,const tfloat4& dompla2,const tfloat4& dompla3
     ,const float domsize1,const float domsize2,const float domsize3,float widthhalf
     ,float coeff,double falpha,double fbeta,double fsub,double fdiv,unsigned fluidbeginidp
-    ,const tdouble2 *posxy,const double *posz,const unsigned *idp,tfloat4 *velrhop);
+    ,const tdouble2* posxy,const double* posz,const unsigned* idp,tfloat4* velrhop);
 
 };
 
@@ -182,7 +182,8 @@ public:
     ,const tfloat4& cenpla,const tfloat4& dompla1
     ,const tfloat4& dompla2,const tfloat4& dompla3
     ,const float domsize1,const float domsize2,const float domsize3
-    ,float widthhalf,float coeff,double falpha,double fbeta,double fsub
+    ,const tfloat3& borderdmp,float widthhalf
+    ,float coeff,double falpha,double fbeta,double fsub
     ,double fdiv,unsigned fluidbeginidp
     ,const tdouble2* posxy,const double* posz,const unsigned* idp
     ,byte* rzid,float* rzfactor);

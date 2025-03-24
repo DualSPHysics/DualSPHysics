@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -37,7 +37,7 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JDsPartsInit::JDsPartsInit(bool simulate2d,double simulate2dposy,double dp
-  ,const JSphMk* mkinfo,unsigned np,const tdouble3 *pos,const typecode *code)
+  ,const JSphMk* mkinfo,unsigned np,const tdouble3* pos,const typecode* code)
   :Simulate2D(simulate2d),Simulate2DPosY(simulate2dposy),Dp(dp)
 {
   ClassName="JDsPartsInit";
@@ -75,7 +75,9 @@ void JDsPartsInit::FreeParticleData(){
 //==============================================================================
 /// Allocates dynamic memory and loads particle data.
 //==============================================================================
-void JDsPartsInit::LoadParticleData(unsigned np,const tdouble3 *pos,const typecode *code){
+void JDsPartsInit::LoadParticleData(unsigned np,const tdouble3* pos
+  ,const typecode* code)
+{
   FreeParticleData();
   Np=np;
   try{

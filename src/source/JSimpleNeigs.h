@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -28,6 +28,7 @@
 //:#   aceptable. (15-09-2018)
 //:# - Mejora la gestion de excepciones. (06-05-2020)
 //:# - Nuevo metodo NearbyPositionsLt(). (30-10-2020)
+//:# - Nuevo metodo NearbyPositionsColXY(). (27-07-2024)
 //:#############################################################################
 
 #include "JObject.h"
@@ -44,26 +45,30 @@ class JSimpleNeigs : protected JObject
 {
 protected:
   const unsigned Np;
-  const tdouble3 *Pos;
+  const tdouble3* Pos;
   const double Scell;
 
   tdouble3 PosMin;
   tdouble3 PosMax;
   int Ncx,Ncy,Ncz,Nsheet,Nct;
 
-  unsigned *PosInCell; //-Positions in cells [Np].
-  unsigned *BeginCell; //-First positions in each cell [Nct+1].
+  unsigned* PosInCell; //-Positions in cells [Np].
+  unsigned* BeginCell; //-First positions in each cell [Nct+1].
 
   unsigned CountSelect;
   unsigned SizeSelect;
-  unsigned *SelectPos; //-Selected positions [SizeSelect].
+  unsigned* SelectPos; //-Selected positions [SizeSelect].
 
   void DefineMapCells();
   void CreateMapCells();
 
-  tint3 GetCell3(const tdouble3 &ps)const{ return(TInt3(int((ps.x-PosMin.x)/Scell),int((ps.y-PosMin.y)/Scell),int((ps.z-PosMin.z)/Scell))); }
-  unsigned GetCell(const tint3 &cel)const{ return(cel.x<0 || cel.y<0 || cel.z<0 || cel.x>=Ncx || cel.y>=Ncy || cel.z>=Ncz? UINT_MAX: unsigned(cel.x+cel.y*Ncx+cel.z*Nsheet)); }
-  void GetNearbyCells(const tdouble3 &ps,double dist,tint3 &celmin,tint3 &celmax)const;
+  tint3 GetCell3(const tdouble3& ps)const{ 
+    return(TInt3(int((ps.x-PosMin.x)/Scell),int((ps.y-PosMin.y)/Scell),int((ps.z-PosMin.z)/Scell)));
+  }
+  unsigned GetCell(const tint3& cel)const{ 
+    return(cel.x<0 || cel.y<0 || cel.z<0 || cel.x>=Ncx || cel.y>=Ncy || cel.z>=Ncz? UINT_MAX: unsigned(cel.x+cel.y*Ncx+cel.z*Nsheet));
+  }
+  void GetNearbyCells(const tdouble3& ps,double dist,tint3& celmin,tint3& celmax)const;
   void SelectAdd(unsigned p);
 
 public:
@@ -72,8 +77,11 @@ public:
   void Reset();
   unsigned GetAllocMemory()const;
 
-  unsigned NearbyPositions(const tdouble3 &ps,unsigned pignore,double dist);
-  unsigned NearbyPositionsLt(const tdouble3 &ps,unsigned pignore,double dist,std::vector<unsigned> &vsel)const;
+  unsigned NearbyPositions(const tdouble3& ps,unsigned pignore,double dist);
+  unsigned NearbyPositionsLt(const tdouble3& ps,unsigned pignore,double dist
+    ,std::vector<unsigned>& vsel)const;
+  unsigned NearbyPositionsColXY(const tdouble3& ps,unsigned pignore,double dist
+    ,std::vector<unsigned>& vsel)const;
 
   unsigned GetCountSelect()const{ return(CountSelect); }
   const unsigned* GetSelectPos()const{ return(SelectPos); }

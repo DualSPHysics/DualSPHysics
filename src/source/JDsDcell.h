@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2021 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -16,11 +16,12 @@
  You should have received a copy of the GNU Lesser General Public License along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-//:#############################################################################
-//:# Cambios:
-//:# =========
-//:# - Implementacion de funciones basicas para uso de dcellcode. (09-09-2021)
-//:#############################################################################
+//#############################################################################
+//# Cambios:
+//# =========
+//# - Implementacion de funciones basicas para uso de dcellcode. (09-09-2021)
+//# - Minor coding style changes. (28-08-2023)
+//#############################################################################
 
 /// \file JDsDcell.h \brief Declares the class \ref JDsDcell.
 
@@ -39,9 +40,9 @@ class JDsDcell
 {
 public:
   static unsigned    CalcBitsValue(unsigned v,unsigned minbits=1);
-  static tuint3      CalcCellDistribution(const tuint3 &ncells,const unsigned maxbits=32);
-  static unsigned    CalcCellCode(const tuint3 &ncells);
-  static bool        InvalidCellCode(unsigned dcc,const tuint3 &ncells);
+  static tuint3      CalcCellDistribution(const tuint3& ncells,const unsigned maxbits=32);
+  static unsigned    CalcCellCode(const tuint3& ncells);
+  static bool        InvalidCellCode(unsigned dcc,const tuint3& ncells);
   static std::string DcellCodeStr(unsigned dcc);
   static void        PrintDcellCodeInfo(unsigned dcc);
 };

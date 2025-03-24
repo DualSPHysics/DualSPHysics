@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -49,11 +49,12 @@ using namespace std;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphInOutZone::JSphInOutZone(bool cpu,unsigned idzone,const StCteSph &csp
-  ,const tdouble3 &posmin,const tdouble3 &posmax
-  ,const JXml *sxml,TiXmlElement* ele,const std::string &dirdatafile
-  ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem)
-  :Log(AppInfo.LogPtr()),Cpu(cpu),IdZone(idzone),CSP(csp),MapRealPosMin(posmin),MapRealPosMax(posmax)
+JSphInOutZone::JSphInOutZone(bool cpu,unsigned idzone,const StCteSph& csp
+  ,const tdouble3& posmin,const tdouble3& posmax
+  ,const JXml* sxml,TiXmlElement* ele,const std::string& dirdatafile
+  ,const JDsPartsInit* partsdata,JGaugeSystem* gaugesystem)
+  :Log(AppInfo.LogPtr()),Cpu(cpu),IdZone(idzone),CSP(csp),MapRealPosMin(posmin)
+  ,MapRealPosMax(posmax)
 {
   ClassName="JSphInOutZone";
   Points=NULL;
@@ -86,11 +87,13 @@ void JSphInOutZone::Reset(){
   for(unsigned c=0;c<PTDOMSIZE;c++)PtDom[c]=TDouble3(DBL_MAX);
   BoxLimitMin=BoxLimitMax=TFloat3(FLT_MAX);
 
+  XmlShape="";
   Direction=PtPlane=TDouble3(0);
   Plane=TPlane3f(0);
   NptInit=NpartInit=0;
 
   VelMode=InVelM_Fixed;
+  VelProfile=InVelP_Uniform;
   delete InOutVel; InOutVel=NULL;
 
   ZsurfMode=InZsurf_Undefined;
@@ -104,7 +107,7 @@ void JSphInOutZone::Reset(){
 //==============================================================================
 /// Loads lines with configuration information.
 //==============================================================================
-void JSphInOutZone::GetConfig(std::vector<std::string> &lines)const{
+void JSphInOutZone::GetConfig(std::vector<std::string>& lines)const{
   const bool simulate2d=CSP.simulate2d;
   lines.push_back(fun::PrintStr("Zone type: %s",InOutVel->GetInletBehaviourName().c_str()));
   Points->GetConfig(lines);
@@ -112,8 +115,8 @@ void JSphInOutZone::GetConfig(std::vector<std::string> &lines)const{
   else          lines.push_back(fun::PrintStr("InOut Position: (%g,%g,%g)",PtPlane.x,PtPlane.y,PtPlane.z));
   if(simulate2d)lines.push_back(fun::PrintStr("InOut Direction(x,z): (%g,%g)",Direction.x,Direction.z));
   else          lines.push_back(fun::PrintStr("InOut Direction: (%g,%g,%g)",Direction.x,Direction.y,Direction.z));
-  lines.push_back(fun::PrintStr("InOut points: %u",NptInit));
-  lines.push_back(fun::PrintStr("Initial InOut particles: %u",NpartInit));
+  lines.push_back(fun::PrintStr("InOut points: %s",KINT(NptInit)));
+  lines.push_back(fun::PrintStr("Initial InOut particles: %s",KINT(NpartInit)));
   lines.push_back(fun::PrintStr("Layers: %u",Layers));
   lines.push_back(fun::PrintStr("Refilling mode: %s",(RefillingMode==InRefill_SimpleFull? "Simple-Full": (RefillingMode==InRefill_SimpleZsurf? "Simple-Zsurf": (RefillingMode==InRefill_Advanced? "Advanced": "???")))));
   lines.push_back(fun::PrintStr("Input treatment: %s",(InputMode==InInput_Free? "Free (no changes)": (InputMode==InInput_Convert? "Convert fluid": (InputMode==InInput_Remove? "Remove fluid": "???")))));
@@ -177,12 +180,15 @@ void JSphInOutZone::LoadDomain(){
 //==============================================================================
 /// Reads initial configuration in the XML node.
 //==============================================================================
-void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string &dirdatafile
-  ,const JDsPartsInit *partsdata,JGaugeSystem *gaugesystem)
+void JSphInOutZone::ReadXml(const JXml* sxml,TiXmlElement* ele
+  ,const std::string& dirdatafile,const JDsPartsInit* partsdata
+  ,JGaugeSystem* gaugesystem)
 {
   //-Checks old configuration.
-  if(sxml->ExistsElement(ele,"userefilling"))Run_ExceptioonFile(fun::PrintStr("Inlet/outlet zone %d: <userefilling> is not supported by current inlet/outlet version.",IdZone),sxml->ErrGetFileRow(ele,"userefilling"));
-  if(sxml->ExistsElement(ele,"convertfluid"))Run_ExceptioonFile(fun::PrintStr("Inlet/outlet zone %d: <convertfluid> is not supported by current inlet/outlet version.",IdZone),sxml->ErrGetFileRow(ele,"convertfluid"));
+  if(sxml->ExistsElement(ele,"userefilling")) Run_ExceptioonFile(fun::PrintStr(
+    "Inlet/outlet zone %d: <userefilling> is not supported by current inlet/outlet version.",IdZone),sxml->ErrGetFileRow(ele,"userefilling"));
+  if(sxml->ExistsElement(ele,"convertfluid"))Run_ExceptioonFile(fun::PrintStr(
+    "Inlet/outlet zone %d: <convertfluid> is not supported by current inlet/outlet version.",IdZone),sxml->ErrGetFileRow(ele,"convertfluid"));
   //-Checks element names.
   sxml->CheckElementNames(ele,true,"refilling inputtreatment layers zone2d zone3d imposevelocity imposerhop imposezsurf");
   //-Loads InputMode (InputTreatment).
@@ -207,11 +213,12 @@ void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string
   }
   //-Loads layers value.
   unsigned layers=sxml->ReadElementUnsigned(ele,"layers","value");
-  if(layers<1)sxml->ErrReadElement(ele,"layers",false,"Minumum number of layers is 1.");
+  if(layers<1)sxml->ErrReadElement(ele,"layers",false,"Minimum number of layers is 1.");
   if(layers>250)sxml->ErrReadElement(ele,"layers",false,"Maximum number of layers is 250.");
   Layers=byte(layers);
   //-Creates inlet points.
-  Points=new JSphInOutPoints(CSP.simulate2d,CSP.simulate2dposy,Layers,CSP.dp,0,MapRealPosMin,MapRealPosMax);
+  Points=new JSphInOutPoints(CSP.simulate2d,CSP.simulate2dposy,Layers,CSP.dp
+    ,0,MapRealPosMin,MapRealPosMax);
   if(CSP.simulate2d){
     TiXmlElement* zone2d=ele->FirstChildElement("zone2d"); 
     if(zone2d)Points->CreatePoints(sxml,zone2d,partsdata);
@@ -226,6 +233,7 @@ void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string
   LoadDomain();
 
   //-Obtains information inlet/outlet points.
+  XmlShape=Points->GetXmlShape();
   Direction=Points->GetDirection();
   PtPlane=PtDom[8];
   if(PtPlane==TDouble3(DBL_MAX))Run_Exceptioon("Reference point in inout plane is invalid.");
@@ -235,13 +243,18 @@ void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string
   //-Velocity configuration.
   InOutVel=new JSphInOutVel(Cpu,IdZone,CSP,Direction,PtPlane,Points->GetZonePosMin(),Points->GetZonePosMax());
   VelMode=InOutVel->ReadXml(sxml,ele,dirdatafile,gaugesystem,MapRealPosMin.y);
+  VelProfile=InOutVel->GetVelProfile();
+  if(VelProfile==InVelP_JetCircle){
+    if(XmlShape!="CIRCLE")Run_Exceptioon(fun::PrintStr("Inlet/outlet zone %d: The use JetCircle velocity mode is only supported by Circle shape definition.",IdZone));
+    InOutVel->ConfigCircleRadius(Points->GetCircleRadius());
+  }
 
   //-Z-surface configuration.
   InOutZsurf=new JSphInOutZsurf(Cpu,IdZone,CSP,Direction,Points->GetZonePosMin(),Points->GetZonePosMax());
   ZsurfMode=InOutZsurf->ReadXml(sxml,ele,dirdatafile,gaugesystem);
 
   //-Rhop configuration.
-  TiXmlElement *xele=ele->FirstChildElement("imposerhop");
+  TiXmlElement* xele=ele->FirstChildElement("imposerhop");
   if(xele){
     const unsigned mode=sxml->GetAttributeUint(xele,"mode",true);
     switch(mode){
@@ -265,9 +278,20 @@ void JSphInOutZone::ReadXml(const JXml *sxml,TiXmlElement* ele,const std::string
   else InOutZsurf->SetInitialPoints(Points->GetCount(),Points->GetPoints(),Points->GetPointsInit());
   NpartInit=Points->CountPointsInit()*Layers;
 
+  //-Check configuration for jet circle velocity.
+  if(VelMode==InVelM_Fixed && VelProfile==InVelP_JetCircle){
+    if(InOutVel->GetInletBehaviour()!=InVelB_Inlet)Run_Exceptioon(
+      fun::PrintStr("Inlet/outlet zone %d: The use JetCircle velocity mode is only supported by Inlet (velocity>0).",IdZone));
+    if(ZsurfMode!=InZsurf_Fixed && ZsurfMode!=InZsurf_Undefined)Run_Exceptioon(
+      fun::PrintStr("Inlet/outlet zone %d: The use JetCircle velocity mode is only supported by fixed or default zsurf configuration.",IdZone));
+    if(RhopMode!=InRhop_Constant)Run_Exceptioon(
+      fun::PrintStr("Inlet/outlet zone %d: The use JetCircle velocity mode is only supported by constant density configuration.",IdZone));
+  }
+
   //-Compute flow velocity factor.
   if(InOutVel->GetFlowActive()){
-    if(ZsurfMode!=InZsurf_Fixed)Run_Exceptioon(fun::PrintStr("Inlet/outlet zone %d: The use of flow velocity is only supported by fixed zsurf configuration.",IdZone));
+    if(ZsurfMode!=InZsurf_Fixed && ZsurfMode!=InZsurf_Undefined)
+      Run_Exceptioon(fun::PrintStr("Inlet/outlet zone %d: The use of flow velocity is only supported by fixed or default zsurf configuration.",IdZone));
     const unsigned nptok=InOutZsurf->ComputeActivePoints(Points->GetCount(),Points->GetPoints());
     InOutVel->ConfigFlowToVel(nptok);
   }
@@ -286,7 +310,8 @@ bool JSphInOutZone::Use_AwasVel()const{
 /// Returns a byte with information about VelMode, VelProfile and RhopMode.
 //==============================================================================
 byte JSphInOutZone::GetConfigZone()const{
-  const TpInVelProfile velprofile=InOutVel->GetVelProfile();
+  TpInVelProfile velprofile=InOutVel->GetVelProfile();
+  if(velprofile==InVelP_JetCircle)velprofile=InVelP_MASK;
   if((velprofile&InVelP_MASK)!=velprofile)Run_Exceptioon("VelProfile value is invalid to code using mask.");
   if((VelMode   &InVelM_MASK)!=VelMode   )Run_Exceptioon("VelMode value is invalid to code using mask.");
   if((RhopMode  &InRhop_MASK)!=RhopMode  )Run_Exceptioon("RhopMode value is invalid to code using mask.");
@@ -296,10 +321,10 @@ byte JSphInOutZone::GetConfigZone()const{
   ret|=byte(RhopMode);
   if(InputCheck)ret|=byte(CheckInput_MASK);
   //-Checks coded configuration.
-  TpInVelProfile vprof =GetConfigVelProfile(ret);
-  TpInVelMode    vmode =GetConfigVelMode(ret);
-  TpInRhopMode   rmode =GetConfigRhopMode(ret);
-  bool         checkf=GetConfigCheckInputDG(ret);
+  TpInVelProfile vprof=GetConfigVelProfile(ret);
+  TpInVelMode    vmode=GetConfigVelMode(ret);
+  TpInRhopMode   rmode=GetConfigRhopMode(ret);
+  bool          checkf=GetConfigCheckInputDG(ret);
   if(vprof!=velprofile || vmode!=VelMode || rmode!=RhopMode || checkf!=InputCheck)
     Run_Exceptioon("Coded configuration is not right.");
   return(ret);
@@ -318,21 +343,21 @@ byte JSphInOutZone::GetConfigUpdate()const{
 }
 
 //==============================================================================
-/// Loads positon of inlet/outlet points.
+/// Loads position of inlet/outlet points.
 //==============================================================================
-unsigned JSphInOutZone::LoadInletPoints(tdouble3 *pos){
-  const tdouble3 *ptpos=Points->GetPoints();
+unsigned JSphInOutZone::LoadInletPoints(tdouble3* pos){
+  const tdouble3* ptpos=Points->GetPoints();
   const tdouble3 dir=Direction*(CSP.dp/2);
   for(unsigned cp=0;cp<NptInit;cp++)pos[cp]=ptpos[cp]+dir;
   return(NptInit);
 }
 
 //==============================================================================
-/// Loads positon of initial inlet/outlet particles.
+/// Loads position of initial inlet/outlet particles.
 //==============================================================================
-void JSphInOutZone::LoadInitialParticles(unsigned npartinit,tdouble3 *pos){
-  const tdouble3 *ptpos=Points->GetPoints();
-  const byte *ptok=Points->GetPointsInit();
+void JSphInOutZone::LoadInitialParticles(unsigned npartinit,tdouble3* pos){
+  const tdouble3* ptpos=Points->GetPoints();
+  const byte* ptok=Points->GetPointsInit();
   unsigned p=0;
   for(unsigned layer=0;layer<Layers;layer++){
     const tdouble3 dir=Direction*(-CSP.dp*layer);
@@ -349,7 +374,9 @@ void JSphInOutZone::LoadInitialParticles(unsigned npartinit,tdouble3 *pos){
 //==============================================================================
 /// Returns velocity according profile configuration.
 //==============================================================================
-float JSphInOutZone::CalcVel(TpInVelProfile vprof,const tfloat4 &vdata,double posz){
+float JSphInOutZone::CalcVel(TpInVelProfile vprof,const tfloat4& vdata
+  ,double posz)
+{
   float vel=0;
   if(vprof==InVelP_Uniform)vel=vdata.x;
   else if(vprof==InVelP_Linear){
@@ -369,14 +396,15 @@ float JSphInOutZone::CalcVel(TpInVelProfile vprof,const tfloat4 &vdata,double po
 //==============================================================================
 /// Indicates if position is inside inlet zone using BoxLimitMin/Max.
 //==============================================================================
-bool JSphInOutZone::InZoneBox(const tfloat3 &ps)const{
-  return(BoxLimitMin.x<=ps.x && ps.x<=BoxLimitMax.x && BoxLimitMin.y<=ps.y && ps.y<=BoxLimitMax.y && BoxLimitMin.z<=ps.z && ps.z<=BoxLimitMax.z);
+bool JSphInOutZone::InZoneBox(const tfloat3& ps)const{
+  return(BoxLimitMin.x<=ps.x && ps.x<=BoxLimitMax.x && BoxLimitMin.y<=ps.y 
+    && ps.y<=BoxLimitMax.y && BoxLimitMin.z<=ps.z && ps.z<=BoxLimitMax.z);
 }
 
 //==============================================================================
 /// Indicates if position is inside inlet zone, using plane and BoxLimitMin/Max.
 //==============================================================================
-bool JSphInOutZone::InZone(bool useboxlimit,const tfloat3 &ps)const{
+bool JSphInOutZone::InZone(bool useboxlimit,const tfloat3& ps)const{
   return((!useboxlimit || InZoneBox(ps)) && fgeo::PlanePoint(Plane,ps)<0);
 }
 

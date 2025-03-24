@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -42,8 +42,8 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JDsAccInputMk::JDsAccInputMk(unsigned idx,bool bound,word mktype1,word mktype2
-  ,double tini,double tend,bool genabled,tfloat3 acccentre,const JLinearValue &acedata
-  ,const JLinearValue &veldata)
+  ,double tini,double tend,bool genabled,tfloat3 acccentre
+  ,const JLinearValue& acedata,const JLinearValue& veldata)
   :Log(AppInfo.LogPtr()),Idx(idx),Bound(bound),MkType1(mktype1),MkType2(mktype2)
   ,TimeIni(tini),TimeEnd(tend),GravityEnabled(genabled),AccCoG(acccentre)
 {
@@ -84,7 +84,7 @@ long long JDsAccInputMk::GetAllocMemory()const{
 //==============================================================================
 /// Loads lines with configuration information.
 //==============================================================================
-void JDsAccInputMk::GetConfig(std::vector<std::string> &lines)const{
+void JDsAccInputMk::GetConfig(std::vector<std::string>& lines)const{
   if(MkType1==MkType2)lines.push_back(fun::PrintStr("Input_%u (%s:%u)",Idx,(Bound? "mkbound": "mkfluid"),MkType1));
   else                lines.push_back(fun::PrintStr("Input_%u (%s:%u - %u)",Idx,(Bound? "mkbound": "mkfluid"),MkType1,MkType2));
   if(!AceData->GetFile().empty())lines.push_back(fun::PrintStr("  Data file.....: %s",AceData->GetFile().c_str()));
@@ -118,8 +118,8 @@ const StAceInput& JDsAccInputMk::GetAccValues(double timestep){
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JDsAccInput::JDsAccInput(const std::string &dirdata,const JXml *sxml
-  ,const std::string &place):Log(AppInfo.LogPtr()),DirData(dirdata)
+JDsAccInput::JDsAccInput(const std::string& dirdata,const JXml* sxml
+  ,const std::string& place):Log(AppInfo.LogPtr()),DirData(dirdata)
 {
   ClassName="JDsAccInput";
   Reset();
@@ -156,7 +156,7 @@ bool JDsAccInput::ExistMk(bool bound,word mktype)const{
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JDsAccInput::LoadXml(const JXml *sxml,const std::string &place){
+void JDsAccInput::LoadXml(const JXml* sxml,const std::string& place){
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
   if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
@@ -165,7 +165,7 @@ void JDsAccInput::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JDsAccInput::ReadXml(const JXml *sxml,TiXmlElement* lis){
+void JDsAccInput::ReadXml(const JXml* sxml,TiXmlElement* lis){
   //-Loads list of inputs.
   TiXmlElement* ele=lis->FirstChildElement("accinput"); 
   while(ele){
@@ -200,7 +200,7 @@ void JDsAccInput::ReadXml(const JXml *sxml,TiXmlElement* lis){
       //-Create input configurations.
       if(mktype1!=USHRT_MAX){
         if(ExistMk(bound,mktype1))Run_ExceptioonFile(fun::PrintStr("An input already exists for the same %s=%u.",(bound? "mkbound": "mkfluid"),mktype1),sxml->ErrGetFileRow(ele));
-        JDsAccInputMk *input=new JDsAccInputMk(GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
+        JDsAccInputMk* input=new JDsAccInputMk(GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
         Inputs.push_back(input);
       }
       else{//-Check range of mkvalues.
@@ -215,12 +215,12 @@ void JDsAccInput::ReadXml(const JXml *sxml,TiXmlElement* lis){
           word v=word(vmk[c]);
           if(mktype2+1==v)mktype2=v;
           else{
-            JDsAccInputMk *input=new JDsAccInputMk(GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
+            JDsAccInputMk* input=new JDsAccInputMk(GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
             Inputs.push_back(input);
             mktype1=mktype2=v;
           }
         }
-        JDsAccInputMk *input=new JDsAccInputMk(GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
+        JDsAccInputMk* input=new JDsAccInputMk(GetCount(),bound,mktype1,mktype2,tini,tend,genabled,acccentre,acedata,veldata);
         Inputs.push_back(input);
       }
     }
@@ -235,7 +235,9 @@ void JDsAccInput::ReadXml(const JXml *sxml,TiXmlElement* lis){
 //==============================================================================
 /// Compute velocity starting from acceleration.
 //==============================================================================
-void JDsAccInput::ComputeVelocity(const JLinearValue &acedata,JLinearValue &veldata)const{
+void JDsAccInput::ComputeVelocity(const JLinearValue& acedata
+  ,JLinearValue& veldata)const
+{
   const unsigned nt=acedata.GetCount();
   double atime0=0;
   tdouble3 vellin0=TDouble3(0);
@@ -290,7 +292,7 @@ void JDsAccInput::VisuConfig(std::string txhead,std::string txfoot)const{
 //==============================================================================
 /// Checks config according to Mk of loaded particles.
 //==============================================================================
-void JDsAccInput::Init(const JSphMk *mkinfo){
+void JDsAccInput::Init(const JSphMk* mkinfo){
   for(unsigned c=0;c<GetCount();c++){
     JDsAccInputMk* ip=Inputs[c];
     //-Check configuration.
@@ -339,7 +341,7 @@ const StAceInput& JDsAccInput::GetAccValues(unsigned cinput,double timestep){
 /// Adds variable acceleration from input configurations.
 //==============================================================================
 void JDsAccInput::RunCpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
-  ,const typecode *code,const tdouble3 *pos,const tfloat4 *velrhop,tfloat3 *ace)
+  ,const typecode* code,const tdouble3* pos,const tfloat4* velrho,tfloat3* ace)
 {
   for(unsigned c=0;c<GetCount();c++){
     const StAceInput v=GetAccValues(c,timestep);
@@ -361,7 +363,7 @@ void JDsAccInput::RunCpu(double timestep,tfloat3 gravity,unsigned n,unsigned pin
           if(!v.setgravity)acc=acc-ToTDouble3(gravity); //-Subtract global gravity from the acceleration if it is set in the input file
           if(withaccang){                               //-Adds angular acceleration.
             const tdouble3 dc=pos[p]-v.centre;
-            const tdouble3 vel=TDouble3(velrhop[p].x,velrhop[p].y,velrhop[p].z);//-Get the current particle's velocity
+            const tdouble3 vel=TDouble3(velrho[p].x,velrho[p].y,velrho[p].z);//-Get the current particle's velocity
 
             //-Calculate angular acceleration ((Dw/Dt) x (r_i - r)) + (w x (w x (r_i - r))) + (2w x (v_i - v))
             //(Dw/Dt) x (r_i - r) (term1)
@@ -397,7 +399,8 @@ void JDsAccInput::RunCpu(double timestep,tfloat3 gravity,unsigned n,unsigned pin
 /// Adds variable acceleration from input configurations.
 //==============================================================================
 void JDsAccInput::RunGpu(double timestep,tfloat3 gravity,unsigned n,unsigned pini
-    ,const typecode *code,const double2 *posxy,const double *posz,const float4 *velrhop,float3 *ace)
+  ,const typecode* code,const double2* posxy,const double* posz
+  ,const float4* velrho,float3* ace)
 {
   for(unsigned c=0;c<GetCount();c++){
     const StAceInput v=GetAccValues(c,timestep);
@@ -405,7 +408,7 @@ void JDsAccInput::RunGpu(double timestep,tfloat3 gravity,unsigned n,unsigned pin
       const typecode codesel1=typecode(v.codesel1);
       const typecode codesel2=typecode(v.codesel2);
       cuaccin::AddAccInput(n,pini,codesel1,codesel2,v.acclin,v.accang,v.centre
-        ,v.velang,v.vellin,v.setgravity,gravity,code,posxy,posz,velrhop,ace,NULL);
+        ,v.velang,v.vellin,v.setgravity,gravity,code,posxy,posz,velrho,ace,NULL);
     }
   }
 }

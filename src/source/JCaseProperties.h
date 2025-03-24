@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -167,12 +167,14 @@ public:
   unsigned GetCount()const{ return(unsigned(Links.size())); }
   
   void AddLink(JCasePropLink::TpLink type,std::string mks,std::string props);
-  void ReadXml(const JXml *sxml,TiXmlElement* eprops);
-  void WriteXml(JXml *sxml,TiXmlElement* eprops)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* eprops);
+  void WriteXml(JXml* sxml,TiXmlElement* eprops)const;
 
-  void GetPropsList(std::vector<std::string> &vprops_mk,std::vector<std::string> &vprops_mkb,std::vector<std::string> &vprops_mkf)const;
+  void GetPropsList(std::vector<std::string>& vprops_mk
+    ,std::vector<std::string>& vprops_mkb,std::vector<std::string>& vprops_mkf)const;
   std::string GetPropsFast(word mk,word mkboundfirst,word mkfluidfirst
-    ,std::vector<std::string> &vprops_mk,std::vector<std::string> &vprops_mkb,std::vector<std::string> &vprops_mkf)const;
+    ,std::vector<std::string>& vprops_mk,std::vector<std::string>& vprops_mkb
+    ,std::vector<std::string>& vprops_mkf)const;
 
   std::string GetProps(word mk,word mkboundfirst,word mkfluidfirst)const;
   std::string GetProps(word mk)const;
@@ -206,10 +208,10 @@ private:
 
   const JCasePropValue* GetValue(std::string props,unsigned idx)const;
   const JCasePropValue* GetValue(std::string props,std::string name)const;
-  void ReadXmlProperty(const JXml *sxml,TiXmlElement* eprop);
-  void ReadXmlPropertyFile(const JXml *sxml,TiXmlElement* epropfile);
-  void WriteXmlProperty(JXml *sxml,TiXmlElement* eprops,const JCasePropProperty* prop)const;
-  void WriteXmlPropertyFile(JXml *sxml,TiXmlElement* eprops,StPropertyFile propfile)const;
+  void ReadXmlProperty(const JXml* sxml,TiXmlElement* eprop);
+  void ReadXmlPropertyFile(const JXml* sxml,TiXmlElement* epropfile);
+  void WriteXmlProperty(JXml* sxml,TiXmlElement* eprops,const JCasePropProperty* prop)const;
+  void WriteXmlPropertyFile(JXml* sxml,TiXmlElement* eprops,StPropertyFile propfile)const;
   void CheckLinks();
 
 public:
@@ -218,12 +220,12 @@ public:
   void Reset();
   void CopyFrom(const JCaseProperties* props);
 
-  void LoadFileXml(const std::string &file,const std::string &path);
-  void SaveFileXml(const std::string &file,const std::string &path,bool newfile=true)const;
-  void LoadXml(const JXml *sxml,const std::string &place);
-  void SaveXml(JXml *sxml,const std::string &place)const;
-  void ReadXml(const JXml *sxml,TiXmlElement* eprops);
-  void WriteXml(JXml *sxml,TiXmlElement* eprops)const;
+  void LoadFileXml(const std::string& file,const std::string& path);
+  void SaveFileXml(const std::string& file,const std::string& path,bool newfile=true)const;
+  void LoadXml(const JXml* sxml,const std::string& place);
+  void SaveXml(JXml* sxml,const std::string& place)const;
+  void ReadXml(const JXml* sxml,TiXmlElement* eprops);
+  void WriteXml(JXml* sxml,TiXmlElement* eprops)const;
 
   void FilterMk(word mkboundfirst,word mkfluidfirst,std::string mkselect);
 
@@ -253,7 +255,6 @@ public:
   void ClearPropertyFile();
 
 };
-
 
 
 #endif

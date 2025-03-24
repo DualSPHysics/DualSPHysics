@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -46,8 +46,9 @@ inline StDivDataCpu DivDataCpuNull(){
 //==============================================================================
 /// Returns structure with data for neighborhood search on Single-GPU.
 //==============================================================================
-inline StDivDataCpu MakeDivDataCpu(int scelldiv,const tuint3 &ncells,const tuint3 &cellmin
-  ,const unsigned* begincell,float scell,unsigned domcellcode,const tdouble3 &domposmin)
+inline StDivDataCpu MakeDivDataCpu(int scelldiv,const tuint3& ncells
+  ,const tuint3& cellmin,const unsigned* begincell,float scell
+  ,unsigned domcellcode,const tdouble3& domposmin)
 {
   StDivDataCpu ret;
   ret.scelldiv=scelldiv;

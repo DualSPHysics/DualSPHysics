@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics (24-10-2021) *** -->
+<!-- *** DualSPHysics v5.4.350 (26-11-2024) *** -->
 <!-- *** class: JGaugeSystem *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -11,7 +11,7 @@
 			<savevtkpart value="false" comment="Creates VTK files for each PART (default=false)" />
 			<computedt value="0.001" comment="Time between measurements. 0:all steps (default=TimeOut)" units_comment="s" />
 			<computetime start="0.1" end="0.2" comment="Start and end of measures. (default=simulation time)" units_comment="s" />
-			<output value="true" comment="Creates CSV files of measurements (default=false)" />
+			<output value="true" comment="Creates CSV and binary files of measurements (default=false)" />
 			<outputdt value="0" comment="Time between output measurements. 0:all computed measurements (default=TimeOut)" units_comment="s" />
 			<outputtime start="0" end="10" comment="Start and end of output measures. (default=simulation time)" units_comment="s" />
 		</default>
@@ -72,6 +72,37 @@
 			<output value="true" comment="Creates CSV files of measurements (default=default.output)" />
 			<target mkbound="1" comment="Indicates the mkbound of selected particles to compute forces" />
 		</force>
+		<!-- Calculates different magnitudes in a mesh of points. Creates input for MESH-IN (https://doi.org/10.1016/j.oceaneng.2022.113400) -->
+		<mesh name="VelZsurf">
+			<point x="0.2" y="0" z="0" comment="Initial measurement position" units_comment="m" />
+			<vec1 x="0" y="1" z="0" comment="First axis vector to define the measurement grid (use 0,0,0 to ignore)" />
+			<vec2 x="1" y="0" z="0" comment="Second axis vector to define the measurement grid (use 0,0,0 to ignore)" />
+			<vec3 x="0" y="0" z="1" comment="Third axis vector to define the measurement grid (required for elevation calculation)" />
+			<size1 length="0.2" distpt="#Dp*4" comment="Length and distance between measurement points for first direction" units_comment="m" />
+			<size2 length="0.1" distpt="#Dp*2" comment="Length and distance between measurement points for second direction" units_comment="m" />
+			<size3 length="0.3" distpt="#Dp*2" comment="Length and distance between measurement points for third direction" units_comment="m" />
+			<dirdat x="1" y="0" z="0" comment="Direction vector for computed linear velocity or other variables" />
+			<masslimit coef="0.45" comment="Coefficient to calculate mass of free-surface (default=0.5 on 3D and 0.4 on 2D)" />
+			<outputdata value="vel,veldir,rhop,zsurf" comment="Type of results requested (vel, veldir, rhop, zsurf)" />
+			<outputfmt value="bin,csv" comment="Output formats (bin, csv) (default=csv)" />
+			<output value="true" comment="Creates CSV and binary files of measurements (default=false)" />
+			<buffersize value="30" comment="Output buffer size (default=30)" />
+			<kclimit value="0.2" comment="Minimum value of sum_wab_vol to apply the Kernel Correction. Use NONE to disable (default=0.5)" />
+			<kcdummy value="0" comment="Dummy value for non-corrected values. Use NONE to disable (default=0)" />
+		</mesh>
+		<!-- Calculates Zsurf in a mesh of x-line points. Creates input for MESH-IN (https://doi.org/10.1016/j.oceaneng.2022.113400) -->
+		<mesh name="Zsurf">
+			<point x="0.2" y="0" z="0" comment="Initial measurement position" units_comment="m" />
+			<vec1 x="1" y="0" z="0" comment="First axis vector to define the measurement grid (use 0,0,0 to ignore)" />
+			<vec3 x="0" y="0" z="1" comment="Third axis vector to define the measurement grid (required used for elevation calculation)" />
+			<size1 length="1.0" distpt="0.1" comment="Length and distance between measurement points for first direction" units_comment="m" />
+			<size3 length="0.3" distpt="#Dp*2" comment="Length and distance between measurement points for third direction" units_comment="m" />
+			<masslimit coef="0.4" comment="Coefficient to calculate mass of free-surface (default=0.5 on 3D and 0.4 on 2D)" />
+			<outputdata value="zsurf" comment="Type of results requested (vel, veldir, rhop, zsurf)" />
+			<outputfmt value="bin,csv" comment="Output formats (bin, csv) (default=csv)" />
+			<output value="true" comment="Creates CSV and binary files of measurements (default=false)" />
+			<buffersize value="30" comment="Output buffer size (default=30)" />
+		</mesh>
 	</gauges>
 </special>
 <!-------------------------------------------------------------------------------------->

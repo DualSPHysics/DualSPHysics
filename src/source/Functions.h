@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -99,12 +99,22 @@
 //:# - Nuevas funciones VectorFind() para unsigned, float y double.  (06-11-2021)
 //:# - Nuevas funciones StrFillBegin(), StrFillEnd().  (08-05-2022)
 //:# - Nuevas funciones GetDateTimet(),GetDateValuesDMY(). (02-08-2022)
+//:# - Nuevas funciones KnumStr(),KintStr(). (10-08-2023)
+//:# - Nuevas funcion GetParentPath(). (27-01-2024)
+//:# - Nuevo parametro de activacion en funciones KnumStr(),KintStr(). (12-04-2024)
+//:# - Error corregido en uso de vsnprintf(). (24-07-2024)
 //:#############################################################################
 
 /// \file Functions.h \brief Declares basic/general functions for the entire application.
 
 #ifndef _Functions_
 #define _Functions_
+
+#define KINT(a) fun::KintStr(a).c_str()
+#define KSTR(a) fun::KnumStr(a).c_str()
+#define KINTSW(a,thousep) fun::KintStr(a,thousep).c_str()
+#define KSTRSW(a,thousep) fun::KnumStr(a,thousep).c_str()
+#define BOOLCHR(a) (a? "True": "False")
 
 #include <ctime>
 #include <string>
@@ -116,8 +126,8 @@
 
 /// Implements a set of basic/general functions.
 namespace fun{
-void RunExceptioonFun(const std::string &srcfile,int srcline,const std::string &fun
-  ,const std::string &msg,const std::string &file="");
+void RunExceptioonFun(const std::string& srcfile,int srcline,const std::string& fun
+  ,const std::string& msg,const std::string& file="");
 
 std::string GetHostName();
 
@@ -133,7 +143,7 @@ int GetWeekDay(int day,int month,int year);
 int GetYearDay(int day,int month,int year);
 int GetWeekNumber(int day,int month,int year);
 
-void GetDateValuesDMY(std::string datetx,int &day,int &month,int &year);
+void GetDateValuesDMY(std::string datetx,int& day,int& month,int& year);
 
 void Delay(int ms);
 double GetRuntime();
@@ -142,10 +152,10 @@ std::string GetHoursOfSeconds(double s);
 
 std::string GetTextRandomCode(unsigned length);
 
-std::string PrintStr(const char *format,...);
+std::string PrintStr(const char* format,...);
 
-std::string PrintStrCsv(bool csvsepcoma,const char *format,...);
-std::string StrCsvSep(bool csvsepcoma,const std::string &cad);
+std::string PrintStrCsv(bool csvsepcoma,const char* format,...);
+std::string StrCsvSep(bool csvsepcoma,const std::string& cad);
 
 std::string NaturalFmt(double v,unsigned ndigits,bool removezeros);
 std::string RealStr(double v,unsigned ndigits,bool removezeros);
@@ -158,223 +168,259 @@ std::string LongStr(llong v);
 std::string UlongStr(ullong v);
 std::string UintStr(unsigned v,const char* fmt="%u");
 std::string IntStr(int v);
-std::string Int3Str(const tint3 &v);
-std::string Uint3Str(const tuint3 &v);
+std::string Int3Str(const tint3& v);
+std::string Uint3Str(const tuint3& v);
+
+std::string KnumStr(const char* v);
+inline std::string KnumStr(std::string v){ return(KnumStr(v.c_str())); }
+std::string KintStr(unsigned v,bool thousep=true);
+std::string KintStr(int      v,bool thousep=true);
+std::string KintStr(ullong   v,bool thousep=true);
+std::string KintStr(llong    v,bool thousep=true);
+
 /// Converts range of tint3 values to string.  
-inline std::string Int3RangeStr(const tint3 &v,const tint3 &v2){ return(std::string("(")+Int3Str(v)+")-("+Int3Str(v2)+")"); }
+inline std::string Int3RangeStr(const tint3& v,const tint3& v2){ 
+  return(std::string("(")+Int3Str(v)+")-("+Int3Str(v2)+")");
+}
 /// Converts range of tuint3 values to string.  
-inline std::string Uint3RangeStr(const tuint3 &v,const tuint3 &v2){ return(std::string("(")+Uint3Str(v)+")-("+Uint3Str(v2)+")"); }
+inline std::string Uint3RangeStr(const tuint3& v,const tuint3& v2){
+  return(std::string("(")+Uint3Str(v)+")-("+Uint3Str(v2)+")");
+}
 
 std::string FloatStr(float v,const char* fmt="%f");
 std::string FloatxStr(float v,const char* fmt="%f");
-std::string Float3Str(const tfloat3 &v,const char* fmt="%f,%f,%f");
+std::string Float3Str(const tfloat3& v,const char* fmt="%f,%f,%f");
 /// Converts real value to string with format g.
-inline std::string Float3gStr(const tfloat3 &v){ return(Float3Str(v,"%g,%g,%g")); }
+inline std::string Float3gStr(const tfloat3& v){ return(Float3Str(v,"%g,%g,%g")); }
 /// Converts real value to string (-FLT_MAX=MIN and FLT_MAX=MAX).
-inline std::string Float3xStr(const tfloat3 &v,const char* fmt="%f"){ return(FloatxStr(v.x,fmt)+","+FloatxStr(v.y,fmt)+","+FloatxStr(v.z,fmt)); }
+inline std::string Float3xStr(const tfloat3& v,const char* fmt="%f"){
+  return(FloatxStr(v.x,fmt)+","+FloatxStr(v.y,fmt)+","+FloatxStr(v.z,fmt));
+}
 /// Converts range of tfloat3 values to string.  
-inline std::string Float3gRangeStr(const tfloat3 &v,const tfloat3 &v2){ return(std::string("(")+Float3gStr(v)+")-("+Float3gStr(v2)+")"); }
+inline std::string Float3gRangeStr(const tfloat3& v,const tfloat3& v2){
+  return(std::string("(")+Float3gStr(v)+")-("+Float3gStr(v2)+")");
+}
 /// Converts range of tfloat3 values to string (-FLT_MAX=MIN and FLT_MAX=MAX).
-inline std::string Float3xRangeStr(const tfloat3 &v,const tfloat3 &v2,const char* fmt="%f"){ return(std::string("(")+Float3xStr(v,fmt)+")-("+Float3xStr(v2,fmt)+")"); }
+inline std::string Float3xRangeStr(const tfloat3& v,const tfloat3& v2,const char* fmt="%f"){
+  return(std::string("(")+Float3xStr(v,fmt)+")-("+Float3xStr(v2,fmt)+")");
+}
 
 std::string DoubleStr(double v,const char* fmt="%g");
 std::string DoublexStr(double v,const char* fmt="%f");
-std::string Double3Str(const tdouble3 &v,const char* fmt="%f,%f,%f");
+std::string Double3Str(const tdouble3& v,const char* fmt="%f,%f,%f");
 /// Converts real values to string with format g.
-inline std::string Double3gStr(const tdouble3 &v){ return(Double3Str(v,"%g,%g,%g")); }
+inline std::string Double3gStr(const tdouble3& v){ return(Double3Str(v,"%g,%g,%g")); }
 /// Converts real values to string (-DBL_MAX=MIN and DBL_MAX=MAX).
-inline std::string Double3xStr(const tdouble3 &v,const char* fmt="%f"){ return(DoublexStr(v.x,fmt)+","+DoublexStr(v.y,fmt)+","+DoublexStr(v.z,fmt)); }
+inline std::string Double3xStr(const tdouble3& v,const char* fmt="%f"){
+  return(DoublexStr(v.x,fmt)+","+DoublexStr(v.y,fmt)+","+DoublexStr(v.z,fmt));
+}
 /// Converts range of tdouble3 values to string.  
-inline std::string Double3gRangeStr(const tdouble3 &v,const tdouble3 &v2){ return(std::string("(")+Double3gStr(v)+")-("+Double3gStr(v2)+")"); }
+inline std::string Double3gRangeStr(const tdouble3& v,const tdouble3& v2){
+  return(std::string("(")+Double3gStr(v)+")-("+Double3gStr(v2)+")");
+}
 /// Converts range of tdouble3 values to string (-DBL_MAX=MIN and DBL_MAX=MAX).
-inline std::string Double3xRangeStr(const tdouble3 &v,const tdouble3 &v2,const char* fmt="%f"){ return(std::string("(")+Double3xStr(v,fmt)+")-("+Double3xStr(v2,fmt)+")"); }
+inline std::string Double3xRangeStr(const tdouble3& v,const tdouble3& v2,const char* fmt="%f"){
+  return(std::string("(")+Double3xStr(v,fmt)+")-("+Double3xStr(v2,fmt)+")");
+}
 
-std::string Double4Str(const tdouble4 &v,const char* fmt="%f,%f,%f");
+std::string Double4Str(const tdouble4& v,const char* fmt="%f,%f,%f");
 /// Converts range of tdouble4 values to string.  
-inline std::string Double4gStr(const tdouble4 &v){ return(Double4Str(v,"%g,%g,%g,%g")); }
+inline std::string Double4gStr(const tdouble4& v){
+  return(Double4Str(v,"%g,%g,%g,%g"));
+}
 
-std::string VectorStr(const std::vector<std::string> &v);
+std::string VectorStr(const std::vector<std::string>& v);
 
+bool StrIsIntegerNumber(const std::string& v);
+bool StrIsRealNumber(const std::string& v);
 
-bool StrIsIntegerNumber(const std::string &v);
-bool StrIsRealNumber(const std::string &v);
-
-int      StrToInt    (const std::string &v);
+int      StrToInt    (const std::string& v);
 tint3    StrToInt3   (std::string v);
 
-double   StrToDouble (const std::string &v);
+double   StrToDouble (const std::string& v);
 tdouble3 StrToDouble3(std::string v);
 
-inline byte     StrToByte   (const std::string &v){ return(byte(StrToInt(v)));          }
-inline word     StrToWord   (const std::string &v){ return(word(StrToInt(v)));          }
-inline unsigned StrToUint   (const std::string &v){ return(unsigned(StrToInt(v)));      }
-inline tuint3   StrToUint3  (const std::string &v){ return(ToTUint3(StrToInt3(v)));     }
-inline float    StrToFloat  (const std::string &v){ return(float(StrToDouble(v)));      }
-inline tfloat3  StrToFloat3 (const std::string &v){ return(ToTFloat3(StrToDouble3(v))); }
+inline byte     StrToByte   (const std::string& v){ return(byte(StrToInt(v)));          }
+inline word     StrToWord   (const std::string& v){ return(word(StrToInt(v)));          }
+inline unsigned StrToUint   (const std::string& v){ return(unsigned(StrToInt(v)));      }
+inline tuint3   StrToUint3  (const std::string& v){ return(ToTUint3(StrToInt3(v)));     }
+inline float    StrToFloat  (const std::string& v){ return(float(StrToDouble(v)));      }
+inline tfloat3  StrToFloat3 (const std::string& v){ return(ToTFloat3(StrToDouble3(v))); }
 
-std::string StrUpper(const std::string &cad);
-std::string StrLower(const std::string &cad);
-std::string StrFillBegin(const std::string &cad,const std::string rcad,unsigned maxsize);
-std::string StrFillEnd(const std::string &cad,const std::string rcad,unsigned maxsize);
-std::string StrTrim(const std::string &cad);
-std::string StrTrimBegin(const std::string &cad);
-std::string StrTrimEnd(const std::string &cad);
-std::string StrTrimRepeated(const std::string &cad);
-std::string StrWithoutChar(const std::string &cad,char let);
-std::string StrRepeat(const std::string &cad,unsigned count);
-std::string StrReplace(const std::string &cad,const std::string &key,const std::string &newcad);
-std::string StrRemoveAfter(const std::string &cad,const std::string &key);
-std::string StrRemoveBefore(const std::string &cad,const std::string &key);
-inline bool StrEqualBegin(const std::string &cad,const std::string &key){ return(cad.find(key)==0); }
+std::string StrUpper(const std::string& cad);
+std::string StrLower(const std::string& cad);
+std::string StrFillBegin(const std::string& cad,const std::string rcad,unsigned maxsize);
+std::string StrFillEnd(const std::string& cad,const std::string rcad,unsigned maxsize);
+std::string StrTrim(const std::string& cad);
+std::string StrTrimBegin(const std::string& cad);
+std::string StrTrimEnd(const std::string& cad);
+std::string StrTrimRepeated(const std::string& cad);
+std::string StrWithoutChar(const std::string& cad,char let);
+std::string StrRepeat(const std::string& cad,unsigned count);
+std::string StrReplace(const std::string& cad,const std::string& key,const std::string& newcad);
+std::string StrRemoveAfter(const std::string& cad,const std::string& key);
+std::string StrRemoveBefore(const std::string& cad,const std::string& key);
+inline bool StrEqualBegin(const std::string& cad,const std::string& key){
+  return(cad.find(key)==0);
+}
 
-std::string StrAddSlashes(const std::string &cad);
-std::string StrStripSlashes(const std::string &cad);
+std::string StrAddSlashes(const std::string& cad);
+std::string StrStripSlashes(const std::string& cad);
 
-bool StrOnlyChars(const std::string &cad,const std::string &chars);
+bool StrOnlyChars(const std::string& cad,const std::string& chars);
 
-int StrFileToVector(const std::string &file,std::vector<std::string> &lines);
-int StrVectorToFile(const std::string &file,const std::vector<std::string> &lines);
+int StrFileToVector(const std::string& file,std::vector<std::string>& lines);
+int StrVectorToFile(const std::string& file,const std::vector<std::string>& lines);
 std::string StrFileError(int error);
 
-std::string StrSplit(const std::string mark,std::string &text);
+std::string StrSplit(const std::string mark,std::string& text);
 unsigned StrSplitCount(const std::string mark,std::string text);
 std::string StrSplitValue(const std::string mark,std::string text,unsigned value);
-unsigned VectorSplitStr(const std::string mark,const std::string &text,std::vector<std::string> &vec);
-unsigned VectorSplitInt(const std::string mark,const std::string &text,std::vector<int> &vec);
-unsigned VectorSplitDouble(const std::string mark,const std::string &text,std::vector<double> &vec);
-unsigned VectorSplitFloat(const std::string mark,const std::string &text,std::vector<float> &vec);
-void     VectorLower(std::vector<std::string> &vec);
-unsigned VectorFind(const std::string &key,const std::string mark,const std::vector<std::string> &vec,unsigned first=0);
-unsigned VectorFindMask(const std::string &keymask,const std::string mark,const std::vector<std::string> &vec,unsigned first=0);
-inline unsigned VectorFind(const std::string &key,const std::vector<std::string> &vec,unsigned first=0){ return(VectorFind(key,"",vec,first)); }
-inline unsigned VectorFindMask(const std::string &keymask,const std::vector<std::string> &vec,unsigned first=0){ return( VectorFindMask(keymask,"",vec,first)); }
-std::string GetVectorFind(const std::string &key,const std::string mark,const std::vector<std::string> &vec,unsigned first=0);
+unsigned VectorSplitStr(const std::string mark,const std::string& text,std::vector<std::string>& vec);
+unsigned VectorSplitInt(const std::string mark,const std::string& text,std::vector<int>& vec);
+unsigned VectorSplitDouble(const std::string mark,const std::string& text,std::vector<double>& vec);
+unsigned VectorSplitFloat(const std::string mark,const std::string& text,std::vector<float>& vec);
+void     VectorLower(std::vector<std::string>& vec);
+unsigned VectorFind(const std::string& key,const std::string mark,const std::vector<std::string>& vec,unsigned first=0);
+unsigned VectorFindMask(const std::string& keymask,const std::string mark,const std::vector<std::string>& vec,unsigned first=0);
+inline unsigned VectorFind(const std::string& key,const std::vector<std::string>& vec,unsigned first=0){
+  return(VectorFind(key,"",vec,first));
+}
+inline unsigned VectorFindMask(const std::string& keymask,const std::vector<std::string>& vec,unsigned first=0){
+  return( VectorFindMask(keymask,"",vec,first));
+}
+std::string GetVectorFind(const std::string& key,const std::string mark,const std::vector<std::string>& vec,unsigned first=0);
 
-unsigned VectorFind(const unsigned key,const std::vector<unsigned> &vec,unsigned first=0);
-unsigned VectorFind(const float    key,const std::vector<float>    &vec,unsigned first=0);
-unsigned VectorFind(const double   key,const std::vector<double>   &vec,unsigned first=0);
+unsigned VectorFind(const unsigned key,const std::vector<unsigned>& vec,unsigned first=0);
+unsigned VectorFind(const float    key,const std::vector<float>&    vec,unsigned first=0);
+unsigned VectorFind(const double   key,const std::vector<double>&   vec,unsigned first=0);
 
 double GetFirstValueDouble(std::string tex,std::string pretex="");
-double GetFirstValueDouble(std::string tex,std::string &resttex,std::string pretex);
+double GetFirstValueDouble(std::string tex,std::string& resttex,std::string pretex);
 int GetFirstValueInt(std::string tex,std::string pretex="");
-int GetFirstValueInt(std::string tex,std::string &resttex,std::string pretex);
-std::string GetFirstTextBetween(std::string tex,std::string &resttex,std::string pretex,std::string endtex);
+int GetFirstValueInt(std::string tex,std::string& resttex,std::string pretex);
+std::string GetFirstTextBetween(std::string tex,std::string& resttex,std::string pretex,std::string endtex);
 
-unsigned Split2pVector(const std::string &text,std::vector<std::string> &vec);
-std::string Split2pKey(const std::string &text);
-std::string Split2pValue(const std::string &text);
+unsigned Split2pVector(const std::string& text,std::vector<std::string>& vec);
+std::string Split2pKey(const std::string& text);
+std::string Split2pValue(const std::string& text);
 tdouble3 Split2pDouble3(std::string text);
 bool Split2pDouble3Error(std::string text);
 
 int CompareVersions(std::string v1,std::string v2);
 
-std::string VarStr(const std::string &name,const char *value);
-std::string VarStr(const std::string &name,const std::string &value);
-std::string VarStr(const std::string &name,float value);
-std::string VarStr(const std::string &name,tfloat3 value);
-std::string VarStr(const std::string &name,double value);
-std::string VarStr(const std::string &name,tdouble3 value);
-std::string VarStr(const std::string &name,bool value);
-std::string VarStr(const std::string &name,int value);
-std::string VarStr(const std::string &name,unsigned value);
+std::string VarStr(const std::string& name,const char* value);
+std::string VarStr(const std::string& name,const std::string& value);
+std::string VarStr(const std::string& name,float value);
+std::string VarStr(const std::string& name,tfloat3 value);
+std::string VarStr(const std::string& name,double value);
+std::string VarStr(const std::string& name,tdouble3 value);
+std::string VarStr(const std::string& name,bool value);
+std::string VarStr(const std::string& name,int value);
+std::string VarStr(const std::string& name,unsigned value);
+std::string VarKStr(const std::string& name,unsigned value);
 
-std::string VarStr(const std::string &name,unsigned n,const int *values,std::string size="?");
-std::string VarStr(const std::string &name,unsigned n,const unsigned *values,std::string size="?");
-std::string VarStr(const std::string &name,unsigned n,const word *values,std::string size="?");
-std::string VarStr(const std::string &name,unsigned n,const float *values,std::string size="?",const char *fmt="%f");
-std::string VarStr(const std::string &name,unsigned n,const double *values,std::string size="?",const char *fmt="%f");
-std::string VarStr(const std::string &name,unsigned n,const tdouble3 *values,std::string size="?",const char *fmt="%g");
+std::string VarStr(const std::string& name,unsigned n,const int* values,std::string size="?");
+std::string VarStr(const std::string& name,unsigned n,const unsigned* values,std::string size="?");
+std::string VarStr(const std::string& name,unsigned n,const ullong* values,std::string size="?");
+std::string VarStr(const std::string& name,unsigned n,const word* values,std::string size="?");
+std::string VarStr(const std::string& name,unsigned n,const float* values,std::string size="?",const char* fmt="%f");
+std::string VarStr(const std::string& name,unsigned n,const double* values,std::string size="?",const char* fmt="%f");
+std::string VarStr(const std::string& name,unsigned n,const tdouble3* values,std::string size="?",const char* fmt="%g");
 
-std::string VarStr(const std::string &name,const std::vector<int> &values,std::string size="?");
-std::string VarStr(const std::string &name,const std::vector<tdouble3> &values,std::string size="?",const char *fmt="%g");
+std::string VarStr(const std::string& name,const std::vector<int>&      values,std::string size="?");
+std::string VarStr(const std::string& name,const std::vector<unsigned>& values,std::string size="?");
+std::string VarStr(const std::string& name,const std::vector<double>&   values,std::string size="?");
+std::string VarStr(const std::string& name,const std::vector<tdouble3>& values,std::string size="?",const char* fmt="%g");
 
 
 
-void PrintVar(const std::string &name,const char *value,const std::string &post="");
-void PrintVar(const std::string &name,const std::string &value,const std::string &post="");
-void PrintVar(const std::string &name,float value,const std::string &post="");
-void PrintVar(const std::string &name,double value,const std::string &post="");
-void PrintVar(const std::string &name,tfloat3 value,const std::string &post="");
-void PrintVar(const std::string &name,tdouble3 value,const std::string &post="");
-void PrintVar(const std::string &name,bool value,const std::string &post="");
-void PrintVar(const std::string &name,int value,const std::string &post="");
-void PrintVar(const std::string &name,unsigned value,const std::string &post="");
+void PrintVar(const std::string& name,const char* value,const std::string& post="");
+void PrintVar(const std::string& name,const std::string& value,const std::string& post="");
+void PrintVar(const std::string& name,float value,const std::string& post="");
+void PrintVar(const std::string& name,double value,const std::string& post="");
+void PrintVar(const std::string& name,tfloat3 value,const std::string& post="");
+void PrintVar(const std::string& name,tdouble3 value,const std::string& post="");
+void PrintVar(const std::string& name,bool value,const std::string& post="");
+void PrintVar(const std::string& name,int value,const std::string& post="");
+void PrintVar(const std::string& name,unsigned value,const std::string& post="");
 
 //-Output functions in JSON format.
-inline std::string JSONValue(const std::string &v){ return(std::string(" \"")+v+"\" "); }
+inline std::string JSONValue(const std::string& v){ return(std::string(" \"")+v+"\" "); }
 inline std::string JSONValue(bool     v){ return(v? " true ": " false "); }
 inline std::string JSONValue(int      v){ return(std::string(" ")+IntStr(v)+" "); }
 inline std::string JSONValue(unsigned v){ return(std::string(" ")+UintStr(v)+" "); }
 inline std::string JSONValue(double   v){ return(std::string(" ")+DoubleStr(v)+" "); }
-inline std::string JSONPropertyValue(const std::string &name,const std::string &v){ return(std::string(" \"")+name+"\" : "+StrTrimBegin(v)); }
-inline std::string JSONProperty(const std::string &name,const std::string &v){ return(JSONPropertyValue(name,JSONValue(v))); }
-inline std::string JSONProperty(const std::string &name,bool               v){ return(JSONPropertyValue(name,JSONValue(v))); }
-inline std::string JSONProperty(const std::string &name,int                v){ return(JSONPropertyValue(name,JSONValue(v))); }
-inline std::string JSONProperty(const std::string &name,unsigned           v){ return(JSONPropertyValue(name,JSONValue(v))); }
-inline std::string JSONProperty(const std::string &name,double             v){ return(JSONPropertyValue(name,JSONValue(v))); }
-std::string JSONObject(const std::vector<std::string> &properties);
-std::string JSONArray(const std::vector<std::string> &values);
+inline std::string JSONPropertyValue(const std::string& name,const std::string& v){ 
+  return(std::string(" \"")+name+"\" : "+StrTrimBegin(v));
+}
+inline std::string JSONProperty(const std::string& name,const std::string& v){ return(JSONPropertyValue(name,JSONValue(v))); }
+inline std::string JSONProperty(const std::string& name,bool               v){ return(JSONPropertyValue(name,JSONValue(v))); }
+inline std::string JSONProperty(const std::string& name,int                v){ return(JSONPropertyValue(name,JSONValue(v))); }
+inline std::string JSONProperty(const std::string& name,unsigned           v){ return(JSONPropertyValue(name,JSONValue(v))); }
+inline std::string JSONProperty(const std::string& name,double             v){ return(JSONPropertyValue(name,JSONValue(v))); }
+std::string JSONObject(const std::vector<std::string>& properties);
+std::string JSONArray(const std::vector<std::string>& values);
 
-int FileType(const std::string &name);
-ullong FileModifTime(const std::string &name);
-inline bool FileExists(const std::string &name){ return(FileType(name)==2); }
-inline bool DirExists(const std::string &name){ return(FileType(name)==1); }
-llong FileSize(const std::string &name);
+int FileType(const std::string& name);
+ullong FileModifTime(const std::string& name);
+inline bool FileExists(const std::string& name){ return(FileType(name)==2); }
+inline bool DirExists(const std::string& name){ return(FileType(name)==1); }
+llong FileSize(const std::string& name);
 
 std::string GetCurrentDir();
-int Mkdir(const std::string &dirname);
+int Mkdir(const std::string& dirname);
 int MkdirPath(std::string path);
 
-std::string GetDirParent(const std::string &ruta);
+std::string GetDirParent(const std::string& fullfile);
+std::string GetParentPath(const std::string& fullfile);
 std::string GetCanonicalPath(std::string pathbase,std::string path);
 std::string GetPathLevels(std::string path,unsigned levels);
-std::string GetFile(const std::string &ruta);
-std::string GetDirWithSlash(const std::string &ruta);
-std::string GetDirWithoutSlash(const std::string &ruta);
-std::string GetExtension(const std::string &file);
-std::string GetWithoutExtension(const std::string &ruta);
-void GetFileNameSplit(const std::string &file,std::string &dir,std::string &fname,std::string &fext);
-std::string AddExtension(const std::string &file,const std::string &ext);
+std::string GetFile(const std::string& ruta);
+std::string GetDirWithSlash(const std::string& ruta);
+std::string GetDirWithoutSlash(const std::string& ruta);
+std::string GetExtension(const std::string& file);
+std::string GetWithoutExtension(const std::string& ruta);
+void GetFileNameSplit(const std::string& file,std::string& dir,std::string& fname,std::string& fext);
+std::string AddExtension(const std::string& file,const std::string& ext);
 std::string FileNameSec(std::string fname,unsigned fnumber);
 std::string GetNewFileName(std::string fnamefmt,unsigned initialnum=0);
-std::string ShortFileName(const std::string &file,unsigned maxlen,bool withpoints=true);
-std::string TextWithShortFileName(const std::string &txpre,const std::string &txpos,const std::string &file,unsigned maxlen);
+std::string ShortFileName(const std::string& file,unsigned maxlen,bool withpoints=true);
+std::string TextWithShortFileName(const std::string& txpre,const std::string& txpos,const std::string& file,unsigned maxlen);
 
 bool FileMask(std::string text,std::string mask);
 int CpyFile(std::string src,const std::string dest);
 
 typedef enum{ BigEndian=1,LittleEndian=0 }TpByteOrder;
 TpByteOrder GetByteOrder();
-void ReverseByteOrder(llong *data,int count,llong *result);
-void ReverseByteOrder(int *data,int count,int *result);
-void ReverseByteOrder(short *data,int count,short *result);
-inline void ReverseByteOrder(llong *data,int count){ ReverseByteOrder(data,count,data); }
-inline void ReverseByteOrder(int *data,int count){ ReverseByteOrder(data,count,data); }
-inline void ReverseByteOrder(short *data,int count){ ReverseByteOrder(data,count,data); }
+void SetByteOrder32(int* data,int count,int* result);
+void SetByteOrder16(short* data,int count,short* result);
+inline void SetByteOrder32(int*   data,int count){ SetByteOrder32(data,count,data); }
+inline void SetByteOrder16(short* data,int count){ SetByteOrder16(data,count,data); }
 
-byte*     ResizeAlloc(byte     *data,unsigned ndata,unsigned newsize);
-word*     ResizeAlloc(word     *data,unsigned ndata,unsigned newsize);
-unsigned* ResizeAlloc(unsigned *data,unsigned ndata,unsigned newsize);
-tuint2*   ResizeAlloc(tuint2   *data,unsigned ndata,unsigned newsize);
-tuint3*   ResizeAlloc(tuint3   *data,unsigned ndata,unsigned newsize);
-tuint4*   ResizeAlloc(tuint4   *data,unsigned ndata,unsigned newsize);
-int*      ResizeAlloc(int      *data,unsigned ndata,unsigned newsize);
-tint2*    ResizeAlloc(tint2    *data,unsigned ndata,unsigned newsize);
-tint3*    ResizeAlloc(tint3    *data,unsigned ndata,unsigned newsize);
-float*    ResizeAlloc(float    *data,unsigned ndata,unsigned newsize);
-tfloat2*  ResizeAlloc(tfloat2  *data,unsigned ndata,unsigned newsize);
-tfloat3*  ResizeAlloc(tfloat3  *data,unsigned ndata,unsigned newsize);
-tfloat4*  ResizeAlloc(tfloat4  *data,unsigned ndata,unsigned newsize);
-double*   ResizeAlloc(double   *data,unsigned ndata,unsigned newsize);
-tdouble2* ResizeAlloc(tdouble2 *data,unsigned ndata,unsigned newsize);
-tdouble3* ResizeAlloc(tdouble3 *data,unsigned ndata,unsigned newsize);
-tdouble4* ResizeAlloc(tdouble4 *data,unsigned ndata,unsigned newsize);
+byte*     ResizeAlloc(byte*     data,unsigned ndata,unsigned newsize);
+word*     ResizeAlloc(word*     data,unsigned ndata,unsigned newsize);
+unsigned* ResizeAlloc(unsigned* data,unsigned ndata,unsigned newsize);
+tuint2*   ResizeAlloc(tuint2*   data,unsigned ndata,unsigned newsize);
+tuint3*   ResizeAlloc(tuint3*   data,unsigned ndata,unsigned newsize);
+tuint4*   ResizeAlloc(tuint4*   data,unsigned ndata,unsigned newsize);
+int*      ResizeAlloc(int*      data,unsigned ndata,unsigned newsize);
+tint2*    ResizeAlloc(tint2*    data,unsigned ndata,unsigned newsize);
+tint3*    ResizeAlloc(tint3*    data,unsigned ndata,unsigned newsize);
+float*    ResizeAlloc(float*    data,unsigned ndata,unsigned newsize);
+tfloat2*  ResizeAlloc(tfloat2*  data,unsigned ndata,unsigned newsize);
+tfloat3*  ResizeAlloc(tfloat3*  data,unsigned ndata,unsigned newsize);
+tfloat4*  ResizeAlloc(tfloat4*  data,unsigned ndata,unsigned newsize);
+double*   ResizeAlloc(double*   data,unsigned ndata,unsigned newsize);
+tdouble2* ResizeAlloc(tdouble2* data,unsigned ndata,unsigned newsize);
+tdouble3* ResizeAlloc(tdouble3* data,unsigned ndata,unsigned newsize);
+tdouble4* ResizeAlloc(tdouble4* data,unsigned ndata,unsigned newsize);
 
 tfloat3*  NewToTFloat3 (const tdouble3* data,unsigned ndata);
 tdouble3* NewToTDouble3(const tfloat3* data,unsigned ndata);
 
-float  Length(const tfloat3 &v);
-double Length(const tdouble3 &v);
+float  Length(const tfloat3& v);
+double Length(const tdouble3& v);
 
 bool IsInfinity(float v);
 bool IsInfinity(double v);
@@ -388,9 +434,9 @@ bool IsGtEqual(double v1,double v2,double tolerance);
 bool IsLtEqual(float  v1,float  v2,float  tolerance);
 bool IsLtEqual(double v1,double v2,double tolerance);
 
-bool IsEqual(const tfloat3  &v1,const tfloat3  &v2,float  tolerance);
-bool IsEqual(const tdouble3 &v1,const tdouble3 &v2,double tolerance);
-bool IsEqual(const tdouble4 &v1,const tdouble4 &v2,double tolerance);
+bool IsEqual(const tfloat3 & v1,const tfloat3 & v2,float  tolerance);
+bool IsEqual(const tdouble3& v1,const tdouble3& v2,double tolerance);
+bool IsEqual(const tdouble4& v1,const tdouble4& v2,double tolerance);
 
 tdouble3 Double3ToAbs(const tdouble3 v);
 }

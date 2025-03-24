@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -30,6 +30,7 @@
 #endif
 #include <algorithm>
 #include <cfloat>
+#include <climits>
 
 using std::string;
 
@@ -55,19 +56,37 @@ std::string JCasePartBlock::GetNameXml()const{
 }
 
 //==============================================================================
+/// Returns begin value as checked unsigned value.
+//==============================================================================
+unsigned JCasePartBlock::GetBegin32()const{
+  const ullong v=GetBegin64();
+  if(v>=UINT_MAX)Run_Exceptioon("Value invalid for 32-bit unsigned type.");
+  return(unsigned(v));
+}
+
+//==============================================================================
+/// Returns the number of particles as checked unsigned value.
+//==============================================================================
+unsigned JCasePartBlock::GetCount32()const{
+  const ullong v=GetCount64();
+  if(v>=UINT_MAX)Run_Exceptioon("Value invalid for 32-bit unsigned type.");
+  return(unsigned(v));
+}
+
+//==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JCasePartBlock::ReadXml(const JXml *sxml,TiXmlElement* ele){
+void JCasePartBlock::ReadXml(const JXml* sxml,TiXmlElement* ele){
   MkType=(word)sxml->GetAttributeUnsigned(ele,(Bound? "mkbound": "mkfluid")); 
-  Begin=sxml->GetAttributeUnsigned(ele,"begin");
-  Count=sxml->GetAttributeUnsigned(ele,"count");
+  Begin=sxml->GetAttributeUlong(ele,"begin");
+  Count=sxml->GetAttributeUlong(ele,"count");
   Props=sxml->GetAttributeStr(ele,"property",true);
 }
 
 //==============================================================================
 /// Writes particles information in xml format.
 //==============================================================================
-TiXmlElement* JCasePartBlock::WriteXml(JXml *sxml,TiXmlElement* ele)const{
+TiXmlElement* JCasePartBlock::WriteXml(JXml* sxml,TiXmlElement* ele)const{
   TiXmlElement item(GetNameXml().c_str());
   JXml::AddAttribute(&item,(Bound? "mkbound": "mkfluid"),MkType);
   JXml::AddAttribute(&item,"mk",Mk);
@@ -144,7 +163,9 @@ bool JCasePartBlock::ExistsSubValue(std::string name,std::string subname)const{
 //==============================================================================
 /// Returns value as string of subvalue indicated.
 //==============================================================================
-std::string JCasePartBlock::GetSubValueStr(std::string name,std::string subname,bool optional,std::string valdef)const{
+std::string JCasePartBlock::GetSubValueStr(std::string name,std::string subname
+  ,bool optional,std::string valdef)const
+{
   if(optional && !Properties->ExistsSubValue(Props,name,subname))return(valdef);
   else return(Properties->GetSubValueStr(Props,name,subname));
 }
@@ -152,7 +173,9 @@ std::string JCasePartBlock::GetSubValueStr(std::string name,std::string subname,
 //==============================================================================
 /// Returns value as int of subvalue indicated.
 //==============================================================================
-int JCasePartBlock::GetSubValueInt(std::string name,std::string subname,bool optional,int valdef)const{   
+int JCasePartBlock::GetSubValueInt(std::string name,std::string subname
+  ,bool optional,int valdef)const
+{   
   if(optional && !Properties->ExistsSubValue(Props,name,subname))return(valdef);
   else return(atoi(GetSubValueStr(name,subname).c_str()));
 }
@@ -160,7 +183,9 @@ int JCasePartBlock::GetSubValueInt(std::string name,std::string subname,bool opt
 //==============================================================================
 /// Returns value as double of subvalue indicated.
 //==============================================================================
-double JCasePartBlock::GetSubValueDouble(std::string name,std::string subname,bool optional,double valdef)const{   
+double JCasePartBlock::GetSubValueDouble(std::string name,std::string subname
+  ,bool optional,double valdef)const
+{   
   if(optional && !Properties->ExistsSubValue(Props,name,subname))return(valdef);
   else return(atof(GetSubValueStr(name,subname).c_str()));
 }
@@ -172,7 +197,7 @@ double JCasePartBlock::GetSubValueDouble(std::string name,std::string subname,bo
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JCasePartBlock_Moving::ReadXml(const JXml *sxml,TiXmlElement* ele){
+void JCasePartBlock_Moving::ReadXml(const JXml* sxml,TiXmlElement* ele){
   JCasePartBlock::ReadXml(sxml,ele);
   RefMotion=sxml->GetAttributeUnsigned(ele,"refmotion"); 
 }
@@ -180,7 +205,7 @@ void JCasePartBlock_Moving::ReadXml(const JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Writes particles information in xml format.
 //==============================================================================
-TiXmlElement* JCasePartBlock_Moving::WriteXml(JXml *sxml,TiXmlElement* ele)const{
+TiXmlElement* JCasePartBlock_Moving::WriteXml(JXml* sxml,TiXmlElement* ele)const{
   ele=JCasePartBlock::WriteXml(sxml,ele);
   JXml::AddAttribute(ele,"refmotion",RefMotion);
   return(ele);
@@ -194,12 +219,12 @@ TiXmlElement* JCasePartBlock_Moving::WriteXml(JXml *sxml,TiXmlElement* ele)const
 /// Constructor.
 //==============================================================================
 JCasePartBlock_Floating::JCasePartBlock_Floating(const JCaseProperties* properties
-  ,word mktype,unsigned begin,unsigned count,double massbody,double masspart
+  ,word mktype,ullong begin,ullong count,double massbody,double masspart
   ,const tdouble3& center,const tmatrix3d& inertia
-  ,const tint3 &translationfree,const tint3 &rotationfree
-  ,const tdouble3 &linvelini,const tdouble3 &angvelini
-  ,const JLinearValue *linvel  ,const JLinearValue *angvel
-  ,const JLinearValue *linforce,const JLinearValue *angforce)
+  ,const tint3& translationfree,const tint3& rotationfree
+  ,const tdouble3& linvelini,const tdouble3& angvelini
+  ,const JLinearValue* linvel  ,const JLinearValue* angvel
+  ,const JLinearValue* linforce,const JLinearValue* angforce)
   :JCasePartBlock(properties,TpPartFloating,"Floating",mktype,begin,count)
   ,Massbody(massbody),Masspart(masspart),Center(center),Inertia(inertia)
   ,TranslationFree(translationfree),RotationFree(rotationfree)
@@ -223,7 +248,8 @@ JCasePartBlock_Floating::JCasePartBlock_Floating(const JCaseProperties* properti
 /// Constructor from XML data.
 //==============================================================================
 JCasePartBlock_Floating::JCasePartBlock_Floating(const JCaseProperties* properties
-  ,const JXml *sxml,TiXmlElement* ele):JCasePartBlock(properties,TpPartFloating,"Floating")
+  ,const JXml* sxml,TiXmlElement* ele)
+  :JCasePartBlock(properties,TpPartFloating,"Floating")
 {
   LinearVel=NULL;   AngularVel=NULL;
   LinearForce=NULL; AngularForce=NULL;
@@ -245,13 +271,13 @@ JCasePartBlock_Floating::~JCasePartBlock_Floating(){
 //==============================================================================
 /// Reads particles information in xml format.
 //==============================================================================
-void JCasePartBlock_Floating::ReadXml(const JXml *sxml,TiXmlElement* ele){
+void JCasePartBlock_Floating::ReadXml(const JXml* sxml,TiXmlElement* ele){
   JCasePartBlock::ReadXml(sxml,ele);
   Massbody=sxml->ReadElementDouble(ele,"massbody","value");
   Masspart=sxml->ReadElementDouble(ele,"masspart","value");
   Center=sxml->ReadElementDouble3(ele,"center");
   //-Reads inertia data from double3 or tmatrix3d XML element.
-  TiXmlElement *item=sxml->GetFirstElement(ele,"inertia");
+  TiXmlElement* item=sxml->GetFirstElement(ele,"inertia");
   if(sxml->ExistsAttribute(item,"x") && sxml->ExistsAttribute(item,"y") && sxml->ExistsAttribute(item,"z")){
     tdouble3 v3=sxml->ReadElementDouble3(ele,"inertia");
     Inertia=TMatrix3d(0);
@@ -293,7 +319,7 @@ void JCasePartBlock_Floating::ReadXml(const JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Writes particles information in xml format.
 //==============================================================================
-TiXmlElement* JCasePartBlock_Floating::WriteXml(JXml *sxml,TiXmlElement* ele)const{
+TiXmlElement* JCasePartBlock_Floating::WriteXml(JXml* sxml,TiXmlElement* ele)const{
   ele=JCasePartBlock::WriteXml(sxml,ele);
   sxml->AddAttribute(sxml->AddElementAttrib(ele,"massbody","value",Massbody),"units_comment","kg");
   sxml->AddAttribute(sxml->AddElementAttrib(ele,"masspart","value",Masspart),"units_comment","kg");
@@ -308,8 +334,8 @@ TiXmlElement* JCasePartBlock_Floating::WriteXml(JXml *sxml,TiXmlElement* ele)con
   else sxml->AddAttribute(sxml->AddElementDouble3(ele,"inertia",TDouble3(Inertia.a11,Inertia.a22,Inertia.a33)),"units_comment","kg*m^2");
 #endif
   //-Writes motion data.
-  if(TranslationFree!=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"translationDOF",TranslationFree),"comment","Use 0 to restrict Degrees Of Freedon for translation (default=(1,1,1))");
-  if(RotationFree   !=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"rotationDOF"   ,RotationFree   ),"comment","Use 0 to restrict Degrees Of Freedon for rotation (default=(1,1,1))");
+  if(TranslationFree!=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"translationDOF",TranslationFree),"comment","Use 0 to restrict Degrees Of Freedom for translation (default=(1,1,1))");
+  if(RotationFree   !=TInt3(1))JXml::AddAttribute(sxml->AddElementInt3(ele,"rotationDOF"   ,RotationFree   ),"comment","Use 0 to restrict Degrees Of Freedom for rotation (default=(1,1,1))");
   if(LinearVelini !=TDouble3(0))JXml::AddAttribute(sxml->AddElementDouble3(ele,"linearvelini" ,LinearVelini),"units_comment","m/s");
   if(AngularVelini!=TDouble3(0))JXml::AddAttribute(sxml->AddElementDouble3(ele,"angularvelini",AngularVelini),"units_comment","rad/s");
 #ifdef JCaseParts_UseLinearv
@@ -355,10 +381,10 @@ JCaseParts::~JCaseParts(){
 void JCaseParts::Reset(){
   for(unsigned c=0;c<Blocks.size();c++){
     switch(Blocks[c]->Type){
-      case TpPartFixed:   { JCasePartBlock_Fixed    *ptr=(JCasePartBlock_Fixed   *)Blocks[c]; delete ptr; }break;
-      case TpPartMoving:  { JCasePartBlock_Moving   *ptr=(JCasePartBlock_Moving  *)Blocks[c]; delete ptr; }break;
-      case TpPartFloating:{ JCasePartBlock_Floating *ptr=(JCasePartBlock_Floating*)Blocks[c]; delete ptr; }break;
-      case TpPartFluid:   { JCasePartBlock_Fluid    *ptr=(JCasePartBlock_Fluid   *)Blocks[c]; delete ptr; }break;
+      case TpPartFixed:   { JCasePartBlock_Fixed*    ptr=(JCasePartBlock_Fixed*   )Blocks[c]; delete ptr; }break;
+      case TpPartMoving:  { JCasePartBlock_Moving*   ptr=(JCasePartBlock_Moving*  )Blocks[c]; delete ptr; }break;
+      case TpPartFloating:{ JCasePartBlock_Floating* ptr=(JCasePartBlock_Floating*)Blocks[c]; delete ptr; }break;
+      case TpPartFluid:   { JCasePartBlock_Fluid*    ptr=(JCasePartBlock_Fluid*   )Blocks[c]; delete ptr; }break;
       default: Run_Exceptioon("Type of block is unknown.");
     }
   }
@@ -375,18 +401,38 @@ void JCaseParts::Reset(){
 //==============================================================================
 /// Returns the number of particles of a given type.
 //==============================================================================
-unsigned JCaseParts::Count(TpParticles type)const{
-  unsigned n=0;
-  for(unsigned c=0;c<Blocks.size();c++)if(Blocks[c]->Type==type)n+=Blocks[c]->GetCount();
-  return(n);
+unsigned JCaseParts::Count32(TpParticles type)const{
+  const ullong v=Count64(type);
+  if(v>=UINT_MAX)Run_Exceptioon("Value invalid for 32-bit unsigned type.");
+  return(unsigned(v));
 }
 
 //==============================================================================
 /// Returns the total number of particles.
 //==============================================================================
-unsigned JCaseParts::Count()const{
-  unsigned n=0;
-  for(unsigned c=0;c<Blocks.size();c++)n+=Blocks[c]->GetCount();
+unsigned JCaseParts::Count32()const{
+  const ullong v=Count64();
+  if(v>=UINT_MAX)Run_Exceptioon("Value invalid for 32-bit unsigned type.");
+  return(unsigned(v));
+}
+
+//==============================================================================
+/// Returns the number of particles of a given type.
+//==============================================================================
+ullong JCaseParts::Count64(TpParticles type)const{
+  ullong n=0;
+  for(unsigned c=0;c<Blocks.size();c++)if(Blocks[c]->Type==type)
+    n+=Blocks[c]->GetCount64();
+  return(n);
+}
+
+
+//==============================================================================
+/// Returns the total number of particles.
+//==============================================================================
+ullong JCaseParts::Count64()const{
+  ullong n=0;
+  for(unsigned c=0;c<Blocks.size();c++)n+=Blocks[c]->GetCount64();
   return(n);
 }
 
@@ -412,40 +458,48 @@ const JCasePartBlock& JCaseParts::GetBlock(unsigned pos)const{
 //==============================================================================
 JCasePartBlock* JCaseParts::GetByMkType(bool bound,word mktype)const{
   JCasePartBlock* bk=NULL;
-  for(unsigned c=0;c<Blocks.size()&&!bk;c++)if(IsBound(Blocks[c]->Type)==bound && Blocks[c]->GetMkType()==mktype)bk=Blocks[c];
+  for(unsigned c=0;c<Blocks.size()&&!bk;c++)
+    if(IsBound(Blocks[c]->Type)==bound && Blocks[c]->GetMkType()==mktype)bk=Blocks[c];
   return(bk);
 }
 
 //==============================================================================
 /// Returns TRUE when number of particles match.
 //==============================================================================
-bool JCaseParts::CheckNparticles(unsigned casenfixed,unsigned casenmoving,unsigned casenfloat,unsigned casenfluid)const{
-  return(casenfixed==Count(TpPartFixed) && casenmoving==Count(TpPartMoving) && casenfloat==Count(TpPartFloating) && casenfluid==Count(TpPartFluid));
+bool JCaseParts::CheckNparticles(unsigned casenfixed,unsigned casenmoving
+  ,unsigned casenfloat,unsigned casenfluid)const
+{
+  return(casenfixed==Count32(TpPartFixed) && casenmoving==Count32(TpPartMoving)
+    && casenfloat==Count32(TpPartFloating) && casenfluid==Count32(TpPartFluid));
 }
 
 //==============================================================================
 /// Returns TRUE when number of particles match.
 //==============================================================================
-bool JCaseParts::CheckNparticles(ullong casenfixed,ullong casenmoving,ullong casenfloat,ullong casenfluid)const{
-  return(CheckNparticles(unsigned(casenfixed),unsigned(casenmoving),unsigned(casenfloat),unsigned(casenfluid)));
+bool JCaseParts::CheckNparticles(ullong casenfixed,ullong casenmoving
+  ,ullong casenfloat,ullong casenfluid)const
+{
+  return(casenfixed==Count64(TpPartFixed) && casenmoving==Count64(TpPartMoving)
+    && casenfloat==Count64(TpPartFloating) && casenfluid==Count64(TpPartFluid));
 }
 
 //==============================================================================
 /// Checks and adds a new block of particles.
 //==============================================================================
 void JCaseParts::Add(JCasePartBlock* block){
-  if(GetByMkType(block->Bound,block->GetMkType()))Run_Exceptioon("Cannot add a block with a existing mk.");
+  if(GetByMkType(block->Bound,block->GetMkType()))
+    Run_Exceptioon("Cannot add a block with a existing mk.");
   if(block->Type<LastType)Run_Exceptioon("The block type is invalid after the last type added.");
   block->ConfigMk(block->Bound? MkBoundFirst: MkFluidFirst);
   Blocks.push_back(block);
-  Begin+=block->GetCount();
+  Begin+=block->GetCount64();
   LastType=block->Type;
 }
 
 //==============================================================================
 /// Loads data in XML format from a file.
 //==============================================================================
-void JCaseParts::LoadFileXml(const std::string &file,const std::string &path){
+void JCaseParts::LoadFileXml(const std::string& file,const std::string& path){
   JXml jxml;
   jxml.LoadFile(file);
   LoadXml(&jxml,path);
@@ -454,7 +508,9 @@ void JCaseParts::LoadFileXml(const std::string &file,const std::string &path){
 //==============================================================================
 /// Stores data in XML format into a file.
 //==============================================================================
-void JCaseParts::SaveFileXml(const std::string &file,const std::string &path,bool newfile)const{
+void JCaseParts::SaveFileXml(const std::string& file,const std::string& path
+  ,bool newfile)const
+{
   JXml jxml;
   if(!newfile)jxml.LoadFile(file);
   SaveXml(&jxml,path);
@@ -464,7 +520,7 @@ void JCaseParts::SaveFileXml(const std::string &file,const std::string &path,boo
 //==============================================================================
 /// Loads particles information from the object XML.
 //==============================================================================
-void JCaseParts::LoadXml(const JXml *sxml,const std::string &place){
+void JCaseParts::LoadXml(const JXml* sxml,const std::string& place){
   Reset();
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(std::string("Cannot find the element \'")+place+"\'.");
@@ -474,17 +530,17 @@ void JCaseParts::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 /// Stores particles information in the object XML.
 //==============================================================================
-void JCaseParts::SaveXml(JXml *sxml,const std::string &place)const{
+void JCaseParts::SaveXml(JXml* sxml,const std::string& place)const{
   WriteXml(sxml,sxml->GetNode(place,true)->ToElement());
 }
 
 //==============================================================================
 /// Reads particles information in XML format.
 //==============================================================================
-void JCaseParts::ReadXml(const JXml *sxml,TiXmlElement* lis){
-  unsigned np=sxml->GetAttributeUnsigned(lis,"np");
-  unsigned nb=sxml->GetAttributeUnsigned(lis,"nb");
-  unsigned nbf=sxml->GetAttributeUnsigned(lis,"nbf");
+void JCaseParts::ReadXml(const JXml* sxml,TiXmlElement* lis){
+  ullong np =sxml->GetAttributeUlong(lis,"np");
+  ullong nb =sxml->GetAttributeUlong(lis,"nb");
+  ullong nbf=sxml->GetAttributeUlong(lis,"nbf");
   word mkboundfirst=(word)sxml->GetAttributeUnsigned(lis,"mkboundfirst");
   word mkfluidfirst=(word)sxml->GetAttributeUnsigned(lis,"mkfluidfirst");
   SetMkFirst(mkboundfirst,mkfluidfirst);
@@ -499,21 +555,22 @@ void JCaseParts::ReadXml(const JXml *sxml,TiXmlElement* lis){
   while(ele){
     std::string cmd=ele->Value();
     if(cmd.length()&&cmd[0]!='_'){
-      if(cmd=="fixed")          Add(new JCasePartBlock_Fixed(Properties,sxml,ele));
-      else if(cmd=="moving")    Add(new JCasePartBlock_Moving(Properties,sxml,ele));
+      if(cmd=="fixed")          Add(new JCasePartBlock_Fixed   (Properties,sxml,ele));
+      else if(cmd=="moving")    Add(new JCasePartBlock_Moving  (Properties,sxml,ele));
       else if(cmd=="floating")  Add(new JCasePartBlock_Floating(Properties,sxml,ele));
-      else if(cmd=="fluid")     Add(new JCasePartBlock_Fluid(Properties,sxml,ele));
+      else if(cmd=="fluid")     Add(new JCasePartBlock_Fluid   (Properties,sxml,ele));
       else if(cmd!="properties")sxml->ErrReadElement(ele,cmd,false);
     }
     ele=ele->NextSiblingElement();
   }
-  Begin=Count();
-  if(np!=Count()||nb!=np-Count(TpPartFluid)||nbf!=Count(TpPartFixed))Run_Exceptioon("The amount of particles does not match the header.");
+  Begin=Count64();
+  if(np!=Count64() || nb!=np-Count64(TpPartFluid) || nbf!=Count64(TpPartFixed))
+    Run_Exceptioon("The amount of particles does not match the header.");
   //-Checks property info in blocks.
 #ifdef JCaseParts_UseProps
   for(unsigned c=0;c<Blocks.size();c++){
     if(Blocks[c]->GetProperty()!=Properties->GetPropertyMk(Blocks[c]->GetMk())){
-      Run_Exceptioon(std::string("Property information of mk=")+fun::IntStr(Blocks[c]->GetMk())+" does not correspond to Links configuration.");
+      Run_Exceptioon(fun::PrintStr("Property information of mk=%d does not correspond to Links configuration.",Blocks[c]->GetMk()));
     }
   }
 #endif
@@ -522,12 +579,12 @@ void JCaseParts::ReadXml(const JXml *sxml,TiXmlElement* lis){
 //==============================================================================
 /// Writes particles information in XML format.
 //==============================================================================
-void JCaseParts::WriteXml(JXml *sxml,TiXmlElement* lis)const{
-  unsigned np=Count();
+void JCaseParts::WriteXml(JXml* sxml,TiXmlElement* lis)const{
+  ullong np=Count64();
   lis->Clear();
   JXml::AddAttribute(lis,"np",np);
-  JXml::AddAttribute(lis,"nb",np-Count(TpPartFluid));
-  JXml::AddAttribute(lis,"nbf",Count(TpPartFixed));
+  JXml::AddAttribute(lis,"nb",np-Count64(TpPartFluid));
+  JXml::AddAttribute(lis,"nbf",Count64(TpPartFixed));
   JXml::AddAttribute(lis,"mkboundfirst",GetMkBoundFirst());
   JXml::AddAttribute(lis,"mkfluidfirst",GetMkFluidFirst());
   WriteXmlSummary(sxml,lis);
@@ -543,7 +600,7 @@ void JCaseParts::WriteXml(JXml *sxml,TiXmlElement* lis)const{
 //==============================================================================
 /// Writes particle summary in XML file.
 //==============================================================================
-void JCaseParts::WriteXmlSummary(JXml *sxml,TiXmlElement* ele)const{
+void JCaseParts::WriteXmlSummary(JXml* sxml,TiXmlElement* ele)const{
   //-Loads summary data.
   StSummaryData dat=GetSummaryData();
   const unsigned ntp=4;
@@ -559,7 +616,7 @@ void JCaseParts::WriteXmlSummary(JXml *sxml,TiXmlElement* ele)const{
   for(unsigned c=0;c<ntp;c++)if(dat.np[c]){
     TiXmlElement item(txtp[c].c_str());
     JXml::AddAttribute(&item,"count",dat.np[c]);
-    JXml::AddAttribute(&item,"id",fun::PrintStr("%u-%u",dat.idini[c],dat.idlast[c]));
+    JXml::AddAttribute(&item,"id",fun::PrintStr("%llu-%llu",dat.idini[c],dat.idlast[c]));
     JXml::AddAttribute(&item,"mkcount",dat.nmk[c]);
     JXml::AddAttribute(&item,"mkvalues",dat.mklist[c]);
     ele->InsertEndChild(item)->ToElement();
@@ -571,20 +628,21 @@ void JCaseParts::WriteXmlSummary(JXml *sxml,TiXmlElement* ele)const{
 //==============================================================================
 void JCaseParts::SetMkFirst(word boundfirst,word fluidfirst){
   MkBoundFirst=boundfirst; MkFluidFirst=fluidfirst;
-  for(unsigned c=0;c<Blocks.size();c++)Blocks[c]->ConfigMk(Blocks[c]->Bound? MkBoundFirst: MkFluidFirst);
+  for(unsigned c=0;c<Blocks.size();c++)
+    Blocks[c]->ConfigMk(Blocks[c]->Bound? MkBoundFirst: MkFluidFirst);
 }
 
 //==============================================================================
 /// Changes particle number of block.
 //==============================================================================
-void JCaseParts::SetBlockSize(unsigned pos,unsigned np){
+void JCaseParts::S_etBlockSize(unsigned pos,ullong np){
   if(pos>=CountBlocks())Run_Exceptioon("The requested particles block is missing.");
   JCasePartBlock* bk=Blocks[pos];
-  if(bk->GetCount()!=np){
-    const unsigned nsum=np-bk->GetCount();
-    bk->SetCount(np);
+  if(bk->GetCount64()!=np){
+    const ullong nsum=np-bk->GetCount64();
+    bk->SetCount64(np);
     //-Cambia el begin del resto de bloques.
-    for(unsigned c=pos+1;c<CountBlocks();c++)Blocks[c]->SetBegin(Blocks[c]->GetBegin()+nsum);
+    for(unsigned c=pos+1;c<CountBlocks();c++)Blocks[c]->SetBegin64(Blocks[c]->GetBegin64()+nsum);
   }
 }
 
@@ -592,14 +650,14 @@ void JCaseParts::SetBlockSize(unsigned pos,unsigned np){
 //==============================================================================
 /// Load information of properties and filter data.
 //==============================================================================
-void JCaseParts::LoadProperties(const JCaseProperties *props){
+void JCaseParts::LoadProperties(const JCaseProperties* props){
   //-Load data of properties.
   Properties->CopyFrom(props);
   if(Properties->GetPropertyCount()){
     //-Get list of used mk.
     std::string mks;
     for(unsigned c=0;c<CountBlocks();c++){
-      const JCasePartBlock &block=GetBlock(c);
+      const JCasePartBlock& block=GetBlock(c);
       mks=mks+fun::IntStr(block.GetMk())+",";
     }
     //-Filter data of mks.
@@ -615,7 +673,8 @@ void JCaseParts::LoadProperties(const JCaseProperties *props){
 //==============================================================================
 std::string JCaseParts::GetMkList(TpParticles type)const{
   string list;
-  for(unsigned c=0;c<Blocks.size();c++)if(Blocks[c]->Type==type)list=list+fun::UintStr(Blocks[c]->GetMk())+",";
+  for(unsigned c=0;c<Blocks.size();c++)
+    if(Blocks[c]->Type==type)list=list+fun::UintStr(Blocks[c]->GetMk())+",";
   JRangeFilter rg(list);
   return(rg.ToString());
 }
@@ -627,9 +686,9 @@ JCaseParts::StSummaryData JCaseParts::GetSummaryData()const{
   const unsigned ntp=TPPARTICLES_COUNT;
   TpParticles types[ntp]={TpPartFixed,TpPartMoving,TpPartFloating,TpPartFluid};
   StSummaryData dat;
-  unsigned idbegin=0;
+  ullong idbegin=0;
   for(unsigned c=0;c<ntp;c++){
-    dat.np[c]=Count(types[c]);
+    dat.np[c]=Count64(types[c]);
     dat.nmk[c]=CountBlocks(types[c]);
     dat.mklist[c]=GetMkList(types[c]);
     if(dat.np[c]){
@@ -643,78 +702,96 @@ JCaseParts::StSummaryData JCaseParts::GetSummaryData()const{
 //==============================================================================
 /// Returns vector of strings with the summary of particles.
 //==============================================================================
-void JCaseParts::GetParticleSummary(std::vector<std::string> &out)const{
+void JCaseParts::GetParticleSummary(std::vector<std::string>& out)const{
   //-Loads summary data.
   StSummaryData dat=GetSummaryData();
   const unsigned ntp=TPPARTICLES_COUNT;
   //-Configures output format.
-  string fmt="%u  id:(%u-%u)   MKs:%u (%s)";
+  string fmt="%s  id:(%llu-%llu)   MKs:%u (%s)";
   const bool aligned=false;
   if(aligned){
-    unsigned snp=0,snm=0,sid=0,sid2=0;
+    ullong maxnp=0,maxid=0,maxid2=0;
+    unsigned maxnmk=0;
     for(unsigned c=0;c<ntp;c++){
-      snp=std::max(snp,dat.np[c]);
-      snm=std::max(snm,dat.nmk[c]);
-      sid=std::max(sid,dat.idini[c]);
-      sid2=std::max(sid2,dat.idlast[c]);
+      maxnp =std::max(maxnp ,dat.np[c]);
+      maxid =std::max(maxid ,dat.idini[c]);
+      maxid2=std::max(maxid2,dat.idlast[c]);
+      maxnmk=std::max(maxnmk,dat.nmk[c]);
     }
-    snp=unsigned(fun::UintStr(snp).length());
-    snm=unsigned(fun::UintStr(snm).length());
-    sid=unsigned(fun::UintStr(sid).length());
-    sid2=unsigned(fun::UintStr(sid2).length());
-    fmt=fun::PrintStr("%%%uu  id:(%%%uu-%%%uu)   MKs:%%%uu (%%s)",snp,sid,sid2,snm);
+    const unsigned snp =unsigned(fun::UlongStr(maxnp ).length());
+    const unsigned sid =unsigned(fun::UlongStr(maxid ).length());
+    const unsigned sid2=unsigned(fun::UlongStr(maxid2).length());
+    const unsigned snmk=unsigned(fun::UintStr (maxnmk).length());
+    fmt=fun::PrintStr("%%%uu  id:(%%%uu-%%%uu)   MKs:%%%uu (%%s)",snp,sid,sid2,snmk);
   }
   //-Generates output.
   string txtype[ntp]={"  Fixed....: ","  Moving...: ","  Floating.: ","  Fluid....: "};
   out.push_back("Particle summary:");
   for(unsigned c=0;c<ntp;c++){
-    out.push_back(txtype[c]+(dat.np[c]? fun::PrintStr(fmt.c_str(),dat.np[c],dat.idini[c],dat.idlast[c],dat.nmk[c],dat.mklist[c].c_str()): "0"));
+    if(!dat.np[c])out.push_back(txtype[c]+"0");
+    else{
+      if(aligned)out.push_back(txtype[c] + fun::PrintStr(fmt.c_str(),dat.np[c],dat.idini[c],dat.idlast[c],dat.nmk[c],dat.mklist[c].c_str()));
+      else       out.push_back(txtype[c] + fun::PrintStr(fmt.c_str(),KINT(dat.np[c]),dat.idini[c],dat.idlast[c],dat.nmk[c],dat.mklist[c].c_str()));
+    }
   }
   out.push_back("");
-  const unsigned nb=dat.np[0]+dat.np[1]+dat.np[2],nt=nb+dat.np[3];
-  const unsigned mb=dat.nmk[0]+dat.nmk[1]+dat.nmk[2],mt=mb+dat.nmk[3];
-  out.push_back(fun::PrintStr("Total particles: %u (bound=%u (fx=%u mv=%u ft=%u) fluid=%u)",nt,nb,dat.np[0],dat.np[1],dat.np[2],dat.np[3]));
-  out.push_back(fun::PrintStr("Total MK blocks: %u (bound=%u (fx=%u mv=%u ft=%u) fluid=%u)",mt,mb,dat.nmk[0],dat.nmk[1],dat.nmk[2],dat.nmk[3]));
+  const ullong nb=dat.np[0]+dat.np[1]+dat.np[2];
+  const ullong nt=nb+dat.np[3];
+  const unsigned mb=dat.nmk[0]+dat.nmk[1]+dat.nmk[2];
+  const unsigned mt=mb+dat.nmk[3];
+  if(1)out.push_back(fun::PrintStr("Total particles: %s (bound=%llu (fx=%llu mv=%llu ft=%llu) fluid=%llu)"
+    ,KINT(nt),nb,dat.np[0],dat.np[1],dat.np[2],dat.np[3]));
+  else{
+    const string knt=fun::KintStr(nt);
+    const string knb=fun::KintStr(nb);
+    const string knfx=fun::KintStr(dat.np[0]);
+    const string knmv=fun::KintStr(dat.np[1]);
+    const string knft=fun::KintStr(dat.np[2]);
+    const string knfl=fun::KintStr(dat.np[3]);
+    out.push_back(string("Total particles: ")+knt+" (bound="+knb+" (fx="+knfx+" mv="+knmv+" ft="+knft+") fluid="+knfl+")");
+  }
+  out.push_back(fun::PrintStr("Total MK blocks: %u (bound=%u (fx=%u mv=%u ft=%u) fluid=%u)"
+    ,mt,mb,dat.nmk[0],dat.nmk[1],dat.nmk[2],dat.nmk[3]));
 }
 
 //==============================================================================
 /// Returns string with particles information.
 //==============================================================================
-void JCaseParts::GetParticlesInfo(std::vector<std::string> &out)const{
+void JCaseParts::GetParticlesInfo(std::vector<std::string>& out)const{
   out.push_back("");
   out.push_back("Particles data:");
   out.push_back("----------------");
-  const unsigned nfixed=Count(TpPartFixed);
-  const unsigned nmoving=Count(TpPartMoving);
-  const unsigned nfloat=Count(TpPartFloating);
-  const unsigned nbound=nfixed+nmoving+nfloat;
-  const unsigned nfluid=Count(TpPartFluid);
-  out.push_back(fun::PrintStr("Number of particles: %u",nbound+nfluid));
-  out.push_back(fun::PrintStr("- Boundary: %u",nbound));
+  const ullong nfixed =Count64(TpPartFixed);
+  const ullong nmoving=Count64(TpPartMoving);
+  const ullong nfloat =Count64(TpPartFloating);
+  const ullong nbound =nfixed+nmoving+nfloat;
+  const ullong nfluid =Count64(TpPartFluid);
+  out.push_back(fun::PrintStr("Number of particles: %llu",nbound+nfluid));
+  out.push_back(fun::PrintStr("- Boundary: %llu",nbound));
   const unsigned nc=CountBlocks();
-  out.push_back(fun::PrintStr("  - Fixed: %u",nfixed));
+  out.push_back(fun::PrintStr("  - Fixed: %llu",nfixed));
   for(unsigned c=0;c<nc;c++)if(GetBlock(c).Type==TpPartFixed){
     const JCasePartBlock& bk=GetBlock(c);
-    const unsigned count=bk.GetCount(),begin=bk.GetBegin();
-    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.GetMk(),count,begin,begin+count-1));
+    const ullong count=bk.GetCount64(),begin=bk.GetBegin64();
+    out.push_back(fun::PrintStr("      Mk[%d]: %llu (%llu-%llu)",bk.GetMk(),count,begin,begin+count-1));
   }
-  out.push_back(fun::PrintStr("  - Moving: %u",nmoving));
+  out.push_back(fun::PrintStr("  - Moving: %llu",nmoving));
   for(unsigned c=0;c<nc;c++)if(GetBlock(c).Type==TpPartMoving){
     const JCasePartBlock& bk=GetBlock(c);
-    const unsigned count=bk.GetCount(),begin=bk.GetBegin();
-    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.GetMk(),count,begin,begin+count-1));
+    const ullong count=bk.GetCount64(),begin=bk.GetBegin64();
+    out.push_back(fun::PrintStr("      Mk[%d]: %llu (%llu-%llu)",bk.GetMk(),count,begin,begin+count-1));
   }
-  out.push_back(fun::PrintStr("  - Floating: %u",nfloat));
+  out.push_back(fun::PrintStr("  - Floating: %llu",nfloat));
   for(unsigned c=0;c<nc;c++)if(GetBlock(c).Type==TpPartFloating){
     const JCasePartBlock& bk=GetBlock(c);
-    const unsigned count=bk.GetCount(),begin=bk.GetBegin();
-    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.GetMk(),count,begin,begin+count-1));
+    const ullong count=bk.GetCount64(),begin=bk.GetBegin64();
+    out.push_back(fun::PrintStr("      Mk[%d]: %llu (%llu-%llu)",bk.GetMk(),count,begin,begin+count-1));
   }
-  out.push_back(fun::PrintStr("- Fluid: %u",nfluid));
+  out.push_back(fun::PrintStr("- Fluid: %llu",nfluid));
   for(unsigned c=0;c<nc;c++)if(GetBlock(c).Type==TpPartFluid){
     const JCasePartBlock& bk=GetBlock(c);
-    const unsigned count=bk.GetCount(),begin=bk.GetBegin();
-    out.push_back(fun::PrintStr("      Mk[%d]: %u (%u-%u)",bk.GetMk(),count,begin,begin+count-1));
+    const ullong count=bk.GetCount64(),begin=bk.GetBegin64();
+    out.push_back(fun::PrintStr("      Mk[%d]: %llu (%llu-%llu)",bk.GetMk(),count,begin,begin+count-1));
   }
 }
 
@@ -733,7 +810,7 @@ void JCaseParts::VisuParticlesInfo()const{
 bool JCaseParts::UseImposedFtVel()const{
   bool usevel=false;
   for(unsigned c=0;c<CountBlocks() && !usevel;c++)if(GetBlock(c).Type==TpPartFloating){
-    const JCasePartBlock_Floating &fblock=(const JCasePartBlock_Floating &)GetBlock(c);
+    const JCasePartBlock_Floating& fblock=(const JCasePartBlock_Floating&)GetBlock(c);
     usevel=(fblock.GetLinearVel()!=NULL || fblock.GetAngularVel()!=NULL);
   }
   return(usevel);
@@ -745,21 +822,24 @@ bool JCaseParts::UseImposedFtVel()const{
 bool JCaseParts::UseAddedFtForce()const{
   bool useforce=false;
   for(unsigned c=0;c<CountBlocks() && !useforce;c++)if(GetBlock(c).Type==TpPartFloating){
-    const JCasePartBlock_Floating &fblock=(const JCasePartBlock_Floating &)GetBlock(c);
+    const JCasePartBlock_Floating& fblock=(const JCasePartBlock_Floating&)GetBlock(c);
     useforce=(fblock.GetLinearForce()!=NULL || fblock.GetAngularForce()!=NULL);
   }
   return(useforce);
 }
 
 //##############################################################################
-//# JCasePartsGetMk
+//# JCasePartsGetMk64
 //##############################################################################
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JCasePartsGetMk::JCasePartsGetMk(const JCaseParts *sparts,bool splitting):Splitting(splitting){
-  ClassName="JCasePartsGetMk";
-  MkRange=NULL; MkValue=NULL;
+JCasePartsGetMk64::JCasePartsGetMk64(const JCaseParts* sparts,bool splitting)
+  :Splitting(splitting)
+{
+  ClassName="JCasePartsGetMk64";
+  MkRange=NULL;
+  MkValue=NULL;
   Reset();
   Config(sparts);
 }
@@ -767,7 +847,7 @@ JCasePartsGetMk::JCasePartsGetMk(const JCaseParts *sparts,bool splitting):Splitt
 //==============================================================================
 /// Destructor.
 //==============================================================================
-JCasePartsGetMk::~JCasePartsGetMk(){
+JCasePartsGetMk64::~JCasePartsGetMk64(){
   DestructorActive=true;
   Reset();
 }
@@ -775,7 +855,7 @@ JCasePartsGetMk::~JCasePartsGetMk(){
 //==============================================================================
 /// Initialisation of variables.
 //==============================================================================
-void JCasePartsGetMk::Reset(){
+void JCasePartsGetMk64::Reset(){
   delete[] MkRange; MkRange=NULL;
   delete[] MkValue; MkValue=NULL;
   MkCount=0;
@@ -785,15 +865,15 @@ void JCasePartsGetMk::Reset(){
 //==============================================================================
 /// Config object.
 //==============================================================================
-void JCasePartsGetMk::Config(const JCaseParts *sparts){
+void JCasePartsGetMk64::Config(const JCaseParts* sparts){
   MkCount=sparts->CountBlocks();
-  MkRange=new unsigned[MkCount];
+  MkRange=new ullong[MkCount];
   MkValue=new word[MkCount];
   for(unsigned c=0;c<sparts->CountBlocks();c++){
-    const JCasePartBlock &block=sparts->GetBlock(c);
+    const JCasePartBlock& block=sparts->GetBlock(c);
     if(Splitting && block.Type==TpPartFluid)MkSplitting=block.GetMk();
     MkValue[c]=block.GetMk();
-    MkRange[c]=block.GetBegin()+block.GetCount();
+    MkRange[c]=block.GetBegin64()+block.GetCount64();
   }
 }
 

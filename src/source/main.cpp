@@ -1,11 +1,12 @@
 /*
- <DUALSPHYSICS>  Copyright (c) 2023, 
- Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo, 
- Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers, 
- Dr Georgios Fourtakas, Prof. Peter Stansby, 
- Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni, 
- Dr Orlando Garcia Feal, Ivan Martinez Estevez,
- Dr Joseph O'Connor, Dr Aaron English
+ <DUALSPHYSICS>  Copyright (c) 2025, 
+ Dr Jose M. Dominguez Alonso, Prof. Alejandro Crespo, 
+ Dr Georgios Fourtakas, Prof. Benedict Rogers, 
+ Dr Renato Vacondio, Dr Corrado Altomare, 
+ Dr Angelo Tafuni, Dr Orlando Garcia Feal, 
+ Dr Ivan Martinez Estevez, Dr Joseph O'Connor, 
+ Dr Aaron English, Dr Francesco Ricci,
+ Prof. Moncho Gomez Gesteira, Prof. Peter Stansby
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -36,8 +37,8 @@ School of Mechanical, Aerospace and Civil Engineering, University of Manchester,
 \section compile_sec Project files
 Please download source files and documentation from <a href="http://dual.sphysics.org">DualSPHysics website.</a> \n
 \author <a href="http://dual.sphysics.org/index.php/developers">DualSPHysics Developers.</a> 
-\version 5.2.269
-\date 03-04-2023
+\version 5.4.354
+\date 20-03-2025
 \copyright GNU Lesser General Public License <a href="http://www.gnu.org/licenses/">GNU licenses.</a>
 */
 
@@ -56,26 +57,35 @@ Please download source files and documentation from <a href="http://dual.sphysic
 #ifdef _WITHGPU
   #include "JSphGpuSingle.h"
 #endif
+#ifdef _WITHMR
+  #include "JSphVResDriver.h"
+  #include "JSphCpuSingle_VRes.h"
+  #ifdef _WITHGPU
+    #include "JSphGpuSingle_VRes.h"
+  #endif
+#endif
 
 #pragma warning(disable : 4996) //Cancels sprintf() deprecated.
 
 using namespace std;
 
-JAppInfo AppInfo("DualSPHysics5","v5.2.269","03-04-2023");
+JAppInfo AppInfo("DualSPHysics5","v5.4.354","20-03-2025");
+//JAppInfo AppInfo("DualSPHysics5","v5.4.353","ShiftAdv","v0.32","11-12-2024"); //-for user versions.
 //JAppInfo AppInfo("DualSPHysics5","v5.0.???","UserVersion","v1.0","??-??-????"); //-for user versions.
 
 //==============================================================================
 /// LGPL License.
 //==============================================================================
-std::string getlicense_lgpl(const std::string &name,bool simple){
+std::string getlicense_lgpl(const std::string& name,bool simple){
   std::string tx=(simple? "": "\n");
-  tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2023 by"; 
-  tx=tx+"\n Dr Jose M. Dominguez Alonso, Dr Alejandro Crespo,";
-  tx=tx+"\n Prof. Moncho Gomez Gesteira, Prof. Benedict Rogers,";
-  tx=tx+"\n Dr Georgios Fourtakas, Prof. Peter Stansby,";
-  tx=tx+"\n Dr Renato Vacondio, Dr Corrado Altomare, Dr Angelo Tafuni,";
-  tx=tx+"\n Dr Orlando Garcia Feal, Ivan Martinez Estevez,";
-  tx=tx+"\n Dr Joseph O'Connor, Dr Aaron English\n";
+  tx=tx+"\n <"+fun::StrUpper(name)+"> Copyright (c) 2025 by"; 
+  tx=tx+"\n Dr Jose M. Dominguez Alonso, Prof. Alejandro Crespo,";
+  tx=tx+"\n Dr Georgios Fourtakas, Prof. Benedict Rogers,";
+  tx=tx+"\n Dr Renato Vacondio, Dr Corrado Altomare,";
+  tx=tx+"\n Dr Angelo Tafuni, Dr Orlando Garcia Feal,";
+  tx=tx+"\n Dr Ivan Martinez Estevez, Dr Joseph O'Connor,";
+  tx=tx+"\n Dr Aaron English, Dr Francesco Ricci,";
+  tx=tx+"\n Prof. Moncho Gomez Gesteira, Prof. Peter Stansby\n";
   if(!simple){
     tx=tx+"\n EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo";
     tx=tx+"\n School of Mechanical, Aerospace and Civil Engineering, University of Manchester\n";
@@ -99,13 +109,15 @@ std::string getlicense_lgpl(const std::string &name,bool simple){
 //==============================================================================
 ///  Shows program version and JSON information and finishes the execution.
 //==============================================================================
-bool ShowsVersionInfo(int argc,char** argv){
+bool ShowsVersionInfo(int argc,char** argv,bool show=true){
   const string option=fun::StrLower(argc==2? argv[1]: "");
   bool finish=true;
   if(fun::StrRemoveAfter(option,":")=="-ver"){
     const string vtex=JCfgRunBase::VerText(AppInfo.GetFullName(),option);
-    printf("%s\n",vtex.c_str());
-    if(vtex==AppInfo.GetFullName())printf("%s",getlicense_lgpl(AppInfo.GetShortName(),true).c_str());
+    if(show){
+      printf("%s\n",vtex.c_str());
+      if(vtex==AppInfo.GetFullName())printf("%s",getlicense_lgpl(AppInfo.GetShortName(),true).c_str());
+    }
   }
   else if(option=="-info"){
     //-Defines the features included in the program.
@@ -113,11 +125,10 @@ bool ShowsVersionInfo(int argc,char** argv){
     features.push_back(fun::JSONProperty("CPU",true));
     features.push_back(fun::JSONProperty("GPU",AVAILABLE_GPU));
     features.push_back(fun::JSONProperty("MultiGPU",AVAILABLE_MGPU));
-    features.push_back(fun::JSONProperty("VTK_Output",AVAILABLE_VTKLIB));
-    features.push_back(fun::JSONProperty("Numex_Expressions",AVAILABLE_NUMEXLIB));
     features.push_back(fun::JSONProperty("CHRONO_Coupling",AVAILABLE_CHRONO));
-    features.push_back(fun::JSONProperty("MoorDyn_Coupling",AVAILABLE_MOORDYN));
+    features.push_back(fun::JSONProperty("MoorDynPlus_Coupling",AVAILABLE_MOORDYNPLUS));
     features.push_back(fun::JSONProperty("WaveGen",AVAILABLE_WAVEGEN));
+    features.push_back(fun::JSONProperty("FlexStruc",AVAILABLE_FLEXSTRUC)); //<vs_flexstruc>
     features.push_back(fun::JSONProperty("DDT_Fourtakas",true));
     //-Defines main information about the version program.
     std::vector<std::string> info;
@@ -126,20 +137,23 @@ bool ShowsVersionInfo(int argc,char** argv){
     info.push_back(fun::JSONProperty("Version"  ,AppInfo.GetMainVer()));
     info.push_back(fun::JSONProperty("Date"     ,AppInfo.GetDate()));
     info.push_back(fun::JSONPropertyValue("Features",fun::JSONObject(features)));
-    printf("%s\n",fun::JSONObject(info).c_str());
+    if(show)printf("%s\n",fun::JSONObject(info).c_str());
   }
   else finish=false;
   return(finish);
 }
 
 //==============================================================================
-///  Print exception message on screen and log file.
+/// Print exception message on standard error output and log file.
 //==============================================================================
-void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *log){
+void PrintExceptionLog(const std::string& prefix,const std::string& text
+  ,JLog2* log)
+{
   const bool prt=(text.empty() || text[0]!='#');
   const string tx=(prt? prefix+text: text.substr(1));
-  if(prt)printf("%s\n",tx.c_str());
+  //if(prt)printf("%s\n",tx.c_str());
   fflush(stdout);
+  if(prt)cerr << tx << endl;
   if(log && log->IsOk())log->PrintFile(tx,true);
 }
 
@@ -148,22 +162,21 @@ void PrintExceptionLog(const std::string &prefix,const std::string &text,JLog2 *
 int main(int argc, char** argv){
   int errcode=1;
 
-  //AppInfo.AddNameExtra("Symmetry");    //<vs_syymmetry>
   //AppInfo.AddNameExtra("SaveFtAce");
-  //AppInfo.AddNameExtra("SaveFtMotion");//<vs_ftmottionsv>
   #ifdef CODE_SIZE4
     AppInfo.AddNameExtra("MK65k");
   #endif
 
   AppInfo.ConfigRunPaths(argv[0]);
+  const std::string appname=AppInfo.GetFullName();
+  const std::string license=getlicense_lgpl(AppInfo.GetShortName(),false);
   if(ShowsVersionInfo(argc,argv))return(errcode);
-  std::string license=getlicense_lgpl(AppInfo.GetShortName(),false);
   printf("%s",license.c_str());
-  std::string appname=AppInfo.GetFullName();
-  std::string appnamesub=fun::StrFillEnd("","=",unsigned(appname.size())+1);
+  const std::string appnamesub=fun::StrFillEnd("","=",unsigned(appname.size())+1);
   printf("\n%s\n%s\n",appname.c_str(),appnamesub.c_str());
-  JLog2 *log=NULL;
+  JLog2* log=NULL;
   JSphCfgRun cfg;
+  cfg.SetFeatureList(JSph::GetFeatureList());
   try{
     cfg.LoadArgv(argc,argv);
     //cfg.VisuConfig();
@@ -180,34 +193,56 @@ int main(int argc, char** argv){
         cfg.Cpu=true;
       #endif
       if(cfg.Cpu){
-        JSphCpuSingle sph;
+        #if defined(_WITHMR)               //<vs_vrres_ini>
+        if(cfg.VRes){
+          JSphVResDriver<JSphCpuSingle_VRes, stinterparmscb> sph;
+          sph.Run(appname,&cfg,log);
+        }else{
+          JSphCpuSingle sph;
+          sph.Run(appname,&cfg,log);        //<vs_vrres_end>
+        }
+        #else
+          JSphCpuSingle sph;
+          sph.Run(appname,&cfg,log);
+        #endif
+      }else{
+      #if defined(_WITHGPU) && defined(_WITHMR)               //<vs_vrres_ini>
+      if(cfg.VRes){                             
+        JSphVResDriver<JSphGpuSingle_VRes, StInterParmsbg> sph;
+        sph.Run(appname,&cfg,log);
+      }else{
+        JSphGpuSingle sph;
         sph.Run(appname,&cfg,log);
       }
-      #ifdef _WITHGPU
+      #elif defined(_WITHGPU)                                 //<vs_vrres_end>
       else{
         JSphGpuSingle sph;
         sph.Run(appname,&cfg,log);
       }
       #endif
+      }
     }
     errcode=0;
   }
-  catch(const char *cad){
+  catch(const char* cad){
     PrintExceptionLog("\n*** Exception(chr): ",cad,log);
   }
-  catch(const string &e){
+  catch(const string& e){
     PrintExceptionLog("\n*** Exception(str): ",e,log);
   }
-  catch (const JException &e){
+  catch (const JException& e){
     if(log && log->IsOk())log->PrintFile(e.what());
   }
-  catch (const exception &e){
+  catch (const exception& e){
     PrintExceptionLog("\n*** Exception(exc): ",e.what(),log);
   }
   catch(...){
     PrintExceptionLog("","\n*** Attention: Unknown exception...",log);
   }
-  PrintExceptionLog("",fun::PrintStr("\nFinished execution (code=%d).\n",errcode),log);
+  //-Finished execution.
+  if(log && log->IsOk())log->PrintFile(fun::PrintStr("\nFinished execution (code=%d).\n",errcode),true);
+  printf("\nFinished execution (code=%d).\n",errcode);
+  fflush(stdout);
   return(errcode);
 }
 

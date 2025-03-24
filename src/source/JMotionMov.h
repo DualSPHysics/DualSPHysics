@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -23,6 +23,7 @@
 
 #include "TypesDef.h"
 #include "JObject.h"
+#include "JMotionData.h"
 
 class JXml;
 class TiXmlNode;
@@ -35,7 +36,24 @@ class TiXmlNode;
 class JMotionMov : protected JObject
 {
 public:
-  typedef enum{ Null=0,Nulo,CircularSinusoidal,RotationSinusoidal,RectilinearSinusoidal,CircularAce,Circular,RotationFile,RotationAce,Rotation,RectilinearFile,RectilinearAce,Rectilinear,Wait }TpMotionMov; 
+  typedef enum{ 
+     Null=0
+    ,Nulo
+    ,CircularSinusoidal
+    ,RotationSinusoidal
+    ,RectilinearSinusoidal
+    ,CircularAce
+    ,Circular
+    ,RotationFile
+    ,RotationAce
+    ,Rotation
+    ,RectilinearFile
+    ,RectilinearAce
+    ,Rectilinear
+    ,Wait
+    ,RotAdvFile
+    ,RotTransFile
+  }TpMotionMov; 
 
   const unsigned Id;
   const unsigned NextId;
@@ -44,13 +62,19 @@ public:
   const TpMotionMov Type;
   JMotionMov* NextMov;
 
-  JMotionMov(const char* classname,bool typeblock,TpMotionMov type,unsigned id,unsigned nextid,double time):TypeBlock(typeblock),Type(type),Id(id),NextId(nextid),Time(time){
+  JMotionMov(const char* classname,bool typeblock,TpMotionMov type,unsigned id
+    ,unsigned nextid,double time):TypeBlock(typeblock),Type(type),Id(id)
+    ,NextId(nextid),Time(time)
+  {
     ClassName=classname;
     NextMov=NULL;
   }
   void SetNextMov(JMotionMov* nextmov){ NextMov=nextmov; }
   virtual void WriteXml(TiXmlNode* node)const=0;
-  virtual ~JMotionMov(){ DestructorActive=true; /*printf("del JMotionMov\n");*/  }
+  virtual ~JMotionMov(){
+    DestructorActive=true;
+    //printf("del JMotionMov\n");
+  }
   //void Reset();
 };
 
@@ -60,7 +84,9 @@ public:
 class JMotionMovBlock : public JMotionMov
 {
 public:
-  JMotionMovBlock(const char* classname,TpMotionMov type,unsigned id,unsigned nextid,double time): JMotionMov(classname,true,type,id,nextid,time) {}
+  JMotionMovBlock(const char* classname,TpMotionMov type,unsigned id
+    ,unsigned nextid,double time)
+    :JMotionMov(classname,true,type,id,nextid,time) {}
 };
 
 //==============================================================================
@@ -69,7 +95,9 @@ public:
 class JMotionMovPart : public JMotionMov
 {
 public:
-  JMotionMovPart(const char* classname,TpMotionMov type,unsigned id,unsigned nextid,double time): JMotionMov(classname,false,type,id,nextid,time) {}
+  JMotionMovPart(const char* classname,TpMotionMov type,unsigned id
+    ,unsigned nextid,double time)
+    :JMotionMov(classname,false,type,id,nextid,time) {}
 };
 
 //==============================================================================
@@ -78,7 +106,8 @@ public:
 class JMotionMovWait : public JMotionMovBlock
 {
 public:
-  JMotionMovWait(unsigned id,unsigned nextid,double time):JMotionMovBlock("JMotionMovWait",Wait,id,nextid,time){}
+  JMotionMovWait(unsigned id,unsigned nextid,double time)
+    :JMotionMovBlock("JMotionMovWait",Wait,id,nextid,time){}
   void WriteXml(TiXmlNode* node)const;
 };
 
@@ -89,7 +118,8 @@ class JMotionMovRect : public JMotionMovBlock
 {
 public:
   const tdouble3 Vel;
-  JMotionMovRect(unsigned id,unsigned nextid,double time,const tdouble3 &vel):JMotionMovBlock("JMotionMovRect",Rectilinear,id,nextid,time),Vel(vel){}
+  JMotionMovRect(unsigned id,unsigned nextid,double time,const tdouble3& vel)
+    :JMotionMovBlock("JMotionMovRect",Rectilinear,id,nextid,time),Vel(vel){}
   void WriteXml(TiXmlNode* node)const;
 };
 
@@ -102,7 +132,10 @@ public:
   const tdouble3 Ace;
   const tdouble3 Vel;
   const bool VelPrev;
-  JMotionMovRectAce(unsigned id,unsigned nextid,double time,const tdouble3 &ace,const tdouble3 &vel,bool velprev):JMotionMovBlock("JMotionMovRectAce",RectilinearAce,id,nextid,time),Ace(ace),Vel(vel),VelPrev(velprev){}
+  JMotionMovRectAce(unsigned id,unsigned nextid,double time
+    ,const tdouble3& ace,const tdouble3& vel,bool velprev)
+    :JMotionMovBlock("JMotionMovRectAce",RectilinearAce,id,nextid,time)
+    ,Ace(ace),Vel(vel),VelPrev(velprev){}
   void WriteXml(TiXmlNode* node)const;
 };
 
@@ -117,9 +150,12 @@ public:
   const tdouble3 InitialP2;
   tdouble3 P1;
   tdouble3 P2;
-  JMotionAxis(const tdouble3 &p1,const tdouble3 &p2):InitialP1(p1),InitialP2(p2),P1(p1),P2(p2){}
+  JMotionAxis(const tdouble3& p1,const tdouble3& p2)
+    :InitialP1(p1),InitialP2(p2),P1(p1),P2(p2){}
   void ResetTime(){ P1=InitialP1; P2=InitialP2; }
-  bool Equals(const tdouble3 &p1,const tdouble3 &p2)const{ return(P1.x==p1.x&&P1.y==p1.y&&P1.z==p1.z&&P2.x==p2.x&&P2.y==p2.y&&P2.z==p2.z); }
+  bool Equals(const tdouble3& p1,const tdouble3& p2)const{ 
+    return(P1.x==p1.x&&P1.y==p1.y&&P1.z==p1.z&&P2.x==p2.x&&P2.y==p2.y&&P2.z==p2.z);
+  }
 };
 
 //==============================================================================
@@ -131,7 +167,10 @@ public:
   const bool AngDegrees;
   const JMotionAxis* Axis;
   const double VelAng;  //-Siempre en grados/s.
-  JMotionMovRot(unsigned id,unsigned nextid,double time,bool angdegrees,const JMotionAxis* axis,const double &velang):JMotionMovPart("JMotionMovRot",Rotation,id,nextid,time),AngDegrees(angdegrees),Axis(axis),VelAng(velang){}
+  JMotionMovRot(unsigned id,unsigned nextid,double time,bool angdegrees
+    ,const JMotionAxis* axis,const double& velang)
+    :JMotionMovPart("JMotionMovRot",Rotation,id,nextid,time)
+    ,AngDegrees(angdegrees),Axis(axis),VelAng(velang){}
   void WriteXml(TiXmlNode* node)const;
 };
 
@@ -147,7 +186,10 @@ public:
   const double AceAng;  //-Siempre en grados/s^2.
   const bool VelPrev;
 
-  JMotionMovRotAce(unsigned id,unsigned nextid,double time,bool angdegrees,const JMotionAxis* axis,const double &aceang,const double &velang,bool velprev):JMotionMovPart("JMotionMovRotAce",RotationAce,id,nextid,time),AngDegrees(angdegrees),Axis(axis),AceAng(aceang),VelAng(velang),VelPrev(velprev){}
+  JMotionMovRotAce(unsigned id,unsigned nextid,double time,bool angdegrees
+    ,const JMotionAxis* axis,const double& aceang,const double& velang,bool velprev)
+    :JMotionMovPart("JMotionMovRotAce",RotationAce,id,nextid,time)
+    ,AngDegrees(angdegrees),Axis(axis),AceAng(aceang),VelAng(velang),VelPrev(velprev){}
   void WriteXml(TiXmlNode* node)const;
 };
 
@@ -161,7 +203,10 @@ public:
   const JMotionAxis* Axis;
   const JMotionAxis* Ref;
   const double VelAng;  //-Siempre en grados/s.
-  JMotionMovCir(unsigned id,unsigned nextid,double time,bool angdegrees,const JMotionAxis* axis,const JMotionAxis* ref,const double &velang):JMotionMovBlock("JMotionMovCir",Circular,id,nextid,time),AngDegrees(angdegrees),Axis(axis),Ref(ref),VelAng(velang){}
+  JMotionMovCir(unsigned id,unsigned nextid,double time,bool angdegrees
+    ,const JMotionAxis* axis,const JMotionAxis* ref,const double& velang)
+    :JMotionMovBlock("JMotionMovCir",Circular,id,nextid,time)
+    ,AngDegrees(angdegrees),Axis(axis),Ref(ref),VelAng(velang){}
   void WriteXml(TiXmlNode* node)const;
 };
 
@@ -177,7 +222,12 @@ public:
   const double VelAng;  //-Siempre en grados/s.
   const double AceAng;  //-Siempre en grados/s^2.
   const bool VelPrev;
-  JMotionMovCirAce(unsigned id,unsigned nextid,double time,bool angdegrees,const JMotionAxis* axis,const JMotionAxis* ref,const double &aceang,const double &velang,bool velprev):JMotionMovBlock("JMotionMovCirAce",CircularAce,id,nextid,time),AngDegrees(angdegrees),Axis(axis),Ref(ref),AceAng(aceang),VelAng(velang),VelPrev(velprev){}
+  JMotionMovCirAce(unsigned id,unsigned nextid,double time,bool angdegrees
+    ,const JMotionAxis* axis,const JMotionAxis* ref,const double& aceang
+    ,const double& velang,bool velprev)
+    :JMotionMovBlock("JMotionMovCirAce",CircularAce,id,nextid,time)
+    ,AngDegrees(angdegrees),Axis(axis),Ref(ref),AceAng(aceang),VelAng(velang)
+    ,VelPrev(velprev){}
   void WriteXml(TiXmlNode* node)const;
 };
 
@@ -192,7 +242,11 @@ public:
   const tdouble3 Ampl;  //-Amplitude, siempre en metros.
   const tdouble3 Phase; //-Siempre en radianes.
   const bool PhasePrev;
-  JMotionMovRectSinu(unsigned id,unsigned nextid,double time,bool angdegrees,const tdouble3 &freq,const tdouble3 &ampl,const tdouble3 &phase,bool phaseprev):JMotionMovBlock("JMotionMovRectSinu",RectilinearSinusoidal,id,nextid,time),AngDegrees(angdegrees),Freq(freq),Ampl(ampl),Phase(phase),PhasePrev(phaseprev){}
+  JMotionMovRectSinu(unsigned id,unsigned nextid,double time,bool angdegrees
+    ,const tdouble3& freq,const tdouble3& ampl,const tdouble3& phase,bool phaseprev)
+    :JMotionMovBlock("JMotionMovRectSinu",RectilinearSinusoidal,id,nextid,time)
+    ,AngDegrees(angdegrees),Freq(freq),Ampl(ampl),Phase(phase)
+    ,PhasePrev(phaseprev){}
   void WriteXml(TiXmlNode* node)const;
 };
 
@@ -208,7 +262,11 @@ public:
   const double Ampl;  //-Amplitude, siempre en grados.
   const double Phase; //-Siempre en radianes.
   const bool PhasePrev;
-  JMotionMovRotSinu(unsigned id,unsigned nextid,double time,bool angdegrees,const JMotionAxis *axis,double freq,double ampl,double phase,bool phaseprev):JMotionMovPart("JMotionMovRotSinu",RotationSinusoidal,id,nextid,time),AngDegrees(angdegrees),Axis(axis),Freq(freq),Ampl(ampl),Phase(phase),PhasePrev(phaseprev){}
+  JMotionMovRotSinu(unsigned id,unsigned nextid,double time,bool angdegrees
+    ,const JMotionAxis* axis,double freq,double ampl,double phase,bool phaseprev)
+    :JMotionMovPart("JMotionMovRotSinu",RotationSinusoidal,id,nextid,time)
+    ,AngDegrees(angdegrees),Axis(axis),Freq(freq),Ampl(ampl),Phase(phase)
+    ,PhasePrev(phaseprev){}
   void WriteXml(TiXmlNode* node)const;
 };
 
@@ -225,42 +283,14 @@ public:
   const double Ampl;  //-Amplitude, siempre en grados.
   const double Phase; //-Siempre en radianes.
   const bool PhasePrev;
-  JMotionMovCirSinu(unsigned id,unsigned nextid,double time,bool angdegrees,const JMotionAxis* axis,const JMotionAxis* ref,double freq,double ampl,double phase,bool phaseprev):JMotionMovBlock("JMotionMovCirSinu",CircularSinusoidal,id,nextid,time),AngDegrees(angdegrees),Axis(axis),Ref(ref),Freq(freq),Ampl(ampl),Phase(phase),PhasePrev(phaseprev){}
+  JMotionMovCirSinu(unsigned id,unsigned nextid,double time,bool angdegrees
+    ,const JMotionAxis* axis,const JMotionAxis* ref,double freq,double ampl
+    ,double phase,bool phaseprev)
+    :JMotionMovBlock("JMotionMovCirSinu",CircularSinusoidal,id,nextid,time)
+    ,AngDegrees(angdegrees),Axis(axis),Ref(ref),Freq(freq),Ampl(ampl)
+    ,Phase(phase),PhasePrev(phaseprev){}
   void WriteXml(TiXmlNode* node)const;
 };
-
-
-//==============================================================================
-//##############################################################################
-//==============================================================================
-class JMotionDataFile : protected JObject
-{
-private:
-  static const unsigned SIZEMAX=104857600; ///<Maximum file size (100mb).
-
-  unsigned Size;   //-Posiciones reservadas para vectores
-  unsigned Count;  //-Numero de posiciones
-  double *Times;   //-Tiempos
-  tdouble3 *ValuesPos;  //-Posiciones.
-  double *ValuesAng;    //-Angulos, siemgre en grados.
-
-  void Reset();
-  void Resize(unsigned size);
-  void LoadFilePos(std::string dirdata,std::string file,const int fields,const int fieldtime,const int fieldx,const int fieldy,const int fieldz);
-  void LoadFileAng(std::string dirdata,std::string file,bool angdegrees);
-
-public:
-  const bool PosType;    //-Indica que se almacenan posiciones.
-  JMotionDataFile(std::string dirdata,std::string file,const int fields,const int fieldtime,const int fieldx,const int fieldy,const int fieldz);
-  JMotionDataFile(std::string dirdata,std::string file,bool angdegrees);
-  ~JMotionDataFile();
-
-  unsigned GetCount()const{ return(Count); }
-  const double*   GetTimes()const{ return(Times); }
-  const tdouble3* GetValuesPos()const{ return(ValuesPos); }
-  const double*   GetValuesAng()const{ return(ValuesAng); }
-};
-
 
 //==============================================================================
 //##############################################################################
@@ -268,7 +298,7 @@ public:
 class JMotionMovRectFile : public JMotionMovBlock
 {
 private:
-  JMotionDataFile *DataFile;
+  JMotionDataMov* DataFile;
 public:
   const std::string* DirData;
   const std::string File;
@@ -277,13 +307,24 @@ public:
   const int FieldX;
   const int FieldY;
   const int FieldZ;
-  JMotionMovRectFile(unsigned id,unsigned nextid,double time,const std::string *dirdata,const std::string &file,int fields,int fieldtime,int fieldx,int fieldy,int fieldz):JMotionMovBlock("JMotionMovRectFile",RectilinearFile,id,nextid,time),DirData(dirdata),File(file),Fields(fields),FieldTime(fieldtime),FieldX(fieldx),FieldY(fieldy),FieldZ(fieldz){
+  JMotionMovRectFile(unsigned id,unsigned nextid,double time
+    ,const std::string* dirdata,const std::string& file,int fields
+    ,int fieldtime,int fieldx,int fieldy,int fieldz)
+    :JMotionMovBlock("JMotionMovRectFile",RectilinearFile,id,nextid,time)
+    ,DirData(dirdata),File(file),Fields(fields),FieldTime(fieldtime)
+    ,FieldX(fieldx),FieldY(fieldy),FieldZ(fieldz)
+  {
     DataFile=NULL;
   }
-  ~JMotionMovRectFile(){ DestructorActive=true; delete DataFile; DataFile=NULL;  }
+  ~JMotionMovRectFile(){ 
+    DestructorActive=true; delete DataFile; DataFile=NULL;
+  }
   void WriteXml(TiXmlNode* node)const;
 
-  void PrepareData(){  if(!DataFile)DataFile=new JMotionDataFile(*DirData,File,Fields,FieldTime,FieldX,FieldY,FieldZ);  }
+  void PrepareData(){  
+    if(!DataFile)DataFile=new JMotionDataMov(*DirData,File,Fields
+      ,FieldTime,FieldX,FieldY,FieldZ);
+  }
   unsigned GetCount()const{  return(DataFile->GetCount());  }
   const double*   GetTimes()const{  return(DataFile->GetTimes());  }
   const tdouble3* GetValuesPos()const{  return(DataFile->GetValuesPos());  }
@@ -295,22 +336,125 @@ public:
 class JMotionMovRotFile : public JMotionMovPart
 {
 private:
-  JMotionDataFile *DataFile;
+  JMotionDataRotAxis* DataFile;
 public:
   const std::string* DirData;
   const std::string File;
   const bool AngDegrees;
   const JMotionAxis* Axis;
-  JMotionMovRotFile(unsigned id,unsigned nextid,double time,bool angdegrees,const JMotionAxis* axis,const std::string *dirdata,const std::string &file):JMotionMovPart("JMotionMovRotFile",RotationFile,id,nextid,time),DirData(dirdata),AngDegrees(angdegrees),Axis(axis),File(file){
+  JMotionMovRotFile(unsigned id,unsigned nextid,double time,bool angdegrees
+    ,const JMotionAxis* axis,const std::string* dirdata,const std::string& file)
+    :JMotionMovPart("JMotionMovRotFile",RotationFile,id,nextid,time)
+    ,DirData(dirdata),AngDegrees(angdegrees),Axis(axis),File(file)
+  {
     DataFile=NULL;
   }
-  ~JMotionMovRotFile(){ DestructorActive=true; delete DataFile; DataFile=NULL;  }
+  ~JMotionMovRotFile(){
+    DestructorActive=true; delete DataFile; DataFile=NULL;
+  }
   void WriteXml(TiXmlNode* node)const;
 
-  void PrepareData(){  if(!DataFile)DataFile=new JMotionDataFile(*DirData,File,AngDegrees);  }
+  void PrepareData(){
+    if(!DataFile)DataFile=new JMotionDataRotAxis(*DirData,File,AngDegrees);
+  }
   unsigned GetCount()const{ return(DataFile->GetCount()); }
   const double* GetTimes()const{ return(DataFile->GetTimes()); }
   const double* GetValuesAng()const{ return(DataFile->GetValuesAng()); }
+};
+
+//==============================================================================
+//##############################################################################
+//==============================================================================
+class JMotionMovRotAdvFile : public JMotionMovPart
+{
+private:
+  JMotionDataRotEuler* DataFile;
+public:
+  const std::string* DirData;
+  const std::string File;
+  const int Fields;
+  const bool AngDegrees;
+  const int FieldTime;
+  const int FieldAng1;
+  const int FieldAng2;
+  const int FieldAng3;
+  const tdouble3 Center;
+  const bool Intrinsic;
+  const std::string Axes;
+//==============================================================================
+  JMotionMovRotAdvFile(unsigned id,unsigned nextid,double time,bool angdegrees
+    ,const std::string* dirdata,const std::string& file,int fields,int fieldtime
+    ,int fieldang1,int fieldang2,int fieldang3,const tdouble3 center
+    ,const bool intrinsic,const std::string& axes)
+    :JMotionMovPart("JMotionMovRotAdvFile",RotAdvFile,id,nextid,time)
+    ,DirData(dirdata),AngDegrees(angdegrees),File(file),Fields(fields)
+    ,FieldTime(fieldtime),FieldAng1(fieldang1),FieldAng2(fieldang2)
+    ,FieldAng3(fieldang3),Center(center),Intrinsic(intrinsic),Axes(axes)
+  {
+    DataFile=NULL;
+  }
+  ~JMotionMovRotAdvFile(){
+    DestructorActive=true; delete DataFile; DataFile=NULL;
+  }
+  void WriteXml(TiXmlNode* node)const;
+  void PrepareData(){
+    if(!DataFile)DataFile=new JMotionDataRotEuler(*DirData,File,Fields
+      ,FieldTime,FieldAng1,FieldAng2,FieldAng3,AngDegrees);
+  }
+  unsigned GetCount()const{ return(DataFile->GetCount()); }
+  const double* GetTimes()const{ return(DataFile->GetTimes()); }
+  const tdouble3* GetValuesAngXYZ()const{ return(DataFile->GetValuesAng3()); }
+};
+
+//==============================================================================
+//##############################################################################
+//==============================================================================
+class JMotionMovPathFile : public JMotionMovPart
+{
+private:
+  JMotionDataPath* DataFile;
+public:
+  const std::string* DirData;
+  const std::string File;
+  const int Fields;
+  const bool AngDegrees;
+  const int FieldTime;
+  const int FieldX;
+  const int FieldY;
+  const int FieldZ;
+  const int FieldAng1;
+  const int FieldAng2;
+  const int FieldAng3;
+  const bool MoveCenter;
+  const bool Intrinsic;
+  const std::string Axes;
+  tdouble3 Center;
+//==============================================================================
+  JMotionMovPathFile(unsigned id,unsigned nextid,double time,bool angdegrees
+    ,const std::string* dirdata,const std::string& file,int fields,int fieldtime
+    ,int fieldx,int fieldy,int fieldz,int fieldang1,int fieldang2,int fieldang3
+    ,const tdouble3 center,const bool movecenter,const bool intrinsic
+    ,const std::string& axes)
+    :JMotionMovPart("JMotionMovPathFile",RotTransFile,id,nextid,time)
+    ,DirData(dirdata),AngDegrees(angdegrees),File(file),Fields(fields)
+    ,FieldTime(fieldtime),FieldX(fieldx),FieldY(fieldy),FieldZ(fieldz)
+    ,FieldAng1(fieldang1),FieldAng2(fieldang2),FieldAng3(fieldang3)
+    ,Center(center),MoveCenter(movecenter),Intrinsic(intrinsic),Axes(axes)
+  {
+    DataFile=NULL;
+  }
+  ~JMotionMovPathFile(){
+    DestructorActive=true; delete DataFile; DataFile=NULL;
+  }
+  void WriteXml(TiXmlNode* node)const;
+  void PrepareData(){
+    if(!DataFile)DataFile=new JMotionDataPath(*DirData,File,Fields,FieldTime
+      ,FieldX,FieldY,FieldZ,FieldAng1,FieldAng2,FieldAng3,AngDegrees);
+  }
+  unsigned GetCount()const{ return(DataFile->GetCount()); }
+  const double* GetTimes()const{ return(DataFile->GetTimes()); }
+  const tdouble3* GetValuesAngXYZ()const{ return(DataFile->GetValuesAng3());}
+  const tdouble3* GetValuesPos()const{  return(DataFile->GetValuesPos());}
 };
 
 //==============================================================================

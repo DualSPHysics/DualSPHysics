@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2021 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -47,7 +47,7 @@ public:
   static const int TIMERSIZE=50;
 
 protected:
-  StDsTimer *List;
+  StDsTimer* List;
   unsigned CtMax;
   bool SvTimers;
 
@@ -75,8 +75,8 @@ public:
   void Reset();
   void ResetTimes();
   
-  void ShowTimes(std::string title,JLog2 *log,bool onlyfile=false)const;
-  void GetTimersInfo(std::string &hinfo,std::string &dinfo)const;
+  void ShowTimes(std::string title,JLog2* log,bool onlyfile=false)const;
+  void GetTimersInfo(std::string& hinfo,std::string& dinfo)const;
 };
 
 #endif

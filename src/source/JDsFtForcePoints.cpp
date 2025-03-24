@@ -1,6 +1,6 @@
 //HEAD_DSTOOLS
 /* 
- <DualSPHysics codes>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <DualSPHysics codes>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  DualSPHysics is an international collaboration between:
@@ -30,7 +30,7 @@
 #include "Functions.h"
 #include "FunGeo3d.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
+#include "JSpVtkData.h"
 #include "JSaveCsv2.h"
 #include "JAppInfo.h"
 #include "JSphMk.h"
@@ -199,7 +199,7 @@ llong JDsFtForcePoints::GetAllocMemory()const{
 //==============================================================================
 /// Adds point and returns ptid of the new point.
 //==============================================================================
-word JDsFtForcePoints::AddPoint(unsigned ftid,word ftmkb,const tdouble3 &pos){
+word JDsFtForcePoints::AddPoint(unsigned ftid,word ftmkb,const tdouble3& pos){
   if(unsigned(ftid)>=unsigned(FtCount))Run_Exceptioon("Id of floating is invalid.");
   word c=PtCount;
   ResizeMemoryPt(PtCount+1);
@@ -241,7 +241,7 @@ void JDsFtForcePoints::ConfigPeri(byte periactive,bool perix,bool periy,bool per
 //==============================================================================
 /// Configures object for execution.
 //==============================================================================
-void JDsFtForcePoints::Config(unsigned ftcount,const StFloatingData *ftdata
+void JDsFtForcePoints::Config(unsigned ftcount,const StFloatingData* ftdata
   ,byte periactive,bool perix,bool periy,bool periz
   ,tdouble3 perixinc,tdouble3 periyinc,tdouble3 perizinc)
 {
@@ -285,8 +285,8 @@ void JDsFtForcePoints::Config(unsigned ftcount,const StFloatingData *ftdata
 //==============================================================================
 /// Checks force points according positions of floating particles.
 //==============================================================================
-void JDsFtForcePoints::CheckPoints(const JSphMk *mkinfo
-  ,unsigned np,const unsigned *idp,const tdouble3 *pos)
+void JDsFtForcePoints::CheckPoints(const JSphMk* mkinfo
+  ,unsigned np,const unsigned* idp,const tdouble3* pos)
 {
   for(word c=0;c<PtCount;c++){
     //-Selects floating data.
@@ -315,7 +315,7 @@ void JDsFtForcePoints::CheckPoints(const JSphMk *mkinfo
 /// Shows force points configuration.
 //==============================================================================
 void JDsFtForcePoints::VisuConfig(std::string txhead,std::string txfoot
-  ,unsigned ftcount,const StFloatingData *ftdata)const
+  ,unsigned ftcount,const StFloatingData* ftdata)const
 {
   if(!txhead.empty())Log->Print(txhead);
   for(word c=0;c<PtCount;c++){
@@ -329,7 +329,9 @@ void JDsFtForcePoints::VisuConfig(std::string txhead,std::string txfoot
 /// Calculate distance between floating particles & centre according to periodic conditions.
 /// Calcula distancia entre pariculas floatin y centro segun condiciones periodicas.
 //==============================================================================
-tfloat3 JDsFtForcePoints::FtPeriodicDist(const tdouble3 &pos,const tdouble3 &center,float radius)const{
+tfloat3 JDsFtForcePoints::FtPeriodicDist(const tdouble3& pos
+  ,const tdouble3& center,float radius)const
+{
   tdouble3 distd=(pos-center);
   while(PeriX && fabs(distd.x)>radius){
     if(distd.x>0)distd=distd+PeriXinc;
@@ -349,9 +351,12 @@ tfloat3 JDsFtForcePoints::FtPeriodicDist(const tdouble3 &pos,const tdouble3 &cen
 //==============================================================================
 /// Updates position and velocity of points.
 //==============================================================================
-void JDsFtForcePoints::UpdatePoints(double timestep,double dt,const StFloatingData *ftdata){
+void JDsFtForcePoints::UpdatePoints(double timestep,double dt,bool ftpaused
+  ,const StFloatingData* ftdata)
+{
   TimeStep=timestep+dt;
-  for(word c=0;c<PtCount;c++){
+  if(ftpaused)for(word c=0;c<PtCount;c++)PtForce[c]=TFloat3(0);
+  else for(word c=0;c<PtCount;c++){
     const word ftid=PtFtid[c];
     tdouble3 pos=PtPos[c];
     tfloat3 vel=PtVel[c];
@@ -400,11 +405,10 @@ void JDsFtForcePoints::ComputeForcesSum(){
 //==============================================================================
 /// Stores sum of linear and angular forces on floatings in ftoforces[].
 //==============================================================================
-void JDsFtForcePoints::GetFtForcesSum(StFtoForces *ftoforces)const{
+void JDsFtForcePoints::GetFtForcesSum(tfloat6* ftoforces)const{
   for(word cs=0;cs<SelFtCount;cs++){
     const word cf=SelFtid[cs];
-    ftoforces[cf].face     =SelFtForceLin[cs];
-    ftoforces[cf].fomegaace=SelFtForceAng[cs];
+    ftoforces[cf]=TFloat6(SelFtForceLin[cs],SelFtForceAng[cs]);
   }
 }
 
@@ -418,15 +422,15 @@ void JDsFtForcePoints::SaveVtkPoints(unsigned numfile)const{
   if(PtVel)  arrays.AddArray("Vel"  ,PtCount,PtVel  ,false);
   if(PtForce)arrays.AddArray("Force",PtCount,PtForce,false);
   const string files=AppInfo.GetDirOut()+"MooringsVtk/FtForcesPoints.vtk";
-  Log->AddFileInfo(fun::FileNameSec(files,UINT_MAX),"Saves VTK file with force points (Moordyn coupling).");
-  JVtkLib::SaveVtkData(fun::FileNameSec(files,numfile),arrays,"Pos");
+  Log->AddFileInfo(fun::FileNameSec(files,UINT_MAX),"Saves VTK file with force points (MoorDynPlus coupling).");
+  JSpVtkData::Save(fun::FileNameSec(files,numfile),arrays,"Pos");
 }
 
 //==============================================================================
 /// Saves CSV with force points.
 //==============================================================================
 void JDsFtForcePoints::SaveCsvPoints(unsigned numfile)const{
-  if(PtCount)Log->AddFileInfo("FtForcesPoints_ft????_pt??.csv","Saves CSV file with force points (Moordyn coupling).");
+  if(PtCount)Log->AddFileInfo("FtForcesPoints_ft????_pt??.csv","Saves CSV file with force points (MoorDynPlus coupling).");
   for(word cp=0;cp<PtCount;cp++){
     const string file=AppInfo.GetDirOut()+fun::PrintStr("FtForcePoints_ft%04d_pt%02u.csv",PtFtid[cp],cp);
     jcsv::JSaveCsv2 scsv(file,true,AppInfo.GetCsvSepComa());

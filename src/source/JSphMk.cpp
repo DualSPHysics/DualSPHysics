@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -83,7 +83,7 @@ void JSphMk::Reset(){
 //==============================================================================
 /// Load MK information of particles.
 //==============================================================================
-void JSphMk::Config(const JCaseParts *parts){
+void JSphMk::Config(const JCaseParts* parts){
   MkBoundFirst=parts->GetMkBoundFirst();
   MkFluidFirst=parts->GetMkFluidFirst();
   MkListSize=parts->CountBlocks();
@@ -105,7 +105,7 @@ void JSphMk::Config(const JCaseParts *parts){
   if(MkListFluid >CODE_MKRANGEMAX)Run_Exceptioon("The number of fluid particle blocks exceeds the maximum.");
   //-Gets info for each block of particles.
   for(unsigned c=0;c<MkListSize;c++){
-    const JCasePartBlock &block=parts->GetBlock(c);
+    const JCasePartBlock& block=parts->GetBlock(c);
     const bool bound=(block.Bound);
     typecode code=0;
     switch(block.Type){
@@ -114,7 +114,8 @@ void JSphMk::Config(const JCaseParts *parts){
       case TpPartFloating:  code=CodeSetType(0,block.Type,c-MkListFixed-MkListMoving);  break;
       case TpPartFluid:     code=CodeSetType(0,block.Type,c-MkListBound);               break;
     }
-    JSphMkBlock* pmk=new JSphMkBlock(block.Type,block.GetMkType(),block.GetMk(),code,block.GetBegin(),block.GetCount());
+    JSphMkBlock* pmk=new JSphMkBlock(block.Type,block.GetMkType(),block.GetMk()
+      ,code,block.GetBegin(),block.GetCount());
     MkList.push_back(pmk);
   }
   //-Checks number of fluid blocks.
@@ -232,7 +233,9 @@ typecode JSphMk::CodeSetType(typecode code,TpParticles type,unsigned value)const
 ////==============================================================================
 ///// Calculates domain limits for each Mk value.
 ////==============================================================================
-//void JSphMk::ComputeMkDomains(bool bound,const std::vector<unsigned> &mklist,unsigned np,const tdouble3 *pos,const typecode *code){
+//void JSphMk::ComputeMkDomains(bool bound,const std::vector<unsigned>& mklist
+//  ,unsigned np,const tdouble3* pos,const typecode* code)
+//{
 //  for(unsigned c=0;c<unsigned(mklist.size());c++){
 //    const unsigned cmk=(bound? GetMkBlockByMkBound(mklist[c]): GetMkBlockByMkFluid(mklist[c]));
 //    if(cmk<Size() && !MkList[cmk]->GetPosDefined()){
@@ -257,10 +260,10 @@ typecode JSphMk::CodeSetType(typecode code,TpParticles type,unsigned value)const
 //==============================================================================
 /// Calculates domain limits for each Mk value.
 //==============================================================================
-void JSphMk::ComputeMkDomains(unsigned np,const tdouble3 *pos,const typecode *code){
+void JSphMk::ComputeMkDomains(unsigned np,const tdouble3* pos,const typecode* code){
   //-Allocates memory and initializes dommain limits.
-  tdouble3 *pmin=new tdouble3[MkListSize];
-  tdouble3 *pmax=new tdouble3[MkListSize];
+  tdouble3* pmin=new tdouble3[MkListSize];
+  tdouble3* pmax=new tdouble3[MkListSize];
   for(unsigned c=0;c<MkListSize;c++){
     pmin[c]=TDouble3(DBL_MAX);
     pmax[c]=TDouble3(-DBL_MAX);
@@ -286,7 +289,7 @@ void JSphMk::ComputeMkDomains(unsigned np,const tdouble3 *pos,const typecode *co
 //==============================================================================
 /// Configures particle blocks in a JPartDataHead object.
 //==============================================================================
-void JSphMk::ConfigPartDataHead(JPartDataHead *parthead)const{
+void JSphMk::ConfigPartDataHead(JPartDataHead* parthead)const{
   for(unsigned c=0;c<Size();c++){
     const JSphMkBlock* pmbk=MkList[c];
     TpParticles type;

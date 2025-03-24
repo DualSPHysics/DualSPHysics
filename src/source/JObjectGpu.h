@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -40,18 +40,18 @@
 class JObjectGpu : protected JObject
 {
 protected:
-  //static void RunExceptioonCudaStatic(const std::string &srcfile,int srcline
-  //  ,const std::string &method
+  //static void RunExceptioonCudaStatic(const std::string& srcfile,int srcline
+  //  ,const std::string& method
   //  ,cudaError_t cuerr,std::string msg);
-  //static void CheckCudaErroorStatic(const std::string &srcfile,int srcline
-  //  ,const std::string &method
+  //static void CheckCudaErroorStatic(const std::string& srcfile,int srcline
+  //  ,const std::string& method
   //  ,std::string msg);
 
-  void RunExceptioonCuda(const std::string &srcfile,int srcline
-    ,const std::string &classname,const std::string &method
+  void RunExceptioonCuda(const std::string& srcfile,int srcline
+    ,const std::string& classname,const std::string& method
     ,cudaError_t cuerr,std::string msg)const;
-  void CheckCudaErroor(const std::string &srcfile,int srcline
-    ,const std::string &classname,const std::string &method
+  void CheckCudaErroor(const std::string& srcfile,int srcline
+    ,const std::string& classname,const std::string& method
     ,std::string msg)const;
 public:  
   JObjectGpu(){ ClassName="JObjectGpu"; } ///<Constructor.

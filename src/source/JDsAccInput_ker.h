@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -37,8 +37,8 @@ namespace cuaccin{
 //-Kernels for external forces (JDsAccInput).
 void AddAccInput(unsigned n,unsigned pini,typecode codesel1,typecode codesel2
   ,tdouble3 acclin,tdouble3 accang,tdouble3 centre,tdouble3 velang,tdouble3 vellin,bool setgravity
-  ,tfloat3 gravity,const typecode *code,const double2 *posxy,const double *posz
-  ,const float4 *velrhop,float3 *ace,cudaStream_t stm);
+  ,tfloat3 gravity,const typecode* code,const double2* posxy,const double* posz
+  ,const float4* velrho,float3* ace,cudaStream_t stm);
 
 }
 

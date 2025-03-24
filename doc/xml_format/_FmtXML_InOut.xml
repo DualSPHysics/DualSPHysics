@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics v5.2.261 (04-03-2023) *** -->
+<!-- *** DualSPHysics v5.4.326 (18-05-2024) *** -->
 <!-- *** class: JSphInOut *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -21,7 +21,7 @@
 				<line>
 					<point x="-1.1" z="0.1" />
 					<point2 x="-1.1" z="1.0" />
-					<direction x="1" z="0" comment="Direction to input fluid" />
+					<direction x="1" z="0" comment="Direction to input fluid (optional with 2-D line definition)" />
 				</line>
 			</zone2d>
 			<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated value (default=0)">
@@ -37,7 +37,7 @@
 				<line>
 					<point x="3.1" z="0.1" />
 					<point2 x="3.1" z="1.0" />
-					<direction x="-1" z="0" comment="Direction to input fluid" />
+					<direction x="-1" z="0" comment="Direction to input fluid (optional with 2-D line definition)" />
 				</line>
 			</zone2d>
 			<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated value (default=0)">
@@ -72,6 +72,12 @@
 				<point x="-1" y="-1" z="0" />
 				<size x="4" y="2" z="1" />
 			</drawbox>
+			<setmkfluid mk="3" />
+			<drawbox>
+				<boxfill>right</boxfill>
+				<point x="-1" y="-1" z="0" />
+				<size x="4" y="2" z="1" />
+			</drawbox>
 			<setmkbound mk="0" />
 			<drawline>
 				<point x="-1.5" y="0" z="0" />
@@ -86,12 +92,17 @@
 		<inoutzone>
 			<zone2d comment="Input zone for 2-D simulations">
 				<particles mkfluid="1" direction="right" />
-				<!-- *** Direction values: left, right, front, back, top, bottom *** -->
+				<!-- *** Direction values: left, right, front, back, top, bottom, custom *** -->
 			</zone2d>
 		</inoutzone>
 		<inoutzone>
 			<zone2d comment="Input zone for 2-D simulations">
-				<particles mkfluid="2" direction="left" />
+				<particles mkfluid="2" direction="custom">
+					<direction x="-1" z="0" comment="Direction definition for custom option only" />
+					<rotate angle="-30" centerx="0" centerz="0" anglesunits="degrees" />
+					<!-- A rotation is applied to inlet points and direction vector. --> 
+					<!-- The center of rotation is (0,0) when centerx and centerz are not defined. -->
+				</particles>
 			</zone2d>
 		</inoutzone>
 	</inout>
@@ -134,14 +145,38 @@
 <special>
 	<inout resizetime="0.5">
 		<inoutzone>
-			<zone3d comment="Input zone for 2-D simulations">
-				<particles mkfluid="1" direction="right" />
-				<!-- *** Direction values: left, right, front, back, top, bottom *** -->
+			<zone3d comment="Input zone for 3-D simulations">
+				<particles mkfluid="1" direction="right">
+				<!-- *** Direction values: left, right, front, back, top, bottom, custom *** -->
+				</particles>
 			</zone3d>
 		</inoutzone>
 		<inoutzone>
-			<zone3d comment="Input zone for 2-D simulations">
-				<particles mkfluid="2" direction="left" />
+			<zone3d comment="Input zone for 3-D simulations">
+				<particles mkfluid="2" direction="custom">
+					<direction x="-1" y="0.1" z="0" comment="Direction definition for custom option only" />
+				</particles>
+			</zone3d>
+		</inoutzone>
+		<inoutzone>
+			<zone3d comment="Input zone for 3-D simulations">
+				<particles mkfluid="2" direction="custom">
+					<direction x="-1" y="0" z="0" comment="Direction definition for custom option only" />
+					<rotateaxis angle="-45" anglesunits="degrees">
+						<point1 x="1.4" y="0" z="0.7" />
+						<point2 x="1.4" y="1" z="0.7" />
+					</rotateaxis>
+				</particles>
+			</zone3d>
+		</inoutzone>
+		<inoutzone>
+			<zone3d comment="Input zone for 3-D simulations">
+				<particles mkfluid="2" direction="custom">
+					<direction x="-1" y="0" z="0" comment="Direction definition for custom option only" />
+					<rotateadv angle1="45" angle2="30" angle3="-10" axes="ZYZ" intrinsic="true" anglesunits="degrees">
+						<center x="0.1" y="0.2" z="0" comment="It is optional (default=0,0,0)" />
+					</rotateadv>
+				</particles>
 			</zone3d>
 		</inoutzone>
 	</inout>
@@ -159,8 +194,10 @@
 				<line>
 					<point x="3" z="1.3" />
 					<point2 x="3" z="2" />
-					<direction x="-1" z="0" />
-					<rotate angle="-30" anglesunits="degrees" />
+					<direction x="-1" z="0" comment="Direction to input fluid (optional with 2-D line definition)" />
+					<rotate angle="-30" centerx="0" centerz="0" anglesunits="degrees" />
+					<!-- A rotation is applied to line points and direction vector. --> 
+					<!-- The center of rotation is the first line point when centerx and centerz are not defined. -->
 				</line>
 			</zone2d>
 		</inoutzone>
@@ -169,11 +206,7 @@
 				<line>
 					<point x="-3.5" z="0.8" />
 					<point2 x="-3.5" z="2.4" />
-					<direction x="1" z="0" />
-				</line>
-				<line>
-					<point x="-1.5" z="1.5" />
-					<point2 x="-1.5" z="2.3" />
+					<direction x="1" z="0" comment="Direction to input fluid (optional with 2-D line definition)" />
 				</line>
 			</zone2d>
 		</inoutzone>
@@ -211,10 +244,43 @@
 		</inoutzone>
 		<inoutzone>
 			<zone3d comment="Input zone for 3-D simulations">
+				<box>
+					<point x="1.2" y="2.8" z="0.5" />
+					<size x="0.4" y="0" z="0.4" />
+					<direction x="0" y="-1" z="0" />
+					<rotateadv angle1="45" angle2="30" angle3="-10" axes="ZYZ" intrinsic="true" anglesunits="degrees">
+						<center x="0.1" y="0.2" z="0" comment="It is optional (default=0,0,0)" />
+					</rotateadv>
+				</box>
+			</zone3d>
+		</inoutzone>
+		<inoutzone>
+			<zone3d comment="Input zone for 3-D simulations">
 				<circle>
 					<point x="2.2" y="2.8" z="0.7" />
 					<radius v="0.2" />
-					<direction x="0" y="-1" z="0" />
+					<direction x="1" y="-1" z="0" />
+				</circle>
+			</zone3d>
+			<zone3d comment="Input zone for 3-D simulations">
+				<circle>
+					<point x="2.2" y="2.8" z="0.7" />
+					<radius v="0.2" />
+					<direction x="1" y="-1" z="0" />
+					<rotateaxis angle="-45" anglesunits="degrees">
+						<point1 x="1.4" y="0" z="0.7" />
+						<point2 x="1.4" y="1" z="0.7" />
+					</rotateaxis>
+				</circle>
+			</zone3d>
+			<zone3d comment="Input zone for 3-D simulations">
+				<circle>
+					<point x="2.2" y="2.8" z="0.7" />
+					<radius v="0.2" />
+					<direction x="1" y="-1" z="0" />
+					<rotateadv angle1="45" angle2="30" angle3="-10" axes="ZYZ" intrinsic="true" anglesunits="degrees">
+						<center x="0.1" y="0.2" z="0" comment="It is optional (default=0,0,0)" />
+					</rotateadv>
 				</circle>
 			</zone3d>
 		</inoutzone>
@@ -234,6 +300,10 @@
 <!-- Fixed Parabolic velocity -->
 	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
 		<velocity3 v="0" v2="0.608" v3="3" z="4" z2="4.5" z3="5" comment="Parabolic inlet velocity" units_comment="m/s" />
+	</imposevelocity>
+<!-- Fixed velocity for jet circle (only for <zone3d><circle>) -->
+	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
+        <jetcircle v="2" distance="0.010" radius="0.02" comment="Velocity for circular jet (velocity, distance and opening radius)" units_comment="m/s" />
 	</imposevelocity>
 <!-- Variable Uniform velocity using values in XML file-->
 	<imposevelocity mode="1" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
@@ -283,11 +353,11 @@
 		<_gridposzero x="0" z="0" comment="Defines position of grid (default=0)" />
 	</imposevelocity>
 <!------------------------------------------------------------------------------->
-<!-- Flow velocity [l/s] definition instead of velocity [m/s] -->
-<!-- Flow velocity [l/s] is suported by uniform fixed or uniform veriable velocity when zsurf is fixed. -->
+<!-- Flow velocity [l/s, gal/s or gal/min] definition instead of velocity [m/s] -->
+<!-- Flow velocity [l/s, gal/s or gal/min] is suported by uniform fixed or uniform variable velocity when zsurf is fixed or undefined. -->
 	<imposevelocity mode="0" comment="Imposed velocity 0:fixed value, 1:variable value, 2:Extrapolated velocity, 3:Interpolated velocity (default=0)">
-	    <flowvelocity active="true" ratio="1.0" comment="Velocity values are read as flow [l/s] and ratio is used to compute particle volume (ratio*dp^3)." />
-		<velocity v="2" comment="Uniform velocity" units_comment="m/s" />
+		<flowvelocity active="true" units="l/s" ratio="1.0" comment="Velocity values are read as flow (units=l/s, gal/s or gal/min) and ratio is used to compute particle volume (ratio*dp^3)." />
+		<velocity v="2" comment="Uniform velocity" units_comment="l/s" />
 	</imposevelocity>
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
@@ -329,6 +399,7 @@
 	<imposezsurf mode="2" comment="Inlet Z-surface 0:Imposed fixed value, 1:Imposed variable value, 2:Calculated from fluid domain (default=0)">
 		<savevtk value="true" comment="Creates VTK files with Zsurf for each PART (default=false)" />
 		<remove value="false" comment="Removes particles above the Zsurf limit (default=false)" />
+		<zsurf0 value="1.0" comment="Initial Z-surface value" units_comment="m" />
 		<zsurfmin value="0.8" comment="Minimum Z-surface to reduce the calculation area (default=minimun Z inlet)" units_comment="m" />
 		<zsurffit valuedp="0.5" comment="Reduction of calculated zsurf with explicit value (value) or according to dp (valuedp) (default vdp=0.5)" units_comment="m" />
 	</imposezsurf>

@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -41,7 +41,7 @@ JRangeFilter::JRangeFilter(std::string filter){
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JRangeFilter::JRangeFilter(const std::vector<unsigned> &values){
+JRangeFilter::JRangeFilter(const std::vector<unsigned>& values){
   ClassName="JRangeFilter";
   Ranges=NULL; FastValue=NULL;
   Reset();
@@ -173,6 +173,19 @@ std::string JRangeFilter::ToString()const{
 }
 
 //==============================================================================
+/// Returns all values in text format.
+//==============================================================================
+std::string JRangeFilter::ToStringFull()const{
+  std::string tx="";
+  unsigned v=GetFirstValue();
+  while(v!=UINT_MAX){
+    tx=tx+(tx.empty()? fun::UintStr(v): fun::PrintStr(",%u",v));
+    v=GetNextValue(v);
+  }
+  return(tx);
+}
+
+//==============================================================================
 /// Configures the given filter.
 //==============================================================================
 void JRangeFilter::Config(std::string filter){
@@ -205,7 +218,7 @@ void JRangeFilter::Config(std::string filter){
 //==============================================================================
 /// Configures the given filter.
 //==============================================================================
-void JRangeFilter::Config(const std::vector<unsigned> &values){
+void JRangeFilter::Config(const std::vector<unsigned>& values){
   Reset();
   const unsigned nv=unsigned(values.size());
   if(nv){
@@ -243,10 +256,25 @@ void JRangeFilter::Prepare(){
 }
 
 //==============================================================================
+/// Returns minimum value (UINT_MAX when it is empty).
+//==============================================================================
+unsigned JRangeFilter::GetValueMin()const{
+  return(Count? ValueMin: UINT_MAX);
+}
+
+//==============================================================================
+/// Returns maximum value (zero when it is empty).
+//==============================================================================
+unsigned JRangeFilter::GetValueMax()const{
+  return(Count? ValueMax: 0);
+}
+
+//==============================================================================
 /// Checks whether a value passes the filter.
 //==============================================================================
 bool JRangeFilter::CheckValue(unsigned v)const{
-  return(ValueMin<=v&&v<=ValueMax&&( Count==1||(FastValue&&FastValue[v-ValueMin])||(!FastValue&&CheckNewValue(v)) ));
+  return(ValueMin<=v && v<=ValueMax && ( Count==1 || 
+    (FastValue && FastValue[v-ValueMin]) || (!FastValue && CheckNewValue(v)) ));
 }
 
 //==============================================================================
@@ -274,12 +302,23 @@ unsigned JRangeFilter::GetNextValue(unsigned v)const{
 //==============================================================================
 /// Returns vector with values.
 //==============================================================================
-void JRangeFilter::GetValues(std::vector<unsigned> &values)const{
+void JRangeFilter::GetValues(std::vector<unsigned>& values)const{
   unsigned v=GetFirstValue();
   while(v!=UINT_MAX){
     values.push_back(v);
     v=GetNextValue(v);
   }
+}
+
+//==============================================================================
+/// Static member to return vector with values.
+//==============================================================================
+unsigned JRangeFilter::GetValuesSta(std::string filter
+  ,std::vector<unsigned>& values)
+{
+  JRangeFilter rg(filter);
+  rg.GetValues(values);
+  return(unsigned(values.size()));
 }
 
 

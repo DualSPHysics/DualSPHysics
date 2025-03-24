@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -46,11 +46,11 @@ private:
   const JSphMk* MkInfo;
 
   unsigned Np;
-  tdouble3 *Pos;
-  typecode *Code;
+  tdouble3* Pos;
+  typecode* Code;
 
   void FreeParticleData();
-  void LoadParticleData(unsigned np,const tdouble3 *pos,const typecode *code);
+  void LoadParticleData(unsigned np,const tdouble3* pos,const typecode* code);
 
 public:
   const bool Simulate2D;         ///<Indicates 2D simulation.
@@ -58,7 +58,7 @@ public:
   const double Dp;               ///<Distance between particles.
 
   JDsPartsInit(bool simulate2d,double simulate2dposy,double dp
-    ,const JSphMk* mkinfo,unsigned np,const tdouble3 *pos,const typecode *code);
+    ,const JSphMk* mkinfo,unsigned np,const tdouble3* pos,const typecode* code);
   ~JDsPartsInit();
   void Reset();
 

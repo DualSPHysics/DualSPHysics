@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -25,7 +25,7 @@
 #include "Functions.h"
 #include "FunGeo3d.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
+#include "JSpVtkShape.h"
 #ifdef _WITHGPU
   #include "JSphShifting_ker.h"
   //#include "FunctionsCuda.h"
@@ -41,8 +41,8 @@ using std::string;
 //==============================================================================
 /// Constructor.
 //==============================================================================
-JSphShiftingZone::JSphShiftingZone(unsigned id,const tdouble3 &posref,const tdouble3 &vx
-  ,const tdouble3 &vy,const tdouble3 &vz):Id(id)
+JSphShiftingZone::JSphShiftingZone(unsigned id,const tdouble3& posref
+  ,const tdouble3& vx,const tdouble3& vy,const tdouble3& vz):Id(id)
 {
   ClassName="JSphShifting";
   Reset();
@@ -136,7 +136,7 @@ void JSphShifting::ConfigBasic(TpShifting shiftmode,float shiftcoef,float shiftt
 //==============================================================================
 /// Loads initial conditions of XML object.
 //==============================================================================
-void JSphShifting::LoadXml(const JXml *sxml,const std::string &place){
+void JSphShifting::LoadXml(const JXml* sxml,const std::string& place){
   TiXmlNode* node=sxml->GetNodeSimple(place);
   if(!node)Run_Exceptioon(string("Cannot find the element \'")+place+"\'.");
   if(sxml->CheckNodeActive(node))ReadXml(sxml,node->ToElement());
@@ -145,7 +145,7 @@ void JSphShifting::LoadXml(const JXml *sxml,const std::string &place){
 //==============================================================================
 /// Returns matrix for rotation in 3D.
 //==============================================================================
-JMatrix4d JSphShifting::ReadRotate3D(const JXml *sxml,TiXmlElement* ele){
+JMatrix4d JSphShifting::ReadRotate3D(const JXml* sxml,TiXmlElement* ele){
   double rotate=sxml->ReadElementDouble(ele,"rotateaxis","angle",true);
   string angunits=fun::StrLower(sxml->ReadElementStr(ele,"rotateaxis","anglesunits"));
   if(angunits=="radians")rotate=rotate*TODEG;
@@ -161,7 +161,7 @@ JMatrix4d JSphShifting::ReadRotate3D(const JXml *sxml,TiXmlElement* ele){
 //==============================================================================
 /// Reads list of initial conditions in the XML node.
 //==============================================================================
-void JSphShifting::ReadXml(const JXml *sxml,TiXmlElement* lis){
+void JSphShifting::ReadXml(const JXml* sxml,TiXmlElement* lis){
   const int smode=sxml->ReadElementInt(lis,"mode","value");
   switch(smode){
     case 0:  ShiftMode=SHIFT_None;     break;
@@ -219,8 +219,8 @@ void JSphShifting::ReadXml(const JXml *sxml,TiXmlElement* lis){
 //==============================================================================
 /// Add configurantion for a new shifting zone.
 //==============================================================================
-void JSphShifting::AddZone(bool fromxml,const tdouble3 &posref
-  ,const tdouble3 &vx,const tdouble3 &vy,const tdouble3 &vz)
+void JSphShifting::AddZone(bool fromxml,const tdouble3& posref
+  ,const tdouble3& vx,const tdouble3& vy,const tdouble3& vz)
 {
   const unsigned id=GetCount();
   JSphShiftingZone* zo=new JSphShiftingZone(id,posref,vx,vy,vz);
@@ -284,14 +284,14 @@ std::string JSphShifting::GetConfigInfo()const{
 void JSphShifting::SaveVtkConfig()const{
   const unsigned nz=GetCount();
   if(nz){
-    JVtkLib sh;
+    JSpVtkShape ss;
     const unsigned nz=GetCount();
     for(unsigned c=0;c<nz;c++){
       const JSphShiftingZone* zo=Zones[c];
-      sh.AddShapeBox(zo->GetPosMin(),zo->GetVecx(),zo->GetVecy(),zo->GetVecz(),c);
+      ss.AddBoxSizeVec(zo->GetPosMin(),zo->GetVecx(),zo->GetVecy(),zo->GetVecz(),word(c));
     }
     const string filevtk=AppInfo.GetDirOut()+"CfgShifting_Zones.vtk";
-    sh.SaveShapeVtk(filevtk,"ZoneId");
+    ss.SaveVtk(filevtk,"ZoneId");
     if(nz==ZonesXml || !ZonesXml)Log->AddFileInfo(filevtk,"Saves VTK file with Shifting zones.");
   }
 }
@@ -343,7 +343,9 @@ template<bool first,bool dbl> void JSphShifting::InitCpuPlanes(unsigned n,unsign
 /// Select particles for shifting and initialize shiftposfs[].
 /// Selecciona particulas para shifting e inicializa shiftposfs[].
 //==============================================================================
-void JSphShifting::InitCpu(unsigned n,unsigned pini,const tdouble3* pos,tfloat4* shiftposfs)const{
+void JSphShifting::InitCpu(unsigned n,unsigned pini,const tdouble3* pos
+  ,tfloat4* shiftposfs)const
+{
   const unsigned nz=GetCount();
   if(!nz)memset(shiftposfs+pini,0,sizeof(tfloat4)*n);   //shiftposfs[]=0
   else{
@@ -422,8 +424,8 @@ void JSphShifting::RunCpu(unsigned n,unsigned pini,double dt,const tfloat4* velr
 /// Select particles for shifting and initialize shiftposfs[].
 /// Selecciona particulas para shifting e inicializa shiftposfs[].
 //==============================================================================
-void JSphShifting::InitGpu(unsigned n,unsigned pini,const double2* posxy,const double* posz
-  ,float4* shiftposfs,cudaStream_t stm)const
+void JSphShifting::InitGpu(unsigned n,unsigned pini,const double2* posxy
+  ,const double* posz,float4* shiftposfs,cudaStream_t stm)const
 {
   const unsigned nz=GetCount();
   if(!nz)cudaMemsetAsync(shiftposfs+pini,0,sizeof(float4)*n,stm);  //ShiftPosfsg[]=0

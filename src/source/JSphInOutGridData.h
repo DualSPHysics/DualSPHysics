@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -46,8 +46,8 @@ class JSphInOutGridDataTime
 {
 private:
   double Time;
-  float *Velx;
-  float *Velz;
+  float* Velx;
+  float* Velz;
 
   inline void AllocData(bool usevelz);
   void ResetInit();
@@ -57,12 +57,12 @@ public:
   const unsigned Nz;
   const unsigned Npt;
   JSphInOutGridDataTime(unsigned nx,unsigned nz);
-  JSphInOutGridDataTime(unsigned nx,unsigned nz,double time,const float *velx,const float *velz);
+  JSphInOutGridDataTime(unsigned nx,unsigned nz,double time,const float* velx,const float* velz);
   ~JSphInOutGridDataTime();
 
-  void SetData(double time,const float *velx,const float *velz);
-  void CopyFrom(double time,const JSphInOutGridDataTime *gdt){ SetData(time,gdt->Velx,gdt->Velz); }
-  void Interpolate(double time,const JSphInOutGridDataTime *gdt,const JSphInOutGridDataTime *gdt2);
+  void SetData(double time,const float* velx,const float* velz);
+  void CopyFrom(double time,const JSphInOutGridDataTime* gdt){ SetData(time,gdt->Velx,gdt->Velz); }
+  void Interpolate(double time,const JSphInOutGridDataTime* gdt,const JSphInOutGridDataTime* gdt2);
 
   double GetTime()const{ return(Time); }
   const float* GetVelx()const{ return(Velx); };
@@ -77,7 +77,7 @@ public:
 class JSphInOutGridData : protected JObject
 {
 private:
-  JLog2 *Log;
+  JLog2* Log;
   std::string File;
 
   unsigned Nx;
@@ -92,8 +92,8 @@ private:
 
   std::vector<JSphInOutGridDataTime*> DataTimes;
 
-  void LoadDataCsv(const std::string &filename);
-  void LoadDataBin(const std::string &filename);
+  void LoadDataCsv(const std::string& filename);
+  void LoadDataBin(const std::string& filename);
 
   unsigned SelCt;
   JSphInOutGridDataTime* SelData;
@@ -118,7 +118,7 @@ private:
  #endif
 
   void ComputeTime(double t);
-  void SaveVtk(const JSphInOutGridDataTime *gdt,std::string filename)const;
+  void SaveVtk(const JSphInOutGridDataTime* gdt,std::string filename)const;
 
 public:
   const static unsigned FmtVersion=1;
@@ -126,11 +126,11 @@ public:
   JSphInOutGridData();
   ~JSphInOutGridData();
   void Reset();
-  void ConfigFromFile(const std::string &filename);
+  void ConfigFromFile(const std::string& filename);
   void ConfigGridData(unsigned nx,unsigned nz,double dpx,double dpz,bool usevelz);
-  void SetPosMin(const tdouble3 &posmin);
+  void SetPosMin(const tdouble3& posmin);
 
-  void AddDataTime(double time,unsigned npt,const float *velx,const float *velz);
+  void AddDataTime(double time,unsigned npt,const float* velx,const float* velz);
 
   unsigned GetNx()const{ return(Nx); }
   unsigned GetNz()const{ return(Nz); }
@@ -141,17 +141,17 @@ public:
   unsigned CountTimes()const{ return(unsigned(DataTimes.size())); }
   std::string GetFile()const{ return(File); };
 
-  void InterpolateVelCpu(double time,unsigned izone,unsigned np,const int *plist
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop
+  void InterpolateVelCpu(double time,unsigned izone,unsigned np,const int* plist
+    ,const tdouble3* pos,const typecode* code,const unsigned* idp,tfloat4* velrhop
     ,float velcorr);
-  void InterpolateZVelCpu(double time,unsigned izone,unsigned np,const int *plist
-    ,const tdouble3 *pos,const typecode *code,const unsigned *idp,tfloat4 *velrhop
+  void InterpolateZVelCpu(double time,unsigned izone,unsigned np,const int* plist
+    ,const tdouble3* pos,const typecode* code,const unsigned* idp,tfloat4* velrhop
     ,float velcorr);
 
 #ifdef _WITHGPU
-  void InterpolateZVelGpu(double time,unsigned izone,unsigned np,const int *plist
-    ,const double2 *posxyg,const double *poszg,const typecode *codeg
-    ,const unsigned *idpg,float4 *velrhopg,float velcorr);
+  void InterpolateZVelGpu(double time,unsigned izone,unsigned np,const int* plist
+    ,const double2* posxyg,const double* poszg,const typecode* codeg
+    ,const unsigned* idpg,float4* velrhopg,float velcorr);
 #endif
 
 

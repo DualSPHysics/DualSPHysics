@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!-- *** DualSPHysics v5.0.210 (11-10-2021) *** -->
+<!-- *** DualSPHysics v5.3.350 (26-11-2024) *** -->
 <!-- *** class: JSphInitialize *** -->
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
-<!-- *** Initialize examples for fluid particles *** -->
+<!-- *** Initialize examples for fluid velocity and boundary normals.      *** -->
+<!-- *** Note that this is a simple example for users who want to develop  *** -->
+<!-- *** new configuration options. The full initialisation configuration  *** -->
+<!-- *** is available in <casedef><initials> and <casedef><normals> of the *** -->
+<!-- *** XML used by GenCase.                                              *** -->
 <special>
 	<initialize>
 		<fluidvelocity mkfluid="0">
@@ -18,64 +22,15 @@
 			<direction x="1" y="0" z="0" />
 			<velocity3 v="0" v2="0.608" v3="3" z="4" z2="4.5" z3="5" comment="Parabolic profile velocity" units_comment="m/s" />
 		</fluidvelocity>
-	</initialize>
-</special>
-<!------------------------------------------------------------------------------->
-<!------------------------------------------------------------------------------->
-<!-- *** Initialize examples for boundary normals using mDBC *** -->
-<special>
-	<initialize>
 		<boundnormal_set mkbound="1">
 			<normal x="1" y="0" z="0" />
 		</boundnormal_set>
-		<boundnormal_plane mkbound="2">
-			<point x="1" y="0" z="0" />
-			<normal x="1" y="0" z="0" />
-			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
-			<clear v="true" comment="Clears previous normal data (default=true)" />		
-		</boundnormal_plane>
-		<boundnormal_plane mkbound="2">
-			<point auto="true" comment="Point is calculated automatically accoding to normal configuration." />
-			<limitdist vdp="0.5" comment="Minimun distance (Dp*vdp) between particles and boundary limit to calculate the point (default=0.5)" />
-			<normal x="1" y="0" z="0" />
-			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
-			<clear v="true" comment="Clears previous normal data (default=true)" />		
-			<!-- Examples by execution parameters: -->
-			<!--  -initnorpla:mkbound=10:normal=1:0:0 -->
-			<!--  -initnorpla:mkbound=10:point=auto:normal=1:0:0:limitdist=0.5:maxdisth=2 -->
-			<!--  -initnorpla:mkbound=5-7,10:point=0.1:0:0.2:normal=1:0:0 -->
-			<!--  -initnorpla:mkbound=0:normal=0:0:1:posmin=0.5:-1:-1:posmax=1.5:1:1 -->
-		</boundnormal_plane>
-		<boundnormal_sphere mkbound="3">
-			<center x="1" y="0" z="0" /> 
-			<radius v="1" />
-			<inside v="true" comment="Boundary particles inside the sphere" />		
-			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
-			<clear v="true" comment="Clears previous normal data (default=true)" />		
-		</boundnormal_sphere>
-		<boundnormal_cylinder mkbound="4">
-			<center1 x="1" y="0" z="0" /> 
-			<center2 x="2" y="0" z="0" /> 
-			<radius v="1" />
-			<inside v="true" comment="Boundary particles inside the cylinder" />		
-			<limit1 v="true" comment="Active normals to limit 1 for inside mode (default=true)" />		
-			<limit2 v="true" comment="Active normals to limit 2 for inside mode (default=true)" />		
-			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />		
-			<clear v="true" comment="Clears previous normal data (default=true)" />		
-		</boundnormal_cylinder>
-		<boundnormal_parts mkbound="2">
-			<maxdisth v="2.0" comment="Maximum distance to boundary limit. It uses H*maxdisth (default=2)" />
-			<!-- Examples by execution parameters: -->
-			<!--  -initnorpart:mkbound=10 -->
-			<!--  -initnorpart:mkbound=5-7,10:maxdisth=2 -->
-			<!--  -initnorpart:mkbound=0:posmax=1.5:1:1 -->
-		</boundnormal_parts>
 	</initialize>
 </special>
 <!------------------------------------------------------------------------------->
 <!------------------------------------------------------------------------------->
 <!-- *** Filter option (<onlypos>) according to particle position for      *** -->
-<!-- *** <fluidvelocity> and <boundnormal_XXX> options.                    *** -->
+<!-- *** <fluidvelocity> and <boundnormal_set> options.                    *** -->
 <special>
 	<initialize>
 		<fluidvelocity mkfluid="0">
@@ -92,19 +47,6 @@
 				<posmax x="2" y="1" z="3" />
 			</onlypos>
 		</boundnormal_set>
-		<boundnormal_plane mkbound="2">
-		    ...
-			<onlypos>
-				<posmin x="2" />
-				<posmax x="4" />
-			</onlypos>
-		</boundnormal_plane>
-		<boundnormal_sphere mkbound="3">
-		    ...
-			<onlypos>
-				<posmax z="1" />
-			</onlypos>
-		</boundnormal_plane>
 	</initialize>
 </special>
 <!------------------------------------------------------------------------------------------>
@@ -115,10 +57,6 @@
 <initialize active="true">
 	<fluidvelocity active="true"/>
 	<boundnormal_set active="true"/>
-	<boundnormal_plane active="true"/>
-	<boundnormal_sphere active="true"/>
-	<boundnormal_cylinder active="true"/>
-	<boundnormal_parts active="true"/>
 	<XXX>
 		<onlypos active="true"/>
 	</XXX>

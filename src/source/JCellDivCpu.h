@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -52,48 +52,55 @@ protected:
   const tdouble3 Map_PosMin,Map_PosMax,Map_PosDif;
   const tuint3 Map_Cells;
   const unsigned CaseNbound,CaseNfixed,CaseNpb;
-  JLog2 *Log;
-  std::string DirOut;
 
-  bool AllocFullNct;     ///<Resserve memory for max number of cells of domain (DomCells). | Reserva memoria para el numero maximo de celdas del dominio (DomCells).
-  float OverMemoryNp;    ///<Percentage that is added to the memory reserved for Np. (def=0) | Porcentaje que se anhade a la reserva de memoria de Np. (def=0).
-  word OverMemoryCells;  ///<Cell number that is incremented in each dimension to reserve memory. | Numero celdas que se incrementa en cada dimension reservar memoria. (def=0).
+  const float OverMemoryNp;    ///<Percentage that is added to the memory reserved for Np. (def=0) | Porcentaje que se anhade a la reserva de memoria de Np. (def=0).
+  const word OverMemoryCells;  ///<Cell number that is incremented in each dimension to reserve memory. | Numero celdas que se incrementa en cada dimension reservar memoria. (def=0).
+  const unsigned OverMemoryNCells; ///<Minimum number of cells that is incremented to reserve memory.
+
+  JLog2* Log;
+  std::string DirOut;
 
   //-Variables to define the domain.
   unsigned DomCellCode;  ///<Key for codifying cell of position. | Clave para la codificacion de la celda de posicion.
-  tuint3 DomCelIni,DomCelFin;
-  tdouble3 DomPosMin,DomPosMax;
+  tuint3 DomCelIni;
+  tuint3 DomCelFin;
+  tdouble3 DomPosMin;
+  tdouble3 DomPosMax;
   tuint3 DomCells;
+  ullong DomCellsMax;    ///<Maximum number of cells according to DomCells.
 
   //-Variables with allocated memory as a function of the number of particles in CPU.
   //-Memoria reservada en funcion de particulas en CPU.
   unsigned SizeNp;
-  unsigned *CellPart;
-  unsigned *SortPart;
+  unsigned* CellPart;
+  unsigned* SortPart;
 
   unsigned IncreaseNp; ///<Possible number of particles to be created in the near future.
 
   //-Variables with allocated memory as a function of the number of cells in GPU.
   //-Memoria reservada en funcion de celdas en GPU.
   unsigned SizeNct;
-  unsigned *PartsInCell;
-  unsigned *BeginCell;   ///<Get first value of each cell. | Contiene el principio de cada celda. 
+  unsigned* PartsInCell;
+  unsigned* BeginCell;   ///<Get first value of each cell. | Contiene el principio de cada celda. 
   // BeginCell=[BoundOk(nct),BoundIgnore(1),Fluid(nct),BoundOut(1),FluidOut(1),BoundOutIgnore(1),FluidOutIgnore(1),END)]
 
   //-Variables to reorder particles. | Variables para reordenar particulas.
-  byte        *VSort;            ///<Memory to reorder particles. | Memoria para reordenar particulas. [sizeof(tdouble3)*Np]
-  word        *VSortWord;        ///<To order word vectors (write to VSort). | Para ordenar vectores word (apunta a VSort).
-  int         *VSortInt;         ///<To order vectors int (write to VSort). | Para ordenar vectores int (apunta a VSort).
-  float       *VSortFloat;       ///<To order vectors float (write to VSort). | Para ordenar vectores float (apunta a VSort).
-  tfloat3     *VSortFloat3;      ///<To order vectors tfloat3 (write to VSort). | Para ordenar vectores tfloat3 (apunta a VSort).
-  tfloat4     *VSortFloat4;      ///<To order vectors tfloat4 (write to VSort). | Para ordenar vectores tfloat4 (apunta a VSort).
-  tdouble3    *VSortDouble3;     ///<To order vectors tdouble3 (write to VSort). | Para ordenar vectores tdouble3 (apunta a VSort).
-  tsymatrix3f *VSortSymmatrix3f; ///<To order vectors tsymatrix3f (write to VSort). | Para ordenar vectores tsymatrix3f (apunta a VSort).
+  byte*        VSort;            ///<Memory to reorder particles. | Memoria para reordenar particulas. [sizeof(tdouble3)*Np]
+  word*        VSortWord;        ///<To order word vectors (write to VSort). | Para ordenar vectores word (apunta a VSort).
+  int*         VSortInt;         ///<To order vectors int (write to VSort). | Para ordenar vectores int (apunta a VSort).
+  float*       VSortFloat;       ///<To order vectors float (write to VSort). | Para ordenar vectores float (apunta a VSort).
+  tfloat3*     VSortFloat3;      ///<To order vectors tfloat3 (write to VSort). | Para ordenar vectores tfloat3 (apunta a VSort).
+  tfloat4*     VSortFloat4;      ///<To order vectors tfloat4 (write to VSort). | Para ordenar vectores tfloat4 (apunta a VSort).
+  tdouble3*    VSortDouble3;     ///<To order vectors tdouble3 (write to VSort). | Para ordenar vectores tdouble3 (apunta a VSort).
+  tsymatrix3f* VSortSymmatrix3f; ///<To order vectors tsymatrix3f (write to VSort). | Para ordenar vectores tsymatrix3f (apunta a VSort).
 
-  llong MemAllocNp;  ///<Memory reserved for particles. | Mermoria reservada para particulas.
-  llong MemAllocNct; ///<Memory reserved for cells. | Mermoria reservada para celdas.
+  llong    MemAllocNp;       ///<CPU memory allocated for particles.
+  unsigned MemAllocNpTimes;  ///<Number of CPU memory allocations for cells.
+  llong    MemAllocNct;      ///<CPU memory reserved for cells.
+  unsigned MemAllocNctTimes; ///<Number of CPU memory allocations for cells.
 
-  unsigned Ndiv,NdivFull;
+  unsigned Ndiv;
+  unsigned NdivFull;
 
   //-Number of particles by type to initialise in divide.
   //-Numero de particulas por tipo al iniciar el divide.
@@ -125,6 +132,8 @@ protected:
 
   bool DivideFull;      ///<Indicate that divie is applied to fluid & boundary (not only to fluid). | Indica que el divide se aplico a fluido y contorno (no solo al fluido).
 
+  unsigned* SortIdx;    ///<Indices to particles which are sorted.  //<vs_flexstruc>
+
   void Reset();
 
   //-Management of allocated dynamic memory.
@@ -132,47 +141,57 @@ protected:
   void FreeMemoryNct();
   void FreeMemoryNp();
   void FreeMemoryAll();
-  void SetMemoryVSort(byte *vsort);
-  void AllocMemoryNp(ullong np);
-  void AllocMemoryNct(ullong nct);
+  void SetMemoryVSort(byte* vsort);
+  void AllocMemoryNp(ullong np,ullong npmin);
+  void AllocMemoryNct(ullong nct,ullong nctmin);
   void CheckMemoryNp(unsigned npmin);
   void CheckMemoryNct(unsigned nctmin);
 
   ullong SizeBeginCell(ullong nct)const{ return((nct*2)+5+1); } //-[BoundOk(nct),BoundIgnore(1),Fluid(nct),BoundOut(1),FluidOut(1),BoundOutIgnore(1),FluidOutIgnore(1),END(1)]
 
-  ullong GetAllocMemoryNp()const{ return(MemAllocNp); };
-  ullong GetAllocMemoryNct()const{ return(MemAllocNct); };
-  ullong GetAllocMemory()const{ return(GetAllocMemoryNp()+GetAllocMemoryNct()); };
+  llong GetAllocMemoryNp()const{ return(MemAllocNp); };
+  llong GetAllocMemoryNct()const{ return(MemAllocNct); };
+  llong GetAllocMemory()const{ return(GetAllocMemoryNp()+GetAllocMemoryNct()); };
 
-  //tuint3 GetMapCell(const tfloat3 &pos)const;
-  void LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)const;
-  void CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax);
-  void LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax)const;
-  void CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2,const unsigned* dcellc,const typecode *codec,tuint3 &cellmin,tuint3 &cellmax);
+  //tuint3 GetMapCell(const tfloat3& pos)const;
+  void LimitsCellBound(unsigned n,unsigned pini,const unsigned* dcellc
+    ,const typecode* codec,tuint3& cellmin,tuint3& cellmax)const;
+  void CalcCellDomainBound(unsigned n,unsigned pini,unsigned n2,unsigned pini2
+    ,const unsigned* dcellc,const typecode* codec,tuint3& cellmin,tuint3& cellmax);
+  void LimitsCellFluid(unsigned n,unsigned pini,const unsigned* dcellc
+    ,const typecode* codec,tuint3& cellmin,tuint3& cellmax)const;
+  void CalcCellDomainFluid(unsigned n,unsigned pini,unsigned n2,unsigned pini2
+    ,const unsigned* dcellc,const typecode* codec,tuint3& cellmin,tuint3& cellmax);
 
   unsigned CellSize(unsigned box)const{ return(BeginCell[box+1]-BeginCell[box]); }
+
+  void SortIndices(unsigned* sortpart,unsigned* sortidx,unsigned np,bool stable); //<vs_flexstruc>
+  void UpdateIndices(unsigned np,const unsigned* sortidx,unsigned* idx);          //<vs_flexstruc>
 
 public:
   JCellDivCpu(bool stable,bool floating,byte periactive
     ,bool celldomfixed,TpCellMode cellmode,float scell
     ,tdouble3 mapposmin,tdouble3 mapposmax,tuint3 mapcells
-    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb,std::string dirout
-    ,bool allocfullnct=true,float overmemorynp=CELLDIV_OVERMEMORYNP,word overmemorycells=CELLDIV_OVERMEMORYCELLS);
+    ,unsigned casenbound,unsigned casenfixed,unsigned casenpb
+    ,std::string dirout);
   ~JCellDivCpu();
 
   void DefineDomain(unsigned cellcode,tuint3 domcelini,tuint3 domcelfin,tdouble3 domposmin,tdouble3 domposmax);
 
-  void SortArray(word *vec);
-  void SortArray(unsigned *vec);
-  void SortArray(float *vec);
-  void SortArray(tdouble3 *vec);
-  void SortArray(tfloat3 *vec);
-  void SortArray(tfloat4 *vec);
-  void SortArray(tsymatrix3f *vec);
+  void SortArray(word* vec);
+  void SortArray(unsigned* vec);
+  void SortArray(float* vec);
+  void SortArray(tdouble3* vec);
+  void SortArray(tfloat3* vec);
+  void SortArray(tfloat4* vec);
+  void SortArray(tsymatrix3f* vec);
+  void SortArrayPeriParent(unsigned* vec);
 
   TpCellMode GetCellMode()const{ return(CellMode); }
   int GetScellDiv()const{ return(ScellDiv); }
   float GetScell()const{ return(Scell); }
+
+  unsigned GetSizeNct()const{ return(SizeNct); }
 
   unsigned GetNct()const{ return(Nct); }
   unsigned GetNcx()const{ return(Ncx); }
@@ -183,6 +202,7 @@ public:
 
   tuint3 GetCellDomainMin()const{ return(CellDomainMin); }
   tuint3 GetCellDomainMax()const{ return(CellDomainMax); }
+  tdouble6 GetDomainLimitsMinMax(unsigned slicecellmin=0)const;
   tdouble3 GetDomainLimits(bool limitmin,unsigned slicecellmin=0)const;
 
   StDivDataCpu GetCellDivData()const;
@@ -199,6 +219,8 @@ public:
   const unsigned* GetBeginCell()const{ return(BeginCell); }
 
   void SetIncreaseNp(unsigned increasenp){ IncreaseNp=increasenp; }
+
+  void UpdateIndices(unsigned n,unsigned* idx); //<vs_flexstruc>
 
   //:bool CellNoEmpty(unsigned box,byte kind)const;
   //:unsigned CellBegin(unsigned box,byte kind)const;

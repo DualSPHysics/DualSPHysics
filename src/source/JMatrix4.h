@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -30,6 +30,8 @@
 //:# - Cambio en GetMotion() para mantener compatibilidad con Linux. (01-02-2016)
 //:# - Nuevos metodos para la rotacion. (05-04-2020)
 //:# - Nuevos metodos IsIdentity() y IsMovMatrix(). (20-12-2020)
+//:# - Nuevo metodo RotatedAxis(). (18-07-2023)
+//:# - Nuevo metodo Rotate() y RotateCen() para rotaciones Davenport. (13-11-2023)
 //:#############################################################################
 
 /// \file JMatrix4.h \brief Declares the template \ref JMatrix4
@@ -57,14 +59,14 @@ private:
 
 public:
 //==============================================================================
-/// Construtor of objects.
+/// Constructor of objects.
 //==============================================================================
   JMatrix4(){ SetIdentity(); }
 
 //==============================================================================
-/// Construtor of objects.
+/// Constructor of objects.
 //==============================================================================
-  //JMatrix4(const JMatrix4 &m){ 
+  //JMatrix4(const JMatrix4& m){ 
   //  //printf("***copia***\n");
   //  a11=m.a11;  a12=m.a12;  a13=m.a13;  a14=m.a14;
   //  a21=m.a21;  a22=m.a22;  a23=m.a23;  a24=m.a24;
@@ -73,7 +75,7 @@ public:
   //}
 
 //==============================================================================
-/// Construtor of objects.
+/// Constructor of objects.
 /// \param m structure of type matrix 4x4.
 //==============================================================================
   JMatrix4(TMAT m){ 
@@ -84,7 +86,27 @@ public:
   }
 
 //==============================================================================
-/// Becomes the indentity matrix.
+/// Becomes the null matrix.
+//==============================================================================
+  void SetNull(){
+    a11=0; a12=0; a13=0; a14=0;
+    a21=0; a22=0; a23=0; a24=0;
+    a31=0; a32=0; a33=0; a34=0;
+    a41=0; a42=0; a43=0; a44=0;
+  }
+
+//==============================================================================
+/// Returns true when matrix is the null matrix.
+//==============================================================================
+  bool IsNull(){
+    return(a11==0 && a12==0 && a13==0 && a14==0
+        && a21==0 && a22==0 && a23==0 && a24==0
+        && a31==0 && a32==0 && a33==0 && a34==0
+        && a41==0 && a42==0 && a43==0 && a44==0);
+  }
+
+//==============================================================================
+/// Becomes the identity matrix.
 //==============================================================================
   void SetIdentity(){
     a11=1; a12=0; a13=0; a14=0;
@@ -94,7 +116,7 @@ public:
   }
 
 //==============================================================================
-/// Returns true when matrix is the indentity matrix.
+/// Returns true when matrix is the identity matrix.
 //==============================================================================
   bool IsIdentity(){
     return(a11==1 && a12==0 && a13==0 && a14==0
@@ -118,7 +140,7 @@ public:
 //==============================================================================
 /// Adds the matrix \a m.
 //==============================================================================
-  void Sum(const JMatrix4 &m){
+  void Sum(const JMatrix4& m){
     a11+=m.a11; a12+=m.a12; a13+=m.a13; a14+=m.a14;
     a21+=m.a21; a22+=m.a22; a23+=m.a23; a24+=m.a24;
     a31+=m.a31; a32+=m.a32; a33+=m.a33; a34+=m.a34;
@@ -128,7 +150,7 @@ public:
 //==============================================================================
 /// Multiplies by the matrix \a m2.
 //==============================================================================
-  void Mul(const JMatrix4 &m2){
+  void Mul(const JMatrix4& m2){
     JMatrix4 m1=*this;
     a11= m1.a11*m2.a11 + m1.a12*m2.a21 + m1.a13*m2.a31 + m1.a14*m2.a41;
     a12= m1.a11*m2.a12 + m1.a12*m2.a22 + m1.a13*m2.a32 + m1.a14*m2.a42;
@@ -151,7 +173,7 @@ public:
 //==============================================================================
 /// Left multiplies by the matrix \a m1.
 //==============================================================================
-  void MulPre(const JMatrix4 &m1){
+  void MulPre(const JMatrix4& m1){
     JMatrix4 m2=*this;
     a11= m1.a11*m2.a11 + m1.a12*m2.a21 + m1.a13*m2.a31 + m1.a14*m2.a41;
     a12= m1.a11*m2.a12 + m1.a12*m2.a22 + m1.a13*m2.a32 + m1.a14*m2.a42;
@@ -174,7 +196,7 @@ public:
 //==============================================================================
 /// Returns the product of the matrix by the normal \a n.
 //==============================================================================
-  T3 MulNormal(const T3 &n)const{
+  T3 MulNormal(const T3& n)const{
     T3 r;
     r.x= a11*n.x + a12*n.y + a13*n.z;
     r.y= a21*n.x + a22*n.y + a23*n.z;
@@ -185,7 +207,7 @@ public:
 //==============================================================================
 /// Returns the product of the matrix by the point \a p.
 //==============================================================================
-  T3 MulPoint(const T3 &p)const{
+  T3 MulPoint(const T3& p)const{
     T3 r;
     r.x= a11*p.x + a12*p.y + a13*p.z + a14;
     r.y= a21*p.x + a22*p.y + a23*p.z + a24;
@@ -196,7 +218,7 @@ public:
 //==============================================================================
 /// Returns the product of the matrix by the array of points.
 //==============================================================================
-  void MulArray(unsigned np,T3 *vp)const{
+  void MulArray(unsigned np,T3* vp)const{
     for(unsigned c=0;c<np;c++){
       const T3 p=vp[c];
       T3 r;
@@ -210,7 +232,7 @@ public:
 //==============================================================================
 /// Returns the product of the matrix by the array of points.
 //==============================================================================
-  void MulArray(unsigned np,const T3 *vp,T3 *vr)const{
+  void MulArray(unsigned np,const T3* vp,T3* vr)const{
     for(unsigned c=0;c<np;c++){
       const T3 p=vp[c];
       T3 r;
@@ -225,33 +247,65 @@ public:
 /// Linear motion is applied.
 /// \param p Array with displacement in every axis.
 //==============================================================================
-  void Move(const T3 &p){
+  void Move(const T3& p){
     Mul(MatrixMov(p));
   }
 
 //==============================================================================
 /// Rotational motion is applied over an arbitrary axis.
-/// \param ang Angle of roation (in degrees).
+/// \param ang Angle of rotation (in degrees).
 /// \param axisp1 Initial point of the array that defines the axis of rotation.
 /// \param axisp2 Final point of the array that defines the axis of rotation.
 //==============================================================================
-  void Rotate(T ang,const T3 &axisp1,const T3 &axisp2){
+  void Rotate(T ang,const T3& axisp1,const T3& axisp2){
     Mul(MatrixRot(ang,axisp1,axisp2));
   }
 
 //==============================================================================
 /// Rotational motion is applied.
-/// \param ang Angles of roation for each axis (in degrees).
+/// \param ang Angles of rotation for each axis (in degrees).
 //==============================================================================
   void Rotate(T3 ang){
     Mul(MatrixRot(ang));
   }
 
 //==============================================================================
-/// Scaling is aplied.
+/// Rotational motion is applied for Davenport chained rotations (includes
+/// Euler and Tait-Bryan rotations).
+/// \param ang1 1st angle of rotation for 1st axis (in degrees).
+/// \param ang2 2nd angle of rotation for 2nd axis (in degrees).
+/// \param ang3 3th angle of rotation for 3th axis (in degrees).
+/// \param axes List of 3 axes for rotation. E.g.:XYZ, ZYZ...
+/// \param intrinsic Indicates intrinsic instead of extrinsic rotation.
+//==============================================================================
+  void Rotate(T ang1,T ang2,T ang3,const char* axes,bool intrinsic){
+    Mul(MatrixRotate(ang1,ang2,ang3,axes,intrinsic));
+  }
+
+//==============================================================================
+/// Rotational motion is applied for Davenport chained rotations (includes
+/// Euler and Tait-Bryan rotations).
+/// \param center Center of rotation.
+/// \param ang1 1st angle of rotation for 1st axis (in degrees).
+/// \param ang2 2nd angle of rotation for 2nd axis (in degrees).
+/// \param ang3 3th angle of rotation for 3th axis (in degrees).
+/// \param axes List of 3 axes for rotation. E.g.:XYZ, ZYZ...
+/// \param intrinsic Indicates intrinsic instead of extrinsic rotation.
+//==============================================================================
+  void RotateCen(const T3& center,T ang1,T ang2,T ang3,const char* axes
+    ,bool intrinsic)
+  {
+    //Move(center);
+    //Mul(MatrixRotate(ang1,ang2,ang3,axes,intrinsic));
+    //Move(TDouble3(-center.x,-center.y,-center.z));
+    Mul(MatrixRotateCen(center,ang1,ang2,ang3,axes,intrinsic));
+  }
+
+//==============================================================================
+/// Scaling is applied.
 /// \param p Array with the scale in every axis.
 //==============================================================================
-  void Scale(const T3 &p){
+  void Scale(const T3& p){
     Mul(MatrixScale(p));
   }
 
@@ -259,7 +313,7 @@ public:
 /// Returns a transformation matrix for a linear movement.
 /// \param p Array with displacement in every axis.
 //==============================================================================
-  static JMatrix4 MatrixMov(const T3 &p){
+  static JMatrix4 MatrixMov(const T3& p){
     JMatrix4 m;
     m.a14=p.x; m.a24=p.y; m.a34=p.z;
     return(m);
@@ -269,7 +323,7 @@ public:
 /// Returns a transformation matrix for a scaling.
 /// \param p Array with displacement in every axis.
 //==============================================================================
-  static JMatrix4 MatrixScale(const T3 &p){
+  static JMatrix4 MatrixScale(const T3& p){
     JMatrix4 m;
     m.a11=p.x; m.a22=p.y; m.a33=p.z;
     return(m);
@@ -277,43 +331,52 @@ public:
 
 //==============================================================================
 /// Returns a transformation matrix for a rotation in axis X.
-/// \param ang Angle of roation (in degrees).
+/// \param ang Angle of rotation (in degrees).
 //==============================================================================
   static JMatrix4 MatrixRotX(T ang){
     //MatrixRot(ang,TDouble3(0,0,0),TDouble3(-1,0,0));
     const T rad=T(ang*TORAD);
     const T cs=cos(rad),sn=sin(rad);
-    const TMAT m={1,0,0,0 , 0,cs,-sn,0 , 0,sn,cs,0 , 0,0,0,1}; 
+    const TMAT m={  1,  0,  0,  0, 
+                    0, cs,-sn,  0,
+                    0, sn, cs,  0,
+                    0,  0,  0,  1}; 
     return(JMatrix4(m));
   }
 
 //==============================================================================
 /// Returns a transformation matrix for a rotation in axis Y.
-/// \param ang Angle of roation (in degrees).
+/// \param ang Angle of rotation (in degrees).
 //==============================================================================
   static JMatrix4 MatrixRotY(T ang){
     //MatrixRot(ang,TDouble3(0,0,0),TDouble3(0,-1,0));
     const T rad=T(ang*TORAD);
     const T cs=cos(rad),sn=sin(rad);
-    const TMAT m={cs,0,sn,0 , 0,1,0,0 , -sn,0,cs,0 , 0,0,0,1}; 
+    const TMAT m={ cs,  0, sn,  0,
+                    0,  1,  0,  0,
+                  -sn,  0, cs,  0,
+                    0,  0,  0,  1}; 
     return(JMatrix4(m));
   }
 
 //==============================================================================
 /// Returns a transformation matrix for a rotation in axis Z.
-/// \param ang Angle of roation (in degrees).
+/// \param ang Angle of rotation (in degrees).
 //==============================================================================
   static JMatrix4 MatrixRotZ(T ang){
     //MatrixRot(ang,TDouble3(0,0,0),TDouble3(0,0,-1));
     const T rad=T(ang*TORAD);
     const T cs=cos(rad),sn=sin(rad);
-    const TMAT m={cs,-sn,0,0 , sn,cs,0,0 , 0,0,1,0 , 0,0,0,1}; 
+    const TMAT m={ cs,-sn,  0,  0,
+                   sn, cs,  0,  0,
+                    0,  0,  1,  0,
+                    0,  0,  0,  1}; 
     return(JMatrix4(m));
   }
 
 //==============================================================================
 /// Returns a transformation matrix for a rotation.
-/// \param ang Angle of roation in each axis (in degrees).
+/// \param ang Angle of rotation in each axis (in degrees).
 //==============================================================================
   static JMatrix4 MatrixRot(T3 ang){
     JMatrix4 m;
@@ -324,12 +387,82 @@ public:
   }
 
 //==============================================================================
+/// Returns true if axes value is valid for Davenport rotations.
+/// \param axes List of 3 axes for rotation. E.g.:XYZ, ZYZ...
+//==============================================================================
+  static bool CheckRotateAxes(const char* axes){
+    return((axes[0]=='X' || axes[0]=='Y' || axes[0]=='Z') &&
+           (axes[1]=='X' || axes[1]=='Y' || axes[1]=='Z') &&
+           (axes[2]=='X' || axes[2]=='Y' || axes[2]=='Z'));
+  }
+
+//==============================================================================
+/// Returns a transformation matrix for a rotation according to axes rotation.
+/// For Davenport chained rotations (includes Euler and Tait-Bryan rotations).
+/// \param ang1 1st angle of rotation for 1st axis (in degrees).
+/// \param ang2 2nd angle of rotation for 2nd axis (in degrees).
+/// \param ang3 3th angle of rotation for 3th axis (in degrees).
+/// \param axes List of 3 axes for rotation. E.g.:XYZ, ZYZ...
+/// \param intrinsic Indicates intrinsic instead of extrinsic rotation.
+//==============================================================================
+  static JMatrix4 MatrixRotate(T ang1,T ang2,T ang3,const char* axes,bool intrinsic){
+    JMatrix4 m;
+    if(CheckRotateAxes(axes)){
+      if(intrinsic){
+        for(int c=0;c<3;c++){
+          const double ang=(c==0? ang1: (c==1? ang2: ang3));
+          switch(axes[c]){
+            case 'X':  if(ang)m.Mul(MatrixRotX(ang));  break;
+            case 'Y':  if(ang)m.Mul(MatrixRotY(ang));  break;
+            case 'Z':  if(ang)m.Mul(MatrixRotZ(ang));
+          }
+        }
+      }
+      else{
+        for(int c=0;c<3;c++){
+          const double ang=(c==0? ang3: (c==1? ang2: ang1));
+          switch(axes[2-c]){
+            case 'X':  if(ang)m.Mul(MatrixRotX(ang));  break;
+            case 'Y':  if(ang)m.Mul(MatrixRotY(ang));  break;
+            case 'Z':  if(ang)m.Mul(MatrixRotZ(ang));
+          }
+        }
+      }
+    }
+    else m.SetNull();
+    return(m);
+  }
+
+//==============================================================================
+/// Returns a transformation matrix for a rotation according to axes rotation.
+/// For Davenport chained rotations (includes Euler and Tait-Bryan rotations).
+/// \param center Center of rotation.
+/// \param ang1 1st angle of rotation for 1st axis (in degrees).
+/// \param ang2 2nd angle of rotation for 2nd axis (in degrees).
+/// \param ang3 3th angle of rotation for 3th axis (in degrees).
+/// \param axes List of 3 axes for rotation. E.g.:XYZ, ZYZ...
+/// \param intrinsic Indicates intrinsic instead of extrinsic rotation.
+//==============================================================================
+  static JMatrix4 MatrixRotateCen(const T3& center,T ang1,T ang2,T ang3
+    ,const char* axes,bool intrinsic)
+  {
+    JMatrix4 m;
+    if(CheckRotateAxes(axes)){
+      m.Move(center);
+      m.Rotate(ang1,ang2,ang3,axes,intrinsic);
+      m.Move(TDouble3(-center.x,-center.y,-center.z));
+    }
+    else m.SetNull();
+    return(m);
+  }
+
+//==============================================================================
 /// Returns a transformation matrix for a rotation over an arbitrary axis.
-/// \param ang Angle of roation (in degrees).
+/// \param ang Angle of rotation (in degrees).
 /// \param axisp1 Initial point of the array that defines the axis of rotation.
 /// \param axisp2 Final point of the array that defines the axis of rotation.
 //==============================================================================
-  static JMatrix4 MatrixRot(T ang,const T3 &axisp1,const T3 &axisp2){
+  static JMatrix4 MatrixRot(T ang,const T3& axisp1,const T3& axisp2){
     //fflush(stdout);    printf("MatrixRot\n");
 
     T rad=T(ang*TORAD);   //float(ang*PI/180);
@@ -366,11 +499,32 @@ public:
   }
 
 //==============================================================================
+/// Returns rotated axis vectors.
+/// \param ang Angle of rotation in each axis (in degrees).
+//==============================================================================
+  static void RotatedAxis(const T3& ang,const T3& size,T3& vx,T3& vy,T3& vz){
+    const JMatrix4 m=MatrixRot(ang);
+    if(ang.x==0 && ang.y==0 && ang.z==0){
+      vx.x=size.x; vx.y=0;      vx.z=0;
+      vy.x=0;      vy.y=size.y; vy.z=0;
+      vz.x=0;      vz.y=0;      vz.z=size.z;
+    }
+    else{
+      vx.x=1; vx.y=0; vx.z=0;
+      vy.x=0; vy.y=1; vy.z=0;
+      vz.x=0; vz.y=0; vz.z=1;
+      vx=m.MulPoint(vx)*size.x;
+      vy=m.MulPoint(vy)*size.y;
+      vz=m.MulPoint(vz)*size.z;
+    }
+  }
+
+//==============================================================================
 /// Returns axis rotation and translation.
-/// \param rot Angles of roation (in degrees).
+/// \param rot Angles of rotation (in degrees).
 /// \param mov Translation.
 //==============================================================================
-  void GetMotion(T3 &rot,T3 &mov)const{
+  void GetMotion(T3& rot,T3& mov)const{
     T3 pt[4]={{0,0,0},{1,0,0},{0,1,0},{0,0,1}};
     T3 pr[3]; MulArray(3,pt,pr);
     mov=pr[0];

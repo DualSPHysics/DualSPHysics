@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -40,14 +40,14 @@ JRelaxZoneRegularGpu::JRelaxZoneRegularGpu(){
 //==============================================================================
 /// Sets velocity of fluid to generate regular waves.
 //==============================================================================
-void JRelaxZoneRegularGpu::SetFluidVel(unsigned n,unsigned pini,bool order2,bool subdrift
-  ,double centerx,float widthhalf,float coeffx,float coeffz
+void JRelaxZoneRegularGpu::SetFluidVel(unsigned n,unsigned pini,bool order2
+  ,bool subdrift,double centerx,float widthhalf,float coeffx,float coeffz
   ,double falpha,double fbeta,double fsub,double fdiv
   ,double timewave,double swl,double kl,double sinhkld
   ,double wpf,double cta,double depth,double framp
   ,double ct2,double sinhkld4
   ,double ctd,double ctd2,unsigned fluidbeginidp
-  ,const tdouble2 *posxy,const double *posz,const unsigned *idp,tfloat4 *velrhop)
+  ,const tdouble2* posxy,const double* posz,const unsigned* idp,tfloat4* velrhop)
 {
   #ifdef _WITHGPU
     curelaxzone::SetFluidVel(n,pini,order2,subdrift,centerx,widthhalf,coeffx,coeffz,falpha,fbeta
@@ -111,7 +111,7 @@ void JRelaxZoneSpectrumGpu::AllocMemoryGpu(unsigned wavecount){
 // Copy wave data on GPU memory.
 //==============================================================================
 void JRelaxZoneSpectrumGpu::PrepareWaveDataGpu(unsigned wavecount
-  ,const double *kl,const double *amp,const double *fang,const double *phase)
+  ,const double* kl,const double* amp,const double* fang,const double* phase)
 {
   AllocMemoryGpu(wavecount);
   #ifdef _WITHGPU
@@ -131,7 +131,7 @@ void JRelaxZoneSpectrumGpu::SetFluidVelSpectrumSub(unsigned n,unsigned pini
   ,double falpha,double fbeta,double fsub,double fdiv
   ,double timewave,double swl,double depth,double framp,unsigned wavecount
   ,unsigned fluidbeginidp
-  ,const tdouble2 *posxy,const double *posz,const unsigned *idp,tfloat4 *velrhop
+  ,const tdouble2* posxy,const double* posz,const unsigned* idp,tfloat4* velrhop
   ,bool subdrift,double fun,double ctd,double ctd2,double ctd_2,double ctd2_2)
 {
   #ifdef _WITHGPU
@@ -195,7 +195,9 @@ void JRelaxZonesExternalGpu::AllocMemoryGpu(unsigned size,bool loadvelz){
 //==============================================================================
 // Copy wave data on GPU memory.
 //==============================================================================
-void JRelaxZonesExternalGpu::PrepareDataGpu(unsigned size,bool loadvelz,const double *velx,const double *velz){
+void JRelaxZonesExternalGpu::PrepareDataGpu(unsigned size,bool loadvelz
+  ,const double* velx,const double* velz)
+{
   if(!GpuReady)AllocMemoryGpu(size,loadvelz);
   #ifdef _WITHGPU
     cudaMemcpy(VelXg,velx,sizeof(double)*size,cudaMemcpyHostToDevice);
@@ -213,7 +215,7 @@ void JRelaxZonesExternalGpu::SetFluidVelExternal(unsigned n,unsigned pini
   ,double dpx,double dpy,double dpz
   ,unsigned npx1,unsigned npy1,unsigned npz1
   ,unsigned fluidbeginidp
-  ,const tdouble2 *posxy,const double *posz,const unsigned *idp,tfloat4 *velrhop
+  ,const tdouble2* posxy,const double* posz,const unsigned* idp,tfloat4* velrhop
   ,bool subdrift,double fun,double ctd,double ctd2,double ctd_2,double ctd2_2,double bottom)
 {
   #ifdef _WITHGPU
@@ -244,11 +246,11 @@ JRelaxZoneUniformGpu::JRelaxZoneUniformGpu(){
 /// Sets velocity of fluid to generate regular waves.
 //==============================================================================
 void JRelaxZoneUniformGpu::SetFluidVelUniform(unsigned n,unsigned pini
-  ,const tfloat3 &vt,const tfloat4 &cenpla
-  ,const tfloat4 &dompla1,const tfloat4 &dompla2,const tfloat4 &dompla3
+  ,const tfloat3& vt,const tfloat4& cenpla
+  ,const tfloat4& dompla1,const tfloat4& dompla2,const tfloat4& dompla3
   ,const float domsize1,const float domsize2,const float domsize3,float widthhalf
   ,float coeff,double falpha,double fbeta,double fsub,double fdiv,unsigned fluidbeginidp
-  ,const tdouble2 *posxy,const double *posz,const unsigned *idp,tfloat4 *velrhop)
+  ,const tdouble2* posxy,const double* posz,const unsigned* idp,tfloat4* velrhop)
 {
   #ifdef _WITHGPU
     curelaxzone::SetFluidVelUniform(n,pini
@@ -298,7 +300,7 @@ void JRelaxZoneMeshdataExt::SetFluidVelOmp(double timestep,unsigned n,unsigned p
 {
 }
 //==============================================================================
-/// Initilise rzid[]=0 (for GPU).
+/// Initialise rzid[]=0 (for GPU).
 //==============================================================================
 void JRelaxZoneMeshdataExt::InitFindGpu(unsigned n,unsigned pini,byte* rzid)
 {
@@ -313,7 +315,8 @@ void JRelaxZoneMeshdataExt::FindFluidVelGpu(unsigned n,unsigned pini
   ,const tfloat4& cenpla,const tfloat4& dompla1
   ,const tfloat4& dompla2,const tfloat4& dompla3
   ,const float domsize1,const float domsize2,const float domsize3
-  ,float widthhalf,float coeff,double falpha,double fbeta,double fsub
+  ,const tfloat3& borderdmp,float widthhalf,float coeff
+  ,double falpha,double fbeta,double fsub
   ,double fdiv,unsigned fluidbeginidp
   ,const tdouble2* posxy,const double* posz,const unsigned* idp
   ,byte* rzid,float* rzfactor)
@@ -325,7 +328,7 @@ void JRelaxZoneMeshdataExt::FindFluidVelGpu(unsigned n,unsigned pini
 //==============================================================================
 void JRelaxZoneMeshdataExt::SetFluidVelGpu(double timestep,unsigned n,unsigned pini
   ,const byte* rzid,const float* rzfactor,const tdouble2* posxy,const double* posz
-  ,tfloat4 *velrhop)
+  ,tfloat4* velrhop)
 {
 }
 

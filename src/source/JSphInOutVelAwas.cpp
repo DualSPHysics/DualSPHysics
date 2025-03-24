@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -40,8 +40,8 @@ using namespace std;
 /// Constructor.
 //==============================================================================
 JSphInOutVelAwas::JSphInOutVelAwas(unsigned idzone,double inletx,tdouble3 inletdir
-  ,float gravityz,const std::string &dirdatafile,JGaugeSystem *gaugesystem
-  ,const JXml *sxml,TiXmlElement* ele)
+  ,float gravityz,const std::string& dirdatafile,JGaugeSystem* gaugesystem
+  ,const JXml* sxml,TiXmlElement* ele)
   :Log(AppInfo.LogPtr()),IdZone(idzone),InletX(inletx),InletDir(inletdir),GravityZ(gravityz)
 {
   ClassName="JSphInOutVelAwas";
@@ -81,8 +81,8 @@ void JSphInOutVelAwas::Reset(){
 //==============================================================================
 /// Reads initial configuration in the XML node.
 //==============================================================================
-void JSphInOutVelAwas::ReadXml(const JXml *sxml,TiXmlElement* ele
-  ,const std::string &dirdatafile,JGaugeSystem *gaugesystem)
+void JSphInOutVelAwas::ReadXml(const JXml* sxml,TiXmlElement* ele
+  ,const std::string& dirdatafile,JGaugeSystem *gaugesystem)
 {
   //-Checks element names.
   sxml->CheckElementNames(ele,true,"inletmode startawas depth zsurffile gaugex gaugey gaugezmin gaugezmax gaugedp savedata");
@@ -126,13 +126,14 @@ void JSphInOutVelAwas::ReadXml(const JXml *sxml,TiXmlElement* ele
   GaugeZmax=GaugeZmin+GaugeDp*gaugenmax;
   const tdouble3 point0=TDouble3(GaugeX,GaugeY,GaugeZmin);
   const tdouble3 point2=TDouble3(GaugeX,GaugeY,GaugeZmax);
-  GaugeSwl=gaugesystem->AddGaugeSwl(fun::PrintStr("AwasInlet%02u",IdZone),StartAwas,DBL_MAX,0,point0,point2,GaugeDp,0);
+  GaugeSwl=gaugesystem->AddGaugeSwl(fun::PrintStr("AwasInlet%02u",IdZone),StartAwas,DBL_MAX,0
+    ,true,point0,point2,GaugeDp,0);
 }
 
 //==============================================================================
 /// Loads lines with configuration information.
 //==============================================================================
-void JSphInOutVelAwas::GetConfig(std::vector<std::string> &lines)const{
+void JSphInOutVelAwas::GetConfig(std::vector<std::string>& lines)const{
   lines.push_back("  AWAS configuration:");
   if(StartAwas)lines.push_back(fun::PrintStr("    StartAWAS.: %f [s]",StartAwas));
                lines.push_back(fun::PrintStr("    Depth.....: %g",InitDepth));

@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -40,22 +40,26 @@ private:
   bool TypeSimple;
 
 public:
-
   JMotionPos();
   void Reset();
-  void Move(const tdouble3 &dis);
-  void Rotate(double ang,const tdouble3 &axisp1,const tdouble3 &axisp2);
-  void MoveMix(const JMotionPos &modpos);
+  void Move(const tdouble3& dis);
+  void Rotate(double ang,const tdouble3& axisp1,const tdouble3& axisp2);
+  void RotateXYZ(const tdouble3& angxyz,const tdouble3& center
+    ,const char* axes="XYZ",const bool intrinsic=false);
+  void RotateXYZ(const tdouble3& previous_angxyz,const tdouble3& angxyz,const tdouble3& center
+    ,const char* axes="XYZ",const bool intrinsic=false);
+  void MoveMix(const JMotionPos& modpos);
   void ToMatrix();
 
-  tdouble3 PointMove(const tdouble3 &p) const;
-  void PointsMove(tdouble3 &p1,tdouble3 &p2) const{ p1=PointMove(p1); p2=PointMove(p2); }
+  tdouble3 PointMove(const tdouble3& p) const;
+  void PointsMove(tdouble3& p1,tdouble3& p2)const{
+    p1=PointMove(p1); p2=PointMove(p2);
+  }
 
   bool IsSimple()const{ return(TypeSimple); }
   tdouble3 GetSimple()const{ return(PosSimple); }
   JMatrix4d GetMatrix()const{ return(PosMatrix); }
 };
-
 
 #endif
 

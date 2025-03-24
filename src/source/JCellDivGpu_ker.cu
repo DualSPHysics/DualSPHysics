@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -40,7 +40,9 @@ namespace cudiv{
 /// Reduction of shared memory values for a warp of KerPosLimitsRedu.
 /// Reduccion de valores en memoria shared para un warp de KerPosLimitsRedu.
 //------------------------------------------------------------------------------
-template <unsigned blockSize> __device__ void KerUintLimitsWarpRedu(volatile unsigned* sp1,volatile unsigned* sp2,const unsigned &tid){
+template <unsigned blockSize> __device__ void KerUintLimitsWarpRedu(
+  volatile unsigned* sp1,volatile unsigned* sp2,const unsigned& tid)
+{
   if(blockSize>=64){
     const unsigned tid2=tid+32;
     sp1[tid]=min(sp1[tid],sp1[tid2]);
@@ -77,7 +79,9 @@ template <unsigned blockSize> __device__ void KerUintLimitsWarpRedu(volatile uns
 /// Reduction of shared memory values for KerPosLimits
 /// Reduccion de valores en memoria shared para KerPosLimits.
 //------------------------------------------------------------------------------
-template <unsigned blockSize> __device__ void KerUintLimitsRedu(unsigned* sp1,unsigned* sp2,const unsigned &tid,unsigned* results){
+template <unsigned blockSize> __device__ void KerUintLimitsRedu(unsigned* sp1
+  ,unsigned* sp2,const unsigned& tid,unsigned* results)
+{
   __syncthreads();
   if(blockSize>=512){ 
     if(tid<256){
@@ -126,7 +130,11 @@ void Sort(unsigned* keys,unsigned* values,unsigned size,bool stable){
 /// Reduction of values in shared memory for a warp of KerPosLimitsRedu.
 /// Reduccion de valores en memoria shared para un warp de KerPosLimitsRedu.
 //------------------------------------------------------------------------------
-template <unsigned blockSize> __device__ void KerPosLimitsWarpRedu(volatile float* spx1,volatile float* spy1,volatile float* spz1,volatile float* spx2,volatile float* spy2,volatile float* spz2,const unsigned &tid){
+template <unsigned blockSize> __device__ void KerPosLimitsWarpRedu(
+  volatile float* spx1,volatile float* spy1,volatile float* spz1
+  ,volatile float* spx2,volatile float* spy2,volatile float* spz2
+  ,const unsigned& tid)
+{
   if(blockSize>=64){
     const unsigned tid2=tid+32;
     spx1[tid]=min(spx1[tid],spx1[tid2]); spy1[tid]=min(spy1[tid],spy1[tid2]); spz1[tid]=min(spz1[tid],spz1[tid2]);
@@ -163,7 +171,10 @@ template <unsigned blockSize> __device__ void KerPosLimitsWarpRedu(volatile floa
 /// Reduction of shared memory values for KerPosLimits.
 /// Reduccion de valores en memoria shared para KerPosLimits.
 //------------------------------------------------------------------------------
-template <unsigned blockSize> __device__ void KerPosLimitsRedu(float* spx1,float* spy1,float* spz1,float* spx2,float* spy2,float* spz2,const unsigned &tid,float* results){
+template <unsigned blockSize> __device__ void KerPosLimitsRedu(float* spx1
+  ,float* spy1,float* spz1,float* spx2,float* spy2,float* spz2
+  ,const unsigned& tid,float* results)
+{
   __syncthreads();
   if(blockSize>=512){ 
     if(tid<256){
@@ -204,14 +215,15 @@ template <unsigned blockSize> __device__ void KerPosLimitsRedu(float* spx1,float
 /// Computes minimum and maximum position starting from the results of KerPosLimit.
 /// Calcula posicion minima y maxima a partir de los resultados de KerPosLimit.
 //------------------------------------------------------------------------------
-template <unsigned int blockSize> __global__ void KerReduPosLimits(unsigned n,float* data,float *results)
+template <unsigned int blockSize> __global__ void KerReduPosLimits(unsigned n
+  ,float* data,float* results)
 {
   extern __shared__ float spx1[];
-  float *spy1=spx1+blockDim.x;
-  float *spz1=spy1+blockDim.x;
-  float *spx2=spz1+blockDim.x;
-  float *spy2=spx2+blockDim.x;
-  float *spz2=spy2+blockDim.x;
+  float* spy1=spx1+blockDim.x;
+  float* spz1=spy1+blockDim.x;
+  float* spx2=spz1+blockDim.x;
+  float* spy2=spx2+blockDim.x;
+  float* spz2=spy2+blockDim.x;
   const unsigned tid=threadIdx.x;
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Value number.
   //-Loads values in shared memory.
@@ -238,14 +250,14 @@ template <unsigned int blockSize> __global__ void KerReduPosLimits(unsigned n,fl
 /// En results[] cada bloque graba xmin,ymin,zmin,xmax,ymax,zmax agrupando por
 /// bloque.
 //==============================================================================
-void ReduPosLimits(unsigned nblocks,float *aux,tfloat3 &pmin,tfloat3 &pmax){
+void ReduPosLimits(unsigned nblocks,float* aux,tfloat3& pmin,tfloat3& pmax){
   unsigned n=nblocks;
   const unsigned smemSize=DIVBSIZE*sizeof(float)*6;
   dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
   unsigned n_blocks=sgrid.x*sgrid.y;
   //:printf("n:%d  n_blocks:%d]\n",n,n_blocks);
-  float *dat=aux;
-  float *res=aux+(n_blocks*6);
+  float* dat=aux;
+  float* res=aux+(n_blocks*6);
   while(n>1){
     //:printf("##>ReduMaxF n:%d  n_blocks:%d]\n",n,n_blocks);
     //:printf("##>ReduMaxF>sgrid=(%d,%d,%d)\n",sgrid.x,sgrid.y,sgrid.z);
@@ -267,7 +279,11 @@ void ReduPosLimits(unsigned nblocks,float *aux,tfloat3 &pmin,tfloat3 &pmax){
 /// Reduction of shared memory values for a warp of KerLimitsCellRedu.
 /// Reduccion de valores en memoria shared para un warp de KerLimitsCellRedu.
 //------------------------------------------------------------------------------
-template <unsigned blockSize> __device__ void KerLimitsCellWarpRedu(volatile unsigned* spx1,volatile unsigned* spy1,volatile unsigned* spz1,volatile unsigned* spx2,volatile unsigned* spy2,volatile unsigned* spz2,const unsigned &tid){
+template <unsigned blockSize> __device__ void KerLimitsCellWarpRedu(
+  volatile unsigned* spx1,volatile unsigned* spy1,volatile unsigned* spz1
+  ,volatile unsigned* spx2,volatile unsigned* spy2,volatile unsigned* spz2
+  ,const unsigned& tid)
+{
   if(blockSize>=64){
     const unsigned tid2=tid+32;
     spx1[tid]=min(spx1[tid],spx1[tid2]); spy1[tid]=min(spy1[tid],spy1[tid2]); spz1[tid]=min(spz1[tid],spz1[tid2]);
@@ -304,7 +320,10 @@ template <unsigned blockSize> __device__ void KerLimitsCellWarpRedu(volatile uns
 /// Reduction of shared memory values for KerLimitsCell.
 /// Reduccion de valores en memoria shared para KerLimitsCell.
 //------------------------------------------------------------------------------
-template <unsigned blockSize> __device__ void KerLimitsCellRedu(unsigned cellcode,unsigned* spx1,unsigned* spy1,unsigned* spz1,unsigned* spx2,unsigned* spy2,unsigned* spz2,const unsigned &tid,unsigned* results){
+template <unsigned blockSize> __device__ void KerLimitsCellRedu(unsigned cellcode
+  ,unsigned* spx1,unsigned* spy1,unsigned* spz1,unsigned* spx2,unsigned* spy2
+  ,unsigned* spz2,const unsigned& tid,unsigned* results)
+{
   __syncthreads();
   if(blockSize>=512){ 
     if(tid<256){
@@ -337,17 +356,18 @@ template <unsigned blockSize> __device__ void KerLimitsCellRedu(unsigned cellcod
 }
 
 //------------------------------------------------------------------------------
-/// Computes minimum and maximum postion startibg from the results of KerPosLimit.
+/// Computes minimum and maximum position startibg from the results of KerPosLimit.
 /// Calcula posicion minima y maxima a partir de los resultados de KerPosLimit.
 //------------------------------------------------------------------------------
-template <unsigned int blockSize> __global__ void KerLimitsCellReduBase(unsigned cellcode,unsigned n,unsigned* data,unsigned *results)
+template <unsigned int blockSize> __global__ void KerLimitsCellReduBase(
+  unsigned cellcode,unsigned n,unsigned* data,unsigned* results)
 {
   extern __shared__ unsigned scx1[];
-  unsigned *scy1=scx1+blockDim.x;
-  unsigned *scz1=scy1+blockDim.x;
-  unsigned *scx2=scz1+blockDim.x;
-  unsigned *scy2=scx2+blockDim.x;
-  unsigned *scz2=scy2+blockDim.x;
+  unsigned* scy1=scx1+blockDim.x;
+  unsigned* scz1=scy1+blockDim.x;
+  unsigned* scx2=scz1+blockDim.x;
+  unsigned* scy2=scx2+blockDim.x;
+  unsigned* scz2=scy2+blockDim.x;
   const unsigned tid=threadIdx.x;
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Value number.
   //-Loads values in shared memory.
@@ -376,16 +396,16 @@ template <unsigned int blockSize> __global__ void KerLimitsCellReduBase(unsigned
 /// En results[] cada bloque graba cxmin,cymin,czmin,cxmax,cymax,czmax codificando
 /// los valores como celdas en 2 unsigned y agrupando por bloque.
 //==============================================================================
-void LimitsCellRedu(unsigned cellcode,unsigned nblocks,unsigned *aux
-  ,tuint3 &celmin,tuint3 &celmax)
+void LimitsCellRedu(unsigned cellcode,unsigned nblocks,unsigned* aux
+  ,tuint3& celmin,tuint3& celmax)
 {
   unsigned n=nblocks;
   const unsigned smemSize=DIVBSIZE*sizeof(float)*6;
   dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
   unsigned n_blocks=sgrid.x*sgrid.y;
   //:printf("n:%d  n_blocks:%d]\n",n,n_blocks);
-  unsigned *dat=aux;
-  unsigned *res=aux+(n_blocks*2); //-Minimum and maximum value.
+  unsigned* dat=aux;
+  unsigned* res=aux+(n_blocks*2); //-Minimum and maximum value.
   while(n>1){
     //:printf("##>ReduMaxF n:%d  n_blocks:%d]\n",n,n_blocks);
     //:printf("##>ReduMaxF>sgrid=(%d,%d,%d)\n",sgrid.x,sgrid.y,sgrid.z);
@@ -404,7 +424,7 @@ void LimitsCellRedu(unsigned cellcode,unsigned nblocks,unsigned *aux
 }
 
 //------------------------------------------------------------------------------
-/// Computes minimun and maximum cell for valid particles.
+/// Computes minimum and maximum cell for valid particles.
 /// The excluded particles are already marked in code[].
 /// In case of having no valid particles the minimum value igreater than the maximum.
 /// In results[], each block stores cxmin,cymin,czmin,cxmax,cymax,czmax encodes
@@ -416,15 +436,16 @@ void LimitsCellRedu(unsigned cellcode,unsigned nblocks,unsigned *aux
 /// En results[] cada bloque graba cxmin,cymin,czmin,cxmax,cymax,czmax codificando
 /// los valores como celdas en 2 unsigned y agrupando por bloque.
 //------------------------------------------------------------------------------
-template <unsigned int blockSize> __global__ void KerLimitsCell(unsigned n,unsigned pini
-  ,unsigned cellcode,const unsigned *dcell,const typecode *code,unsigned *results)
+template <unsigned int blockSize> __global__ void KerLimitsCell(unsigned n
+  ,unsigned pini,unsigned cellcode,const unsigned* dcell,const typecode* code
+  ,unsigned* results)
 {
   extern __shared__ unsigned scx1[];
-  unsigned *scy1=scx1+blockDim.x;
-  unsigned *scz1=scy1+blockDim.x;
-  unsigned *scx2=scz1+blockDim.x;
-  unsigned *scy2=scx2+blockDim.x;
-  unsigned *scz2=scy2+blockDim.x;
+  unsigned* scy1=scx1+blockDim.x;
+  unsigned* scz1=scy1+blockDim.x;
+  unsigned* scx2=scz1+blockDim.x;
+  unsigned* scy2=scx2+blockDim.x;
+  unsigned* scz2=scy2+blockDim.x;
   const unsigned tid=threadIdx.x;
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   //-Loads shared memory values.
@@ -453,7 +474,7 @@ template <unsigned int blockSize> __global__ void KerLimitsCell(unsigned n,unsig
 }
 
 //==============================================================================
-/// Computes minimun and maximum cell for valid particles.
+/// Computes minimum and maximum cell for valid particles.
 /// The excluded particles are already marked in code[].
 /// In case of having no valid particles the minimum value igreater than the maximum.
 /// In results[], each block stores cxmin,cymin,czmin,cxmax,cymax,czmax encodes
@@ -465,8 +486,8 @@ template <unsigned int blockSize> __global__ void KerLimitsCell(unsigned n,unsig
 /// En results[] cada bloque graba cxmin,cymin,czmin,cxmax,cymax,czmax codificando
 /// los valores como celdas en 2 unsigned y agrupando por bloque.
 //==============================================================================
-void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcell
-  ,const typecode *code,unsigned *aux,tuint3 &celmin,tuint3 &celmax)
+void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned* dcell
+  ,const typecode* code,unsigned* aux,tuint3& celmin,tuint3& celmax)
 {
   if(!np){//-Execution is canceled when no particles.
     celmin=TUint3(UINT_MAX);
@@ -482,14 +503,14 @@ void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcel
 #ifdef DG_LimitsCell  //:delbeg:
   char cad[1024];
   sprintf(cad,"LimitsPos_%s> n:%u  pini:%u",(velrhop? "Fluid": "Bound"),np,pini); log->Print(cad);
-  float4 *poscellh=new float4[np];
-  byte *checkh=new byte[np];
+  float4* poscellh=new float4[np];
+  byte* checkh=new byte[np];
   cudaMemcpy(poscellh,poscell+pini,sizeof(float4)*np,cudaMemcpyDeviceToHost);
   cudaMemcpy(checkh,check+pini,sizeof(byte)*np,cudaMemcpyDeviceToHost);
   tuint3 pminh=TUint3(UINT_MAX);
   tuint3 pmaxh=TUint3(0);
   for(unsigned p=0;p<np;p++)if(!checkh[p]){
-    unsigned cell=*((unsigned *)&(poscellh[p].w));
+    unsigned cell=*((unsigned*)&(poscellh[p].w));
     unsigned px=DCEL_Cellx(cellcode,cell),py=DCEL_Celly(cellcode,cell),pz=DCEL_Cellz(cellcode,cell);
     //sprintf(cad,"LimitsPos> cell[%u]=%u  (%u,%u,%u)",p,cell,px,py,pz); log->Print(cad);
     if(pminh.x>px)pminh.x=px;  if(pminh.y>py)pminh.y=py;  if(pminh.z>pz)pminh.z=pz;
@@ -509,7 +530,8 @@ void LimitsCell(unsigned np,unsigned pini,unsigned cellcode,const unsigned *dcel
 /// Compute first and last particle for each cell.
 /// Calcula particula inicial y final de cada celda.
 //------------------------------------------------------------------------------
-__global__ void KerCalcBeginEndCell(unsigned n,unsigned pini,const unsigned *cellpart,int2 *begcell)
+__global__ void KerCalcBeginEndCell(unsigned n,unsigned pini
+  ,const unsigned* cellpart,int2* begcell)
 {
   extern __shared__ unsigned scell[];    // [blockDim.x+1}
   const unsigned pt=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
@@ -534,7 +556,9 @@ __global__ void KerCalcBeginEndCell(unsigned n,unsigned pini,const unsigned *cel
 /// Compute first and last particle for each cell.
 /// Calcula particula inicial y final de cada celda.
 //==============================================================================
-void CalcBeginEndCell(bool full,unsigned np,unsigned npb,unsigned sizebegcell,unsigned cellfluid,const unsigned *cellpart,int2 *begcell){
+void CalcBeginEndCell(bool full,unsigned np,unsigned npb,unsigned sizebegcell
+  ,unsigned cellfluid,const unsigned* cellpart,int2* begcell)
+{
   if(full)cudaMemset(begcell,0,sizeof(int2)*sizebegcell);
   else cudaMemset(begcell+cellfluid,0,sizeof(int2)*(sizebegcell-cellfluid));
   const unsigned pini=(full? 0: npb);
@@ -550,9 +574,11 @@ void CalcBeginEndCell(bool full,unsigned np,unsigned npb,unsigned sizebegcell,un
 /// Reorders particle data according to idsort[].
 /// Reordena datos de particulas segun idsort[].
 //------------------------------------------------------------------------------
-__global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart
-  ,const unsigned *idp,const typecode *code,const unsigned *dcell,const double2 *posxy,const double *posz,const float4 *velrhop
-  ,unsigned *idp2,typecode *code2,unsigned *dcell2,double2 *posxy2,double *posz2,float4 *velrhop2)
+__global__ void KerSortDataParticles(unsigned n,unsigned pini
+  ,const unsigned* sortpart,const unsigned* idp,const typecode* code
+  ,const unsigned* dcell,const double2* posxy,const double* posz
+  ,const float4* velrhop,unsigned* idp2,typecode* code2,unsigned* dcell2
+  ,double2* posxy2,double* posz2,float4* velrhop2)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
@@ -569,7 +595,8 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
 /// Reorders particle data according to sortpart[].
 /// Reordena datos de particulas segun sortpart[].
 //------------------------------------------------------------------------------
-__global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart,const float4 *a,float4 *a2)
+__global__ void KerSortDataParticles(unsigned n,unsigned pini
+  ,const unsigned* sortpart,const float4* a,float4* a2)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
@@ -581,7 +608,8 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
 /// Reorders particle data according to sortpart[].
 /// Reordena datos de particulas segun sortpart[].
 //------------------------------------------------------------------------------
-__global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart,const float *a,const float *b,float *a2,float *b2)
+__global__ void KerSortDataParticles(unsigned n,unsigned pini
+  ,const unsigned* sortpart,const float* a,const float* b,float* a2,float* b2)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
@@ -594,7 +622,9 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
 /// Reorders particle data according to sortpart[].
 /// Reordena datos de particulas segun sortpart[].
 //------------------------------------------------------------------------------
-__global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart,const double2 *a,const double *b,const float4 *c,double2 *a2,double *b2,float4 *c2)
+__global__ void KerSortDataParticles(unsigned n,unsigned pini
+  ,const unsigned* sortpart,const double2* a,const double* b,const float4* c
+  ,double2* a2,double* b2,float4* c2)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
@@ -608,7 +638,24 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
 /// Reorders particle data according to sortpart[].
 /// Reordena datos de particulas segun sortpart[].
 //------------------------------------------------------------------------------
-__global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart,const tsymatrix3f *a,tsymatrix3f *a2)
+__global__ void KerSortDataParticles(unsigned n,unsigned pini
+  ,const unsigned* sortpart,const float3* a,const float3* b,const float3* c
+  ,float3* a2,float3* b2,float3* c2)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n){
+    const unsigned oldpos=(p<pini? p: sortpart[p]);
+    a2[p]=a[oldpos];
+    b2[p]=b[oldpos];
+    c2[p]=c[oldpos];
+  }
+}
+//------------------------------------------------------------------------------
+/// Reorders particle data according to sortpart[].
+/// Reordena datos de particulas segun sortpart[].
+//------------------------------------------------------------------------------
+__global__ void KerSortDataParticles(unsigned n,unsigned pini
+  ,const unsigned* sortpart,const tsymatrix3f* a,tsymatrix3f* a2)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
@@ -620,7 +667,8 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
 /// Reorders particle data according to sortpart[].
 /// Reordena datos de particulas segun sortpart[].
 //------------------------------------------------------------------------------
-__global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart,const float3 *a,float3 *a2)
+__global__ void KerSortDataParticles(unsigned n,unsigned pini
+  ,const unsigned* sortpart,const float3* a,float3* a2)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
@@ -632,7 +680,8 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
 /// Reorders particle data according to sortpart[].
 /// Reordena datos de particulas segun sortpart[].
 //------------------------------------------------------------------------------
-__global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *sortpart,const float *a,float *a2)
+__global__ void KerSortDataParticles(unsigned n,unsigned pini
+  ,const unsigned* sortpart,const float* a,float* a2)
 {
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
   if(p<n){
@@ -641,24 +690,45 @@ __global__ void KerSortDataParticles(unsigned n,unsigned pini,const unsigned *so
   }
 }
 
+//------------------------------------------------------------------------------
+/// Reorders particle data according to sortpart[].
+/// Reordena datos de particulas segun sortpart[].
+//------------------------------------------------------------------------------
+__global__ void KerSortDataParticles(unsigned n,unsigned pini
+  ,const unsigned* sortpart,const unsigned* a,const float4* b,unsigned* a2,float4* b2)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n){
+    const unsigned oldpos=(p<pini? p: sortpart[p]);
+    a2[p]=a[oldpos];
+    b2[p]=b[oldpos];
+  }
+}
+
+
 //==============================================================================
 /// Reorders particle data according to sortpart.
 /// Reordena datos de particulas segun sortpart.
 //==============================================================================
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart
-  ,const unsigned *idp,const typecode *code,const unsigned *dcell,const double2 *posxy,const double *posz,const float4 *velrhop
-  ,unsigned *idp2,typecode *code2,unsigned *dcell2,double2 *posxy2,double *posz2,float4 *velrhop2)
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const unsigned* idp,const typecode* code,const unsigned* dcell
+  ,const double2* posxy,const double* posz,const float4* velrhop
+  ,unsigned* idp2,typecode* code2,unsigned* dcell2,double2* posxy2
+  ,double* posz2,float4* velrhop2)
 {
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
-    KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,idp,code,dcell,posxy,posz,velrhop,idp2,code2,dcell2,posxy2,posz2,velrhop2);
+    KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,idp,code,dcell
+      ,posxy,posz,velrhop,idp2,code2,dcell2,posxy2,posz2,velrhop2);
   }
 }
 //==============================================================================
 /// Reorders particle data according to sortpart.
 /// Reordena datos de particulas segun sortpart.
 //==============================================================================
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float4 *a,float4 *a2){
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const float4* a,float4* a2)
+{
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,a2);
@@ -668,7 +738,9 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
 /// Reorders particle data according to sortpart.
 /// Reordena datos de particulas segun sortpart.
 //==============================================================================
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float *a,const float *b,float *a2,float *b2){
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const float* a,const float* b,float* a2,float* b2)
+{
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,b,a2,b2);
@@ -678,7 +750,10 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
 /// Reorders particle data according to sortpart.
 /// Reordena datos de particulas segun sortpart.
 //==============================================================================
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const double2 *a,const double *b,const float4 *c,double2 *a2,double *b2,float4 *c2){
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const double2* a,const double* b,const float4* c,double2* a2,double* b2
+  ,float4* c2)
+{
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,b,c,a2,b2,c2);
@@ -688,7 +763,22 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
 /// Reorders particle data according to sortpart.
 /// Reordena datos de particulas segun sortpart.
 //==============================================================================
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const tsymatrix3f *a,tsymatrix3f *a2){
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const float3* a,const float3* b,const float3* c,float3* a2,float3* b2
+  ,float3* c2)
+{
+  if(np){
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
+    KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,b,c,a2,b2,c2);
+  }
+}
+//==============================================================================
+/// Reorders particle data according to sortpart.
+/// Reordena datos de particulas segun sortpart.
+//==============================================================================
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const tsymatrix3f* a,tsymatrix3f* a2)
+{
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,a2);
@@ -699,7 +789,9 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
 /// Reorders particle data according to sortpart.
 /// Reordena datos de particulas segun sortpart.
 //==============================================================================
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float3 *a,float3 *a2){
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const float3* a,float3* a2)
+{
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,a2);
@@ -710,10 +802,63 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
 /// Reorders particle data according to sortpart.
 /// Reordena datos de particulas segun sortpart.
 //==============================================================================
-void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const float *a,float *a2){
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const float* a,float* a2)
+{
   if(np){
     dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
     KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,a2);
+  }
+}
+
+//==============================================================================
+/// Reorders particle data according to sortpart.
+/// Reordena datos de particulas segun sortpart.
+//==============================================================================
+void SortDataParticles(unsigned np,unsigned pini,const unsigned* sortpart
+  ,const unsigned* a,const float4* b,unsigned* a2,float4* b2)
+{
+  if(np){
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
+    KerSortDataParticles <<<sgrid,DIVBSIZE>>>(np,pini,sortpart,a,b,a2,b2);
+  }
+}
+
+//------------------------------------------------------------------------------
+/// Reorders PeriParent references.
+//------------------------------------------------------------------------------
+__global__ void KerReSortData(unsigned n,const unsigned* sortpart
+  ,unsigned* rsortpart)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n){
+    rsortpart[sortpart[p]]=p;
+  }
+}
+//------------------------------------------------------------------------------
+/// Reorders PeriParent references.
+//------------------------------------------------------------------------------
+__global__ void KerSortArrayPeriParent(unsigned n
+  ,const unsigned* sortpart,const unsigned* rsortpart,const unsigned* a
+  ,unsigned* a2)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n){
+    const unsigned pp=a[sortpart[p]];
+    a2[p]=(pp!=UINT_MAX? rsortpart[pp]: pp);
+  }
+}
+
+//==============================================================================
+/// Reorders PeriParent references.
+//==============================================================================
+void SortArrayPeriParent(unsigned np,const unsigned* sortpart
+  ,unsigned* rsortpart,const unsigned* a,unsigned* a2)
+{
+  if(np){
+    dim3 sgrid=GetSimpleGridSize(np,DIVBSIZE);
+    KerReSortData <<<sgrid,DIVBSIZE>>>(np,sortpart,rsortpart);
+    KerSortArrayPeriParent <<<sgrid,DIVBSIZE>>>(np,sortpart,rsortpart,a,a2);
   }
 }
 
@@ -721,10 +866,11 @@ void SortDataParticles(unsigned np,unsigned pini,const unsigned *sortpart,const 
 /// Compute minimum and maximum values starting from data[].
 /// Calcula valores minimo y maximo a partir de data[].
 //------------------------------------------------------------------------------
-template <unsigned int blockSize> __global__ void KerReduUintLimits(unsigned n,unsigned* data,unsigned *results)
+template <unsigned int blockSize> __global__ void KerReduUintLimits(unsigned n
+  ,unsigned* data,unsigned* results)
 {
   extern __shared__ unsigned sp1[];
-  unsigned *sp2=sp1+blockDim.x;
+  unsigned* sp2=sp1+blockDim.x;
   const unsigned tid=threadIdx.x;
   const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Value number.
   //-Loads variables to shared memory.
@@ -745,14 +891,14 @@ template <unsigned int blockSize> __global__ void KerReduUintLimits(unsigned n,u
 /// Reduce los limites de valores unsigned a partir de results[].
 /// En results[] cada bloque graba vmin,vmax agrupando por bloque.
 //==============================================================================
-void ReduUintLimits(unsigned nblocks,unsigned *aux,unsigned &vmin,unsigned &vmax){
+void ReduUintLimits(unsigned nblocks,unsigned* aux,unsigned& vmin,unsigned& vmax){
   unsigned n=nblocks;
   const unsigned smemSize=DIVBSIZE*sizeof(unsigned)*2;
   dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
   unsigned n_blocks=sgrid.x*sgrid.y;
   //:printf("n:%d  n_blocks:%d]\n",n,n_blocks);
-  unsigned *dat=aux;
-  unsigned *res=aux+(n_blocks*2);
+  unsigned* dat=aux;
+  unsigned* res=aux+(n_blocks*2);
   while(n>1){
     //:printf("##>ReduMaxF n:%d  n_blocks:%d]\n",n,n_blocks);
     //:printf("##>ReduMaxF>sgrid=(%d,%d,%d)\n",sgrid.x,sgrid.y,sgrid.z);
@@ -774,7 +920,9 @@ void ReduUintLimits(unsigned nblocks,unsigned *aux,unsigned &vmin,unsigned &vmax
 /// Reduction of shared memory values for a warp of KerReduUintSum.
 /// Reduccion de valores en memoria shared para un warp de KerReduUintSum.
 //------------------------------------------------------------------------------
-template <unsigned blockSize> __device__ void KerUintSumWarpRedu(volatile unsigned* sp1,const unsigned &tid){
+template <unsigned blockSize> __device__ void KerUintSumWarpRedu(
+  volatile unsigned* sp1,const unsigned& tid)
+{
   if(blockSize>=64)sp1[tid]+=sp1[tid+32];
   if(blockSize>=32)sp1[tid]+=sp1[tid+16];
   if(blockSize>=16)sp1[tid]+=sp1[tid+ 8];
@@ -787,7 +935,9 @@ template <unsigned blockSize> __device__ void KerUintSumWarpRedu(volatile unsign
 /// Reduction of shared memory values for KerReduUintSum.
 /// Reduccion de valores en memoria shared para KerReduUintSum.
 //------------------------------------------------------------------------------
-template <unsigned blockSize> __device__ void KerUintSumRedu(unsigned* sp1,const unsigned &tid,unsigned* results){
+template <unsigned blockSize> __device__ void KerUintSumRedu(unsigned* sp1
+  ,const unsigned& tid,unsigned* results)
+{
   __syncthreads();
   if(blockSize>=512){ if(tid<256)sp1[tid]+=sp1[tid+256]; __syncthreads(); }
   if(blockSize>=256){ if(tid<128)sp1[tid]+=sp1[tid+128]; __syncthreads(); }
@@ -800,7 +950,8 @@ template <unsigned blockSize> __device__ void KerUintSumRedu(unsigned* sp1,const
 /// Returns the sum of the values contained in data[].
 /// Devuelve la suma de los valores contenidos en data[].
 //------------------------------------------------------------------------------
-template <unsigned int blockSize> __global__ void KerReduUintSum(unsigned n,unsigned* data,unsigned *results)
+template <unsigned int blockSize> __global__ void KerReduUintSum(unsigned n
+  ,unsigned* data,unsigned* results)
 {
   extern __shared__ unsigned sp1[];
   const unsigned tid=threadIdx.x;
@@ -818,14 +969,14 @@ template <unsigned int blockSize> __global__ void KerReduUintSum(unsigned n,unsi
 /// Returns the sum of the values contained in aux[].
 /// Devuelve la suma de los valores contenidos en aux[].
 //==============================================================================
-unsigned ReduUintSum(unsigned nblocks,unsigned *aux){
+unsigned ReduUintSum(unsigned nblocks,unsigned* aux){
   unsigned n=nblocks;
   const unsigned smemSize=DIVBSIZE*sizeof(unsigned);
   dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
   unsigned n_blocks=sgrid.x*sgrid.y;
   //:printf("n:%d  n_blocks:%d]\n",n,n_blocks);
-  unsigned *dat=aux;
-  unsigned *res=aux+(n_blocks);
+  unsigned* dat=aux;
+  unsigned* res=aux+(n_blocks);
   while(n>1){
     //:printf("##>ReduMaxF n:%d  n_blocks:%d]\n",n,n_blocks);
     //:printf("##>ReduMaxF>sgrid=(%d,%d,%d)\n",sgrid.x,sgrid.y,sgrid.z);
@@ -842,14 +993,48 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux){
   return(resf);
 }
 
+//<vs_flexstruc_ini>
+//==============================================================================
+/// Sorts the indices of the flexible structure particles.
+/// Ordena los índices de las partículas de estructura flexible.
+//==============================================================================
+void SortIndices(unsigned* sortpart,unsigned* sortidx,unsigned np,bool stable){
+  thrust::device_ptr<unsigned> dev_sortidx(sortidx);
+  thrust::sequence(dev_sortidx,dev_sortidx+np);
+  Sort(sortpart,sortidx,np,stable);
+}
+
+//==============================================================================
+/// Updates the indices of the flexible structure particles.
+/// Actualiza los índices de las partículas de estructura flexible..
+//==============================================================================
+__global__ void KerUpdateIndices(unsigned n,const unsigned* sortidx,unsigned* idx)
+{
+  const unsigned p=blockIdx.x*blockDim.x + threadIdx.x; //-Particle number.
+  if(p<n)idx[p]=sortidx[idx[p]];
+}
+
+//==============================================================================
+/// Updates the indices of the flexible structure particles.
+/// Actualiza los índices de las partículas de estructura flexible..
+//==============================================================================
+void UpdateIndices(unsigned n,const unsigned* sortidx,unsigned* idx){
+  if(n){
+    dim3 sgrid=GetSimpleGridSize(n,DIVBSIZE);
+    KerUpdateIndices <<<sgrid,DIVBSIZE>>>(n,sortidx,idx);
+  }
+}
+//<vs_flexstruc_end>
+
 /*:
 ////------------------------------------------------------------------------------
 //// Devuelve rango de particulas en el rango de celdas indicadas.
 ////------------------------------------------------------------------------------
-//template <unsigned blockSize> __global__ void KerGetRangeParticlesCells(unsigned ncel,unsigned ini,const int2 *begcell,unsigned *results)
+//template <unsigned blockSize> __global__ void KerGetRangeParticlesCells(
+//  unsigned ncel,unsigned ini,const int2* begcell,unsigned* results)
 //{ //torder{ORDER_XYZ=1,ORDER_YZX=2,ORDER_XZY=3} 
 //  extern __shared__ unsigned sp1[];
-//  unsigned *sp2=sp1+blockDim.x;
+//  unsigned* sp2=sp1+blockDim.x;
 //  const unsigned tid=threadIdx.x;
 //  const unsigned cel=blockIdx.x*blockDim.x + threadIdx.x; //-Number of cell
 //  //-Carga valores en memoria shared.
@@ -870,7 +1055,9 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux){
 ////==============================================================================
 //// Devuelve rango de particulas en el rango de celdas indicadas.
 ////==============================================================================
-//void GetRangeParticlesCells(unsigned celini,unsigned celfin,const int2 *begcell,unsigned *aux,unsigned &pmin,unsigned &pmax){
+//void GetRangeParticlesCells(unsigned celini,unsigned celfin,const int2* begcell
+//  ,unsigned* aux,unsigned& pmin,unsigned& pmax)
+//{
 //  unsigned ncel=celfin-celini;
 //  if(!ncel){//-Si no hay celdas cancela proceso.
 //    pmin=UINT_MAX; pmax=0;
@@ -884,7 +1071,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux){
 //#ifdef DG_GetRangeParticlesCells
 //  char cad[1024];
 //  sprintf(cad,"GetRangeParticlesCells> ncel:%u  celini:%u",ncel,celini); log->Print(cad);
-//  int2 *begcellh=new int2[ncel];
+//  int2* begcellh=new int2[ncel];
 //  cudaMemcpy(begcellh,begcell+celini,sizeof(int2)*ncel,cudaMemcpyDeviceToHost);
 //  unsigned pminh=UINT_MAX;
 //  unsigned pmaxh=0;
@@ -907,7 +1094,8 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux){
 ////------------------------------------------------------------------------------
 //// Devuelve rango de particulas en el rango de celdas indicadas.
 ////------------------------------------------------------------------------------
-//template <unsigned blockSize> __global__ void KerGetParticlesCells(unsigned ncel,unsigned ini,const int2 *begcell,unsigned *results)
+//template <unsigned blockSize> __global__ void KerGetParticlesCells(unsigned ncel
+//  ,unsigned ini,const int2* begcell,unsigned* results)
 //{ //torder{ORDER_XYZ=1,ORDER_YZX=2,ORDER_XZY=3} 
 //  extern __shared__ unsigned sp1[];
 //  const unsigned tid=threadIdx.x;
@@ -926,7 +1114,9 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux){
 ////==============================================================================
 //// Devuelve numero de particulas en el rango de celdas indicadas.
 ////==============================================================================
-//unsigned GetParticlesCells(unsigned celini,unsigned celfin,const int2 *begcell,unsigned *aux){
+//unsigned GetParticlesCells(unsigned celini,unsigned celfin,const int2* begcell
+//  ,unsigned* aux)
+//{
 //  unsigned ncel=celfin-celini;
 //  if(!ncel)return(0);//-Si no hay celdas cancela proceso.
 //  const unsigned smemSize=DIVBSIZE*sizeof(unsigned);
@@ -937,7 +1127,7 @@ unsigned ReduUintSum(unsigned nblocks,unsigned *aux){
 //#ifdef DG_GetParticlesCells
 //  char cad[1024];
 //  //sprintf(cad,"GetParticlesCells> ncel:%u  celini:%u",ncel,celini); log->PrintDbg(cad);
-//  int2 *begcellh=new int2[ncel];
+//  int2* begcellh=new int2[ncel];
 //  cudaMemcpy(begcellh,begcell+celini,sizeof(int2)*ncel,cudaMemcpyDeviceToHost);
 //  unsigned sumh=0;
 //  for(unsigned p=0;p<ncel;p++){

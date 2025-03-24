@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -38,7 +38,9 @@ namespace curedus{
 /// Reduction using sum of double values in shared memory for a warp.
 /// Reduccion mediante suma de valores double en memoria shared para un warp.
 //==============================================================================
-template <unsigned blockSize> __device__ void KerReduSumDoubleWarp(volatile double* sddat,unsigned tid){
+template <unsigned blockSize> __device__ void KerReduSumDoubleWarp(
+  volatile double* sddat,unsigned tid)
+{
   if(blockSize>=64)sddat[tid]+=sddat[tid+32];
   if(blockSize>=32)sddat[tid]+=sddat[tid+16];
   if(blockSize>=16)sddat[tid]+=sddat[tid+8];
@@ -56,7 +58,9 @@ template <unsigned blockSize> __device__ void KerReduSumDoubleWarp(volatile doub
 /// principio de res[] (Se usan tantas posiciones del res[] como bloques, 
 /// quedando el resultado final en res[0]).
 //==============================================================================
-template <unsigned blockSize> __global__ void KerReduSumDouble(unsigned n,unsigned ini,const double *dat,double *res){
+template <unsigned blockSize> __global__ void KerReduSumDouble(unsigned n
+  ,unsigned ini,const double* dat,double* res)
+{
   extern __shared__ double sddat[];
   unsigned tid=threadIdx.x;
   unsigned c=blockIdx.x*blockDim.x + threadIdx.x;
@@ -95,7 +99,9 @@ unsigned GetAuxSize_ReduSumDouble(unsigned ndata){
 /// resu[], en pim1_sum o devolverse segun parametros de ejecucion.
 /// Usar ReduSumDouble() o ReduSumDoubleAsyn().
 //==============================================================================
-double ReduSumDoubleBase(unsigned ndata,unsigned inidata,const double* data,double* resu,double *pim1_sum,cudaStream_t stm){
+double ReduSumDoubleBase(unsigned ndata,unsigned inidata,const double* data
+  ,double* resu,double* pim1_sum,cudaStream_t stm)
+{
   double ret=0;
   if(ndata){
     unsigned n=ndata,ini=inidata;
@@ -103,9 +109,9 @@ double ReduSumDoubleBase(unsigned ndata,unsigned inidata,const double* data,doub
     dim3 sgrid=GetSimpleGridSize(n,REDUBSIZE);
     unsigned nblocks=sgrid.x*sgrid.y;
     //:printf(">> n:%d  nblocks:%d]\n",n,nblocks);
-    const double *dat=data;
-    double *resu1=resu,*resu2=resu+nblocks;
-    double *res=resu1;
+    const double* dat=data;
+    double* resu1=resu,*resu2=resu+nblocks;
+    double* res=resu1;
     while(n>1){
       KerReduSumDouble<REDUBSIZE><<<sgrid,REDUBSIZE,smemSize,stm>>>(n,ini,dat,res);
       n=nblocks; ini=0;
@@ -116,7 +122,7 @@ double ReduSumDoubleBase(unsigned ndata,unsigned inidata,const double* data,doub
       }
     }
     //-Manages the result.
-    const double *result=(ndata>1? res: data);
+    const double* result=(ndata>1? res: data);
     if(!stm)cudaMemcpy(&ret,result,sizeof(double),cudaMemcpyDeviceToHost);
     else if(pim1_sum)cudaMemcpyAsync(pim1_sum,result,sizeof(double),cudaMemcpyDeviceToHost,stm);
     else if(res!=result)cudaMemcpyAsync(res,result,sizeof(double),cudaMemcpyDeviceToDevice,stm);
@@ -132,7 +138,7 @@ double DgReduSumDouble(unsigned ndata,unsigned inidata,const double* datag){
   double res=0;
   if(ndata){
     //-Allocates CPU memory.
-    double *data=new double[ndata];
+    double* data=new double[ndata];
     //-Gets data from GPU.
     cudaMemcpy(data,datag+inidata,sizeof(double)*ndata,cudaMemcpyDeviceToHost);
     fcuda::Check_CudaErroorFun("DgReduSumDouble");
@@ -153,7 +159,9 @@ double DgReduSumDouble(unsigned ndata,unsigned inidata,const double* datag){
 /// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumDouble(ndata).
 /// Ejecucion sincrona en el stream 0.
 //==============================================================================
-double ReduSumDouble(unsigned ndata,unsigned inidata,const double* data,double* resu){
+double ReduSumDouble(unsigned ndata,unsigned inidata,const double* data
+  ,double* resu)
+{
   double ret=ReduSumDoubleBase(ndata,inidata,data,resu,NULL,NULL);
   #ifdef DG_curedus_ReduSumDouble
     #ifdef DG_curedus_Print
@@ -176,7 +184,9 @@ double ReduSumDouble(unsigned ndata,unsigned inidata,const double* data,double* 
 /// Ejecucion asincrona en el stream stm y el resultado final se graba al inicio
 /// de resu[].
 //==============================================================================
-void ReduSumDoubleAsyn(unsigned ndata,unsigned inidata,const double* data,double* resu,cudaStream_t stm){
+void ReduSumDoubleAsyn(unsigned ndata,unsigned inidata,const double* data
+  ,double* resu,cudaStream_t stm)
+{
   if(!ndata)throw "Number of values cannot be zero ReduSumDoubleAsyn().";
   if(!stm)throw "Error in parameters calling ReduSumDoubleAsyn().";
   ReduSumDoubleBase(ndata,inidata,data,resu,NULL,stm);
@@ -193,7 +203,9 @@ void ReduSumDoubleAsyn(unsigned ndata,unsigned inidata,const double* data,double
 /// Ejecucion asincrona en el stream stm y el resultado se graba en pim1_sum 
 /// (QUE DEBE SER PINNED MEMORY).
 //==============================================================================
-void ReduSumDoubleAsyn(unsigned ndata,unsigned inidata,const double* data,double* resu,double *pim1_sum,cudaStream_t stm){
+void ReduSumDoubleAsyn(unsigned ndata,unsigned inidata,const double* data
+  ,double* resu,double* pim1_sum,cudaStream_t stm)
+{
   if(!ndata)throw "Number of values cannot be zero ReduSumDoubleAsyn().";
   if(!pim1_sum || !stm)throw "Error in parameters calling ReduSumDoubleAsyn().";
   ReduSumDoubleBase(ndata,inidata,data,resu,pim1_sum,stm);
@@ -208,7 +220,9 @@ void ReduSumDoubleAsyn(unsigned ndata,unsigned inidata,const double* data,double
 /// Reduction using sum of float values in shared memory for a warp.
 /// Reduccion mediante suma de valores float en memoria shared para un warp.
 //==============================================================================
-template <unsigned blockSize> __device__ void KerReduSumFloatWarp(volatile float* sfdat,unsigned tid){
+template <unsigned blockSize> __device__ void KerReduSumFloatWarp(
+  volatile float* sfdat,unsigned tid)
+{
   if(blockSize>=64)sfdat[tid]+=sfdat[tid+32];
   if(blockSize>=32)sfdat[tid]+=sfdat[tid+16];
   if(blockSize>=16)sfdat[tid]+=sfdat[tid+8];
@@ -226,7 +240,9 @@ template <unsigned blockSize> __device__ void KerReduSumFloatWarp(volatile float
 /// principio de res[] (Se usan tantas posiciones del res[] como bloques, 
 /// quedando el resultado final en res[0]).
 //==============================================================================
-template <unsigned blockSize> __global__ void KerReduSumFloat(unsigned n,unsigned ini,const float *dat,float *res){
+template <unsigned blockSize> __global__ void KerReduSumFloat(unsigned n
+  ,unsigned ini,const float* dat,float* res)
+{
   extern __shared__ float sfdat[];
   unsigned tid=threadIdx.x;
   unsigned c=blockIdx.x*blockDim.x + threadIdx.x;
@@ -243,7 +259,9 @@ template <unsigned blockSize> __global__ void KerReduSumFloat(unsigned n,unsigne
 /// Returns size of auxiliary memory for execution.
 /// Devuelve el tamanho minimo de la memoria auxiliar necesaria segun ndata.
 //==============================================================================
-unsigned GetAuxSize_ReduSumFloat(unsigned ndata){ return(GetAuxSize_ReduSumDouble(ndata)); }
+unsigned GetAuxSize_ReduSumFloat(unsigned ndata){ 
+  return(GetAuxSize_ReduSumDouble(ndata)); 
+}
 
 //==============================================================================
 /// Calculate sum of a vector, using resu [] as auxiliary vector.
@@ -258,7 +276,9 @@ unsigned GetAuxSize_ReduSumFloat(unsigned ndata){ return(GetAuxSize_ReduSumDoubl
 /// resu[], en pim1_sum o devolverse segun parametros de ejecucion.
 /// Usar ReduSumFloat() o ReduSumFloatAsyn().
 //==============================================================================
-float ReduSumFloatBase(unsigned ndata,unsigned inidata,const float* data,float* resu,float *pim1_sum,cudaStream_t stm){
+float ReduSumFloatBase(unsigned ndata,unsigned inidata,const float* data
+  ,float* resu,float* pim1_sum,cudaStream_t stm)
+{
   float ret=0;
   if(ndata){
     unsigned n=ndata,ini=inidata;
@@ -266,9 +286,9 @@ float ReduSumFloatBase(unsigned ndata,unsigned inidata,const float* data,float* 
     dim3 sgrid=GetSimpleGridSize(n,REDUBSIZE);
     unsigned nblocks=sgrid.x*sgrid.y;
     //:printf(">> n:%d  nblocks:%d]\n",n,nblocks);
-    const float *dat=data;
-    float *resu1=resu,*resu2=resu+nblocks;
-    float *res=resu1;
+    const float* dat=data;
+    float* resu1=resu,*resu2=resu+nblocks;
+    float* res=resu1;
     while(n>1){
       KerReduSumFloat<REDUBSIZE><<<sgrid,REDUBSIZE,smemSize,stm>>>(n,ini,dat,res);
       n=nblocks; ini=0;
@@ -279,7 +299,7 @@ float ReduSumFloatBase(unsigned ndata,unsigned inidata,const float* data,float* 
       }
     }
     //-Manages the result.
-    const float *result=(ndata>1? res: data);
+    const float* result=(ndata>1? res: data);
     if(!stm)cudaMemcpy(&ret,result,sizeof(float),cudaMemcpyDeviceToHost);
     else if(pim1_sum)cudaMemcpyAsync(pim1_sum,result,sizeof(float),cudaMemcpyDeviceToHost,stm);
     else if(res!=result)cudaMemcpyAsync(res,result,sizeof(float),cudaMemcpyDeviceToDevice,stm);
@@ -295,7 +315,7 @@ float DgReduSumFloat(unsigned ndata,unsigned inidata,const float* datag){
   float res=0;
   if(ndata){
     //-Allocates CPU memory.
-    float *data=new float[ndata];
+    float* data=new float[ndata];
     //-Gets data from GPU.
     cudaMemcpy(data,datag+inidata,sizeof(float)*ndata,cudaMemcpyDeviceToHost);
     fcuda::Check_CudaErroorFun("DgReduSumFloat");
@@ -342,7 +362,9 @@ float ReduSumFloat(unsigned ndata,unsigned inidata,const float* data,float* resu
 /// Ejecucion asincrona en el stream stm y el resultado final se graba al inicio
 /// de resu[].
 //==============================================================================
-void ReduSumFloatAsyn(unsigned ndata,unsigned inidata,const float* data,float* resu,cudaStream_t stm){
+void ReduSumFloatAsyn(unsigned ndata,unsigned inidata,const float* data
+  ,float* resu,cudaStream_t stm)
+{
   if(!ndata)throw "Number of values cannot be zero ReduSumFloatAsyn().";
   if(!stm)throw "Error in parameters calling ReduSumFloatAsyn().";
   ReduSumFloatBase(ndata,inidata,data,resu,NULL,stm);
@@ -359,7 +381,9 @@ void ReduSumFloatAsyn(unsigned ndata,unsigned inidata,const float* data,float* r
 /// Ejecucion asincrona en el stream stm y el resultado se graba en pim1_sum 
 /// (QUE DEBE SER PINNED MEMORY).
 //==============================================================================
-void ReduSumFloatAsyn(unsigned ndata,unsigned inidata,const float* data,float* resu,float *pim1_sum,cudaStream_t stm){
+void ReduSumFloatAsyn(unsigned ndata,unsigned inidata,const float* data
+  ,float* resu,float* pim1_sum,cudaStream_t stm)
+{
   if(!ndata)throw "Number of values cannot be zero ReduSumFloatAsyn().";
   if(!pim1_sum || !stm)throw "Error in parameters calling ReduSumFloatAsyn().";
   ReduSumFloatBase(ndata,inidata,data,resu,pim1_sum,stm);
@@ -374,7 +398,9 @@ void ReduSumFloatAsyn(unsigned ndata,unsigned inidata,const float* data,float* r
 /// Reduction using sum of unsigned values in shared memory for a warp.
 /// Reduccion mediante suma de valores unsigned en memoria shared para un warp.
 //==============================================================================
-template <unsigned blockSize> __device__ void KerReduSumUintWarp(volatile unsigned* sudat,unsigned tid){
+template <unsigned blockSize> __device__ void KerReduSumUintWarp(
+  volatile unsigned* sudat,unsigned tid)
+{
   if(blockSize>=64)sudat[tid]+=sudat[tid+32];
   if(blockSize>=32)sudat[tid]+=sudat[tid+16];
   if(blockSize>=16)sudat[tid]+=sudat[tid+8];
@@ -392,7 +418,9 @@ template <unsigned blockSize> __device__ void KerReduSumUintWarp(volatile unsign
 /// principio de res[] (Se usan tantas posiciones del res[] como bloques, 
 /// quedando el resultado final en res[0]).
 //==============================================================================
-template <unsigned blockSize> __global__ void KerReduSumUint(unsigned n,unsigned ini,const unsigned *dat,unsigned *res){
+template <unsigned blockSize> __global__ void KerReduSumUint(unsigned n
+  ,unsigned ini,const unsigned* dat,unsigned* res)
+{
   extern __shared__ unsigned sudat[];
   unsigned tid=threadIdx.x;
   unsigned c=blockIdx.x*blockDim.x + threadIdx.x;
@@ -409,7 +437,9 @@ template <unsigned blockSize> __global__ void KerReduSumUint(unsigned n,unsigned
 /// Returns size of auxiliary memory for execution.
 /// Devuelve el tamanho minimo de la memoria auxiliar necesaria segun ndata.
 //==============================================================================
-unsigned GetAuxSize_ReduSumUint(unsigned ndata){ return(GetAuxSize_ReduSumDouble(ndata)); }
+unsigned GetAuxSize_ReduSumUint(unsigned ndata){ 
+  return(GetAuxSize_ReduSumDouble(ndata));
+}
 
 //==============================================================================
 /// Calculate sum of a vector, using resu [] as auxiliary vector.
@@ -424,7 +454,9 @@ unsigned GetAuxSize_ReduSumUint(unsigned ndata){ return(GetAuxSize_ReduSumDouble
 /// resu[], en pim1_sum o devolverse segun parametros de ejecucion.
 /// Usar ReduSumUint() o ReduSumUintAsyn().
 //==============================================================================
-unsigned ReduSumUintBase(unsigned ndata,unsigned inidata,const unsigned* data,unsigned* resu,unsigned *pim1_sum,cudaStream_t stm){
+unsigned ReduSumUintBase(unsigned ndata,unsigned inidata,const unsigned* data
+  ,unsigned* resu,unsigned* pim1_sum,cudaStream_t stm)
+{
   unsigned ret=0;
   if(ndata){
     unsigned n=ndata,ini=inidata;
@@ -432,9 +464,9 @@ unsigned ReduSumUintBase(unsigned ndata,unsigned inidata,const unsigned* data,un
     dim3 sgrid=GetSimpleGridSize(n,REDUBSIZE);
     unsigned nblocks=sgrid.x*sgrid.y;
     //printf(">> n:%d  nblocks:%d]\n",n,nblocks);
-    const unsigned *dat=data;
-    unsigned *resu1=resu,*resu2=resu+nblocks;
-    unsigned *res=resu1;
+    const unsigned* dat=data;
+    unsigned* resu1=resu,*resu2=resu+nblocks;
+    unsigned* res=resu1;
     while(n>1){
       KerReduSumUint<REDUBSIZE><<<sgrid,REDUBSIZE,smemSize,stm>>>(n,ini,dat,res);
       n=nblocks; ini=0;
@@ -445,7 +477,7 @@ unsigned ReduSumUintBase(unsigned ndata,unsigned inidata,const unsigned* data,un
       }
     }
     //-Manages the result.
-    const unsigned *result=(ndata>1? res: data);
+    const unsigned* result=(ndata>1? res: data);
     if(!stm)cudaMemcpy(&ret,result,sizeof(unsigned),cudaMemcpyDeviceToHost);
     else if(pim1_sum)cudaMemcpyAsync(pim1_sum,result,sizeof(unsigned),cudaMemcpyDeviceToHost,stm);
     else if(res!=result)cudaMemcpyAsync(res,result,sizeof(unsigned),cudaMemcpyDeviceToDevice,stm);
@@ -461,7 +493,7 @@ unsigned DgReduSumUint(unsigned ndata,unsigned inidata,const unsigned* datag){
   unsigned res=0;
   if(ndata){
     //-Allocates CPU memory.
-    unsigned *data=new unsigned[ndata];
+    unsigned* data=new unsigned[ndata];
     //-Gets data from GPU.
     cudaMemcpy(data,datag+inidata,sizeof(unsigned)*ndata,cudaMemcpyDeviceToHost);
     fcuda::Check_CudaErroorFun("DgReduSumUint");
@@ -482,7 +514,9 @@ unsigned DgReduSumUint(unsigned ndata,unsigned inidata,const unsigned* datag){
 /// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumUint(ndata).
 /// Ejecucion sincrona en el stream 0.
 //==============================================================================
-unsigned ReduSumUint(unsigned ndata,unsigned inidata,const unsigned* data,unsigned* resu){
+unsigned ReduSumUint(unsigned ndata,unsigned inidata,const unsigned* data
+  ,unsigned* resu)
+{
   unsigned ret=ReduSumUintBase(ndata,inidata,data,resu,NULL,NULL);
   #ifdef DG_curedus_ReduSumUint
     #ifdef DG_curedus_Print
@@ -505,7 +539,9 @@ unsigned ReduSumUint(unsigned ndata,unsigned inidata,const unsigned* data,unsign
 /// Ejecucion asincrona en el stream stm y el resultado final se graba al inicio
 /// de resu[].
 //==============================================================================
-void ReduSumUintAsyn(unsigned ndata,unsigned inidata,const unsigned* data,unsigned* resu,cudaStream_t stm){
+void ReduSumUintAsyn(unsigned ndata,unsigned inidata,const unsigned* data
+  ,unsigned* resu,cudaStream_t stm)
+{
   if(!ndata)throw "Number of values cannot be zero ReduSumUintAsyn().";
   if(!stm)throw "Error in parameters calling ReduSumUintAsyn().";
   ReduSumUintBase(ndata,inidata,data,resu,NULL,stm);
@@ -522,7 +558,9 @@ void ReduSumUintAsyn(unsigned ndata,unsigned inidata,const unsigned* data,unsign
 /// Ejecucion asincrona en el stream stm y el resultado se graba en pim1_sum 
 /// (QUE DEBE SER PINNED MEMORY).
 //==============================================================================
-void ReduSumUintAsyn(unsigned ndata,unsigned inidata,const unsigned* data,unsigned* resu,unsigned *pim1_sum,cudaStream_t stm){
+void ReduSumUintAsyn(unsigned ndata,unsigned inidata,const unsigned* data
+  ,unsigned* resu,unsigned* pim1_sum,cudaStream_t stm)
+{
   if(!ndata)throw "Number of values cannot be zero ReduSumUintAsyn().";
   if(!pim1_sum || !stm)throw "Error in parameters calling ReduSumUintAsyn().";
   ReduSumUintBase(ndata,inidata,data,resu,pim1_sum,stm);
@@ -542,10 +580,12 @@ void ReduSumUintAsyn(unsigned ndata,unsigned inidata,const unsigned* data,unsign
 /// principio de res[] (Se usan tantas posiciones del res[] como bloques, 
 /// quedando el resultado final en res[0]).
 //==============================================================================
-template <unsigned blockSize> __global__ void KerReduSumFloat3(unsigned n,unsigned ini,const float3 *dat,float3 *res){
+template <unsigned blockSize> __global__ void KerReduSumFloat3(unsigned n
+  ,unsigned ini,const float3* dat,float3* res)
+{
   extern __shared__ float sfdatx[];
-  float *sfdaty=sfdatx+blockDim.x;
-  float *sfdatz=sfdaty+blockDim.x;
+  float* sfdaty=sfdatx+blockDim.x;
+  float* sfdatz=sfdaty+blockDim.x;
   const unsigned tid=threadIdx.x;
   unsigned c=blockIdx.x*blockDim.x + threadIdx.x;
   float3 value=(c<n? dat[c+ini]: make_float3(0,0,0));
@@ -564,7 +604,9 @@ template <unsigned blockSize> __global__ void KerReduSumFloat3(unsigned n,unsign
 /// Returns size of auxiliary memory for execution.
 /// Devuelve el tamanho minimo de la memoria auxiliar necesaria segun ndata.
 //==============================================================================
-unsigned GetAuxSize_ReduSumFloat3(unsigned ndata){ return(GetAuxSize_ReduSumDouble(ndata)); }
+unsigned GetAuxSize_ReduSumFloat3(unsigned ndata){
+  return(GetAuxSize_ReduSumDouble(ndata));
+}
 
 //==============================================================================
 /// Calculate sum of a vector, using resu [] as auxiliary vector.
@@ -579,7 +621,9 @@ unsigned GetAuxSize_ReduSumFloat3(unsigned ndata){ return(GetAuxSize_ReduSumDoub
 /// resu[], en pim1_sum o devolverse segun parametros de ejecucion.
 /// Usar ReduSumFloat() o ReduSumFloatAsyn().
 //==============================================================================
-float3 ReduSumFloat3Base(unsigned ndata,unsigned inidata,const float3* data,float3* resu,float3 *pim1_sum,cudaStream_t stm){
+float3 ReduSumFloat3Base(unsigned ndata,unsigned inidata,const float3* data
+  ,float3* resu,float3* pim1_sum,cudaStream_t stm)
+{
   float3 ret; ret.x=ret.y=ret.z=0;
   if(ndata){
     unsigned n=ndata,ini=inidata;
@@ -587,9 +631,9 @@ float3 ReduSumFloat3Base(unsigned ndata,unsigned inidata,const float3* data,floa
     dim3 sgrid=GetSimpleGridSize(n,REDUBSIZE);
     unsigned nblocks=sgrid.x*sgrid.y;
     //:printf(">> n:%d  nblocks:%d]\n",n,nblocks);
-    const float3 *dat=data;
-    float3 *resu1=resu,*resu2=resu+nblocks;
-    float3 *res=resu1;
+    const float3* dat=data;
+    float3* resu1=resu,*resu2=resu+nblocks;
+    float3* res=resu1;
     while(n>1){
       KerReduSumFloat3<REDUBSIZE><<<sgrid,REDUBSIZE,smemSize,stm>>>(n,ini,dat,res);
       n=nblocks; ini=0;
@@ -600,7 +644,7 @@ float3 ReduSumFloat3Base(unsigned ndata,unsigned inidata,const float3* data,floa
       }
     }
     //-Manages the result.
-    const float3 *result=(ndata>1? res: data);
+    const float3* result=(ndata>1? res: data);
     if(!stm)cudaMemcpy(&ret,result,sizeof(float3),cudaMemcpyDeviceToHost);
     else if(pim1_sum)cudaMemcpyAsync(pim1_sum,result,sizeof(float3),cudaMemcpyDeviceToHost,stm);
     else if(res!=result)cudaMemcpyAsync(res,result,sizeof(float3),cudaMemcpyDeviceToDevice,stm);
@@ -616,7 +660,7 @@ float3 DgReduSumFloat3(unsigned ndata,unsigned inidata,const float3* datag){
   float3 res; res.x=res.y=res.z=0;
   if(ndata){
     //-Allocates CPU memory.
-    float3 *data=new float3[ndata];
+    float3* data=new float3[ndata];
     //-Gets data from GPU.
     cudaMemcpy(data,datag+inidata,sizeof(float3)*ndata,cudaMemcpyDeviceToHost);
     fcuda::Check_CudaErroorFun("DgReduSumFloat3");
@@ -641,7 +685,9 @@ float3 DgReduSumFloat3(unsigned ndata,unsigned inidata,const float3* datag){
 /// El tamanho de resu[] debe ser >= a GetAuxSize_ReduSumFloat(ndata).
 /// Ejecucion sincrona en el stream 0.
 //==============================================================================
-float3 ReduSumFloat3(unsigned ndata,unsigned inidata,const float3* data,float3* resu){
+float3 ReduSumFloat3(unsigned ndata,unsigned inidata,const float3* data
+  ,float3* resu)
+{
   float3 ret=ReduSumFloat3Base(ndata,inidata,data,resu,NULL,NULL);
   #ifdef DG_curedus_ReduSumFloat
     #ifdef DG_curedus_Print
@@ -669,7 +715,9 @@ float3 ReduSumFloat3(unsigned ndata,unsigned inidata,const float3* data,float3* 
 /// Ejecucion asincrona en el stream stm y el resultado final se graba al inicio
 /// de resu[].
 //==============================================================================
-void ReduSumFloat3Asyn(unsigned ndata,unsigned inidata,const float3* data,float3* resu,cudaStream_t stm){
+void ReduSumFloat3Asyn(unsigned ndata,unsigned inidata,const float3* data
+  ,float3* resu,cudaStream_t stm)
+{
   if(!ndata)throw "Number of values cannot be zero ReduSumFloat3Asyn().";
   if(!stm)throw "Error in parameters calling ReduSumFloat3Asyn().";
   ReduSumFloat3Base(ndata,inidata,data,resu,NULL,stm);
@@ -686,7 +734,9 @@ void ReduSumFloat3Asyn(unsigned ndata,unsigned inidata,const float3* data,float3
 /// Ejecucion asincrona en el stream stm y el resultado se graba en pim1_sum 
 /// (QUE DEBE SER PINNED MEMORY).
 //==============================================================================
-void ReduSumFloat3Asyn(unsigned ndata,unsigned inidata,const float3* data,float3* resu,float3 *pim1_sum,cudaStream_t stm){
+void ReduSumFloat3Asyn(unsigned ndata,unsigned inidata,const float3* data
+  ,float3* resu,float3* pim1_sum,cudaStream_t stm)
+{
   if(!ndata)throw "Number of values cannot be zero ReduSumFloat3Asyn().";
   if(!pim1_sum || !stm)throw "Error in parameters calling ReduSumFloat3Asyn().";
   ReduSumFloat3Base(ndata,inidata,data,resu,pim1_sum,stm);

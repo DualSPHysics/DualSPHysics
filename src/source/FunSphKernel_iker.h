@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -31,7 +31,7 @@ namespace cufsph{
 //#define CTE_AVAILABLE
 #ifdef CTE_AVAILABLE
 //------------------------------------------------------------------------------
-/// Returns wab of kernel.
+/// Returns the kernel (wab).
 //------------------------------------------------------------------------------
 __device__ float GetKernelCubic_Wab(float rr2){
   const float rad=sqrt(rr2);
@@ -47,7 +47,8 @@ __device__ float GetKernelCubic_Wab(float rr2){
   }
 }
 //------------------------------------------------------------------------------
-/// Returns fac of kernel.
+/// Returns fac of kernel (module of the gradient of the kernel divided by the 
+/// distance between particles).
 //------------------------------------------------------------------------------
 __device__ float GetKernelCubic_Fac(float rr2){
   const float rad=sqrt(rr2);
@@ -63,9 +64,10 @@ __device__ float GetKernelCubic_Fac(float rr2){
   }
 }
 //------------------------------------------------------------------------------
-/// Returns wab and fac of kernel.
+/// Returns wab (the kernel) and fac (module of the gradient of the kernel 
+/// divided by the distance between particles).
 //------------------------------------------------------------------------------
-__device__ float GetKernelCubic_WabFac(float rr2,float &fac){
+__device__ float GetKernelCubic_WabFac(float rr2,float& fac){
   const float rad=sqrt(rr2);
   const float qq=rad/CTE.kernelh;
   if(rad>CTE.kernelh){
@@ -99,7 +101,7 @@ __device__ float GetKernelCubic_Tensil(float rr2
 //# Wendland kernel
 //##############################################################################
 //------------------------------------------------------------------------------
-/// Returns wab of kernel.
+/// Returns the kernel (wab).
 //------------------------------------------------------------------------------
 __device__ float GetKernelWendland_Wab(float rr2,float h,float awen){
   const float rad=sqrt(rr2);
@@ -110,48 +112,68 @@ __device__ float GetKernelWendland_Wab(float rr2,float h,float awen){
   return(awen*wqq*wqq2*wqq2);
 }
 //------------------------------------------------------------------------------
-/// Returns fac of kernel.
+/// Returns fac of kernel (module of the gradient of the kernel divided by the 
+/// distance between particles).
 //------------------------------------------------------------------------------
-__device__ float GetKernelWendland_Fac(float rr2,float h,float bwen){
+__device__ float GetKernelWendland_Fac(float rr2,float h,float bwenh){
   const float rad=sqrt(rr2);
   const float qq=rad/h;
   const float wqq1=1.f-0.5f*qq;
-  return(bwen*qq*wqq1*wqq1*wqq1/rad);
+  return(bwenh*wqq1*wqq1*wqq1);
 }
 
 #ifdef CTE_AVAILABLE
 //------------------------------------------------------------------------------
-/// Returns wab and fac of kernel.
+/// Returns wab (the kernel) and fac (module of the gradient of the kernel 
+/// divided by the distance between particles).
 //------------------------------------------------------------------------------
-__device__ float GetKernelWendland_WabFac(float rr2,float &fac){
+__device__ float GetKernelWendland_WabFac(float rr2,float& fac){
   const float rad=sqrt(rr2);
   const float qq=rad/CTE.kernelh;
   const float wqq1=1.f-0.5f*qq;
   const float wqq2=wqq1*wqq1;
-  fac=CTE.bwen*qq*wqq2*wqq1/rad;
+  fac=CTE.bwenh*wqq2*wqq1;
   const float wqq=qq+qq+1.f;
   return(CTE.awen*wqq*wqq2*wqq2);
 }
+//<vs_vrres_ini>
 //------------------------------------------------------------------------------
-/// Returns wab of kernel.
+/// Returns wab (the kernel) and fac (module of the gradient of the kernel 
+/// divided by the distance between particles) and facc  (module of the second derivative of the kernel).
+//------------------------------------------------------------------------------
+__device__ float GetKernelWendland_WabFacFacc(float rr2,float &fac,float &facc){
+  const float rad=sqrt(rr2);
+  const float qq=rad/CTE.kernelh;
+  const float wqq1=1.f-0.5f*qq;
+  const float wqq2=wqq1*wqq1;
+  fac=CTE.bwenh*wqq2*wqq1;
+  const float wqq=qq+qq+1.f;
+  facc=-CTE.bwenh*wqq2*(qq+qq-1.f);
+  return(CTE.awen*wqq*wqq2*wqq2);
+}
+//<vs_vrres_end>
+
+//------------------------------------------------------------------------------
+/// Returns the kernel (wab).
 //------------------------------------------------------------------------------
 __device__ float GetKernelWendland_Wab(float rr2){ 
   return(GetKernelWendland_Wab(rr2,CTE.kernelh,CTE.awen)); 
 }
 //------------------------------------------------------------------------------
-/// Returns fac of kernel.
+/// Returns fac of kernel (module of the gradient of the kernel divided by the 
+/// distance between particles).
 //------------------------------------------------------------------------------
 __device__ float GetKernelWendland_Fac(float rr2){
-  return(GetKernelWendland_Fac(rr2,CTE.kernelh,CTE.bwen));
+  return(GetKernelWendland_Fac(rr2,CTE.kernelh,CTE.bwenh));
 }
 #endif
 
 //##############################################################################
-//# Computes kernel values usig templates.
+//# Computes kernel values using templates.
 //##############################################################################
 #ifdef CTE_AVAILABLE
 //------------------------------------------------------------------------------
-/// Returns wab of kernel according to template.
+/// Returns the kernel (wab) according to temaplate.
 //------------------------------------------------------------------------------
 template<TpKernel tker> __device__ float GetKernel_Wab(float rr2){
        if(tker==KERNEL_Wendland  )return(GetKernelWendland_Wab  (rr2));
@@ -159,7 +181,8 @@ template<TpKernel tker> __device__ float GetKernel_Wab(float rr2){
   else return(0);
 }
 //------------------------------------------------------------------------------
-/// Returns fac of kernel according to template.
+/// Returns fac of kernel (module of the gradient of the kernel divided by the 
+/// distance between particles) according to template.
 //------------------------------------------------------------------------------
 template<TpKernel tker> __device__ float GetKernel_Fac(float rr2){
        if(tker==KERNEL_Wendland  )return(GetKernelWendland_Fac  (rr2));
@@ -167,27 +190,42 @@ template<TpKernel tker> __device__ float GetKernel_Fac(float rr2){
   else return(0);
 }
 //------------------------------------------------------------------------------
-/// Returns wab and fac of kernel according to template.
+/// Returns wab (the kernel) and fac (module of the gradient of the kernel 
+/// divided by the distance between particles) according to template.
 //------------------------------------------------------------------------------
-template<TpKernel tker> __device__ float GetKernel_WabFac(float rr2,float &fac){
+template<TpKernel tker> __device__ float GetKernel_WabFac(float rr2,float& fac){
        if(tker==KERNEL_Wendland  )return(GetKernelWendland_WabFac  (rr2,fac));
   else if(tker==KERNEL_Cubic     )return(GetKernelCubic_WabFac     (rr2,fac));
   else return(0);
 }
+
+//<vs_vrres_ini>
+    //------------------------------------------------------------------------------
+    /// Returns wab (the kernel) and fac (module of the gradient of the kernel 
+    /// divided by the distance between particles) and facc  (module of the second derivative of the kernel).
+    //------------------------------------------------------------------------------
+template<TpKernel tker> __device__ float GetKernel_WabFacFacc(float rr2,float &fac,float &facc){
+          if(tker==KERNEL_Wendland  )return(GetKernelWendland_WabFacFacc  (rr2,fac,facc));
+      else return(0);
+}
+//<vs_vrres_end>
+
 #endif
 //------------------------------------------------------------------------------
-/// Returns wab of kernel according to template.
+/// Returns the kernel (wab) according to temaplate.
 //------------------------------------------------------------------------------
 template<TpKernel tker> __device__ float GetKernel_Wab(float rr2,float h,float aker){
        if(tker==KERNEL_Wendland  )return(GetKernelWendland_Wab  (rr2,h,aker));
   else return(0);
 }
 //------------------------------------------------------------------------------
-/// Returns wab of kernel according to template.
+/// Returns fac of kernel (module of the gradient of the kernel divided by the 
+/// distance between particles) according to template.
 //------------------------------------------------------------------------------
-template<TpKernel tker> __device__ float GetKernel_Fac(float rr2,float h,float bker){
-       if(tker==KERNEL_Wendland  )return(GetKernelWendland_Fac  (rr2,h,bker));
+template<TpKernel tker> __device__ float GetKernel_Fac(float rr2,float h,float bhker){
+       if(tker==KERNEL_Wendland  )return(GetKernelWendland_Fac  (rr2,h,bhker));
   else return(0);
 }
 
 }
+

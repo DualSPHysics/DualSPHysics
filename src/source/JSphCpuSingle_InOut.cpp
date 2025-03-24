@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -20,7 +20,6 @@
 
 #include "JSphCpuSingle.h"
 #include "JCellDivCpuSingle.h"
-#include "JArraysCpu.h"
 #include "JSphInOut.h"
 #include "JSphMk.h"
 #include "JDsPartsInit.h"
@@ -30,7 +29,6 @@
 #include "JAppInfo.h"
 #include "JTimeControl.h"
 #include "JDataArrays.h"
-#include "JVtkLib.h"
 #include <climits>
 
 using namespace std;
@@ -39,7 +37,9 @@ using namespace std;
 /// Mark special fluid particles to ignore.
 /// Marca las particulas fluidas especiales para ignorar.
 //==============================================================================
-void JSphCpuSingle::InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist){
+void JSphCpuSingle::InOutIgnoreFluidDef(const std::vector<unsigned>& mkfluidlist
+  ,typecode* code)
+{
   const unsigned nc=unsigned(mkfluidlist.size());
   for(unsigned c=0;c<nc;c++){
     const unsigned cmk=MkInfo->GetMkBlockByMkFluid(mkfluidlist[c]);
@@ -47,7 +47,7 @@ void JSphCpuSingle::InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist
       const typecode rcode=MkInfo->Mkblock(cmk)->Code;
       const typecode rcode2=CODE_SetOutIgnore(rcode);
       //-Mark special fluid particles to ignore.
-      for(unsigned p=0;p<Np;p++)if(Codec[p]==rcode)Codec[p]=rcode2;
+      for(unsigned p=0;p<Np;p++)if(code[p]==rcode)code[p]=rcode2;
     }
   }
 }
@@ -61,7 +61,8 @@ void JSphCpuSingle::InOutIgnoreFluidDef(const std::vector<unsigned> &mkfluidlist
 //==============================================================================
 void JSphCpuSingle::InOutCheckProximity(unsigned newnp){
   if(Np && newnp){
-    InOut->InitCheckProximity(Np,newnp,Scell,Posc,Idpc,Codec);
+    InOut->InitCheckProximity(Np,newnp,Scell,Pos_c->cptr(),Idp_c->cptr()
+      ,Code_c->ptr());
   }
 }
 
@@ -78,31 +79,42 @@ void JSphCpuSingle::InOutInit(double timestepini){
   //-Configures InOut zones and prepares new inout particles to create.
   const unsigned newnp=InOut->Config(timestepini,Stable,PeriActive
     ,MapRealPosMin,MapRealPosMax,MkInfo->GetCodeNewFluid()
-    ,PartsInit,GaugeSystem,NuxLib);
+    ,PartsInit,GaugeSystem);
 
   //-Mark special fluid particles to ignore. | Marca las particulas fluidas especiales para ignorar.
-  InOutIgnoreFluidDef(InOut->MkFluidList);
+  InOutIgnoreFluidDef(InOut->MkFluidList,Code_c->ptr());
 
   //Log->Printf("++> newnp:%u",newnp);
   //-Resizes memory when it is necessary (always at the beginning).
   if(true || !CheckCpuParticlesSize(Np+newnp)){
     const unsigned newnp2=newnp+InOut->GetNpResizePlus0();
     Timersc->TmStop(TMC_SuInOut);
-    ResizeParticlesSize(Np+newnp2,0,false);
+    const unsigned ndatacpu=Np;
+    ResizeParticlesSizeData(ndatacpu,Np+newnp2,Np+newnp,0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
     Timersc->TmStart(TMC_SuInOut);
   }
 
   //-Creates initial inlet particles with pos, idp, code and velrhop=0.
   unsigned idnext=IdMax+1;
-  InOut->LoadInitPartsData(idnext,newnp,Idpc+Np,Codec+Np,Posc+Np,Velrhopc+Np);
+  InOut->LoadInitPartsData(idnext,newnp,Idp_c->ptr()+Np,Code_c->ptr()+Np
+    ,Pos_c->ptr()+Np,Velrho_c->ptr()+Np);
 
   //-Checks position of new particles and calculates cell.
-  for(unsigned p=Np;p<Np+newnp;p++)UpdatePos(Posc[p],0,0,0,false,p,Posc,Dcellc,Codec);
+  for(unsigned p=Np;p<Np+newnp;p++){
+    const tdouble3 ps=Pos_c->cptr()[p];
+    UpdatePos(ps,0,0,0,false,p,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr());
+  }
 
-  //-Updates new particle values for Laminar+SPS.
-  if(SpsTauc)memset(SpsTauc+Np,0,sizeof(tsymatrix3f)*newnp);
-  if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",0,Np,Np+newnp,Posc,Codec,Idpc,Velrhopc);
+  //-Updates new particle values for Laminar+SPS, mDBC...
+  if(SpsTauRho2_c)SpsTauRho2_c->MemsetOffset(Np,0,newnp);
+  if(BoundNor_c)BoundNor_c->MemsetOffset(Np,0,newnp);
+  if(FSType_c)FSType_c->MemsetOffset(Np,3,newnp); //<vs_advshift>
+  #ifdef AVAILABLE_DIVCLEAN
+  if(PsiClean_c)PsiClean_c->MemsetOffset(Np,0,newnp);
+  #endif
+  if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",0
+    ,Np,Np+newnp,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr());
 
   //-Updates number of particles.
   Np+=newnp;
@@ -115,14 +127,13 @@ void JSphCpuSingle::InOutInit(double timestepini){
 
   //-Shows configuration.
   InOut->VisuConfig("\nInOut configuration:"," ");
-  //-Checks invalid options for symmetry. //<vs_syymmetry>
-  if(Symmetry && InOut->Use_ExtrapolatedData())Run_Exceptioon("Symmetry is not allowed with inlet/outlet conditions when extrapolate option is enabled."); //<vs_syymmetry>
 
   //-Updates divide information.
   Timersc->TmStop(TMC_SuInOut);
   RunCellDivide(true);
   Timersc->TmStart(TMC_SuInOut);
-  if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",1,0,Np,Posc,Codec,Idpc,Velrhopc);
+  if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",1
+    ,0,Np,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr());
 
   //-Updates Velocity data of inout zones according to current timestep.
   InOut->UpdateVelData(timestepini);
@@ -132,7 +143,15 @@ void JSphCpuSingle::InOutInit(double timestepini){
   //-Updates inout particle data according inlet configuration.
   InOutUpdatePartsData(timestepini);
 
-  if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",2,0,Np,Posc,Codec,Idpc,Velrhopc);
+  if(DBG_INOUT_PARTINIT)DgSaveVtkParticlesCpu("CfgInOut_InletIni.vtk",2,0,Np
+    ,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->cptr());
+  
+  //-Defines NpfMinimum according to the current fluid including inlet particles.
+  const unsigned npfnormal=Np-NpbPer-NpfPer-CaseNbound;
+  NpfMinimum=unsigned(MinFluidStop*npfnormal);
+  Log->Printf("**MinFluidStop value was updated with inlet particles to %s (%g x %s)."
+    ,KINT(NpfMinimum),MinFluidStop,KINT(npfnormal));
+
   Timersc->TmStop(TMC_SuInOut);
 }
 
@@ -154,7 +173,8 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
     if(!InOut->GetNpResizePlus1())Run_Exceptioon("Allocated memory is not enough and resizing is not allowed by XML configuration (check the value inout.memoryresize.size).");
     const unsigned newnp2=InOut->GetCurrentNp()+InOut->GetNpResizePlus1();
     Timersc->TmStop(TMC_SuInOut);
-    ResizeParticlesSize(Np+newnp2,0,false);
+    const unsigned ndatacpu=Np;
+    ResizeParticlesSizeData(ndatacpu,Np+newnp2,Np+InOut->GetCurrentNp(),0,false);
     CellDivSingle->SetIncreaseNp(newnp2);
     Timersc->TmStart(TMC_SuInOut);
   }
@@ -167,38 +187,48 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
   //-Create and remove inout particles.
   unsigned newnp=0;
   {
-    byte *zsurfok=NULL;
+    acbyte zsurfok("-",Arrays_Cpu,InOut->Use_ZsurfNonUniform());
+    acint inoutpart("-",Arrays_Cpu,true);
+    acbyte newizone("-",Arrays_Cpu,true);
+
     //-Creates list with current inout particles and normal fluid (no periodic) in inout zones.
-    int *inoutpart=ArraysCpu->ReserveInt();
-    const unsigned inoutcountpre=InOut->CreateListCpu(Np-Npb,Npb,Posc,Idpc,Codec,inoutpart);
+    const unsigned inoutcountpre=InOut->CreateListCpu(Np-Npb,Npb
+      ,Pos_c->cptr(),Idp_c->cptr(),Code_c->ptr(),inoutpart.ptr());
+
+    //-Computes Zsurf-ok of current inout particles when it is necessary. //<vs_meeshdat_ini>
+    if(InOut->Use_ZsurfNonUniform()){
+      InOut->ComputeZsurfokPartCpu(inoutcountpre,inoutpart.cptr()
+        ,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),zsurfok.ptr());
+    } //<vs_meeshdat_end>
 
     //-Updates code of inout particles according its position and create new inlet particles when refilling=false.
-    byte *newizone=ArraysCpu->ReserveByte();
-    newnp=InOut->ComputeStepCpu(inoutcountpre,inoutpart,this,IdMax+1,CpuParticlesSize
-      ,Np,Posc,Dcellc,Codec,Idpc,zsurfok,Velrhopc,newizone);
-    ArraysCpu->Free(newizone);  newizone=NULL;
+    newnp=InOut->ComputeStepCpu(inoutcountpre,inoutpart.ptr(),this,IdMax+1
+      ,CpuParticlesSize,Np,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr(),Idp_c->ptr()
+      ,zsurfok.cptr(),Velrho_c->ptr(),newizone.ptr());
 
     //-Creates new inlet particles using advanced refilling mode.
     if(InOut->Use_RefillAdvanced()){
+      //-Computes Zsurf-ok of inout points when it is necessary.     //<vs_meeshdat>
+      if(zsurfok.cptr())InOut->ComputeZsurfokPtosCpu(zsurfok.ptr()); //<vs_meeshdat>
       //-Creates new inlet particles using advanced refilling mode.
       if(!InOut->RefillingRate || (Nstep%InOut->RefillingRate)==0){
-        float    *prodist=ArraysCpu->ReserveFloat();
-        tdouble3 *propos =ArraysCpu->ReserveDouble3();
-        newnp+=InOut->ComputeStepFillingCpu(inoutcountpre,inoutpart
-          ,this,IdMax+1+newnp,CpuParticlesSize,Np+newnp,Posc,Dcellc,Codec,Idpc,Velrhopc
-          ,zsurfok,prodist,propos);
-        ArraysCpu->Free(prodist);
-        ArraysCpu->Free(propos);
+        acfloat   prodist("-",Arrays_Cpu,true);
+        acdouble3 propos ("-",Arrays_Cpu,true);
+        newnp+=InOut->ComputeStepFillingCpu(inoutcountpre,inoutpart.ptr()
+          ,this,IdMax+1+newnp,CpuParticlesSize,Np+newnp
+          ,Pos_c->ptr(),Dcell_c->ptr(),Code_c->ptr(),Idp_c->ptr(),Velrho_c->ptr()
+          ,zsurfok.cptr(),prodist.ptr(),propos.ptr());
       }
     }
-    //-Free arrays.
-    ArraysCpu->Free(inoutpart);
-    ArraysCpu->Free(zsurfok);
   }
 
-  //-Updates new particle values for Laminar+SPS and normals for mDBC.
-  if(SpsTauc)memset(SpsTauc+Np,0,sizeof(tsymatrix3f)*newnp);
-  if(BoundNormalc)memset(BoundNormalc+Np,0,sizeof(tfloat3)*newnp);
+  //-Updates new particle values for Laminar+SPS, mDBC...
+  if(SpsTauRho2_c)SpsTauRho2_c->MemsetOffset(Np,0,newnp);
+  if(BoundNor_c)BoundNor_c->MemsetOffset(Np,0,newnp);
+  if(FSType_c)FSType_c->MemsetOffset(Np,3,newnp); //<vs_advshift>
+  #ifdef AVAILABLE_DIVCLEAN
+  if(PsiClean_c)PsiClean_c->MemsetOffset(Np,0,newnp);
+  #endif
 
   //-Updates number of particles.
   if(newnp){
@@ -227,46 +257,61 @@ void JSphCpuSingle::InOutComputeStep(double stepdt){
 //==============================================================================
 void JSphCpuSingle::InOutUpdatePartsData(double timestepnew){
   //-Create list of current inout particles (normal and periodic).
-  int* inoutpart=ArraysCpu->ReserveInt();
-  const unsigned inoutcount=InOut->CreateListSimpleCpu(Np-Npb,Npb,Codec,inoutpart);
+  acint inoutpart("-",Arrays_Cpu,true);
+  const unsigned inoutcount=InOut->CreateListSimpleCpu(Np-Npb,Npb
+    ,Code_c->cptr(),inoutpart.ptr());
   InOut->SetCurrentNp(inoutcount);
 
   //-Updates velocity and rhop (with analytical solution).
   if(InOut->Use_AnalyticalData()){
-    float *zsurfpart=NULL;
+    acfloat zsurfpart("-",Arrays_Cpu,InOut->Use_ZsurfNonUniform());
+    //-Computes Zsurf of current inout particles when it is necessary. //<vs_meeshdat_ini>
+    if(InOut->Use_ZsurfNonUniform()){
+      InOut->ComputeZsurfPartCpu(inoutcount,inoutpart.cptr(),Pos_c->cptr()
+        ,Code_c->cptr(),Idp_c->cptr(),zsurfpart.ptr());
+    } //<vs_meeshdat_end>
     //-Updates velocity and rhop (with analytical solution).
-    InOut->SetAnalyticalDataCpu(float(timestepnew),inoutcount,inoutpart,Posc,Codec,Idpc,zsurfpart,Velrhopc);
-    //-Free array.
-    ArraysCpu->Free(zsurfpart); zsurfpart=NULL;
+    InOut->SetAnalyticalDataCpu(float(timestepnew),inoutcount,inoutpart.cptr()
+      ,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),zsurfpart.cptr()
+      ,Velrho_c->ptr());
+
+    //-Updates velocity of inout particles when it uses an special velocity profile.
+    if(InOut->Use_SpecialProfile()){
+      InOut->SetSpecialVelCpu(float(timestepnew),inoutcount,inoutpart.cptr()
+        ,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->ptr());
+    }
   }
 
   //-Calculates extrapolated velocity and/or rhop for inlet/outlet particles from fluid domain.
-  if(InOut->Use_ExtrapolatedData())InOutExtrapolateData(inoutcount,inoutpart);
+  if(InOut->Use_ExtrapolatedData())InOutExtrapolateData(inoutcount,inoutpart.cptr());
 
   //-Calculates interpolated velocity for inlet/outlet particles.
-  if(InOut->Use_InterpolatedVel())
-    InOut->InterpolateVelCpu(float(timestepnew),inoutcount,inoutpart,Posc,Codec,Idpc,Velrhopc);
+  if(InOut->Use_InterpolatedVel()){
+    InOut->InterpolateVelCpu(float(timestepnew),inoutcount,inoutpart.cptr()
+      ,Pos_c->cptr(),Code_c->cptr(),Idp_c->cptr(),Velrho_c->ptr());
+  }
 
   //-Updates velocity and rhop of M1 variables starting from current velocity and rhop when Verlet is used. 
-  if(VelrhopM1c)InOut->UpdateVelrhopM1Cpu(inoutcount,inoutpart,Velrhopc,VelrhopM1c);
-
-  //-Free array for inoutpart list.
-  ArraysCpu->Free(inoutpart); inoutpart=NULL;
+  if(VelrhoM1_c){
+    InOut->UpdateVelrhopM1Cpu(inoutcount,inoutpart.cptr(),Velrho_c->cptr()
+      ,VelrhoM1_c->ptr());
+  }
 }
 
 //==============================================================================
 /// Calculates extrapolated data for inlet/outlet particles from fluid domain.
 /// Calcula datos extrapolados en el fluido para las particulas inlet/outlet.
 //==============================================================================
-void JSphCpuSingle::InOutExtrapolateData(unsigned inoutcount,const int *inoutpart){
-  const tplane3f *planes=InOut->GetPlanes();
-  const byte    *cfgzone=InOut->GetCfgZone();
-  const float   *width  =InOut->GetWidth();
-  const tfloat3 *dirdata=InOut->GetDirData();
+void JSphCpuSingle::InOutExtrapolateData(unsigned inoutcount,const int* inoutpart){
+  const tplane3f* planes=InOut->GetPlanes();
+  const byte*     cfgzone=InOut->GetCfgZone();
+  const float*    width  =InOut->GetWidth();
+  const tfloat3*  dirdata=InOut->GetDirData();
   const float determlimit=InOut->GetDetermLimit();
   const byte doublemode=InOut->GetExtrapolateMode();
-  Interaction_InOutExtrap(doublemode,inoutcount,inoutpart,cfgzone,planes,width,dirdata,determlimit
-    ,Dcellc,Posc,Codec,Idpc,Velrhopc);
+  Interaction_InOutExtrap(doublemode,inoutcount,inoutpart,cfgzone,planes,width
+    ,dirdata,determlimit,Dcell_c->cptr(),Pos_c->cptr(),Code_c->cptr()
+    ,Idp_c->cptr(),Velrho_c->ptr());
 }
 
 

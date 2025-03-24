@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -42,7 +42,7 @@ class JGaugeSwl;
 class JSphInOutVelAwas : protected JObject
 {
 private:
-  JLog2 *Log;
+  JLog2* Log;
 
   const unsigned IdZone;
   const double InletX;       ///<Inlet limit in X.
@@ -54,7 +54,7 @@ private:
   double StartAwas;          ///<Time to start AWAS correction (def=start+ramp*waveperiod).
   double InitDepth;          ///<Initial depth.
   double CoefDepth;          ///<Coefficient from initial depth. CoefDepth=sqrt(-GravityZ/InitDepth)
-  JLinearValue *ZsurfTarget; ///<Zsurf target to compute AWAS correction.
+  JLinearValue* ZsurfTarget; ///<Zsurf target to compute AWAS correction.
   double GaugeX;             ///<Position in X from piston to measure free-surface water (def=5*Dp).
   double GaugeXh;            ///<Position in X from piston to measure free-surface water (according H value).
   double GaugeXdp;           ///<Position in X from piston to measure free-surface water (according Dp value).
@@ -65,12 +65,12 @@ private:
   double GaugeDp;            ///<Gauge resolution. GaugeDp=Dp*GaugeDpXml
   byte SaveData;             ///<Saves CSV with AWAS information. 0:none, 1:PART data, 2:all steps.
 
-  JGaugeSwl *GaugeSwl;       ///<Gauge object to measure water level in front of the inlet/outlet zone.
+  JGaugeSwl* GaugeSwl;       ///<Gauge object to measure water level in front of the inlet/outlet zone.
 
   //-Saves step data for CSV.
   static const unsigned SizeStepData=200;
   unsigned CountStepData;
-  tfloat4 *StepData;         ///<Saves values of each step. [SizeSaveData]
+  tfloat4* StepData;         ///<Saves values of each step. [SizeSaveData]
 
   //-Values for the current step.
   double LastTimeStep;
@@ -79,16 +79,16 @@ private:
   float LastVelCorr;
 
 private:
-  void ReadXml(const JXml *sxml,TiXmlElement* lis,const std::string &dirdatafile
-    ,JGaugeSystem *gaugesystem);
+  void ReadXml(const JXml* sxml,TiXmlElement* lis,const std::string& dirdatafile
+    ,JGaugeSystem* gaugesystem);
 
 public:
   JSphInOutVelAwas(unsigned idzone,double inletx,tdouble3 inletdir
-    ,float gravityz,const std::string &dirdatafile,JGaugeSystem *gaugesystem
-    ,const JXml *sxml,TiXmlElement* ele);
+    ,float gravityz,const std::string& dirdatafile,JGaugeSystem* gaugesystem
+    ,const JXml* sxml,TiXmlElement* ele);
   ~JSphInOutVelAwas();
   void Reset();
-  void GetConfig(std::vector<std::string> &lines)const;
+  void GetConfig(std::vector<std::string>& lines)const;
   float GetVelCorr(double timestep);
   void SaveCsvData();
 };

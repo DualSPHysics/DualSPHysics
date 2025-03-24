@@ -1,6 +1,6 @@
 //HEAD_DSPH
 /*
- <DUALSPHYSICS>  Copyright (c) 2021 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -38,7 +38,7 @@ unsigned JDsDcell::CalcBitsValue(unsigned v,unsigned minbits){
 /// When maxbits==0 returns the minimum number of bits.
 /// When maxbits!=0 returns 0 if maxbits is not enough.
 //==============================================================================
-tuint3 JDsDcell::CalcCellDistribution(const tuint3 &ncells,const unsigned maxbits){
+tuint3 JDsDcell::CalcCellDistribution(const tuint3& ncells,const unsigned maxbits){
   unsigned sxmin=CalcBitsValue(ncells.x,2);
   unsigned symin=CalcBitsValue(ncells.y,2);
   unsigned szmin=CalcBitsValue(ncells.z,2);
@@ -59,7 +59,7 @@ tuint3 JDsDcell::CalcCellDistribution(const tuint3 &ncells,const unsigned maxbit
 //==============================================================================
 /// Selects an adequate code for cell configuration or 0 for invalid cell number.
 //==============================================================================
-unsigned JDsDcell::CalcCellCode(const tuint3 &ncells){
+unsigned JDsDcell::CalcCellCode(const tuint3& ncells){
   const tuint3 nbits=CalcCellDistribution(ncells,31);
   unsigned dcelcode=(nbits==TUint3(0)? 0: DCEL_GetCode(nbits.x,nbits.y,nbits.z));
   //printf("==>CalcCellCode> ncells:(%u,%u,%u) sb:(%u,%u,%u) dcc:%X\n",ncells.x,ncells.y,ncells.z,nbits.x,nbits.y,nbits.z,dcelcode);
@@ -69,7 +69,7 @@ unsigned JDsDcell::CalcCellCode(const tuint3 &ncells){
 //==============================================================================
 /// Returns true when cellcode is invalid for the number of cells.
 //==============================================================================
-bool JDsDcell::InvalidCellCode(unsigned dcc,const tuint3 &ncells){
+bool JDsDcell::InvalidCellCode(unsigned dcc,const tuint3& ncells){
   return(dcc==0
       || DCEL_MaxCellx(dcc)<ncells.x 
       || DCEL_MaxCelly(dcc)<ncells.y 

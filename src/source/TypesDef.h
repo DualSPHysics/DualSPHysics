@@ -1,6 +1,6 @@
 //HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -21,12 +21,17 @@
 #ifndef _TypesDef_
 #define _TypesDef_
 
+#include <cstring>
+
 #define PI 3.14159265358979323846      ///<Value of cte PI. 
 #define TWOPI 6.28318530717958647692   ///<Value of cte PI*2. 
 #define PIHALF 1.57079632679489661923  ///<Value of cte PI/2. 
 #define TORAD 0.017453292519943295769  ///<Constant for conversion to radians. rad=degrees*TORAD (TORAD=PI/180)
 #define TODEG 57.29577951308232087684  ///<Constant for conversion to degrees. degrees=rad*TODEG (TODEG=180/PI)
 #define EULER 2.71828182845904523536   ///<Value of cte E (Euler's number or Napier's constant), E=std::exp(1.0);
+#define TOGALLON 0.2641720523581480    ///<Constant for conversion litres to US gallon. Gallon=3.785411784 litres
+#define MEBIBYTE 1048576               ///<Value of 1 MiB 2^20=1024*1024
+#define GIBIBYTE 1073741824            ///<Value of 1 GiB 2^30=1024*1024*1024
 
 typedef unsigned char byte;
 typedef unsigned short word;
@@ -241,6 +246,7 @@ inline tdouble3 operator *(const tdouble3& a, const double& b){ return(TDouble3(
 inline tdouble3 operator /(const tdouble3& a, const double& b){ return(TDouble3(a.x/b,a.y/b,a.z/b)); }
 inline tdouble3 MinValues(const tdouble3& a, const tdouble3& b){ return(TDouble3((a.x<=b.x? a.x: b.x),(a.y<=b.y? a.y: b.y),(a.z<=b.z? a.z: b.z))); }
 inline tdouble3 MaxValues(const tdouble3& a, const tdouble3& b){ return(TDouble3((a.x>=b.x? a.x: b.x),(a.y>=b.y? a.y: b.y),(a.z>=b.z? a.z: b.z))); }
+inline double   TDouble3Get(const tdouble3& a,unsigned c){ return(!c? a.x: (c==1? a.y: a.z)); }
 
 ///Converts \ref tuint3 to \ref tint3.
 inline tint3 ToTInt3(const tuint3& v){ return(TInt3(int(v.x),int(v.y),int(v.z))); }
@@ -256,6 +262,95 @@ inline tdouble2 ToTDouble2(const tfloat2& v){ return(TDouble2(v.x,v.y)); }
 inline tfloat3 ToTFloat3(const tdouble3& v){ return(TFloat3(float(v.x),float(v.y),float(v.z))); }
 ///Converts \ref tfloat3 to \ref tdouble3.
 inline tdouble3 ToTDouble3(const tfloat3& v){ return(TDouble3(v.x,v.y,v.z)); }
+
+
+///Structure of 2x3 variables of type float.
+typedef struct strfloat6{
+  float x1,y1,z1;
+  float x2,y2,z2;
+
+  tfloat3 getlo()const{ 
+    return(TFloat3(x1,y1,z1));
+  }
+  tfloat3 gethi()const{
+    return(TFloat3(x2,y2,z2));
+  }
+  void setlo(const tfloat3& v){ 
+    x1=v.x;  y1=v.y;  z1=v.z;
+  }
+  void sethi(const tfloat3& v){ 
+    x2=v.x;  y2=v.y;  z2=v.z;
+  }
+  void add(const tfloat3& v1,const tfloat3& v2){ 
+    x1+=v1.x;  y1+=v1.y;  z1+=v1.z;
+    x2+=v2.x;  y2+=v2.y;  z2+=v2.z;
+  }
+  void add(const strfloat6& v){ 
+    x1+=v.x1;  y1+=v.y1;  z1+=v.z1;
+    x2+=v.x2;  y2+=v.y2;  z2+=v.z2;
+  }
+}tfloat6;
+
+///Constructors other functions for type \ref tfloat6.
+inline tfloat6 TFloat6(){ tfloat6 m={0,0,0,0,0,0}; return(m); }
+inline tfloat6 TFloat6(float v){ tfloat6 m={v,v,v,v,v,v}; return(m); }
+inline tfloat6 TFloat6(float x1,float y1,float z1,float x2,float y2,float z2){ tfloat6 m={x1,y1,z1,x2,y2,z2}; return(m); }
+inline tfloat6 TFloat6(const tfloat3& v1,const tfloat3& v2){ tfloat6 m={v1.x,v1.y,v1.z,v2.x,v2.y,v2.z}; return(m); }
+inline bool operator ==(const tfloat6& a,const tfloat6& b){ return(a.getlo()==b.getlo() && a.gethi()==b.gethi()); }
+inline bool operator !=(const tfloat6& a,const tfloat6& b){ return(a.getlo()!=b.getlo() || a.gethi()!=b.gethi()); }
+
+
+///Structure of 2x3 variables of type double.
+typedef struct strdouble6{
+  double x1,y1,z1;
+  double x2,y2,z2;
+
+  tdouble3 getlo()const{ 
+    return(TDouble3(x1,y1,z1));
+  }
+  tdouble3 gethi()const{
+    return(TDouble3(x2,y2,z2));
+  }
+  void setlo(const tdouble3& v){ 
+    x1=v.x;  y1=v.y;  z1=v.z;
+  }
+  void sethi(const tdouble3& v){ 
+    x2=v.x;  y2=v.y;  z2=v.z;
+  }
+  void add(const tdouble3& v1,const tdouble3& v2){ 
+    x1+=v1.x;  y1+=v1.y;  z1+=v1.z;
+    x2+=v2.x;  y2+=v2.y;  z2+=v2.z;
+  }
+}tdouble6;
+
+///Constructors other functions for type \ref tdouble6.
+inline tdouble6 TDouble6(){ tdouble6 m={0,0,0,0,0,0}; return(m); }
+inline tdouble6 TDouble6(double v){ tdouble6 m={v,v,v,v,v,v}; return(m); }
+inline tdouble6 TDouble6(double x1,double y1,double z1,double x2,double y2,double z2){ tdouble6 m={x1,y1,z1,x2,y2,z2}; return(m); }
+inline tdouble6 TDouble6(const tdouble3& v1,const tdouble3& v2){ tdouble6 m={v1.x,v1.y,v1.z,v2.x,v2.y,v2.z}; return(m); }
+inline bool operator ==(const tdouble6& a,const tdouble6& b){ return(a.getlo()==b.getlo() && a.gethi()==b.gethi()); }
+inline bool operator !=(const tdouble6& a,const tdouble6& b){ return(a.getlo()!=b.getlo() || a.gethi()!=b.gethi()); }
+
+
+///Converts \ref tdouble6 to \ref tfloat6.
+inline tfloat6 ToTFloat6(const tdouble6& v){ return(TFloat6(ToTFloat3(v.getlo()),ToTFloat3(v.gethi()))); }
+///Converts \ref tfloat6 to \ref tdouble6.
+inline tdouble6 ToTDouble6(const tfloat6& v){ return(TDouble6(ToTDouble3(v.getlo()),ToTDouble3(v.gethi()))); }
+
+
+///Structure of 4 variables of type word.
+typedef struct{
+  word x,y,z,w;
+}tword4;
+
+inline tword4 TWord4(word v){ tword4 p={v,v,v,v}; return(p); }
+inline tword4 TWord4(word x,word y,word z,word w){ tword4 p={x,y,z,w}; return(p); }
+inline bool  operator ==(const tword4& a, const tword4& b){ return(a.x==b.x&&a.y==b.y&&a.z==b.z&&a.w==b.w); }
+inline bool  operator !=(const tword4& a, const tword4& b){ return(a.x!=b.x||a.y!=b.y||a.z!=b.z||a.w!=b.w); }
+inline tword4 operator +(const tword4& a, const tword4& b){ return(TWord4(a.x+b.x,a.y+b.y,a.z+b.z,a.w+b.w)); }
+inline tword4 operator -(const tword4& a, const tword4& b){ return(TWord4(a.x-b.x,a.y-b.y,a.z-b.z,a.w-b.w)); }
+inline tword4 operator *(const tword4& a, const tword4& b){ return(TWord4(a.x*b.x,a.y*b.y,a.z*b.z,a.w*b.w)); }
+inline tword4 operator /(const tword4& a, const tword4& b){ return(TWord4(a.x/b.x,a.y/b.y,a.z/b.z,a.w/b.w)); }
 
 
 ///Structure of 4 variables of type int.
@@ -386,6 +481,10 @@ inline tmatrix3d TMatrix3d(double a11,double a12,double a13,double a21,double a2
 inline tmatrix3d TMatrix3d(double v){ tmatrix3d m={v,v,v,v,v,v,v,v,v}; return(m); }
 inline bool operator ==(const tmatrix3d& a, const tmatrix3d& b){ return(a.a11==b.a11 && a.a12==b.a12 && a.a13==b.a13 && a.a21==b.a21 && a.a22==b.a22 && a.a23==b.a23 && a.a31==b.a31 && a.a32==b.a32 && a.a33==b.a33); }
 inline bool operator !=(const tmatrix3d& a, const tmatrix3d& b){ return(a.a11!=b.a11 || a.a12!=b.a12 || a.a13!=b.a13 || a.a21!=b.a21 || a.a22!=b.a22 || a.a23!=b.a23 || a.a31!=b.a31 || a.a32!=b.a32 || a.a33!=b.a33); }
+inline tmatrix3d operator *(const tmatrix3d& a,const double& s)   { tmatrix3d m={a.a11*s,a.a12*s,a.a13*s,a.a21*s,a.a22*s,a.a23*s,a.a31*s,a.a32*s,a.a33*s}; return(m); }
+inline tmatrix3d operator +(const tmatrix3d& a,const double& s)   { tmatrix3d m={a.a11+s,a.a12+s,a.a13+s,a.a21+s,a.a22+s,a.a23+s,a.a31+s,a.a32+s,a.a33+s}; return(m); }
+inline tmatrix3d operator +(const tmatrix3d& a,const tmatrix3d& b){ tmatrix3d m={a.a11+b.a11,a.a12+b.a12,a.a13+b.a13,a.a21+b.a21,a.a22+b.a22,a.a23+b.a23,a.a31+b.a31,a.a32+b.a32,a.a33+b.a33}; return(m); }
+inline tmatrix3d operator -(const tmatrix3d& a,const tmatrix3d& b){ tmatrix3d m={a.a11-b.a11,a.a12-b.a12,a.a13-b.a13,a.a21-b.a21,a.a22-b.a22,a.a23-b.a23,a.a31-b.a31,a.a32-b.a32,a.a33-b.a33}; return(m); }
 
 ///Converts \ref matrix3d to \ref matrix3f.
 inline tmatrix3f ToTMatrix3f(const tmatrix3d& v){ return(TMatrix3f(float(v.a11),float(v.a12),float(v.a13),float(v.a21),float(v.a22),float(v.a23),float(v.a31),float(v.a32),float(v.a33))); }
@@ -405,7 +504,7 @@ inline tmatrix4f TMatrix4f(float a11,float a12,float a13,float a14,float a21,flo
 inline tmatrix4f TMatrix4f(float v){ tmatrix4f m={v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v}; return(m); }
 inline bool operator ==(const tmatrix4f& a, const tmatrix4f& b){ return(a.a11==b.a11 && a.a12==b.a12 && a.a13==b.a13 && a.a14==b.a14 && a.a21==b.a21 && a.a22==b.a22 && a.a23==b.a23 && a.a24==b.a24 && a.a31==b.a31 && a.a32==b.a32 && a.a33==b.a33 && a.a34==b.a34 && a.a41==b.a41 && a.a42==b.a42 && a.a43==b.a43 && a.a44==b.a44); }
 inline bool operator !=(const tmatrix4f& a, const tmatrix4f& b){ return(a.a11!=b.a11 || a.a12!=b.a12 || a.a13!=b.a13 || a.a14!=b.a14 || a.a21!=b.a21 || a.a22!=b.a22 || a.a23!=b.a23 || a.a24!=b.a24 || a.a31!=b.a31 || a.a32!=b.a32 || a.a33!=b.a33 || a.a34!=b.a34 || a.a41!=b.a41 || a.a42!=b.a42 || a.a43!=b.a43 || a.a44!=b.a44); }
-inline tfloat3 MatrixMulPoint(const tmatrix4f &m,const tfloat3 &p){ return(TFloat3(m.a11*p.x + m.a12*p.y + m.a13*p.z + m.a14, m.a21*p.x + m.a22*p.y + m.a23*p.z + m.a24, m.a31*p.x + m.a32*p.y + m.a33*p.z + m.a34)); }
+inline tfloat3 MatrixMulPoint(const tmatrix4f& m,const tfloat3& p){ return(TFloat3(m.a11*p.x + m.a12*p.y + m.a13*p.z + m.a14, m.a21*p.x + m.a22*p.y + m.a23*p.z + m.a24, m.a31*p.x + m.a32*p.y + m.a33*p.z + m.a34)); }
 
 
 ///Matrix of 4x4 values of type double.
@@ -422,8 +521,27 @@ inline tmatrix4d TMatrix4d(double a11,double a12,double a13,double a14,double a2
 inline tmatrix4d TMatrix4d(double v){ tmatrix4d m={v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v}; return(m); }
 inline bool operator ==(const tmatrix4d& a, const tmatrix4d& b){ return(a.a11==b.a11 && a.a12==b.a12 && a.a13==b.a13 && a.a14==b.a14 && a.a21==b.a21 && a.a22==b.a22 && a.a23==b.a23 && a.a24==b.a24 && a.a31==b.a31 && a.a32==b.a32 && a.a33==b.a33 && a.a34==b.a34 && a.a41==b.a41 && a.a42==b.a42 && a.a43==b.a43 && a.a44==b.a44); }
 inline bool operator !=(const tmatrix4d& a, const tmatrix4d& b){ return(a.a11!=b.a11 || a.a12!=b.a12 || a.a13!=b.a13 || a.a14!=b.a14 || a.a21!=b.a21 || a.a22!=b.a22 || a.a23!=b.a23 || a.a24!=b.a24 || a.a31!=b.a31 || a.a32!=b.a32 || a.a33!=b.a33 || a.a34!=b.a34 || a.a41!=b.a41 || a.a42!=b.a42 || a.a43!=b.a43 || a.a44!=b.a44); }
-inline tdouble3 MatrixMulPoint(const tmatrix4d &m,const tdouble3 &p){ return(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z + m.a14, m.a21*p.x + m.a22*p.y + m.a23*p.z + m.a24, m.a31*p.x + m.a32*p.y + m.a33*p.z + m.a34)); }
-inline tfloat3 MatrixMulPointNormal(const tmatrix4d &m,const tfloat3 &p){ return(ToTFloat3(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z, m.a21*p.x + m.a22*p.y + m.a23*p.z, m.a31*p.x + m.a32*p.y + m.a33*p.z))); }
+inline tdouble3 MatrixMulPoint(const tmatrix4d& m,const tdouble3& p){ return(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z + m.a14, m.a21*p.x + m.a22*p.y + m.a23*p.z + m.a24, m.a31*p.x + m.a32*p.y + m.a33*p.z + m.a34)); }
+inline tfloat3 MatrixMulPointNormal(const tmatrix4d& m,const tfloat3& p){ return(ToTFloat3(TDouble3(m.a11*p.x + m.a12*p.y + m.a13*p.z, m.a21*p.x + m.a22*p.y + m.a23*p.z, m.a31*p.x + m.a32*p.y + m.a33*p.z))); }
+
+///Converts \ref tmatrix4d to \ref tmatrix4f.
+inline tmatrix4f ToTMatrix4f(const tmatrix4d &m){ return(TMatrix4f(float(m.a11),float(m.a12),float(m.a13),float(m.a14),float(m.a21),float(m.a22),float(m.a23),float(m.a24),float(m.a31),float(m.a32),float(m.a33),float(m.a34),float(m.a41),float(m.a42),float(m.a43),float(m.a44))); }
+///Converts \ref tmatrix4f to \ref tmatrix4d.
+inline tmatrix4d ToTMatrix4d(const tmatrix4f &m){ return(TMatrix4d(m.a11,m.a12,m.a13,m.a14,m.a21,m.a22,m.a23,m.a24,m.a31,m.a32,m.a33,m.a34,m.a41,m.a42,m.a43,m.a44)); }
+
+
+///Matrix of 6x6 values of type float.
+typedef struct{
+  float a11,a12,a13,a14,a15,a16;
+  float a21,a22,a23,a24,a25,a26;
+  float a31,a32,a33,a34,a35,a36;
+  float a41,a42,a43,a44,a45,a46;
+  float a51,a52,a53,a54,a55,a56;
+  float a61,a62,a63,a64,a65,a66;
+}tmatrix6f;
+
+///Constructor of type \ref matrix6f.
+inline tmatrix6f TMatrix6f(float v){ tmatrix6f m={v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v,v}; return(m); }
 
 
 ///Symmetric matrix 3x3 of 6 values of type float.
@@ -458,14 +576,14 @@ inline tsymatrix4f TSymMatrix4f(){ tsymatrix4f m={0,0,0,0,0,0,0,0,0,0}; return(m
 //##############################################################################
 //# Geometry type and functions
 //##############################################################################
-inline tdouble3 Point3dxy(const tdouble2 &p){ return(TDouble3(p.x,p.y,0)); }
-inline tdouble3 Point3dxz(const tdouble2 &p){ return(TDouble3(p.x,0,p.y)); }
-inline tdouble3 Point3dxy(const tfloat2  &p){ return(TDouble3(p.x,p.y,0)); }
-inline tdouble3 Point3dxz(const tfloat2  &p){ return(TDouble3(p.x,0,p.y)); }
-inline tfloat3  Point3fxy(const tfloat2  &p){ return(TFloat3 (p.x,p.y,0)); }
-inline tfloat3  Point3fxz(const tfloat2  &p){ return(TFloat3 (p.x,0,p.y)); }
-inline tfloat3  Point3fxy(const tdouble2 &p){ return(TFloat3 (float(p.x),float(p.y),0)); }
-inline tfloat3  Point3fxz(const tdouble2 &p){ return(TFloat3 (float(p.x),0,float(p.y))); }
+inline tdouble3 Point3dxy(const tdouble2& p){ return(TDouble3(p.x,p.y,0)); }
+inline tdouble3 Point3dxz(const tdouble2& p){ return(TDouble3(p.x,0,p.y)); }
+inline tdouble3 Point3dxy(const tfloat2&  p){ return(TDouble3(p.x,p.y,0)); }
+inline tdouble3 Point3dxz(const tfloat2&  p){ return(TDouble3(p.x,0,p.y)); }
+inline tfloat3  Point3fxy(const tfloat2&  p){ return(TFloat3 (p.x,p.y,0)); }
+inline tfloat3  Point3fxz(const tfloat2&  p){ return(TFloat3 (p.x,0,p.y)); }
+inline tfloat3  Point3fxy(const tdouble2& p){ return(TFloat3 (float(p.x),float(p.y),0)); }
+inline tfloat3  Point3fxz(const tdouble2& p){ return(TFloat3 (float(p.x),0,float(p.y))); }
 
 ///Plane definition on 3D using double values.
 typedef struct{
@@ -480,18 +598,18 @@ typedef struct{
 
 inline tplane3d TPlane3d(double v){ tplane3d p={v,v,v,v}; return(p); }
 inline tplane3d TPlane3d(double a,double b,double c,double d){ tplane3d p={a,b,c,d}; return(p); }
-inline tplane3d TPlane3d(const tdouble4 &v){ return(TPlane3d(v.x,v.y,v.z,v.w)); }
-inline tplane3d TPlane3d(const tplane3f &v){ return(TPlane3d(v.a,v.b,v.c,v.d)); }
+inline tplane3d TPlane3d(const tdouble4& v){ return(TPlane3d(v.x,v.y,v.z,v.w)); }
+inline tplane3d TPlane3d(const tplane3f& v){ return(TPlane3d(v.a,v.b,v.c,v.d)); }
 
 inline tplane3f TPlane3f(float v){ tplane3f p={v,v,v,v}; return(p); }
 inline tplane3f TPlane3f(float a,float b,float c,float d){ tplane3f p={a,b,c,d}; return(p); }
-inline tplane3f TPlane3f(const tfloat4 &v){ return(TPlane3f(v.x,v.y,v.z,v.w)); }
-inline tplane3f TPlane3f(const tplane3d &v){ return(TPlane3f(float(v.a),float(v.b),float(v.c),float(v.d))); }
+inline tplane3f TPlane3f(const tfloat4& v){ return(TPlane3f(v.x,v.y,v.z,v.w)); }
+inline tplane3f TPlane3f(const tplane3d& v){ return(TPlane3f(float(v.a),float(v.b),float(v.c),float(v.d))); }
 
-inline tfloat4  TPlane3fToTFloat4 (const tplane3f &v){ return(TFloat4(v.a,v.b,v.c,v.d)); }
-inline tfloat4  TPlane3dToTFloat4 (const tplane3d &v){ return(TPlane3fToTFloat4(TPlane3f(v))); }
-inline tdouble4 TPlane3fToTDouble4(const tplane3f &v){ return(TDouble4(v.a,v.b,v.c,v.d)); }
-inline tdouble4 TPlane3dToTDouble4(const tplane3d &v){ return(TDouble4(v.a,v.b,v.c,v.d)); }
+inline tfloat4  TPlane3fToTFloat4 (const tplane3f& v){ return(TFloat4(v.a,v.b,v.c,v.d)); }
+inline tfloat4  TPlane3dToTFloat4 (const tplane3d& v){ return(TPlane3fToTFloat4(TPlane3f(v))); }
+inline tdouble4 TPlane3fToTDouble4(const tplane3f& v){ return(TDouble4(v.a,v.b,v.c,v.d)); }
+inline tdouble4 TPlane3dToTDouble4(const tplane3d& v){ return(TDouble4(v.a,v.b,v.c,v.d)); }
 
 ///Line definition on 3D using double values.
 typedef struct{
@@ -570,7 +688,7 @@ inline const char* TypeToStr(TpTypeData type){
 }
 
 ///Returns size of the data type.
-inline unsigned SizeOfType(TpTypeData type){
+inline size_t TypeSize(TpTypeData type){
   switch(type){
     case TypeBool:       return(sizeof(int));
     case TypeChar:       return(sizeof(char));
@@ -599,9 +717,42 @@ inline unsigned SizeOfType(TpTypeData type){
   }
   return(0);
 }
+///Returns size of the data type as unsigned.
+inline unsigned TypeSizeU(TpTypeData type){ return(unsigned(TypeSize(type))); }
 
-///Returns number of components.
-inline int DimOfType(TpTypeData type){
+///Returns parent type.
+inline TpTypeData TypeParent(TpTypeData type){
+  switch(type){
+    case TypeBool:
+    case TypeChar:
+    case TypeUchar:
+    case TypeShort:
+    case TypeUshort:
+    case TypeInt:
+    case TypeUint:
+    case TypeLlong:
+    case TypeUllong:
+    case TypeFloat:
+    case TypeDouble:     return(type);
+    case TypeInt2:       return(TypeInt);
+    case TypeUint2:      return(TypeUint);
+    case TypeFloat2:     return(TypeFloat);
+    case TypeDouble2:    return(TypeDouble);
+    case TypeInt3:       return(TypeInt);
+    case TypeUint3:      return(TypeUint);
+    case TypeFloat3:     return(TypeFloat);
+    case TypeDouble3:    return(TypeDouble);
+    case TypeInt4:       return(TypeInt);
+    case TypeUint4:      return(TypeUint);
+    case TypeFloat4:     return(TypeFloat);
+    case TypeDouble4:    return(TypeDouble);
+    case TypeSyMatrix3f: return(TypeFloat);
+  }
+  return(TypeNull);
+}
+
+///Returns dimension of type.
+inline int TypeDim(TpTypeData type){
   return(type<TypeChar? 0: (type<TypeInt2? 1: (type<TypeInt3? 2: (type<TypeInt4? 3: (type<TypeSyMatrix3f? 4: 6)))));
 }
 

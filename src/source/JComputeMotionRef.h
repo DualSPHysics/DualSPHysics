@@ -1,6 +1,6 @@
 ﻿//HEAD_DSCODES
 /*
- <DUALSPHYSICS>  Copyright (c) 2020 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
+ <DUALSPHYSICS>  Copyright (c) 2025 by Dr Jose M. Dominguez et al. (see http://dual.sphysics.org/index.php/developers/). 
 
  EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo, Ourense, Spain.
  School of Mechanical, Aerospace and Civil Engineering, University of Manchester, Manchester, U.K.
@@ -51,10 +51,10 @@ private:
   unsigned CaseNfloat;   ///<Number of floating boundary particles. 
   unsigned CaseNbound;   ///<Number of boundary particles (fixed+moving+float). 
 
-  unsigned *PartRidp;    ///<To look for particles by Id. [CaseNbound]
+  unsigned* PartRidp;    ///<To look for particles by Id. [CaseNbound]
 
 private:
-  unsigned* ComputeRidp(unsigned np,const unsigned *idp);
+  unsigned* ComputeRidp(unsigned np,const unsigned* idp);
 
 public:
   JComputeMotionRef();
@@ -66,16 +66,16 @@ public:
   const StMkMotionData& GetMkBlock(unsigned idx)const{ return(Mks[idx]); }
 
   void AddMkBlock(word mk,word mkbound,unsigned begin,unsigned np);
-  void AddMkBlocks(word mkboundfirst,const std::vector<StMkMotionData> &mks);
-  void AddMkBlocks(word mkboundfirst,unsigned nmk,const StMkMotionData *mks);
+  void AddMkBlocks(word mkboundfirst,const std::vector<StMkMotionData>& mks);
+  void AddMkBlocks(word mkboundfirst,unsigned nmk,const StMkMotionData* mks);
 
   void ComputeRefPoints(unsigned casenfixed,unsigned casenmoving
-    ,unsigned casenfloat,unsigned np,const unsigned *idp,const tdouble3 *posd
-    ,const tfloat3 *posf,const unsigned *ridp);
+    ,unsigned casenfloat,unsigned np,const unsigned* idp,const tdouble3* posd
+    ,const tfloat3* posf,const unsigned* ridp);
 
-  void GetMotionRefData(StMkMotionData &v)const;
-  void GetMotionRef(std::vector<StMkMotionData> &mks)const;
-  void GetMotionRef(unsigned nmk,StMkMotionData *mks)const;
+  void GetMotionRefData(StMkMotionData& v)const;
+  void GetMotionRef(std::vector<StMkMotionData>& mks)const;
+  void GetMotionRef(unsigned nmk,StMkMotionData* mks)const;
 
 };
 
