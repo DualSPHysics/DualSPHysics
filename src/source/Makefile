@@ -9,10 +9,18 @@ COMPILE_WAVEGEN=YES
 COMPILE_MOORDYNPLUS=YES
 
 LIBS_DIRECTORIES=-L./
-LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
+ifeq ($(GCC), 7)
+  LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc7
+else
+  LIBS_DIRECTORIES:=$(LIBS_DIRECTORIES) -L../lib/linux_gcc
+endif
 
 EXECNAME=DualSPHysics5.4_linux64
 EXECS_DIRECTORY=../../bin/linux
+
+ifeq ($(GCC), 7)
+  EXECS_DIRECTORY=../../bin/linux/DSGcc7
+endif
 
 # -std=c++0x ---> Used to avoid errors for calls to enums
 ifeq ($(USE_DEBUG), YES)
@@ -42,6 +50,10 @@ endif
 #=============== CUDA selection ===============
 CUDAVER=12
 
+ifneq ($(CUDA),)
+  CUDAVER=$(CUDA)
+endif
+
 #=============== CUDA toolkit directory (make appropriate for local CUDA installation) ===============
 ifeq ($(CUDAVER),00)
   DIRTOOLKIT=/usr/local/cuda
@@ -59,7 +71,7 @@ ifeq ($(CUDAVER),11)
   DIRTOOLKIT=/exports/opt/NVIDIA/cuda-11.7
 endif
 ifeq ($(CUDAVER),12)
-  DIRTOOLKIT=/exports/opt/NVIDIA/cuda-12
+  DIRTOOLKIT=/exports/opt/NVIDIA/cuda-12.3
 endif
 
 #=============== Select GPU architectures ===============
@@ -192,11 +204,6 @@ ifeq ($(COMPILE_MOORDYNPLUS), YES)
 	$(MAKE) -C Source_DSphMoorDynPlus -f Makefile_MoorDynPlus $(MAKEFLAGS)
 endif
 
-compile_libs:
-ifeq ($(COMPILE_MOORDYNPLUS), YES)
-	$(MAKE) -C Source_DSphMoorDynPlus -f Makefile_MoorDynPlus $(MAKEFLAGS)
-endif
-
 $(EXECS_DIRECTORY)/$(EXECNAME):  $(OBJECTS)
 	$(CC) $(OBJECTS) $(CCLINKFLAGS) -o $@ $(JLIBS)
 
@@ -238,6 +245,6 @@ JRelaxZone_ker.o: JRelaxZone_ker.cu
 
 clean:
 ifeq ($(COMPILE_MOORDYNPLUS), YES)
-	$(MAKE) -C Source_DSphMoorDynPlus -f Makefile_MoorDynPlus clean
+	$(MAKE) -C Source_DSphMoorDynPlus -f Makefile_MoorDynPlus clean $(MAKEFLAGS)
 endif
-	rm -rf *.o $(EXECNAME) $(EXECNAME)_debug
+	rm -rf *.o $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECS_DIRECTORY)/$(EXECNAME)_debug

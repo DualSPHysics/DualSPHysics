@@ -4,13 +4,18 @@
 USE_DEBUG=NO
 USE_FAST_MATH=YES
 USE_NATIVE_CPU_OPTIMIZATIONS=NO
-USE_DSPH=NO
+USE_DSPH=YES
 
 EXECNAME=TestMoorDynPlus_linux64
 LIBNAME=libdsphmoordynplus_64.a
 
 LIBS_DIRECTORIES=-L./
-LIBS=../../lib/linux_gcc/$(LIBNAME)
+
+ifeq ($(GCC), 7)
+  LIBS=../../lib/linux_gcc7/$(LIBNAME)
+else
+  LIBS=../../lib/linux_gcc/$(LIBNAME)
+endif
 
 ifeq ($(USE_DEBUG), YES)
   CCFLAGS=-c -O0 -g -Wall -static -static-libgcc -std=c++0x -DLINUX
@@ -61,50 +66,11 @@ $(LIBS): $(OBJECTS)
 $(EXECS_DIRECTORY)/$(EXECNAME): $(OBJECTS)
 	$(CC) $(OBJECTS) $(CCLINKFLAGS) -o $@ $(MLIBS)
 
-$(DIRTOOLS)Functions.o: $(DIRTOOLS)Functions.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)Functions.cpp -o $(DIRTOOLS)Functions.o
-
-$(DIRTOOLS)FunGeo3d.o: $(DIRTOOLS)FunGeo3d.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)FunGeo3d.cpp -o $(DIRTOOLS)FunGeo3d.o
-
-$(DIRTOOLS)JDataArrays.o: $(DIRTOOLS)JDataArrays.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)JDataArrays.cpp -o $(DIRTOOLS)JDataArrays.o
-
-$(DIRTOOLS)JException.o: $(DIRTOOLS)JException.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)JException.cpp -o $(DIRTOOLS)JException.o
-
-$(DIRTOOLS)JObject.o: $(DIRTOOLS)JObject.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)JObject.cpp -o $(DIRTOOLS)JObject.o
-
-$(DIRTOOLS)JSaveCsv2.o: $(DIRTOOLS)JSaveCsv2.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)JSaveCsv2.cpp -o $(DIRTOOLS)JSaveCsv2.o
-
-$(DIRTOOLS)JSpVtkShape.o: $(DIRTOOLS)JSpVtkShape.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)JSpVtkShape.cpp -o $(DIRTOOLS)JSpVtkShape.o
-
-$(DIRTOOLS)JXml.o: $(DIRTOOLS)JXml.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)JXml.cpp -o $(DIRTOOLS)JXml.o
-
-$(DIRTOOLS)JLog2.o: $(DIRTOOLS)JLog2.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)JLog2.cpp -o $(DIRTOOLS)JLog2.o
-
-$(DIRTOOLS)JRangeFilter.o: $(DIRTOOLS)JRangeFilter.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)JRangeFilter.cpp -o $(DIRTOOLS)JRangeFilter.o
-
-$(DIRTOOLS)tinystr.o: $(DIRTOOLS)tinystr.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)tinystr.cpp -o $(DIRTOOLS)tinystr.o
-
-$(DIRTOOLS)tinyxml.o: $(DIRTOOLS)tinyxml.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)tinyxml.cpp -o $(DIRTOOLS)tinyxml.o
-
-$(DIRTOOLS)tinyxmlerror.o: $(DIRTOOLS)tinyxmlerror.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)tinyxmlerror.cpp -o $(DIRTOOLS)tinyxmlerror.o
-
-$(DIRTOOLS)tinyxmlparser.o: $(DIRTOOLS)tinyxmlparser.cpp
-	$(CC) $(CCFLAGS) $(DIRTOOLS)tinyxmlparser.cpp -o $(DIRTOOLS)tinyxmlparser.o
+$(DIRTOOLS)%.o: $(DIRTOOLS)%.cpp
+	$(CC) $(CCFLAGS) -c $< -o $@
 
 .cpp.o: 
 	$(CC) $(CCFLAGS) -I./ $< 
 
 clean:
-	rm -rf *.o $(DIRTOOLS)/*.o $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECS_DIRECTORY)/$(EXECNAME)_debug $(LIBS)
+	rm -rf *.o $(DIRTOOLS)*.o $(EXECS_DIRECTORY)/$(EXECNAME) $(EXECS_DIRECTORY)/$(EXECNAME)_debug $(LIBS)
