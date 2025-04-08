@@ -99,7 +99,7 @@ void JSphCfgRun::Reset(){
   CreateDirs=true;
   CsvSepComa=false;
   #ifdef _WITHMR //<vs_vrres_ini>
-    VRes=false;
+    VRes=-1;
     VResOrder=-1;
     VResMethod=-1;
     MRFastSingle=true;
@@ -513,7 +513,7 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         if(!txopt2.empty())PipsSteps=(unsigned)atoi(txopt2.c_str());
       }
 #ifdef _WITHMR //<vs_vrres_ini>
-      else if(txword=="VRES")VRes=true;
+      else if(txword=="VRES")VRes=(OptIsEnabled(txoptfull)? 1: 0);
       else if(txword=="VRES_FAST")MRFastSingle=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
       else if(txword=="VRES_ORDER")VResOrder=(txoptfull!=""? atoi(txoptfull.c_str()): -1);
       else if(txword=="VRES_METHOD")VResMethod=(txoptfull!=""? atoi(txoptfull.c_str()): -1);
@@ -525,5 +525,10 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
       else ErrorParm(opt,c,lv,file);
     }
   }
+#ifdef _WITHMR //<vs_vrres_ini>
+  if(!lv && VRes<0){
+    VRes=(fun::FileExists(CaseName+"_vres00.bi4")? 1: 0);
+  }
+#endif         //<vs_vrres_end>
 }
 

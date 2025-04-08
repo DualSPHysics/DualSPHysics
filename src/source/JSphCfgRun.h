@@ -97,8 +97,8 @@ public:
   unsigned PipsMode;   ///<Defines mode of PIPS calculation (0:No computed (default), 1:Computed, 2:computed and save detail).
   unsigned PipsSteps;  ///<Number of steps per interval to compute PIPS (100 by default).
 
-  #ifdef _WITHMR //<vs_vrres_ini>
-  bool  VRes;          ///<Define use of variable resolution zones (false by default).
+#ifdef _WITHMR //<vs_vrres_ini>
+  int   VRes;          ///<Define use of variable resolution zones (-1:Automatic, 0:Normal data, 1:VRes data).
   int   MRFastSingle;   
   int   VResOrder;
   int   VResMethod;
