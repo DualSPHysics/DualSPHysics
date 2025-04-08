@@ -1,0 +1,162 @@
+
+
+ <DUALSPHYSICS5> Copyright (c) 2025 by
+ Dr Jose M. Dominguez Alonso, Prof. Alejandro Crespo,
+ Dr Georgios Fourtakas, Prof. Benedict Rogers,
+ Dr Renato Vacondio, Dr Corrado Altomare,
+ Dr Angelo Tafuni, Dr Orlando Garcia Feal,
+ Dr Ivan Martinez Estevez, Dr Joseph O'Connor,
+ Dr Aaron English, Dr Francesco Ricci,
+ Prof. Moncho Gomez Gesteira, Prof. Peter Stansby
+
+ EPHYSLAB Environmental Physics Laboratory, Universidade de Vigo
+ School of Mechanical, Aerospace and Civil Engineering, University of Manchester
+
+ DualSPHysics is free software: you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public License
+ as published by the Free Software Foundation, either version 2.1 of
+ the License, or (at your option) any later version.
+
+ DualSPHysics is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Lesser General Public License for more details.
+
+ You should have received a copy of the GNU Lesser General Public License
+ along with DualSPHysics. If not, see <http://www.gnu.org/licenses/>.
+
+ Free download source files and documentation from DualSPHysics website (http://dual.sphysics.org).
+ Full list of developers and contributors is available at https://dual.sphysics.org/developers
+ Properly cite the use of DualSPHysics (Dominguez et al., 2022) (https://dual.sphysics.org/references).
+
+
+DualSPHysics5 v5.4.354 (20-03-2025)
+====================================
+LoadDsphConfig> .../bin/windows/DsphConfig.xml
+Available features: Project Chrono coupling, MoorDynPlus coupling, Wave generation, FlexStruc, mDBC no-slip, GPU execution, OpenMP execution.
+
+Information about execution parameters:
+
+  DualSPHysics [name_case [dir_out]] [options]
+
+  General options:
+    -h          Shows information about parameters
+    -ver        Shows version information
+    -info       Shows version features in JSON format
+    -opt <file> Loads a file configuration
+
+  Execution options for CPU:
+    -cpu        Execution on CPU (option by default)
+    -ompthreads:<int>  Only for CPU execution, indicates the number of threads
+                by host for parallel execution, this takes the number of cores
+                of the device by default (or using zero value)
+
+  Execution options for Single-GPU:
+    -gpu[:id]   Execution on GPU and optional id of the device
+
+  General execution options:
+    -stable     The result is always the same but the execution is slower
+    -saveposdouble:<0/1>  Saves position using double precision (default=0)
+    -svextraparts:<int>  PART interval for saving extra data (default=0)
+    -svextraparts:<list> List of PARTs for saving extra data (default=0)
+
+    -cellmode:<mode>  Specifies the cell division mode
+        full      Lowest and the least expensive in memory (by default)
+        half      Fastest and the most expensive in memory
+    -cellfixed:<0/1>  Cell domain is fixed according maximum domain size
+                      (default=0)
+
+  Formulation options:
+    -dbc                    Dynamic Boundary Condition DBC (by default)
+    -mdbc                   Modified Dynamic Boundary Condition mDBC (vel=0 mode)
+    -mdbc_noslip[:nopen]    Modified Dynamic Boundary Condition mDBC (no-slip mode)
+    -mdbc_freeslip[:nopen]  Modified Dynamic Boundary Condition mDBC (free-slip mode)
+
+    -initnorpla:<inlinecfg>  Initialize definition for <boundnormal_plane>
+    -initnorpart:<inlinecfg> Initialize definition for <boundnormal_parts>
+
+    -symplectic      Symplectic algorithm as time step algorithm
+    -verlet[:steps]  Verlet algorithm as time step algorithm and number of
+                     time steps to switch equations
+
+    -wendland        Wendland kernel (by default)
+    -cubic           Cubic spline kernel
+
+    -viscoart:<float>          Artificial viscosity [0-1]
+    -viscolam:<float>          Laminar viscosity [order of 1E-6]
+    -viscolamsps:<float>       Laminar+SPS viscosity [order of 1E-6]
+    -viscoboundfactor:<float>  Multiplies the viscosity value of boundary
+
+    -ddt:<mode> Specifies the Density Diffusion Term to correct density
+        none       Not used (by default)
+        1          Diffusion term by Molteni and Colagrossi 2009
+        2          Diffusion term by Fourtakas et al 2019 (inner fluid particles)
+        3          Diffusion term by Fourtakas et al 2019 (all fluid particles)
+    -ddtvalue:<float> Constant for DDT (0.1 by default)
+    -ddtramp:tramp:tmax:maxvalue  Total time of DDT ramp and time for maxvalue
+
+    -shifting:<mode> Set Shifting correction (with default paramters)
+        none       Shifting is disabled (by default)
+        nobound    Shifting is not applied near boundary
+        nofixed    Shifting is not applied near fixed boundary
+        full       Shifting is always applied
+        fulladv    Advanced shifting for free-surface (mode:ale:ncp)
+
+  Simulation options:
+    -name <string>      Specifies path and name of the case 
+    -runname <string>   Specifies name for case execution
+    -dirout <dir>       Specifies the general output directory 
+    -dirdataout <dir>   Specifies the output subdirectory for binary data
+                        files (default=data) 
+
+    -partbegin:begin[:first] dir 
+     Specifies the beginning of the simulation starting from a given PART
+     (begin) and located in the directory (dir), (first) indicates the
+     number of the first PART to be generated
+    -restartchrono:<0/1>    Allows restart with Chrono active (default=0)
+
+    -tmax:<float>   Maximum time of simulation
+    -tout:<float>   Time between output files
+    -toutx:<float>  Time between extra output files on motion and floatings
+
+    -cfl:<float> CFL number coefficient to multiply dt
+    -ftpause:<float> Time to start floating bodies movement. By default 0
+    -rhopout:min:max Excludes fluid particles out of these density limits
+    -domain_fixed:xmin:ymin:zmin:xmax:ymax:zmax    The domain is fixed
+     with the specified values
+
+  Output options:
+    -sv:[formats,...] Specifies the output formats.
+        none    No particles files are generated
+        binx    Binary files (by default)
+        info    Information about execution in .ibi4 format (by default)
+        vtk     VTK files
+        csv     CSV files
+    -svnormals:<0/1> Saves normal vector of boundary particles (default=0)
+    -svres:<0/1>     Generates file that summarises the execution process
+    -svtimers:<0/1>  Obtains timing for each individual process
+    -svdomainvtk:<0/1>  Generates VTK file with domain limits
+    -svpips:<mode>:n  Compute PIPS of simulation each n steps (100 by default),
+       mode options: 0=disabled (by default), 1=no save details, 2=save details
+
+    -createdirs:<0/1> Creates full path for output files
+                      (value by default is read from DsphConfig.xml or 1)
+    -csvsep:<0/1>     Separator character in CSV files (0=semicolon, 1=coma)
+                      (value by default is read from DsphConfig.xml or 0)
+
+  Debug options:
+    -nsteps:<uint>  Maximum number of steps allowed (activates nortimes)
+    -svsteps:<0/1>  Saves a PART for each step (activates nortimes)
+    -nortimes:<0/1> Removes execution dependent values from bi4 files
+
+  Variable resolution options:
+    -vres                     Execution with variable resolution algorithm
+    -vres_fast:<0/1>          Precision of variable resolution interpolation (0=double, 1=single)
+    -vres_order:<uint>        Maximum order vres interpolation (0=0th, 1:1st, 2:2nd)
+    -vres_threshold:<float>   Threshold for vres interpolation
+
+  Examples:
+    DualSPHysics case out_case -sv:binx,csv 
+    DualSPHysics -name case -dirout out_case -sv:binx,csv 
+
+Finished execution (code=0).

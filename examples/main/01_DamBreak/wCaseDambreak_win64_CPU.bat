@@ -49,7 +49,7 @@ rem Executes GenCase to create initial files for simulation.
 if not "%ERRORLEVEL%" == "0" goto fail
 
 rem Executes DualSPHysics to simulate SPH method.
-%dualsphysicsgpu% -gpu %dirout%/%name% %dirout%
+%dualsphysicscpu% %dirout%/%name% %dirout%
 if not "%ERRORLEVEL%" == "0" goto fail
 
 :postprocessing

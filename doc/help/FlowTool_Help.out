@@ -1,20 +1,20 @@
 
 
- <FLOWTOOL>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <FLOWTOOL>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  FlowTool is a free tool for DualSPHysics simulations.
  DualSPHysics project is an international collaboration between
  University of Vigo (Spain) and University of Manchester (UK).
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- * Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+ Redistribution and use in binary form, without modification, are
+ permitted provided that the following conditions are met:
  * Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
+ * Redistributions or modifications of source code are not permitted 
+   unless expressly authorised, and must retain the above copyright 
+   notice, this list of conditions and the following disclaimer.
  * Neither the name of the FlowTool nor the names of its contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
@@ -31,7 +31,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-FlowTool v5.0.206 (12-04-2023)
+FlowTool v5.4.266 (20-03-2025)
 ===============================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -44,29 +44,32 @@ Information about parameters of execution:
     -opt <file>    Load configuration of a file
 
   Defines input file:
-    -dirin <dir>       Directory with particle data bi4
-    -filein <file>     File with particle data bi4
+    -dirdata <dir>    Directory with particle data (Part_XXXX.bi4)
+    -filedata <file>  File with particle data (file.bi4)
 
-    -fileboxes <file>  File with definition of domains using prisms
+    -fileboxes <file> File with definition of domains using prisms (txt or xml)
     -first:<int>     Indicates the first file to be computed
     -last:<int>      Indicates the last file to be computed
     -files:<values>  Indicates the number of files to be processed
 
   Defines output file:
-    -boxestemplate        Creates example file to be used with -fileboxes
+    -templates            Creates example file to be used with -fileboxes
     -savecsv <file.csv>   Generates CSV files with number of particles that
-                          enter or leave the domains , volume and flow rates
-    -savevtk <file.vtk>   Generates vtk(polydata) files with particles
+                          enter or leave the domains, volume and flow rates
+    -units:1  Define units for volume or flow and saves extra flow data between
+              control boxes (0:by default, 1:l/s, 2:gal/s, 3:gal/min)
+
+    -savevtk <file.vtk>   Creates VTK (polydata) files with particles
 
     -createdirs:<0/1>     Creates full path for output files
                           (value by default is read from DsphConfig.xml or 1)
-    -csvsep:<0/1>         Separator character in CSV files (0=semicolon, 1=coma)
-                          (value by default is read from DsphConfig.xml or 0)
+    -thousands:<0/1>      Use thousands separator (value by default is read
+                          from DsphConfig.xml or 0)
 
     -threads:<int>  Indicates the number of threads for parallel execution of
      the interpolation, it takes the number of cores of the device by default
      (or using zero value).
 
   Examples:
-    FlowTool -dirin . -fileboxes boxes.dat -savecsv resul.csv -savevtk dir/files.vtk
+    FlowTool -dirdata . -fileboxes boxes.txt -savecsv resul.csv -savevtk dir/files.vtk
 

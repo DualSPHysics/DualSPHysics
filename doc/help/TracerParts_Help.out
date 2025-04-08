@@ -1,20 +1,20 @@
 
 
- <TRACERPARTS>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <TRACERPARTS>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  TracerParts is a free tool for DualSPHysics simulations.
  DualSPHysics project is an international collaboration between
  University of Vigo (Spain) and University of Manchester (UK).
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- * Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+ Redistribution and use in binary form, without modification, are
+ permitted provided that the following conditions are met:
  * Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
+ * Redistributions or modifications of source code are not permitted 
+   unless expressly authorised, and must retain the above copyright 
+   notice, this list of conditions and the following disclaimer.
  * Neither the name of the TracerParts nor the names of its contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
@@ -31,7 +31,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-TracerParts v5.0.206 (12-04-2023)
+TracerParts v5.4.266 (20-03-2025)
 ==================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -46,7 +46,7 @@ Information about parameters of execution:
      Uses 0 to take the number of cores of the device (default=1).
 
   Defines input file:
-    -dirin <dir>       Directory with particle data bi4
+    -dirdata <dir>     Directory with particle data (Part_XXXX.bi4)
     -filexml file.xml  Loads xml file with information of mk and
                        and other information. The word 'AUTO' can
                        be used to load the xml used in the simulation.

@@ -1,20 +1,20 @@
 
 
- <PARTVTKOUT>  Copyright (c) 2020 by Dr Jose M. Dominguez
+ <PARTVTKOUT>  Copyright (c) 2025 by Dr Jose M. Dominguez
  All rights reserved.
 
  PartVTKOut is a free tool for DualSPHysics simulations.
  DualSPHysics project is an international collaboration between
  University of Vigo (Spain) and University of Manchester (UK).
 
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
- * Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
+ Redistribution and use in binary form, without modification, are
+ permitted provided that the following conditions are met:
  * Redistributions in binary form must reproduce the above copyright
    notice, this list of conditions and the following disclaimer in the
    documentation and/or other materials provided with the distribution.
+ * Redistributions or modifications of source code are not permitted 
+   unless expressly authorised, and must retain the above copyright 
+   notice, this list of conditions and the following disclaimer.
  * Neither the name of the PartVTKOut nor the names of its contributors
    may be used to endorse or promote products derived from this software
    without specific prior written permission.
@@ -31,7 +31,7 @@
  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-PartVTKOut v5.0.206 (12-04-2023)
+PartVTKOut v5.4.266 (20-03-2025)
 =================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Information about parameters of execution:
@@ -44,17 +44,18 @@ Information about parameters of execution:
     -opt <file>    Loads configuration of a file
 
   Define input file:
-    -dirin <dir>       Directory with particle data
-    -filexml file.xml  Loads xml file with information of mk to
-                       save value of mk
-    -first:<int>     Indicates the first file to be computed
-    -last:<int>      Indicates the last file to be computed
+    -dirdata <dir>    Directory with excluded particle data (PartOut_XXX.obi4)
+                      or main output directory for VRes simulations
+    -filexml file.xml Loads xml file with information of mk to
+                      save value of mk
+    -first:<int>      Indicates the first file to be computed
+    -last:<int>       Indicates the last file to be computed
 
   Define output file:
     -savevtk <file.vtk>     Generates vtk(polydata) files with excluded
                             particles.
     -savecsv <file.csv>     Generates CSV file with particles info
-    -SaveResume <file.csv>  Generates CSV file with resume info
+    -saveresume <file.csv>  Generates CSV file with resume info
 
     -createdirs:<0/1>  Creates full path for output files
                        (value by default is read from DsphConfig.xml or 1)
@@ -63,10 +64,11 @@ Information about parameters of execution:
 
   Configuration for output file:
     -onlypos:xmin:ymin:zmin:xmax:ymax:zmax  Indicates limits of particles
-    -onlynew  Stores only new excluded particles of each PART file (default
-     value = false)
+    -onlynew             Stores only new excluded particles of each PART file
+                         (default value = false)
+    -onlyzone:<values>   Indicates the VRes zone of selected particles
     -limitpos:xmin:ymin:zmin:xmax:ymax:zmax Changes limits of simulation
-    -limitrhop:min:max      Changes limits of rhop values
+    -limitrhop:min:max   Changes limits of rhop values
 
   Examples:
     PartVTKOut -savevtk out.vtk
