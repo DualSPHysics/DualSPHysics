@@ -186,7 +186,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -ddtvalue:<float> Constant for DDT (0.1 by default)\n");
   printf("    -ddtramp:tramp:tmax:maxvalue  Total time of DDT ramp and time for maxvalue\n"); //<vs_ddramp>
   printf("\n");
-  printf("    -shifting:<mode> Set Shifting correction (with default paramters)\n");
+  printf("    -shifting:<mode> Set Shifting correction (with default parameters)\n");
   printf("        none       Shifting is disabled (by default)\n");
   printf("        nobound    Shifting is not applied near boundary\n");
   printf("        nofixed    Shifting is not applied near fixed boundary\n");

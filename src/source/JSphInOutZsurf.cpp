@@ -647,7 +647,7 @@ void JSphInOutZsurf::SetInitialPoints(unsigned npt,const tdouble3* ptpos
   }
   else if(!UniformZsurf){ //<vs_meeshdat_ini>
     //if(ZsurfMode==InZsurf_Calculated)//-Nothing to do since CurrentZsurf (for CPU and GPU) and CurrentZsurfg (only for GPU) contains the zsurf results.
-    if(CurrentZsurf==NULL)Run_Exceptioon("Curren Zsurf results are not available.");
+    if(CurrentZsurf==NULL)Run_Exceptioon("Current Zsurf results are not available.");
     for(unsigned p=0;p<npt;p++){
       const tdouble3 ps=ptpos[p];
       const float xzsurf=GetCurrentZsurfNonUniform(ps);

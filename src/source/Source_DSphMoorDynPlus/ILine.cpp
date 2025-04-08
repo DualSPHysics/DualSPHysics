@@ -982,7 +982,7 @@ void ILine::VisuConfig()const{
 /// Shows initial tension in the nodes
 //==============================================================================
 void ILine::VisuIniTen()const{
-  Log->Printf("  ILine %d:",Idl);
+  Log->Printf("  Line %d:",Idl);
   if(AnchConnect->GetType()!=TpConnection::connect)Log->Printf("    Point(%s): %g [N]",fun::Double3gStr(AnchConnect->GetPositions()).c_str(),GetTensionOutput(AnchConnect->GetNode()));
   if(FairConnect->GetType()!=TpConnection::connect)Log->Printf("    Point(%s): %g [N]",fun::Double3gStr(FairConnect->GetPositions()).c_str(),GetTensionOutput(FairConnect->GetNode()));
 }

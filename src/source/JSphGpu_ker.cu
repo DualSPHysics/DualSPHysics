@@ -695,7 +695,7 @@ template<TpKernel tker,TpFtMode ftmode,TpVisco tvisco,TpDensity tdensity
             float absx=abs(normx);
             float absy=abs(normy);
             float absz=abs(normz);
-            // decompose the normal and apply correction in each direction seperately
+            // decompose the normal and apply correction in each direction separately
             if(drx*normx<0.75f && absx>0.001f*CTE.dp)cusph::ComputeNoPenVel(velrhop1.x-movvelp2.x,normx,drx,
                                                               nopencount.x,nopenshift.x);
             if(dry*normy<0.75f && absy>0.001f*CTE.dp)cusph::ComputeNoPenVel(velrhop1.y-movvelp2.y,normy,dry,

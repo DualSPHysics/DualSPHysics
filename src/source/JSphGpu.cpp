@@ -620,7 +620,7 @@ void JSphGpu::ParticlesDataUp(unsigned n,const tfloat3* boundnor){
 /// Recovers particle data from the GPU and returns the particle number that
 /// are less than n if the paeriodic particles are removed.
 /// - code: Recovers data of Codeg.
-/// - onlynormal: Onlly retains the normal particles, removes the periodic ones.
+/// - onlynormal: Only retains the normal particles, removes the periodic ones.
 ///
 /// Recupera datos de particulas de la GPU y devuelve el numero de particulas que
 /// sera menor que n si se eliminaron las periodicas.
