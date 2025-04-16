@@ -112,7 +112,7 @@ void JSimpleNeigs::DefineMapCells(){
 /// Crea mapa de celdas.
 //==============================================================================
 void JSimpleNeigs::CreateMapCells(){
-  if(Np==0)Run_Exceptioon("Nummber of positions is zero.");
+  if(Np==0)Run_Exceptioon("Number of positions is zero.");
   if(Scell<=0)Run_Exceptioon("Size of cells is invalid.");
   DefineMapCells();
   //-Allocate memory.

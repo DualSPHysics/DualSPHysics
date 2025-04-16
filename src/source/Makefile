@@ -71,7 +71,7 @@ ifeq ($(CUDAVER),11)
   DIRTOOLKIT=/exports/opt/NVIDIA/cuda-11.7
 endif
 ifeq ($(CUDAVER),12)
-  DIRTOOLKIT=/exports/opt/NVIDIA/cuda-12.3
+  DIRTOOLKIT=/exports/opt/NVIDIA/cuda-12.8
 endif
 
 #=============== Select GPU architectures ===============
@@ -179,9 +179,9 @@ CCFLAGS := $(CCFLAGS) -I./ -I$(DIRTOOLKIT)/include
 CCLINKFLAGS := $(CCLINKFLAGS) -L$(DIRTOOLKIT)/lib64 -lcudart_static -ldl -lrt
 NCC=nvcc
 ifeq ($(USE_DEBUG), NO)
-  NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC) -D_WITHMR -D_WITHGPU
+  NCCFLAGS+=-c $(GENCODE) -O3 -ccbin $(CC) -D_WITHMR -D_WITHGPU -DCUB_IGNORE_DEPRECATED_CPP_DIALECT -DTHRUST_IGNORE_DEPRECATED_CPP_DIALECT
 else
-  NCCFLAGS+=-c $(GENCODE) -g -G -ccbin $(CC)  -D_WITHMR -D_WITHGPU
+  NCCFLAGS+=-c $(GENCODE) -g -G -ccbin $(CC)  -D_WITHMR -D_WITHGPU -DCUB_IGNORE_DEPRECATED_CPP_DIALECT -DTHRUST_IGNORE_DEPRECATED_CPP_DIALECT
 endif
 ifeq ($(USE_FAST_MATH), YES)
   NCCFLAGS+= -use_fast_math

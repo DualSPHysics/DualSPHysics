@@ -107,8 +107,8 @@ private:
   JPartDataBi4* DataBi4;             ///<To store particles and info in bi4 format.      | Para grabar particulas e info en formato bi4.
   JPartOutBi4Save* DataOutBi4;       ///<To store excluded particles in bi4 format.      | Para grabar particulas excluidas en formato bi4.
 public:
-  JDsPartMotionSave* PartMotionSave; ///<To store motion reference data of moving and floating objects in bi4 format with several frecuencies.
-  JDsPartFloatSave* PartFloatSave;   ///<To store floating data in bi4 format with several frecuencies.
+  JDsPartMotionSave* PartMotionSave; ///<To store motion reference data of moving and floating objects in bi4 format with several frequencies.
+  JDsPartFloatSave* PartFloatSave;   ///<To store floating data in bi4 format with several frequencies.
 
 private:
   //-Total number of excluded particles according to reason for exclusion.

@@ -30,7 +30,7 @@
  Properly cite the use of DualSPHysics (Dominguez et al., 2022) (https://dual.sphysics.org/references).
 
 
-DualSPHysics5 v5.4.354 (20-03-2025)
+DualSPHysics5 v5.4.355 (08-04-2025)
 ====================================
 LoadDsphConfig> .../bin/windows/DsphConfig.xml
 Available features: Project Chrono coupling, MoorDynPlus coupling, Wave generation, FlexStruc, mDBC no-slip, GPU execution, OpenMP execution.
@@ -95,7 +95,7 @@ Information about execution parameters:
     -ddtvalue:<float> Constant for DDT (0.1 by default)
     -ddtramp:tramp:tmax:maxvalue  Total time of DDT ramp and time for maxvalue
 
-    -shifting:<mode> Set Shifting correction (with default paramters)
+    -shifting:<mode> Set Shifting correction (with default parameters)
         none       Shifting is disabled (by default)
         nobound    Shifting is not applied near boundary
         nofixed    Shifting is not applied near fixed boundary

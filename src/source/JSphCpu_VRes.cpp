@@ -792,7 +792,7 @@ template<TpKernel tker,bool sim2d> void InteractionComputeFSNormals
     }
 
     if(CODE_IsFluidBuffer(code[p1])){
-    //-Loop trough the local virtual stencil.
+    //-Loop through the local virtual stencil.
       double ks=csp.kernelsize;
       double dp=csp.dp;
       const byte izone0=byte(CODE_GetIzoneFluidBuffer(code[p1]));

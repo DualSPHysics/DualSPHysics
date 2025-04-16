@@ -106,7 +106,7 @@ void JTrianglesMesh::LoadData(const std::vector<tuint3>& vtri
  }
 
 //==============================================================================
-/// Applies displacement tranformation.
+/// Applies displacement transformation.
 //==============================================================================
 void JTrianglesMesh::TransformMove(const tfloat3& move){
   for(unsigned c=0;c<VertsCount;c++)Verts[c]=Verts[c]+move;
@@ -115,7 +115,7 @@ void JTrianglesMesh::TransformMove(const tfloat3& move){
 }
 
 //==============================================================================
-/// Applies matrix tranformation.
+/// Applies matrix transformation.
 //==============================================================================
 void JTrianglesMesh::TransformMatrix(const tmatrix4d& m){
   //-Implements JMatrix4d::MulPoint()

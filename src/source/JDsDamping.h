@@ -121,7 +121,7 @@ class JDsDampingOp_Plane : public JDsDampingOp
 {
 private:
   tdouble3 LimitMin;  ///<Minimal reduction position. | Posicion de reduccion minima.
-  tdouble3 LimitMax;  ///<Miximum reduction position. | Posicion de reduccion maxima.
+  tdouble3 LimitMax;  ///<Maximum reduction position. | Posicion de reduccion maxima.
 
   bool UseDomain;     ///<Indicates use of domain planes. | Indica uso de planos del dominio.
   double DomzMin;     ///<Domain definition - Z minimum. | Definicion de dominio - Z minima.

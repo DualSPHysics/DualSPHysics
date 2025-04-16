@@ -104,7 +104,7 @@ void JSphCpuSingle_VRes::AddWarningVRes(){
    if(FlexStruc)Log->PrintWarning("The use of FlexStruct with Variable resolution is an experimental feature.");
    if(TKernel==KERNEL_Cubic) Run_Exceptioon("Cubic Kernel is not available with Variable resolution execution.");
    if(TStep==STEP_Verlet) Run_Exceptioon("Verlet Time Integration is not available with Variable resolution execution.");
-   if(Shifting)Log->PrintWarning("Shifting==4 is reccomended with Variable resolution execution.");
+   if(Shifting)Log->PrintWarning("Shifting==4 is recommended with Variable resolution execution.");
    #ifdef AVAILABLE_DIVCLEAN
    if(DivCleaning) Run_Exceptioon("Divergence cleaning is not available with Variable resolution execution.");
    #endif

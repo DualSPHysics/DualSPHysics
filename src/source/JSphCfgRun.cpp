@@ -99,7 +99,7 @@ void JSphCfgRun::Reset(){
   CreateDirs=true;
   CsvSepComa=false;
   #ifdef _WITHMR //<vs_vrres_ini>
-    VRes=false;
+    VRes=-1;
     VResOrder=-1;
     VResMethod=-1;
     MRFastSingle=true;
@@ -186,7 +186,7 @@ void JSphCfgRun::VisuInfo()const{
   printf("    -ddtvalue:<float> Constant for DDT (0.1 by default)\n");
   printf("    -ddtramp:tramp:tmax:maxvalue  Total time of DDT ramp and time for maxvalue\n"); //<vs_ddramp>
   printf("\n");
-  printf("    -shifting:<mode> Set Shifting correction (with default paramters)\n");
+  printf("    -shifting:<mode> Set Shifting correction (with default parameters)\n");
   printf("        none       Shifting is disabled (by default)\n");
   printf("        nobound    Shifting is not applied near boundary\n");
   printf("        nofixed    Shifting is not applied near fixed boundary\n");
@@ -513,7 +513,7 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
         if(!txopt2.empty())PipsSteps=(unsigned)atoi(txopt2.c_str());
       }
 #ifdef _WITHMR //<vs_vrres_ini>
-      else if(txword=="VRES")VRes=true;
+      else if(txword=="VRES")VRes=(OptIsEnabled(txoptfull)? 1: 0);
       else if(txword=="VRES_FAST")MRFastSingle=(txoptfull!=""? atoi(txoptfull.c_str()): 1);
       else if(txword=="VRES_ORDER")VResOrder=(txoptfull!=""? atoi(txoptfull.c_str()): -1);
       else if(txword=="VRES_METHOD")VResMethod=(txoptfull!=""? atoi(txoptfull.c_str()): -1);
@@ -525,5 +525,10 @@ void JSphCfgRun::LoadOpts(const std::string* optlis,int optn,int lv
       else ErrorParm(opt,c,lv,file);
     }
   }
+#ifdef _WITHMR //<vs_vrres_ini>
+  if(!lv && VRes<0){
+    VRes=(fun::FileExists(CaseName+"_vres00.bi4")? 1: 0);
+  }
+#endif         //<vs_vrres_end>
 }
 

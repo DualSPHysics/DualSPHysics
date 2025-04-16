@@ -284,7 +284,7 @@ __device__ float3 KerMdbc2TangenVel(const float3& boundnor,const float3& velfina
   return(tangentvel);
 }
 //------------------------------------------------------------------------------
-/// Perform interaction between ghost node of selected bondary and fluid.
+/// Perform interaction between ghost node of selected boundary and fluid.
 //------------------------------------------------------------------------------
 template<TpKernel tker,bool sim2d,TpSlipMode tslip,bool sp>
   __global__ void KerInteractionMdbc2Correction_Fast
