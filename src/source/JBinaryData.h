@@ -68,6 +68,7 @@
 #include <vector>
 #include <fstream>
 #include <climits>
+#include <cstdint>
 
 class JBinaryData;
 
